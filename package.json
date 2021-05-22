@@ -12,7 +12,8 @@
 	],
 	"activationEvents": [
 		"onCommand:server.start",
-		"onCommand:server.end"
+		"onCommand:server.end",
+		"onCommand:server.preview.refresh"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -24,6 +25,10 @@
 			{
 				"command": "server.end",
 				"title": "End dev server"
+			},
+			{
+				"command": "server.preview.refresh",
+				"title": "Refresh dev server"
 			}
 		]
 	},
