@@ -11,24 +11,25 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:server.start",
-		"onCommand:server.end",
-		"onCommand:server.preview.refresh"
+		"onCommand:liveserver.start",
+		"onCommand:liveserver.end",
+		"onCommand:liveserver.start.withpreview",
+		"onWebviewPanel:localhostBrowserPreview"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "server.start",
-				"title": "Start dev server"
+				"command": "liveserver.start",
+				"title": "LiveServer v2: Start Development Server"
 			},
 			{
-				"command": "server.end",
-				"title": "End dev server"
+				"command": "liveserver.start.withpreview",
+				"title": "LiveServer v2: Show Preview"
 			},
 			{
-				"command": "server.preview.refresh",
-				"title": "Refresh dev server"
+				"command": "liveserver.end",
+				"title": "LiveServer v2: Close Development Server"
 			}
 		]
 	},
@@ -41,12 +42,15 @@
 	"devDependencies": {
 		"@types/node": "^12.12.0",
 		"@types/vscode": "^1.32.0",
+		"@types/ws": "^7.4.4",
 		"@typescript-eslint/eslint-plugin": "^4.16.0",
 		"@typescript-eslint/parser": "^4.16.0",
 		"eslint": "^7.21.0",
 		"typescript": "^4.2.2"
 	},
 	"dependencies": {
-		"url": "^0.11.0"
+		"url": "^0.11.0",
+		"vscode-codicons": "0.0.17",
+		"ws": "^7.4.6"
 	}
 }

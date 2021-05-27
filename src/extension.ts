@@ -1,32 +1,34 @@
 import * as vscode from 'vscode';
 import * as bp from './BrowserPreview'
+import { getWebviewOptions, Manager } from './manager';
 
 export function activate(context: vscode.ExtensionContext) {
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('server.start', ()  => {
-			bp.BrowserPreview.createOrShow(context.extensionUri);
-		})
-	);
+	const manager = new Manager(context.extensionUri);
 	
 	context.subscriptions.push(
-		vscode.commands.registerCommand('server.preview.refresh', ()  => {
-			bp.BrowserPreview.refreshBrowserPreview();
+		vscode.commands.registerCommand('liveserver.start', ()  => {
+			manager.openServer(true);
 		})
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('server.end', ()  => {
-			bp.BrowserPreview.closeServer();
+		vscode.commands.registerCommand('liveserver.start.withpreview', ()  => {
+			manager.createOrShowPreview();
 		})
 	);
 
+	context.subscriptions.push(
+		vscode.commands.registerCommand('liveserver.end', ()  => {
+			manager.server.closeServer();
+		})
+	);
 
 	if (vscode.window.registerWebviewPanelSerializer) {
 		vscode.window.registerWebviewPanelSerializer(bp.BrowserPreview.viewType, {
 			async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel) {
 				// Reset the webview options so we use latest uri for `localResourceRoots`.
-				webviewPanel.webview.options = bp.getWebviewOptions(context.extensionUri);
+				webviewPanel.webview.options = getWebviewOptions(context.extensionUri);
 				bp.BrowserPreview.revive(webviewPanel, context.extensionUri);
 			}
 		});
