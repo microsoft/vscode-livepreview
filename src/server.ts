@@ -51,15 +51,13 @@ export class Server extends Disposable {
 			const endOfPath = req.url.lastIndexOf("?");
 			const pathnameWithoutQueries = endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
 
-			let fileurl = pathnameWithoutQueries;
+			let readPath = path.join(basePath, pathnameWithoutQueries)
 
 			// Redirect to index.html if the request URL is blank
-			if ((pathnameWithoutQueries == '/' || pathnameWithoutQueries == '') &&
-				fs.existsSync(path.join(basePath, "index.html"))) {
-				fileurl = 'index.html';
-			}
-
-			const readPath = path.join(basePath, fileurl);
+			if (fs.statSync(readPath).isDirectory() && fs.existsSync(path.join(readPath, "index.html"))) {
+				readPath = path.join(readPath,'index.html');
+			} 
+			
 			const stream = this.getStream(readPath, scriptInjection);
 
 			if (stream) {
