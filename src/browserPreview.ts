@@ -1,6 +1,5 @@
-// import { Server } from 'http';
 import * as vscode from 'vscode';
-import { PORTNUM } from './server'
+import { PORTNUM } from './constants';
 import { Disposable } from './dispose';
 import { pageHistory, NavEditCommands } from './pageHistoryTracker';
 
@@ -8,20 +7,24 @@ export class BrowserPreview extends Disposable {
 	/**
 	 * Track the currently panel. Only allow a single panel to exist at a time.
 	 */
-	public static readonly viewType = 'localhostBrowserPreview';
-	// public static currentPanel: BrowserPreview | undefined;
-	// public static server = new Server();
-
+	public static readonly viewType = 'browserPreview';
 	private readonly _pageHistory: pageHistory;
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
+	
+	private readonly _onDisposeEmitter = this._register(new vscode.EventEmitter<void>());
+	public readonly onDispose = this._onDisposeEmitter.event;
 
-
-	public get panel() {
-		return this._panel;
+	public close() {
+		this._panel.dispose();
 	}
+
+	public reveal(column: number) {
+		this._panel.reveal(column);
+	}
+
 	constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
-		super()
+		super();
 		this._panel = panel;
 		this._extensionUri = extensionUri;
 
@@ -32,8 +35,8 @@ export class BrowserPreview extends Disposable {
 		}));
 
 		this._pageHistory = this._register(new pageHistory());
-		this.handleNavAction(NavEditCommands.DISABLE_BACK)
-		this.handleNavAction(NavEditCommands.DISABLE_FORWARD)
+		this.handleNavAction(NavEditCommands.DISABLE_BACK);
+		this.handleNavAction(NavEditCommands.DISABLE_FORWARD);
 
 		// Handle messages from the webview
 		this._register(this._panel.webview.onDidReceiveMessage(
@@ -43,45 +46,50 @@ export class BrowserPreview extends Disposable {
 						vscode.window.showErrorMessage(message.text);
 						return;
 					case 'update-path':
-						this.handleNewPageLoad(message.text)
+						this.handleNewPageLoad(message.text);
 						return;
 					case 'go-back':
 						this.goBack();
-						return
+						return;
 					case 'go-forward':
 						this.goForwards();
-						return
+						return;
 					case 'open-browser':
-						const urlString = (message.text == '') ? "http://localhost:" + PORTNUM + "/" + this._panel.title : message.text;
+						const urlString = (message.text == '') ? this.constructHostAddress(this._panel.title) : message.text;
 						const url = vscode.Uri.parse(urlString);
 						vscode.env.openExternal(url);
-						return
+						return;
 				}
 			}
 		));
 
 
-		// Set the webview's initial html content
+		// Set the webview's html content at index.html
 		this.goToFile("/");
-		this._pageHistory?.addHistory("/")
-
+		this._pageHistory?.addHistory("/");
 		this.setPanelTitle();
+
 	}
 
 	dispose() {
 		this._onDisposeEmitter.fire();
 		this._onDisposeEmitter.dispose();
-		super.dispose()
-	}
-	
-	private readonly _onDisposeEmitter = this._register(new vscode.EventEmitter<void>());
-	public readonly onDispose = this._onDisposeEmitter.event;
-
-	private _setHtml(webview: vscode.Webview, url: string) {
-		this._panel.webview.html = this._getHtmlForWebview(webview, url);
+		super.dispose();
 	}
 
-	private _getHtmlForWebview(webview: vscode.Webview, url: string) {
+	private constructHostAddress(URLExt: string) {
+		if (URLExt.length > 0 && URLExt[0] == "/") {
+			URLExt = URLExt.substring(1);
+		}
+
+		return `http://localhost:${PORTNUM}/${URLExt}`;
+	}
+
+	private setHtml(webview: vscode.Webview, url: string) {
+		this._panel.webview.html = this.getHtmlForWebview(webview, url);
+	}
+
+	private getHtmlForWebview(webview: vscode.Webview, url: string) {
 		// Local path to main script run in the webview
 		const scriptPathOnDisk = vscode.Uri.joinPath(this._extensionUri, 'media', 'main.js');
 
@@ -89,12 +97,10 @@ export class BrowserPreview extends Disposable {
 		const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
 
 		// Local path to css styles
-		const styleResetPath = vscode.Uri.joinPath(this._extensionUri, 'media', 'reset.css');
 		const stylesPathMainPath = vscode.Uri.joinPath(this._extensionUri, 'media', 'vscode.css');
 		const codiconsPathMainPath = vscode.Uri.joinPath(this._extensionUri, 'node_modules', 'vscode-codicons', 'dist', 'codicon.css');
 
 		// Uri to load styles into webview
-		const stylesResetUri = webview.asWebviewUri(styleResetPath);
 		const stylesMainUri = webview.asWebviewUri(stylesPathMainPath);
 		const codiconsUri = webview.asWebviewUri(codiconsPathMainPath);
 
@@ -102,7 +108,7 @@ export class BrowserPreview extends Disposable {
 		const nonce = new Date().getTime() + '' + new Date().getMilliseconds();
 
 		return `<!DOCTYPE html>
-			<html lang="en">
+		<html lang="en">
 			<head>
 				<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
 
@@ -119,69 +125,72 @@ export class BrowserPreview extends Disposable {
 				">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-				<link href="${stylesResetUri}" rel="stylesheet">
 				<link href="${stylesMainUri}" rel="stylesheet">
 				<link rel="stylesheet" type="text/css" href="${codiconsUri}">
 
 				<title>LocalHost Preview</title>
-
-
-				<nav class="controls">
-					<button
-						id="back"
-						title="Back"
-						class="back-button icon"><i class="codicon codicon-arrow-left"></i></button>
-
-					<button
-						id="forward"
-						title="Forward"
-						class="forward-button icon"><i class="codicon codicon-arrow-right"></i></button>
-
-					<button
-						id="reload"
-						title="Reload"
-						class="reload-button icon"><i class="codicon codicon-refresh"></i></button>
-					<button
-						id="browserOpen"
-						title="Open in browser"
-						class="open-external-button icon"><i class="codicon codicon-link-external"></i></button>
-				</nav>
 			</head>
 			<body>
-			
-				<!-- <a>bloop</a> -->
-				<iframe id="hostedContent" src="${url}" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+			<div class="displayContents">
+				<div class="header">
+					<div class="headercontent">
+						<nav class="controls">
+							<button
+								id="back"
+								title="Back"
+								class="back-button icon"><i class="codicon codicon-arrow-left"></i></button>
+
+							<button
+								id="forward"
+								title="Forward"
+								class="forward-button icon"><i class="codicon codicon-arrow-right"></i></button>
+
+							<button
+								id="reload"
+								title="Reload"
+								class="reload-button icon"><i class="codicon codicon-refresh"></i></button>
+							<button
+								id="browserOpen"
+								title="Open in browser"
+								class="open-external-button icon"><i class="codicon codicon-link-external"></i></button>
+						</nav>
+					</div>
+				</div>
+				<div class="content">
+					<iframe id="hostedContent" src="${url}" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+				</div>
+			</div>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
-			</html>`;
+		</html>`;
 	}
 
-	public goForwards() {
+	private goForwards() {
 		const response = this._pageHistory.goForward();
 
 		const pagename = response.address;
 		if (pagename != undefined) {
-			this.goToFile(pagename)
+			this.goToFile(pagename);
 		}
 
 		for (const i in response.actions) {
-			this.handleNavAction(response.actions[i])
+			this.handleNavAction(response.actions[i]);
 		}
 	}
 
-	public goBack() {
+	private goBack() {
 			const response = this._pageHistory.goBackward();
 
 			const pagename = response.address;
 			if (pagename != undefined) {
-				this.goToFile(pagename)
+				this.goToFile(pagename);
 			}
 			for (const i in response.actions) {
-				this.handleNavAction(response.actions[i])
+				this.handleNavAction(response.actions[i]);
 			}
 	}
 
-	public handleNavAction(command: NavEditCommands) {
+	private handleNavAction(command: NavEditCommands) {
 		switch (command) {
 			case NavEditCommands.DISABLE_BACK:
 				this._panel.webview.postMessage({ command: 'disable-back' });
@@ -198,7 +207,7 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	public handleNewPageLoad(panelTitle: string) {
+	private handleNewPageLoad(panelTitle: string) {
 		// only load relative addresses
 		if (panelTitle[0] != '/') {
 			return;
@@ -206,35 +215,23 @@ export class BrowserPreview extends Disposable {
 
 		this.setPanelTitle(panelTitle.substring(1));
 
-		const response = this._pageHistory?.addHistory(panelTitle)
+		const response = this._pageHistory?.addHistory(panelTitle);
 		if (response) {
 			for (const i in response.actions) {
-				this.handleNavAction(response.actions[i])
+				this.handleNavAction(response.actions[i]);
 			}
 		}
 
 	}
 
-	public refreshIFrame() {
-		this._panel.webview.postMessage({ command: 'refresh' });
+	private goToFile(URLExt: string) {
+		this.setHtml(this._panel.webview, this.constructHostAddress(URLExt));
 	}
 
-	public goToFile(URLExt: string) {
-		console.log("going to " + URLExt)
-		this._setHtml(this._panel.webview, "http://localhost:" + PORTNUM + URLExt);
-
-	}
-
-	public setPanelTitle(title: string = ""): void {
-		title = title == "" ? "index.html" : title
+	private setPanelTitle(title = ""): void {
+		title = title == "" ? "index.html" : title;
 		this._panel.title = title;
 	}
-
-	public static revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
-		vscode.commands.executeCommand('liveserver.start')
-		return new BrowserPreview(panel, extensionUri);
-	}
-	
 }
 
 

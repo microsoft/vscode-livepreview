@@ -41,107 +41,15 @@ code {
 	font-size: var(--vscode-editor-font-size);
 	font-family: var(--vscode-editor-font-family);
 }
-
-button {
-	border: none;
-	padding: var(--input-padding-vertical) var(--input-padding-horizontal);
-	width: 100%;
-	text-align: center;
-	outline: 1px solid transparent;
-	outline-offset: 2px !important;
-	color: var(--vscode-button-foreground);
-	background: var(--vscode-button-background);
-}
-
-button:hover {
-	cursor: pointer;
-	background: var(--vscode-button-hoverBackground);
-}
-
-button:focus {
-	outline-color: var(--vscode-focusBorder);
-}
-
-button.secondary {
-	color: var(--vscode-button-secondaryForeground);
-	background: var(--vscode-button-secondaryBackground);
-}
-
-button.secondary:hover {
-	background: var(--vscode-button-secondaryHoverBackground);
-}
-
-input:not([type='checkbox']),
-textarea {
-	display: block;
-	width: 100%;
-	border: none;
-	font-family: var(--vscode-font-family);
-	padding: var(--input-padding-vertical) var(--input-padding-horizontal);
-	color: var(--vscode-input-foreground);
-	outline-color: var(--vscode-input-border);
-	background-color: var(--vscode-input-background);
-}
-
-input::placeholder,
-textarea::placeholder {
-	color: var(--vscode-input-placeholderForeground);
-}
-
 iframe {
-	padding-top:2em;
 	width: 100%;
 	height: 100%;
 	border: none;
 	background: white; /* Browsers default to a white background */
 }
-/**/
-input:not([type='checkbox']),
-textarea {
-	display: block;
-	width: 100%;
-	border: none;
-	font-family: var(--vscode-font-family);
-	padding: var(--input-padding-vertical) var(--input-padding-horizontal);
-	color: var(--vscode-input-foreground);
-	outline-color: var(--vscode-input-border);
-	background-color: var(--vscode-input-background);
-}
-
-input::placeholder,
-textarea::placeholder {
-	color: var(--vscode-input-placeholderForeground);
-}
-
-button {
-	border: none;
-	padding: var(--input-padding-vertical) var(--input-padding-horizontal);
-	text-align: center;
-	outline: 1px solid transparent;
-	outline-offset: 2px !important;
-	color: var(--vscode-icon-foreground);
-	background: none;
-}
-
-button:hover:not(:disabled) {
-	cursor: pointer;
-	color: var(--vscode-button-foreground);
-	background: var(--vscode-button-hoverBackground);
-}
-
-button:disabled {
-	opacity: 0.5;
-	background: var(--vscode-button-background);
-}
-
-button:focus {
-	outline-color: var(--vscode-focusBorder);
-}
-
 
 .controls {
-	display: flex;
-	position:fixed;
+	display:block;
 	width:100%;
 	height:2em;
 	margin-top:0;
@@ -152,4 +60,59 @@ button:focus {
 	display: flex;
 	margin-right: 0.3em;
 
+}
+
+.displayContents {
+	position:fixed;
+    display: table; 
+    width: 100%;
+    height: 100%;
+}
+
+.displayContents > div {   
+    display: table-row;   
+    width: 100%;
+}
+
+.headercontent {
+    display: table-cell;   
+	text-align:right;
+	width:100%;
+	height:2em;
+}
+.header nav {
+	display:flex;
+}
+
+.header nav button {
+	border: none;
+	padding: var(--input-padding-vertical) var(--input-padding-horizontal);
+	text-align: center;
+	outline: 1px solid transparent;
+	outline-offset: 2px !important;
+	color: var(--vscode-icon-foreground);
+	background: none;
+	width:25%;
+	display:inline-block;
+}
+
+.header nav button:hover:not(:disabled) {
+	cursor: pointer;
+	color: var(--vscode-button-foreground);
+	background: var(--vscode-button-hoverBackground);
+}
+
+.header nav button:disabled {
+	opacity: 0.5;
+	background: var(--vscode-button-background);
+}
+
+.header nav button:focus {
+	outline-color: var(--vscode-focusBorder);
+}
+.content iframe {
+    display: table-cell;   
+	width: 100%;
+	height: 100%;
+	background: white; /* Browsers default to a white background */
 }

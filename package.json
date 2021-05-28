@@ -14,7 +14,7 @@
 		"onCommand:liveserver.start",
 		"onCommand:liveserver.end",
 		"onCommand:liveserver.start.withpreview",
-		"onWebviewPanel:localhostBrowserPreview"
+		"onWebviewPanel:browserPreview"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -45,7 +45,7 @@
 		"@types/ws": "^7.4.4",
 		"@typescript-eslint/eslint-plugin": "^4.16.0",
 		"@typescript-eslint/parser": "^4.16.0",
-		"eslint": "^7.21.0",
+		"eslint": "^7.27.0",
 		"typescript": "^4.2.2"
 	},
 	"dependencies": {

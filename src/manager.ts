@@ -1,20 +1,12 @@
 import { BrowserPreview } from "./browserPreview";
 import { Disposable } from "./dispose";
-import { Server, PORTNUM } from './server'
+import { Server } from './server';
 import * as vscode from 'vscode';
-
-
-export const CLOSE_SERVER: vscode.MessageItem = {
-	title: "Close Server"
-};
-
-export const DONT_CLOSE: vscode.MessageItem = {
-	title: "Don't Close"
-};
+import { INIT_PANEL_TITLE, CLOSE_SERVER, DONT_CLOSE } from "./constants";
 
 export class Manager extends Disposable {
-	public currentPanel: BrowserPreview | undefined = undefined;
-	public server = new Server();
+	public currentPanel: BrowserPreview | undefined;
+	private readonly _server = new Server();
 	private readonly _extensionUri: vscode.Uri;
 	private readonly _path: vscode.WorkspaceFolder | undefined;
 
@@ -24,64 +16,74 @@ export class Manager extends Disposable {
 		this._path = vscode.workspace.workspaceFolders?.[0];
 	}
 
-	public createOrShowPreview(panel: vscode.WebviewPanel | undefined  = undefined) {
-		
-		if (!panel) {
+	public createOrShowPreview(panel: vscode.WebviewPanel | undefined = undefined) {
 
-			const currentColumn = vscode.window.activeTextEditor?.viewColumn ?? 1;
-			const column = currentColumn + 1;
-	
-			// If we already have a panel, show it.
-			if (this.currentPanel) {
-				this.currentPanel.panel.reveal(column);
-				return;
-			}
-	
+		const currentColumn = vscode.window.activeTextEditor?.viewColumn ?? 1;
+		const column = currentColumn + 1;
+
+		// If we already have a panel, show it.
+		if (this.currentPanel) {
+			this.currentPanel.reveal(column);
+			return;
+		}
+
+		if (!panel) {
 			// Otherwise, create a new panel.
 			panel = vscode.window.createWebviewPanel(
 				BrowserPreview.viewType,
-				'LocalHost Preview',
+				INIT_PANEL_TITLE,
 				column,
 				getWebviewOptions(this._extensionUri),
 			);
 		}
-		this.openServer()
+		this.openServer();
 		this.currentPanel = new BrowserPreview(panel, this._extensionUri);
 
 		this.currentPanel.onDispose(() => {
 			this.currentPanel = undefined;
-			vscode.window
-                .showInformationMessage(
-                    "You closed the embedded preview. Would you like to also close the server?",
-                    CLOSE_SERVER,
-					DONT_CLOSE
-                )
-                .then((selection: vscode.MessageItem | undefined) => {
-                    if (selection === CLOSE_SERVER) {
-                        this.server.closeServer();
-                    }
-                });
+			if (this._server.running) {
+				vscode.window
+					.showInformationMessage(
+						"You closed the embedded preview. Would you like to also close the server?",
+						CLOSE_SERVER,
+						DONT_CLOSE
+					)
+					.then((selection: vscode.MessageItem | undefined) => {
+						if (selection === CLOSE_SERVER) {
+							this._server.closeServer();
+						}
+					});
+			}
 		});
 
 	}
-	
-	public openServer(showMsg:boolean = false) {
-		// open server
-		
-		if (!this.server.running) {
-			const openSuccessful = this.server.openServer(this._path, this._extensionUri);
-			
-			if (!openSuccessful) {
-				vscode.window.showErrorMessage("Failed to start server. Please try again.");
-				return
+
+	public openServer(showMsgAlreadyOn = false) {
+		if (!this._server.running) {
+			this._server.openServer(this._path, this._extensionUri);
+			vscode.window.showInformationMessage("Started server");
+		} else if (showMsgAlreadyOn) {
+			vscode.window.showErrorMessage("Server already on");
+		}
+	}
+
+	public closeServer(showMsgAlreadyOff = false) {
+
+		if (this._server.running) {
+			this._server.closeServer();
+
+			if (this.currentPanel) {
+				this.currentPanel.close();
 			}
-		} else if (showMsg) {
-			vscode.window.showErrorMessage("Server already on");	
+
+			vscode.window.showInformationMessage("Closed server");
+		} else if (showMsgAlreadyOff) {
+			vscode.window.showErrorMessage("Server already closed");
 		}
 	}
 
 	dispose() {
-		this.server.closeServer();
+		this._server.closeServer();
 		super.dispose();
 	}
 
@@ -95,7 +97,7 @@ export function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptio
 		// And restrict the webview to only loading content from our extension's `media` directory.
 		localResourceRoots: [
 			vscode.Uri.joinPath(extensionUri, 'media'),
-			vscode.Uri.joinPath(extensionUri, 'node_modules','vscode-codicons','dist')
+			vscode.Uri.joinPath(extensionUri, 'node_modules', 'vscode-codicons', 'dist')
 		]
 	};
 }
