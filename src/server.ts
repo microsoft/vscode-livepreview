@@ -49,16 +49,25 @@ export class Server extends Disposable {
 
 		this._server = http.createServer((req: any, res: any) => {
 			const endOfPath = req.url.lastIndexOf("?");
-			const pathnameWithoutQueries = endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
+			let pathnameWithoutQueries = endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
 
-			let readPath = path.join(basePath, pathnameWithoutQueries)
-
-			// Redirect to index.html if the request URL is blank
-			if (fs.statSync(readPath).isDirectory() && fs.existsSync(path.join(readPath, "index.html"))) {
-				readPath = path.join(readPath,'index.html');
-			} 
+			const queries = endOfPath == -1 ? "": req.url.substring(endOfPath+1);
+			console.log(queries)
 			
-			const stream = this.getStream(readPath, scriptInjection);
+			let readPath = path.join(basePath, pathnameWithoutQueries)
+			let stream;
+			// Redirect to index.html if the request URL is blank
+			if (fs.statSync(readPath).isDirectory()) {
+				if (fs.existsSync(path.join(readPath, "index.html"))) {
+					readPath = path.join(readPath,'index.html');
+					stream = this.getStream(readPath, scriptInjection);
+				} else {
+					stream = this.createIndexStream(readPath, pathnameWithoutQueries,scriptInjection);
+				}
+			} else {
+				stream = this.getStream(readPath, scriptInjection);
+			}
+
 
 			if (stream) {
 				stream.on('error', function () {
@@ -90,6 +99,29 @@ export class Server extends Disposable {
 		return true; // TODO: find error conditions and return false when needed
 	}
 
+	private createIndexStream(readPath: string, relativePath: string, scriptInjection: string): Stream.Readable {
+
+		const childFiles = fs.readdirSync(readPath)
+		let directoryContents = "";
+		for (const i in childFiles) {
+			directoryContents += `<tr><td>> <a href="${path.join(relativePath,childFiles[i]) + "?needsInjection"}">${childFiles[i]}/</a></td></tr>\n`;
+		}
+		
+		const htmlString = `
+		<!DOCTYPE html>
+		<html>
+			<body style="font-family:calibri">
+			<h1>Index of ${relativePath}</h1>
+			<table>
+			${directoryContents}
+			</table>
+			</body>
+			${scriptInjection}
+		</html>
+		`
+
+		return Stream.Readable.from(htmlString);
+	}
 	private getHTMLInjection(extensionUri: vscode.Uri): string {
 		const scriptPath = path.join(extensionUri.fsPath, "media", "inject_script.js");
 		const buffer = fs.readFileSync(scriptPath);
@@ -146,6 +178,8 @@ export class Server extends Disposable {
 		return newContents;
 	}
 
+	// private indexHtmlFile() {
 
+	// }
 
 }

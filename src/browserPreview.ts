@@ -31,7 +31,7 @@ export class BrowserPreview extends Disposable {
 		// Set the webview's html content at index.html
 		this.goToFile("/");
 		this._pageHistory?.addHistory("/");
-		this.setPanelTitle();
+		this.setPanelTitle("/");
 
 		// Listen for when the panel is disposed
 		// This happens when the user closes the panel or when the panel is closed programmatically
@@ -223,7 +223,7 @@ export class BrowserPreview extends Disposable {
 			return;
 		}
 
-		this.setPanelTitle(panelTitle.substring(1));
+		this.setPanelTitle(panelTitle);
 
 		const response = this._pageHistory?.addHistory(panelTitle);
 		if (response) {
@@ -237,8 +237,7 @@ export class BrowserPreview extends Disposable {
 		this.setHtml(this._panel.webview, this.constructHostAddress(URLExt));
 	}
 
-	private setPanelTitle(title = ""): void {
-		title = title == "" ? "index.html" : title;
+	private setPanelTitle(title = "/"): void {
 		this._panel.title = title;
 	}
 }
