@@ -23,17 +23,18 @@ export class Server extends Disposable {
 		}));
 	}
 
-	public get running() {
+	public get running(): boolean {
 		return this._isServerOn;
 	}
-	public closeServer() {
+
+	public closeServer(): void {
 		const success = this.end();
 		if (success) {
 			this._isServerOn = false;
 		}
 	}
 
-	public openServer(path: vscode.WorkspaceFolder | undefined, extensionUri: vscode.Uri | undefined) {
+	public openServer(path: vscode.WorkspaceFolder | undefined, extensionUri: vscode.Uri | undefined): void {
 		if (path && extensionUri) {
 			const success = this.start(path.uri.fsPath, extensionUri);
 			if (success) {
@@ -98,7 +99,7 @@ export class Server extends Disposable {
 		return "<script>\n" + bufString + "\n</script>";
 	}
 
-	private refreshBrowsers() {
+	private refreshBrowsers(): void {
 		this._wss.clients.forEach((client: any) => client.send("reload"));
 	}
 
@@ -110,11 +111,11 @@ export class Server extends Disposable {
 		while (i < workspaceDocuments.length) {
 			if (readPath == workspaceDocuments[i].fileName) {
 				let fileContents = workspaceDocuments[i].getText();
-				
+
 				if (readPath.endsWith(".html")) {
 					fileContents = this.injectNotifier(fileContents, scriptInjection);
 				}
-				
+
 				stream = Stream.Readable.from(fileContents);
 				break;
 			}
@@ -134,7 +135,7 @@ export class Server extends Disposable {
 		return stream;
 	}
 
-	private injectNotifier(contents: string, scriptInjection: string) {
+	private injectNotifier(contents: string, scriptInjection: string): string {
 		const re = "<\/html\s*>";
 		const locationHeadEnd = contents.search(re);
 

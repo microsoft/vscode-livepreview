@@ -5,6 +5,8 @@ A simple live server hosting extension for static HTML/CSS Projects.
 The goal of the extension is to allow local previews of web projects (ie: HTML/CSS/JS-based projects). The extension should support similar functionalities to that of the existing [vscode-live-server](https://github.com/ritwickdey/vscode-live-server); however, it should show the preview in an extra column within the VS Code window (amongst other optimizations).
 
 Based off of the webview template found [here](https://github.com/microsoft/vscode-extension-samples/tree/main/webview-sample).
+
+Issues are currently being tracked on the [June Iteration Ticket](https://github.com/microsoft/vscode/issues/124608)
 ## Running the extension
 - Open this example in VS Code 1.47+
 - `npm install`

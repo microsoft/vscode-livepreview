@@ -4,22 +4,19 @@ import { Disposable } from './dispose';
 import { pageHistory, NavEditCommands } from './pageHistoryTracker';
 
 export class BrowserPreview extends Disposable {
-	/**
-	 * Track the currently panel. Only allow a single panel to exist at a time.
-	 */
 	public static readonly viewType = 'browserPreview';
 	private readonly _pageHistory: pageHistory;
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
-	
+
 	private readonly _onDisposeEmitter = this._register(new vscode.EventEmitter<void>());
 	public readonly onDispose = this._onDisposeEmitter.event;
 
-	public close() {
+	public close(): void {
 		this._panel.dispose();
 	}
 
-	public reveal(column: number) {
+	public reveal(column: number): void {
 		this._panel.reveal(column);
 	}
 
@@ -27,16 +24,20 @@ export class BrowserPreview extends Disposable {
 		super();
 		this._panel = panel;
 		this._extensionUri = extensionUri;
+		this._pageHistory = this._register(new pageHistory());
+
+		this.updateForwardBackArrows();
+
+		// Set the webview's html content at index.html
+		this.goToFile("/");
+		this._pageHistory?.addHistory("/");
+		this.setPanelTitle();
 
 		// Listen for when the panel is disposed
 		// This happens when the user closes the panel or when the panel is closed programmatically
 		this._register(this._panel.onDidDispose(() => {
 			this.dispose();
 		}));
-
-		this._pageHistory = this._register(new pageHistory());
-		this.handleNavAction(NavEditCommands.DISABLE_BACK);
-		this.handleNavAction(NavEditCommands.DISABLE_FORWARD);
 
 		// Handle messages from the webview
 		this._register(this._panel.webview.onDidReceiveMessage(
@@ -63,11 +64,13 @@ export class BrowserPreview extends Disposable {
 			}
 		));
 
-
-		// Set the webview's html content at index.html
-		this.goToFile("/");
-		this._pageHistory?.addHistory("/");
-		this.setPanelTitle();
+		// Update the content based on view changes
+		this._register(this._panel.onDidChangeViewState(
+			e => {
+				if (this._panel.visible) {
+					this.updateForwardBackArrows();
+				}
+			}));
 
 	}
 
@@ -77,7 +80,14 @@ export class BrowserPreview extends Disposable {
 		super.dispose();
 	}
 
-	private constructHostAddress(URLExt: string) {
+	private updateForwardBackArrows(): void {
+		const navigationStatus = this._pageHistory.currentCommands;
+		for (const i in navigationStatus) {
+			this.handleNavAction(navigationStatus[i]);
+		}
+	}
+
+	private constructHostAddress(URLExt: string): string {
 		if (URLExt.length > 0 && URLExt[0] == "/") {
 			URLExt = URLExt.substring(1);
 		}
@@ -85,11 +95,11 @@ export class BrowserPreview extends Disposable {
 		return `http://localhost:${PORTNUM}/${URLExt}`;
 	}
 
-	private setHtml(webview: vscode.Webview, url: string) {
+	private setHtml(webview: vscode.Webview, url: string): void {
 		this._panel.webview.html = this.getHtmlForWebview(webview, url);
 	}
 
-	private getHtmlForWebview(webview: vscode.Webview, url: string) {
+	private getHtmlForWebview(webview: vscode.Webview, url: string): string {
 		// Local path to main script run in the webview
 		const scriptPathOnDisk = vscode.Uri.joinPath(this._extensionUri, 'media', 'main.js');
 
@@ -165,7 +175,7 @@ export class BrowserPreview extends Disposable {
 		</html>`;
 	}
 
-	private goForwards() {
+	private goForwards(): void {
 		const response = this._pageHistory.goForward();
 
 		const pagename = response.address;
@@ -178,19 +188,19 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	private goBack() {
-			const response = this._pageHistory.goBackward();
+	private goBack(): void {
+		const response = this._pageHistory.goBackward();
 
-			const pagename = response.address;
-			if (pagename != undefined) {
-				this.goToFile(pagename);
-			}
-			for (const i in response.actions) {
-				this.handleNavAction(response.actions[i]);
-			}
+		const pagename = response.address;
+		if (pagename != undefined) {
+			this.goToFile(pagename);
+		}
+		for (const i in response.actions) {
+			this.handleNavAction(response.actions[i]);
+		}
 	}
 
-	private handleNavAction(command: NavEditCommands) {
+	private handleNavAction(command: NavEditCommands): void {
 		switch (command) {
 			case NavEditCommands.DISABLE_BACK:
 				this._panel.webview.postMessage({ command: 'disable-back' });
@@ -207,7 +217,7 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	private handleNewPageLoad(panelTitle: string) {
+	private handleNewPageLoad(panelTitle: string): void {
 		// only load relative addresses
 		if (panelTitle[0] != '/') {
 			return;
@@ -221,10 +231,9 @@ export class BrowserPreview extends Disposable {
 				this.handleNavAction(response.actions[i]);
 			}
 		}
-
 	}
 
-	private goToFile(URLExt: string) {
+	private goToFile(URLExt: string): void {
 		this.setHtml(this._panel.webview, this.constructHostAddress(URLExt));
 	}
 

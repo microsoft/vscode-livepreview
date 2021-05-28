@@ -13,13 +13,25 @@ export interface NavResponse {
 export class pageHistory extends Disposable {
 	private _history = new Array<string>();
 	private _backstep = 0;
+	private _current_back_enabled = false;
+	private _current_forward_enabled = false;
 
-	public clearHistory() {
-		this._history = [];
-	}
+	public get currentCommands() : Array<NavEditCommands> {
+		const action = new Array<NavEditCommands>();
 
-	public canGoBack() {
-		return (this._backstep != (this._history.length - 1));
+		if (this._current_back_enabled) {
+			action.push(NavEditCommands.ENABLE_BACK);
+		} else {
+			action.push(NavEditCommands.DISABLE_BACK);
+		}
+		
+		if (this._current_forward_enabled) {
+			action.push(NavEditCommands.ENABLE_FORWARD);
+		} else {
+			action.push(NavEditCommands.DISABLE_FORWARD);
+		}
+
+		return action;
 	}
 
 	public goForward(): NavResponse {
@@ -32,11 +44,13 @@ export class pageHistory extends Disposable {
 			// if we reached 0, this means we can't go forwards anymore
 			if (this._backstep == 0) {
 				action.push(NavEditCommands.DISABLE_FORWARD);
+				this._current_forward_enabled = false;
 			}
 
 			// if reached the second-last entry, we can now go backwards
 			if (this._backstep == (this._history.length - 2)) {
 				action.push(NavEditCommands.ENABLE_BACK);
+				this._current_back_enabled = true;
 			}
 			return { 'actions': action, 'address': path };
 		} else {
@@ -53,10 +67,12 @@ export class pageHistory extends Disposable {
 			// if we reached the last entry, we can't go back any more 
 			if (this._backstep == (this._history.length - 1)) {
 				action.push(NavEditCommands.DISABLE_BACK);
+				this._current_back_enabled = false;
 			}
 			// if we reached 1, we can now go forwards
 			if (this._backstep == 1) {
 				action.push(NavEditCommands.ENABLE_FORWARD);
+				this._current_forward_enabled = true;
 			}
 			return { 'actions': action, 'address': path };
 		} else {
@@ -75,10 +91,12 @@ export class pageHistory extends Disposable {
 		}
 		if (this._history.length == 1) {
 			action.push(NavEditCommands.ENABLE_BACK);
+			this._current_back_enabled = true;
 		}
 		this._history.unshift(address);
 		this._backstep = 0;
 		action.push(NavEditCommands.DISABLE_FORWARD);
+		this._current_forward_enabled = false;
 
 		return { 'actions': action };
 	}

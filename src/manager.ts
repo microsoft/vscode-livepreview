@@ -16,7 +16,7 @@ export class Manager extends Disposable {
 		this._path = vscode.workspace.workspaceFolders?.[0];
 	}
 
-	public createOrShowPreview(panel: vscode.WebviewPanel | undefined = undefined) {
+	public createOrShowPreview(panel: vscode.WebviewPanel | undefined = undefined): void {
 
 		const currentColumn = vscode.window.activeTextEditor?.viewColumn ?? 1;
 		const column = currentColumn + 1;
@@ -50,7 +50,7 @@ export class Manager extends Disposable {
 					)
 					.then((selection: vscode.MessageItem | undefined) => {
 						if (selection === CLOSE_SERVER) {
-							this._server.closeServer();
+							this.closeServer(true);
 						}
 					});
 			}
@@ -58,7 +58,7 @@ export class Manager extends Disposable {
 
 	}
 
-	public openServer(showMsgAlreadyOn = false) {
+	public openServer(showMsgAlreadyOn = false): void {
 		if (!this._server.running) {
 			this._server.openServer(this._path, this._extensionUri);
 			vscode.window.showInformationMessage("Started server");
@@ -67,7 +67,7 @@ export class Manager extends Disposable {
 		}
 	}
 
-	public closeServer(showMsgAlreadyOff = false) {
+	public closeServer(showMsgAlreadyOff = false): void {
 
 		if (this._server.running) {
 			this._server.closeServer();
