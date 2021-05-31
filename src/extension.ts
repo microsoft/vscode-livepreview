@@ -3,7 +3,6 @@ import * as bp from './BrowserPreview';
 import { getWebviewOptions, Manager } from './manager';
 
 export function activate(context: vscode.ExtensionContext) {
-
 	const manager = new Manager(context.extensionUri);
 
 	context.subscriptions.push(
@@ -29,14 +28,9 @@ export function activate(context: vscode.ExtensionContext) {
 			async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel) {
 				// Reset the webview options so we use latest uri for `localResourceRoots`.
 				webviewPanel.webview.options = getWebviewOptions(context.extensionUri);
-				manager.createOrShowPreview(webviewPanel)
+				manager.createOrShowPreview(webviewPanel);
 				// bp.BrowserPreview.revive(webviewPanel, context.extensionUri);
-			}
+			},
 		});
-
 	}
-
-
 }
-
-

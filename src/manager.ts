@@ -1,8 +1,8 @@
-import { BrowserPreview } from "./browserPreview";
-import { Disposable } from "./dispose";
+import { BrowserPreview } from './browserPreview';
+import { Disposable } from './dispose';
 import { Server } from './server';
 import * as vscode from 'vscode';
-import { INIT_PANEL_TITLE, CLOSE_SERVER, DONT_CLOSE } from "./constants";
+import { INIT_PANEL_TITLE, CLOSE_SERVER, DONT_CLOSE } from './constants';
 
 export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
@@ -16,8 +16,9 @@ export class Manager extends Disposable {
 		this._path = vscode.workspace.workspaceFolders?.[0];
 	}
 
-	public createOrShowPreview(panel: vscode.WebviewPanel | undefined = undefined): void {
-
+	public createOrShowPreview(
+		panel: vscode.WebviewPanel | undefined = undefined
+	): void {
 		const currentColumn = vscode.window.activeTextEditor?.viewColumn ?? 1;
 		const column = currentColumn + 1;
 
@@ -33,7 +34,7 @@ export class Manager extends Disposable {
 				BrowserPreview.viewType,
 				INIT_PANEL_TITLE,
 				column,
-				getWebviewOptions(this._extensionUri),
+				getWebviewOptions(this._extensionUri)
 			);
 		}
 		this.openServer();
@@ -44,7 +45,7 @@ export class Manager extends Disposable {
 			if (this._server.running) {
 				vscode.window
 					.showInformationMessage(
-						"You closed the embedded preview. Would you like to also close the server?",
+						'You closed the embedded preview. Would you like to also close the server?',
 						CLOSE_SERVER,
 						DONT_CLOSE
 					)
@@ -55,20 +56,18 @@ export class Manager extends Disposable {
 					});
 			}
 		});
-
 	}
 
 	public openServer(showMsgAlreadyOn = false): void {
 		if (!this._server.running) {
 			this._server.openServer(this._path, this._extensionUri);
-			vscode.window.showInformationMessage("Started server");
+			vscode.window.showInformationMessage('Started server');
 		} else if (showMsgAlreadyOn) {
-			vscode.window.showErrorMessage("Server already on");
+			vscode.window.showErrorMessage('Server already on');
 		}
 	}
 
 	public closeServer(showMsgAlreadyOff = false): void {
-
 		if (this._server.running) {
 			this._server.closeServer();
 
@@ -76,9 +75,9 @@ export class Manager extends Disposable {
 				this.currentPanel.close();
 			}
 
-			vscode.window.showInformationMessage("Closed server");
+			vscode.window.showInformationMessage('Closed server');
 		} else if (showMsgAlreadyOff) {
-			vscode.window.showErrorMessage("Server already closed");
+			vscode.window.showErrorMessage('Server already closed');
 		}
 	}
 
@@ -86,10 +85,11 @@ export class Manager extends Disposable {
 		this._server.closeServer();
 		super.dispose();
 	}
-
 }
 
-export function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
+export function getWebviewOptions(
+	extensionUri: vscode.Uri
+): vscode.WebviewOptions {
 	return {
 		// Enable javascript in the webview
 		enableScripts: true,
@@ -97,7 +97,12 @@ export function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptio
 		// And restrict the webview to only loading content from our extension's `media` directory.
 		localResourceRoots: [
 			vscode.Uri.joinPath(extensionUri, 'media'),
-			vscode.Uri.joinPath(extensionUri, 'node_modules', 'vscode-codicons', 'dist')
-		]
+			vscode.Uri.joinPath(
+				extensionUri,
+				'node_modules',
+				'vscode-codicons',
+				'dist'
+			),
+		],
 	};
 }

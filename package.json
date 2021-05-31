@@ -49,6 +49,8 @@
 		"typescript": "^4.2.2"
 	},
 	"dependencies": {
+		"prettier-eslint": "^12.0.0",
+		"prettier-eslint-cli": "^5.0.1",
 		"url": "^0.11.0",
 		"vscode-codicons": "0.0.17",
 		"ws": "^7.4.6"
