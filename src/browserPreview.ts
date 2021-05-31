@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { PORTNUM } from './constants';
+import { PORTNUM, WS_PORTNUM } from './constants';
 import { Disposable } from './dispose';
 import { pageHistory, NavEditCommands } from './pageHistoryTracker';
 
@@ -9,7 +9,9 @@ export class BrowserPreview extends Disposable {
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
 
-	private readonly _onDisposeEmitter = this._register(new vscode.EventEmitter<void>());
+	private readonly _onDisposeEmitter = this._register(
+		new vscode.EventEmitter<void>()
+	);
 	public readonly onDispose = this._onDisposeEmitter.event;
 
 	public close(): void {
@@ -29,19 +31,21 @@ export class BrowserPreview extends Disposable {
 		this.updateForwardBackArrows();
 
 		// Set the webview's html content at index.html
-		this.goToFile("/");
-		this._pageHistory?.addHistory("/");
-		this.setPanelTitle();
+		this.goToFile('/');
+		this._pageHistory?.addHistory('/');
+		this.setPanelTitle('/');
 
 		// Listen for when the panel is disposed
 		// This happens when the user closes the panel or when the panel is closed programmatically
-		this._register(this._panel.onDidDispose(() => {
-			this.dispose();
-		}));
+		this._register(
+			this._panel.onDidDispose(() => {
+				this.dispose();
+			})
+		);
 
 		// Handle messages from the webview
-		this._register(this._panel.webview.onDidReceiveMessage(
-			message => {
+		this._register(
+			this._panel.webview.onDidReceiveMessage((message) => {
 				switch (message.command) {
 					case 'alert':
 						vscode.window.showErrorMessage(message.text);
@@ -56,22 +60,24 @@ export class BrowserPreview extends Disposable {
 						this.goForwards();
 						return;
 					case 'open-browser':
-						const urlString = (message.text == '') ? this.constructHostAddress(this._panel.title) : message.text;
-						const url = vscode.Uri.parse(urlString);
-						vscode.env.openExternal(url);
+						this.handleOpenBrowser(message.text);
+						return;
+					case 'add-history':
+						// called from main.js in the case where the target is non-injectable
+						this.handleNewPageLoad(message.text);
 						return;
 				}
-			}
-		));
+			})
+		);
 
 		// Update the content based on view changes
-		this._register(this._panel.onDidChangeViewState(
-			e => {
+		this._register(
+			this._panel.onDidChangeViewState((e) => {
 				if (this._panel.visible) {
 					this.updateForwardBackArrows();
 				}
-			}));
-
+			})
+		);
 	}
 
 	dispose() {
@@ -80,6 +86,14 @@ export class BrowserPreview extends Disposable {
 		super.dispose();
 	}
 
+	private handleOpenBrowser(givenURL: string) {
+		const urlString =
+		givenURL == ''
+			? this.constructHostAddress(this._panel.title)
+			: givenURL;
+		const url = vscode.Uri.parse(urlString);
+		vscode.env.openExternal(url);
+	}
 	private updateForwardBackArrows(): void {
 		const navigationStatus = this._pageHistory.currentCommands;
 		for (const i in navigationStatus) {
@@ -88,7 +102,7 @@ export class BrowserPreview extends Disposable {
 	}
 
 	private constructHostAddress(URLExt: string): string {
-		if (URLExt.length > 0 && URLExt[0] == "/") {
+		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);
 		}
 
@@ -101,14 +115,28 @@ export class BrowserPreview extends Disposable {
 
 	private getHtmlForWebview(webview: vscode.Webview, url: string): string {
 		// Local path to main script run in the webview
-		const scriptPathOnDisk = vscode.Uri.joinPath(this._extensionUri, 'media', 'main.js');
+		const scriptPathOnDisk = vscode.Uri.joinPath(
+			this._extensionUri,
+			'media',
+			'main.js'
+		);
 
 		// And the uri we use to load this script in the webview
 		const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
 
 		// Local path to css styles
-		const stylesPathMainPath = vscode.Uri.joinPath(this._extensionUri, 'media', 'vscode.css');
-		const codiconsPathMainPath = vscode.Uri.joinPath(this._extensionUri, 'node_modules', 'vscode-codicons', 'dist', 'codicon.css');
+		const stylesPathMainPath = vscode.Uri.joinPath(
+			this._extensionUri,
+			'media',
+			'vscode.css'
+		);
+		const codiconsPathMainPath = vscode.Uri.joinPath(
+			this._extensionUri,
+			'node_modules',
+			'vscode-codicons',
+			'dist',
+			'codicon.css'
+		);
 
 		// Uri to load styles into webview
 		const stylesMainUri = webview.asWebviewUri(stylesPathMainPath);
@@ -117,6 +145,7 @@ export class BrowserPreview extends Disposable {
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = new Date().getTime() + '' + new Date().getMilliseconds();
 
+		const wsURL = `ws://localhost:${WS_PORTNUM}`;
 		return `<!DOCTYPE html>
 		<html lang="en">
 			<head>
@@ -128,6 +157,7 @@ export class BrowserPreview extends Disposable {
 				-->
 				<meta http-equiv="Content-Security-Policy" content="
 				default-src 'none';
+				connect-src ${wsURL};
 				font-src ${this._panel.webview.cspSource};
 				style-src ${this._panel.webview.cspSource};
 				script-src 'nonce-${nonce}';
@@ -170,6 +200,9 @@ export class BrowserPreview extends Disposable {
 					<iframe id="hostedContent" src="${url}" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
 				</div>
 			</div>
+				<script nonce="${nonce}">
+					const WS_URL= "${wsURL}";
+				</script>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 		</html>`;
@@ -219,11 +252,11 @@ export class BrowserPreview extends Disposable {
 
 	private handleNewPageLoad(panelTitle: string): void {
 		// only load relative addresses
-		if (panelTitle[0] != '/') {
+		if (panelTitle.length > 0 && panelTitle[0] != '/') {
 			return;
 		}
 
-		this.setPanelTitle(panelTitle.substring(1));
+		this.setPanelTitle(panelTitle);
 
 		const response = this._pageHistory?.addHistory(panelTitle);
 		if (response) {
@@ -237,10 +270,7 @@ export class BrowserPreview extends Disposable {
 		this.setHtml(this._panel.webview, this.constructHostAddress(URLExt));
 	}
 
-	private setPanelTitle(title = ""): void {
-		title = title == "" ? "index.html" : title;
+	private setPanelTitle(title = '/'): void {
 		this._panel.title = title;
 	}
 }
-
-
