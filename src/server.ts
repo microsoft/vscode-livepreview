@@ -42,6 +42,16 @@ export class Server extends Disposable {
 				this.refreshBrowsers();
 			})
 		);
+		this._register(
+			vscode.workspace.onDidDeleteFiles((e) => {
+				this.refreshBrowsers();
+			})
+		);
+		this._register(
+			vscode.workspace.onDidCreateFiles((e) => {
+				this.refreshBrowsers();
+			})
+		);
 	}
 
 	public get running(): boolean {
