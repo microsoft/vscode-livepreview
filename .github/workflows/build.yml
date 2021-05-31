@@ -5,8 +5,15 @@ on:
     branches:
       - master
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  build-and-test:
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-20.04]
+        node-version: [14.x]
     steps:
       - name: Checkout the code
         uses: actions/checkout@v2
