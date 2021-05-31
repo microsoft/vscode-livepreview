@@ -14,3 +14,5 @@ jobs:
         run: npm i
       - name: Build the app
         run: npm run compile
+      - name: Run linter on src
+        run: npx eslint src

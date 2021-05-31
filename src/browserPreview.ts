@@ -60,12 +60,7 @@ export class BrowserPreview extends Disposable {
 						this.goForwards();
 						return;
 					case 'open-browser':
-						const urlString =
-							message.text == ''
-								? this.constructHostAddress(this._panel.title)
-								: message.text;
-						const url = vscode.Uri.parse(urlString);
-						vscode.env.openExternal(url);
+						this.handleOpenBrowser(message.text);
 						return;
 					case 'add-history':
 						// called from main.js in the case where the target is non-injectable
@@ -91,6 +86,14 @@ export class BrowserPreview extends Disposable {
 		super.dispose();
 	}
 
+	private handleOpenBrowser(givenURL: string) {
+		const urlString =
+		givenURL == ''
+			? this.constructHostAddress(this._panel.title)
+			: givenURL;
+		const url = vscode.Uri.parse(urlString);
+		vscode.env.openExternal(url);
+	}
 	private updateForwardBackArrows(): void {
 		const navigationStatus = this._pageHistory.currentCommands;
 		for (const i in navigationStatus) {

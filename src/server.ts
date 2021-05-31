@@ -119,33 +119,31 @@ export class Server extends Disposable {
 			ws.on('message', (message: string) => {
 				const parsedMessage = JSON.parse(message);
 				switch (parsedMessage.command) {
-					case 'urlCheck':
-						const url = new URL(parsedMessage.url);
-						const targetInjectable = this.performTargetInjectableCheck(
-							basePath,
-							url
-						);
-
-						if (!targetInjectable) {
+					case 'urlCheck': {
+						const results = this.performTargetInjectableCheck(basePath,parsedMessage.url);
+						if (!results.injectable) {
 							ws.send(
-								`{"command":"foundNonInjectable","path":"${url.pathname}"}`
+								`{"command":"foundNonInjectable","path":"${results.pathname}"}`
 							);
 						}
+					}
 				}
 			});
 		});
 		return true;
 	}
 
-	private performTargetInjectableCheck(basePath: string, url: URL): boolean {
+	private performTargetInjectableCheck(basePath: string, urlString: string): {'injectable':boolean, 'pathname': string} {
+		
+		const url = new URL(urlString);
 		const absolutePath = path.join(basePath, url.pathname);
 		if (
 			fs.statSync(absolutePath).isDirectory() ||
 			path.extname(absolutePath) == '.html'
 		) {
-			return true;
+			return {'injectable':true,'pathname':url.pathname};
 		}
-		return false;
+		return {'injectable':false,'pathname':url.pathname};
 	}
 
 	private end(): boolean {
