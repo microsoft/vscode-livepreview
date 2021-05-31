@@ -1,5 +1,7 @@
 # LiveServer v2 - Visual Studio Code Extension
 
+![Build](https://github.com/andreamah/VS-Code-LiveServer-V2-Extension/actions/workflows/build.yml/badge.svg)
+
 A simple live server hosting extension for static HTML/CSS Projects.
 
 The goal of the extension is to allow local previews of web projects (ie: HTML/CSS/JS-based projects). The extension should support similar functionalities to that of the existing [vscode-live-server](https://github.com/ritwickdey/vscode-live-server); however, it should show the preview in an extra column within the VS Code window (amongst other optimizations).
