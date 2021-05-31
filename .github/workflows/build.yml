@@ -6,7 +6,7 @@ on:
       - master
 jobs:
   build-windows:
-    runs-on: [macos-latest, windows-latest, ubuntu-18.04]
+    runs-on: windows-latest
     steps:
       - name: Checkout the code
         uses: actions/checkout@v2
