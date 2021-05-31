@@ -33,11 +33,12 @@ for (var i = 0; i < l.length; i++) {
 		const linkTarget = e.target.href;
 
 		if (!linkTarget.startsWith('http://localhost:')) {
-			e.preventDefault();
-			window.parent.postMessage(
-				{ command: 'open-external-link', text: linkTarget },
-				'*'
-			);
+			// TODO: support for external links - current work doesn't support browser
+			// e.preventDefault();
+			// window.parent.postMessage(
+			// 	{ command: 'open-external-link', text: linkTarget },
+			// 	'*'
+			// );
 		} else {
 			// check all local URLs to make sure to catch pages that won't be injectable
 			window.parent.postMessage(
