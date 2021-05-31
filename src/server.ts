@@ -100,6 +100,7 @@ export class Server extends Disposable {
 						absoluteReadPath = path.join(absoluteReadPath, 'index.html');
 						stream = this.getStream(absoluteReadPath, scriptInjection);
 					} else {
+						// create a default index page
 						stream = this.createIndexStream(
 							absoluteReadPath,
 							URLPathName,
@@ -123,7 +124,23 @@ export class Server extends Disposable {
 				}
 			})
 			.listen(this._port);
-		// for websockets
+
+		this.configureWebsockets(basePath);
+
+		return true;
+	}
+
+
+	private end(): boolean {
+		this._server.close();
+		if (this._wss != null) {
+			this._wss.close();
+		}
+
+		return true; // TODO: find error conditions and return false when needed
+	}
+
+	private configureWebsockets(basePath: string) {
 		this._wss = new WebSocket.Server({ port: this._ws_port });
 		this._wss.on('connection', (ws: any) => {
 			ws.on('message', (message: string) => {
@@ -140,9 +157,7 @@ export class Server extends Disposable {
 				}
 			});
 		});
-		return true;
 	}
-
 	private performTargetInjectableCheck(basePath: string, urlString: string): {'injectable':boolean, 'pathname': string} {
 		
 		const url = new URL(urlString);
@@ -156,23 +171,15 @@ export class Server extends Disposable {
 		return {'injectable':false,'pathname':url.pathname};
 	}
 
-	private end(): boolean {
-		this._server.close();
-		if (this._wss != null) {
-			this._wss.close();
-		}
-
-		return true; // TODO: find error conditions and return false when needed
-	}
-
 	private createPageDoesNotExist(
 		relativePath: string,
 		scriptInjection: string
 	): Stream.Readable {
+		// TODO: make look better
 		const htmlString = `
 		<!DOCTYPE html>
 		<html>
-			<body style="font-family:calibri">
+			<body>
 			<h1>File not found</h1>
 			<p>The file <b>"${relativePath}"</b> cannot be found. It may have been moved, edited, or deleted.</p>
 			</body>
@@ -248,9 +255,6 @@ export class Server extends Disposable {
 		<html>
 			<head>
 				<style>
-					body {
-						font-family:calibri;
-					}
 					table td {
 						padding:4px;
 					}
