@@ -242,7 +242,6 @@ export class Server extends Disposable {
 				<style>
 					body {
 						font-family:calibri;
-						letter-spacing:1px;
 					}
 					table td {
 						padding:4px;
