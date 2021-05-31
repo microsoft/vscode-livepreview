@@ -1,3 +1,5 @@
+// const { existsSync } = require("fs")
+
 const url = 'ws://localhost:${WS_PORTNUM}'
 const connection = new WebSocket(url)
 
@@ -24,16 +26,20 @@ for (var i=0; i<l.length; i++)
 {
 	l[i].onclick = (e) => {
 		const linkTarget = e.target.href
+
 		if (!linkTarget.startsWith("http://localhost:")){
 			e.preventDefault()
 			window.parent.postMessage({command:"open-external-link","text":linkTarget}, "*");
+		} else {
+			// check all local URLs to make sure to catch pages that won't be injectable
+			window.parent.postMessage({command:"perform-url-check","text":linkTarget}, "*");
 		}
 	}
 }
 
 
 window.addEventListener('message', event => {
-	if (event.data.command != 'update-path'){
+	if (event.data.command == 'open-external-link'){
 		window.parent.postMessage(event.data, "*");
 	}
 });

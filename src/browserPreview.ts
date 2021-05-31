@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { PORTNUM } from './constants';
+import { PORTNUM,WS_PORTNUM } from './constants';
 import { Disposable } from './dispose';
 import { pageHistory, NavEditCommands } from './pageHistoryTracker';
 
@@ -60,6 +60,10 @@ export class BrowserPreview extends Disposable {
 						const url = vscode.Uri.parse(urlString);
 						vscode.env.openExternal(url);
 						return;
+					case 'add-history':
+						// called from main.js in the case where the target is non-injectable
+						this.handleNewPageLoad(message.text)
+						return;
 				}
 			}
 		));
@@ -117,6 +121,7 @@ export class BrowserPreview extends Disposable {
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = new Date().getTime() + '' + new Date().getMilliseconds();
 
+		const wsURL = `ws://localhost:${WS_PORTNUM}`
 		return `<!DOCTYPE html>
 		<html lang="en">
 			<head>
@@ -128,6 +133,7 @@ export class BrowserPreview extends Disposable {
 				-->
 				<meta http-equiv="Content-Security-Policy" content="
 				default-src 'none';
+				connect-src ${wsURL};
 				font-src ${this._panel.webview.cspSource};
 				style-src ${this._panel.webview.cspSource};
 				script-src 'nonce-${nonce}';
@@ -170,6 +176,9 @@ export class BrowserPreview extends Disposable {
 					<iframe id="hostedContent" src="${url}" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
 				</div>
 			</div>
+				<script nonce="${nonce}">
+					const WS_URL= "${wsURL}";
+				</script>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 		</html>`;
@@ -219,7 +228,7 @@ export class BrowserPreview extends Disposable {
 
 	private handleNewPageLoad(panelTitle: string): void {
 		// only load relative addresses
-		if (panelTitle[0] != '/') {
+		if (panelTitle.length > 0 && panelTitle[0] != '/') {
 			return;
 		}
 

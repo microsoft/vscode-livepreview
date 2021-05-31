@@ -6,7 +6,21 @@ import * as WebSocket from 'ws';
 import * as Stream from 'stream';
 import { Disposable } from './dispose';
 import { PORTNUM, WS_PORTNUM, WS_PORTNUM_PLACEHOLDER } from './constants';
+import { URL } from 'url';
+import { FormatFileSize, FormatDateTime } from './utils';
 
+export interface IndexFileEntry {
+	LinkSrc: string,
+	LinkName: string,
+	FileSize: string,
+	DateTime: string,
+}
+
+export interface IndexDirEntry {
+	LinkSrc: string,
+	LinkName: string,
+	DateTime: string,
+}
 
 export class Server extends Disposable {
 	private readonly _port = PORTNUM;
@@ -19,6 +33,9 @@ export class Server extends Disposable {
 		super();
 
 		this._register(vscode.workspace.onDidChangeTextDocument(e => {
+			this.refreshBrowsers();
+		}));
+		this._register(vscode.workspace.onDidRenameFiles(e => {
 			this.refreshBrowsers();
 		}));
 	}
@@ -49,25 +66,26 @@ export class Server extends Disposable {
 
 		this._server = http.createServer((req: any, res: any) => {
 			const endOfPath = req.url.lastIndexOf("?");
-			let pathnameWithoutQueries = endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
+			let URLPathName = endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
 
-			const queries = endOfPath == -1 ? "": req.url.substring(endOfPath+1);
-			console.log(queries)
-			
-			let readPath = path.join(basePath, pathnameWithoutQueries)
+			let absoluteReadPath = path.join(basePath, URLPathName)
 			let stream;
-			// Redirect to index.html if the request URL is blank
-			if (fs.statSync(readPath).isDirectory()) {
-				if (fs.existsSync(path.join(readPath, "index.html"))) {
-					readPath = path.join(readPath,'index.html');
-					stream = this.getStream(readPath, scriptInjection);
+
+			if (!fs.existsSync(absoluteReadPath)) {
+				stream = this.createPageDoesNotExist(absoluteReadPath, scriptInjection)
+			}
+			else if (fs.statSync(absoluteReadPath).isDirectory()) {
+				
+				// Redirect to index.html if the request URL is a directory
+				if (fs.existsSync(path.join(absoluteReadPath, "index.html"))) {
+					absoluteReadPath = path.join(absoluteReadPath, 'index.html');
+					stream = this.getStream(absoluteReadPath, scriptInjection);
 				} else {
-					stream = this.createIndexStream(readPath, pathnameWithoutQueries,scriptInjection);
+					stream = this.createIndexStream(absoluteReadPath, URLPathName, scriptInjection);
 				}
 			} else {
-				stream = this.getStream(readPath, scriptInjection);
+				stream = this.getStream(absoluteReadPath, scriptInjection);
 			}
-
 
 			if (stream) {
 				stream.on('error', function () {
@@ -84,9 +102,29 @@ export class Server extends Disposable {
 		}).listen(this._port);
 		// for websockets
 		this._wss = new WebSocket.Server({ port: this._ws_port });
+		this._wss.on('connection', (ws: any) => {
+			ws.on('message', (message: string) => {
+				const parsedMessage = JSON.parse(message)
+				switch (parsedMessage.command) {
+					case 'urlCheck':
+						const url = new URL(parsedMessage.url);
+						const targetInjectable = this.performTargetInjectableCheck(basePath, url)
 
-		console.log("started server");
+						if (!targetInjectable) {
+							ws.send(`{"command":"foundNonInjectable","path":"${url.pathname}"}`)
+						}
+				}
+			})
+		})
 		return true;
+	}
+
+	private performTargetInjectableCheck(basePath: string, url: URL): boolean {
+		const absolutePath = path.join(basePath, url.pathname)
+		if (fs.statSync(absolutePath).isDirectory() || path.extname(absolutePath) == ".html") {
+			return true
+		}
+		return false;
 	}
 
 	private end(): boolean {
@@ -94,26 +132,91 @@ export class Server extends Disposable {
 		if (this._wss != null) {
 			this._wss.close();
 		}
-		console.log("closed server");
 
 		return true; // TODO: find error conditions and return false when needed
+	}
+
+	private createPageDoesNotExist(relativePath: string, scriptInjection: string): Stream.Readable {
+
+		const htmlString = `
+		<!DOCTYPE html>
+		<html>
+			<body style="font-family:calibri">
+			<h1>File not found</h1>
+			<p>The file <b>"${relativePath}"</b> cannot be found. It may have been moved, edited, or deleted.</p>
+			</body>
+			${scriptInjection}
+		</html>
+		`
+
+		return Stream.Readable.from(htmlString);
 	}
 
 	private createIndexStream(readPath: string, relativePath: string, scriptInjection: string): Stream.Readable {
 
 		const childFiles = fs.readdirSync(readPath)
-		let directoryContents = "";
-		for (const i in childFiles) {
-			directoryContents += `<tr><td>> <a href="${path.join(relativePath,childFiles[i]) + "?needsInjection"}">${childFiles[i]}/</a></td></tr>\n`;
-		}
+
+		const fileEntries = new Array<IndexFileEntry>();
+		const dirEntries = new Array<IndexDirEntry>();
+
 		
+		if (relativePath != "/") {
+			dirEntries.push({LinkSrc: "/../", LinkName: "..", DateTime:""})
+		}
+
+		for (const i in childFiles) {
+			const relativeFileWithChild = path.join(relativePath, childFiles[i])
+			const absolutePath = path.join(readPath,childFiles[i])
+
+			const fileStats = fs.statSync(absolutePath);
+			const modifiedDateTimeString = FormatDateTime(fileStats.mtime);
+
+			if (fileStats.isDirectory()) {
+				dirEntries.push({LinkSrc: relativeFileWithChild, LinkName: childFiles[i], DateTime: modifiedDateTimeString})
+			} else {
+				const fileSize = FormatFileSize(fileStats.size) 
+				fileEntries.push({LinkSrc: relativeFileWithChild, LinkName: childFiles[i], FileSize: fileSize, DateTime: modifiedDateTimeString})
+			}
+		}
+
+		let directoryContents = "";
+
+		dirEntries.forEach((elem: IndexDirEntry) =>
+			directoryContents += `
+				<tr>
+				<td><a href="${elem.LinkSrc}">${elem.LinkName}/</a></td>
+				<td></td>
+				<td>${elem.DateTime}</td>
+				</tr>\n`);
+		
+		fileEntries.forEach((elem: IndexFileEntry) =>
+			directoryContents += `
+				<tr>
+				<td><a href="${elem.LinkSrc}">${elem.LinkName}/</a></td>
+				<td>${elem.FileSize}</td>
+				<td>${elem.DateTime}</td>
+				</tr>\n`);
+
 		const htmlString = `
 		<!DOCTYPE html>
 		<html>
-			<body style="font-family:calibri">
+			<head>
+				<style>
+					body {
+						font-family:calibri;
+						letter-spacing:1px;
+					}
+					table td {
+						padding:4px;
+					}
+				</style>
+			</head>
+			<body>
 			<h1>Index of ${relativePath}</h1>
+
 			<table>
-			${directoryContents}
+				<th>Name</th><th>Size</th><th>Date Modified</th>
+				${directoryContents}
 			</table>
 			</body>
 			${scriptInjection}
@@ -122,6 +225,9 @@ export class Server extends Disposable {
 
 		return Stream.Readable.from(htmlString);
 	}
+
+
+
 	private getHTMLInjection(extensionUri: vscode.Uri): string {
 		const scriptPath = path.join(extensionUri.fsPath, "media", "inject_script.js");
 		const buffer = fs.readFileSync(scriptPath);
@@ -177,9 +283,5 @@ export class Server extends Disposable {
 		const newContents = contents.substr(0, locationHeadEnd) + scriptInjection + contents.substr(locationHeadEnd);
 		return newContents;
 	}
-
-	// private indexHtmlFile() {
-
-	// }
 
 }
