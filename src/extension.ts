@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as bp from './BrowserPreview';
+import * as bp from './browserPreview';
 import { getWebviewOptions, Manager } from './manager';
 
 export function activate(context: vscode.ExtensionContext) {
