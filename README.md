@@ -23,4 +23,9 @@ Starting the server on port 3000   | `LiveServer v2: Start Development Server`
 Closing the server | `LiveServer v2: Close Development Server`
 Viewing the embedded preview (does not require manually starting the server)  | `LiveServer v2: Show Preview`  
 
-[![Image from Gyazo](https://i.gyazo.com/a3796821f5cc2ea2164725457d26f45c.gif)](https://gyazo.com/a3796821f5cc2ea2164725457d26f45c)
+[![Image from Gyazo](./release_notes/images/live-server-v0_1-overview.gif)](https://gyazo.com/a3796821f5cc2ea2164725457d26f45c)
+
+## Issue Tracking:
+- [May Iteration](https://github.com/microsoft/vscode/issues/124607)
+- [June Iteration](https://github.com/microsoft/vscode/issues/124608)
+- [Backlog](https://github.com/microsoft/vscode/issues/125343)
