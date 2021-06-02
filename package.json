@@ -3,7 +3,11 @@
 	"displayName": "live-server-sample",
 	"description": "A simple live server hosting extension for static HTML/CSS Projects",
 	"version": "0.0.1",
-	"publisher": "vscode-samples",
+	"publisher": "andrea-mah",
+	"repository": {
+        "type": "git",
+        "url": "https://github.com/andreamah/VS-Code-LiveServer-V2-Extension"
+    },
 	"engines": {
 		"vscode": "^1.47.0"
 	},
@@ -52,6 +56,7 @@
 		"prettier-eslint": "^12.0.0",
 		"prettier-eslint-cli": "^5.0.1",
 		"url": "^0.11.0",
+		"vsce": "^1.91.0",
 		"vscode-codicons": "0.0.17",
 		"ws": "^7.4.6"
 	}
