@@ -132,9 +132,7 @@ export class BrowserPreview extends Disposable {
 		);
 		const codiconsPathMainPath = vscode.Uri.joinPath(
 			this._extensionUri,
-			'node_modules',
-			'vscode-codicons',
-			'dist',
+			'media',
 			'codicon.css'
 		);
 

@@ -12,7 +12,7 @@ Issues are currently being tracked on the [June Iteration Ticket](https://github
 ## Running the extension
 - Open this example in VS Code 1.47+
 - `npm install`
-- `npm run watch` or `npm run compile`
+- `npm run compile`
 - <kbd>F5</kbd> to start debugging
 
 ## Using the extension

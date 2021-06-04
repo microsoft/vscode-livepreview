@@ -244,7 +244,7 @@ export class Server extends Disposable {
 			(elem: IndexFileEntry) =>
 				(directoryContents += `
 				<tr>
-				<td><a href="${elem.LinkSrc}">${elem.LinkName}/</a></td>
+				<td><a href="${elem.LinkSrc}">${elem.LinkName}</a></td>
 				<td>${elem.FileSize}</td>
 				<td>${elem.DateTime}</td>
 				</tr>\n`)

@@ -1,13 +1,13 @@
 {
-	"name": "live-server-sample",
-	"displayName": "live-server-sample",
+	"name": "live-server",
+	"displayName": "live-server",
 	"description": "A simple live server hosting extension for static HTML/CSS Projects",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"publisher": "andrea-mah",
 	"repository": {
-        "type": "git",
-        "url": "https://github.com/andreamah/VS-Code-LiveServer-V2-Extension"
-    },
+		"type": "git",
+		"url": "https://github.com/andreamah/VS-Code-LiveServer-V2-Extension"
+	},
 	"engines": {
 		"vscode": "^1.47.0"
 	},
@@ -38,10 +38,10 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "npm run compile",
-		"compile": "tsc -p ./",
-		"lint": "eslint . --ext .ts,.tsx",
-		"watch": "tsc -watch -p ./"
+		"vscode:prepublish": "webpack --mode production",
+		"webpack": "webpack --mode development",
+		"webpack-dev": "webpack --mode development --watch",
+		"compile": "node codicon_copy.js && tsc -p ./"
 	},
 	"devDependencies": {
 		"@types/node": "^12.12.0",
@@ -49,10 +49,15 @@
 		"@types/ws": "^7.4.4",
 		"@typescript-eslint/eslint-plugin": "^4.16.0",
 		"@typescript-eslint/parser": "^4.16.0",
+		"esbuild": "^0.12.5",
 		"eslint": "^7.27.0",
-		"typescript": "^4.2.2"
+		"ts-loader": "^9.2.2",
+		"typescript": "^4.2.2",
+		"webpack": "^5.38.1",
+		"webpack-cli": "^4.7.0"
 	},
 	"dependencies": {
+		"copy-webpack-plugin": "^9.0.0",
 		"prettier-eslint": "^12.0.0",
 		"prettier-eslint-cli": "^5.0.1",
 		"url": "^0.11.0",
