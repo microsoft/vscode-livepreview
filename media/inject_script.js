@@ -8,8 +8,11 @@ connection.onerror = (error) => {
 };
 
 connection.onmessage = (e) => {
-	if ((e.data = 'refresh')) {
-		window.location.reload();
+	const parsedMessage = JSON.parse(e.data);
+	switch (parsedMessage.command) {
+		case 'reload': {
+			window.location.reload();
+		}
 	}
 };
 window.parent.postMessage(

@@ -34,7 +34,9 @@ export class Server extends Disposable {
 
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
-				this.refreshBrowsers();
+				if (e.contentChanges && e.contentChanges.length > 0) {
+					this.refreshBrowsers();
+				}
 			})
 		);
 		this._register(
@@ -289,7 +291,8 @@ export class Server extends Disposable {
 	}
 
 	private refreshBrowsers(): void {
-		this._wss.clients.forEach((client: any) => client.send('reload'));
+		this._wss.clients.forEach((client: any) => client.send(
+			`{"command":"reload"}`));
 	}
 
 	private getStream(

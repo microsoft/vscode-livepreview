@@ -1,9 +1,10 @@
 {
 	"name": "live-server",
-	"displayName": "live-server",
+	"displayName": "Live Server",
 	"description": "A simple live server hosting extension for static HTML/CSS Projects",
 	"version": "0.0.2",
 	"publisher": "andrea-mah",
+	"icon" : "icon.png",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/andreamah/VS-Code-LiveServer-V2-Extension"
@@ -41,7 +42,8 @@
 		"vscode:prepublish": "webpack --mode production",
 		"webpack": "webpack --mode development",
 		"webpack-dev": "webpack --mode development --watch",
-		"compile": "node codicon_copy.js && tsc -p ./"
+		"compile": "node codicon_copy.js && tsc -p ./",
+		"watch": "node codicon_copy.js && tsc -watch -p ./"
 	},
 	"devDependencies": {
 		"@types/node": "^12.12.0",
