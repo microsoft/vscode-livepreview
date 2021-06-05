@@ -1,14 +1,16 @@
 import * as vscode from 'vscode';
-import { PORTNUM, WS_PORTNUM } from './constants';
 import { Disposable } from './dispose';
 import { pageHistory, NavEditCommands } from './pageHistoryTracker';
 
 export class BrowserPreview extends Disposable {
+
 	public static readonly viewType = 'browserPreview';
 	private readonly _pageHistory: pageHistory;
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
 
+	private _port;
+	private _wsPort;
 	private readonly _onDisposeEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
@@ -22,8 +24,17 @@ export class BrowserPreview extends Disposable {
 		this._panel.reveal(column);
 	}
 
-	constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
+	public updatePortNums(port:number, wsPort: number):void {
+		this._port = port;
+		this._wsPort = wsPort;
+		this.goToFile("/")
+	}
+
+	constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, port:number, wsPort: number) {
 		super();
+		
+		this._port = port;
+		this._wsPort = wsPort;
 		this._panel = panel;
 		this._extensionUri = extensionUri;
 		this._pageHistory = this._register(new pageHistory());
@@ -105,8 +116,7 @@ export class BrowserPreview extends Disposable {
 		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);
 		}
-
-		return `http://localhost:${PORTNUM}/${URLExt}`;
+		return `http://127.0.0.1:${this._port}/${URLExt}`;
 	}
 
 	private setHtml(webview: vscode.Webview, url: string): void {
@@ -143,7 +153,7 @@ export class BrowserPreview extends Disposable {
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = new Date().getTime() + '' + new Date().getMilliseconds();
 
-		const wsURL = `ws://localhost:${WS_PORTNUM}`;
+		const wsURL = `ws://localhost:${this._wsPort}`;
 		return `<!DOCTYPE html>
 		<html lang="en">
 			<head>
