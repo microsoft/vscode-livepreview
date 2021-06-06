@@ -25,7 +25,7 @@ export interface IndexDirEntry {
 export class Server extends Disposable {
 	private _server: any;
 	private _isServerOn = false;
-	private _wss: any;
+	private _wss: WebSocket.Server | undefined;
 	private _scriptInjection = ``; // TODO: turn script injector into object that keeps state of changes to reduce disk reads
 	private _ws_port = 0;
 	private _port = 0;
@@ -93,20 +93,16 @@ export class Server extends Disposable {
 
 
 	private startMainServer(basePath: string): boolean {
-		const originalPort = this._port;
 
 		this._server = this.createServer(basePath);
 			
 		this._server.on('listening', () =>{
-			console.log(`server is running on port ${this._port}`);
-			if (this._port != originalPort) {
-				this._onPortChangeEmitter.fire({'port':this._port})
-			}
+			console.log(`Server is running on port ${this._port}`);
+			this._onPortChangeEmitter.fire({'port':this._port})
 		});
 
 		this._server.on('error',(err:any) =>{
 			if(err.code == 'EADDRINUSE') {
-				console.log(`port ${this._port} in use. Trying ${this._port+1}`)
 				this._port++;
 				this._server.listen(this._port,"127.0.0.1");
 			} else {
@@ -122,22 +118,23 @@ export class Server extends Disposable {
 	private startWSServer(basePath: string,extensionUri: vscode.Uri):boolean {
 		this._wss = new WebSocket.Server({ port: this._ws_port });
 		this._wss.on('connection', (ws: any) => this.handleWSConnection(basePath,ws));
-		this._wss.on('error',(err:any) => this.handleWSCollision(basePath,extensionUri, err));
+		this._wss.on('error',(err:any) => this.handleWSError(basePath,extensionUri, err));
+		this._wss.on('listening',() => this.handleWSListen(extensionUri));
 		return true
 	}
 
-	private handleWSCollision(basePath: string,extensionUri: vscode.Uri, err:any) {
+
+	private handleWSError(basePath: string,extensionUri: vscode.Uri, err:any) {
 		if(err.code == 'EADDRINUSE') {
-			console.log(`ws port ${this._ws_port} in use. Trying ${this._ws_port+1}`)
 			this._ws_port++;
 			this.startWSServer(basePath,extensionUri);
-			this.handleWSOpen(extensionUri)
 		} else {
 			console.log(`Unknown error: ${err}`)
 		}
 	}
 
-	private handleWSOpen(extensionUri:vscode.Uri)  {
+	private handleWSListen(extensionUri:vscode.Uri)  {
+		console.log(`Websocket server is running on port ${this._ws_port}`);
 		this._onPortChangeEmitter.fire({'ws_port':this._ws_port})
 		this._scriptInjection = this.getHTMLInjection(this._ws_port,extensionUri)
 	}
@@ -334,18 +331,20 @@ export class Server extends Disposable {
 		const scriptPath = path.join(
 			extensionUri.fsPath,
 			'media',
-			'inject_script.js'
+			'inject_script.html'
 		);
 		const buffer = fs.readFileSync(scriptPath);
 		const bufString = buffer
 			.toString()
 			.replace(WS_PORTNUM_PLACEHOLDER, ws_port.toString());
-		return '<script>\n' + bufString + '\n</script>';
+		return bufString;
 	}
 
 	private refreshBrowsers(): void {
-		this._wss.clients.forEach((client: any) => client.send(
-			`{"command":"reload"}`));
+		if (this._wss) {
+			this._wss.clients.forEach((client: any) => client.send(
+				`{"command":"reload"}`));
+		}
 	}
 
 	private getStream(
@@ -385,18 +384,7 @@ export class Server extends Disposable {
 	}
 
 	private injectNotifier(contents: string): string {
-		const re = '</htmls*>';
-		const locationHeadEnd = contents.search(re);
-
-		if (locationHeadEnd == -1) {
-			// add html tags if the file doesn't have a proper closing tag
-			return '<html>\n' + contents + this._scriptInjection + '\n</html>';
-		}
-
-		const newContents =
-			contents.substr(0, locationHeadEnd) +
-			this._scriptInjection +
-			contents.substr(locationHeadEnd);
+		const newContents =  this._scriptInjection + contents;
 		return newContents;
 	}
 }
