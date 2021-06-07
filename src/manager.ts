@@ -2,18 +2,34 @@ import { BrowserPreview } from './browserPreview';
 import { Disposable } from './dispose';
 import { Server } from './server';
 import * as vscode from 'vscode';
-import { INIT_PANEL_TITLE, CLOSE_SERVER, DONT_CLOSE } from './constants';
+import {
+	INIT_PANEL_TITLE,
+	CLOSE_SERVER,
+	DONT_CLOSE,
+	PORTNUM,
+	WS_PORTNUM,
+} from './constants';
 
 export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
 	private readonly _server = new Server();
 	private readonly _extensionUri: vscode.Uri;
 	private readonly _path: vscode.WorkspaceFolder | undefined;
+	private _serverPort: number = PORTNUM;
+	private _serverWSPort: number = WS_PORTNUM;
 
 	constructor(extensionUri: vscode.Uri) {
 		super();
 		this._extensionUri = extensionUri;
 		this._path = vscode.workspace.workspaceFolders?.[0];
+
+		this._server.onPortChange((e) => {
+			if (this.currentPanel) {
+				this._serverPort = e.port ?? this._serverPort;
+				this._serverWSPort = e.ws_port ?? this._serverWSPort;
+				this.currentPanel.updatePortNums(this._serverPort, this._serverWSPort);
+			}
+		});
 	}
 
 	public createOrShowPreview(
@@ -38,7 +54,12 @@ export class Manager extends Disposable {
 			);
 		}
 		this.openServer();
-		this.currentPanel = new BrowserPreview(panel, this._extensionUri);
+		this.currentPanel = new BrowserPreview(
+			panel,
+			this._extensionUri,
+			this._serverPort,
+			this._serverWSPort
+		);
 
 		this.currentPanel.onDispose(() => {
 			this.currentPanel = undefined;
@@ -60,8 +81,12 @@ export class Manager extends Disposable {
 
 	public openServer(showMsgAlreadyOn = false): void {
 		if (!this._server.running) {
-			this._server.openServer(this._path, this._extensionUri);
-			vscode.window.showInformationMessage('Started server');
+			this._server.openServer(
+				this._serverPort,
+				this._serverWSPort,
+				this._path,
+				this._extensionUri
+			);
 		} else if (showMsgAlreadyOn) {
 			vscode.window.showErrorMessage('Server already on');
 		}
@@ -74,7 +99,6 @@ export class Manager extends Disposable {
 			if (this.currentPanel) {
 				this.currentPanel.close();
 			}
-
 			vscode.window.showInformationMessage('Closed server');
 		} else if (showMsgAlreadyOff) {
 			vscode.window.showErrorMessage('Server already closed');

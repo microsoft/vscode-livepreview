@@ -9,23 +9,27 @@ The goal of the extension is to allow local previews of web projects (ie: HTML/C
 Based off of the webview template found [here](https://github.com/microsoft/vscode-extension-samples/tree/main/webview-sample).
 
 Issues are currently being tracked on the [June Iteration Ticket](https://github.com/microsoft/vscode/issues/124608)
+
 ## Running the extension
+
 - Open this example in VS Code 1.47+
 - `npm install`
 - `npm run compile`
 - <kbd>F5</kbd> to start debugging
 
 ## Using the extension
+
 Run commands using the command palette using <kbd>CTRL</kbd>+<kbd>SHIFT</kbd>+<kbd>P</kbd>
-Action | Command 
-:----- | :---- 
-Starting the server on port 3000   | `LiveServer v2: Start Development Server` 
+Action | Command
+:----- | :----
+Starting the server on port 3000 | `LiveServer v2: Start Development Server`
 Closing the server | `LiveServer v2: Close Development Server`
-Viewing the embedded preview (does not require manually starting the server)  | `LiveServer v2: Show Preview`  
+Viewing the embedded preview (does not require manually starting the server) | `LiveServer v2: Show Preview`
 
 [![Image from Gyazo](./release_notes/images/v0_1/live-server-v0_1-overview.gif)](https://gyazo.com/a3796821f5cc2ea2164725457d26f45c)
 
 ## Issue Tracking:
+
 - [May Iteration](https://github.com/microsoft/vscode/issues/124607)
 - [June Iteration](https://github.com/microsoft/vscode/issues/124608)
 - [Backlog](https://github.com/microsoft/vscode/issues/125343)
