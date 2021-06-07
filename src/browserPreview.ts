@@ -269,7 +269,6 @@ export class BrowserPreview extends Disposable {
 			return;
 		}
 		this.setPanelTitle(panelTitle);
-		console.log("here!!")
 		const response = this._pageHistory?.addHistory(panelTitle);
 		if (response) {
 			for (const i in response.actions) {

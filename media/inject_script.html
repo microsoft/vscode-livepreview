@@ -15,6 +15,7 @@
 			}
 		}
 	};
+	console.log(window.location.pathname)
 	window.parent.postMessage(
 		{ command: 'update-path', text: window.location.pathname },
 		'*'

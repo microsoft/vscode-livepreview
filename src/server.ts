@@ -161,12 +161,26 @@ export class Server extends Disposable {
 	}
 	private createServer(basePath: string) {
 		return http
-		.createServer((req: any, res: any) => {
+		.createServer((req, res) => {
+			if (!req || !req.url) {
+				res.writeHead(500);
+				res.end();
+				return;
+			}
+			console.log(req)
+			
+			let referrerPath = ""
+			if (req.headers.referer) {
+				const referrerURL = new URL(req.headers.referer);
+				referrerPath = referrerURL.pathname;
+				// check if a file or directory and get referrer path accordingly.
+			}
+
 			const endOfPath = req.url.lastIndexOf('?');
 			const URLPathName =
 				endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
 
-			let absoluteReadPath = path.join(basePath, URLPathName);
+			let absoluteReadPath = path.join(basePath, referrerPath, URLPathName);
 			let stream;
 
 			if (!fs.existsSync(absoluteReadPath)) {
