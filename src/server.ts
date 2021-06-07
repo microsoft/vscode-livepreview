@@ -57,9 +57,8 @@ export class Server extends Disposable {
 		);
 	}
 
-	
 	private readonly _onPortChangeEmitter = this._register(
-		new vscode.EventEmitter<{'port'?:number,'ws_port'?:number}>()
+		new vscode.EventEmitter<{ port?: number; ws_port?: number }>()
 	);
 	public readonly onPortChange = this._onPortChangeEmitter.event;
 
@@ -75,15 +74,15 @@ export class Server extends Disposable {
 	}
 
 	public openServer(
-		port:number,
-		ws_port:number,
+		port: number,
+		ws_port: number,
 		path: vscode.WorkspaceFolder | undefined,
 		extensionUri: vscode.Uri | undefined
 	): void {
 		if (path && extensionUri) {
 			this._scriptInjection = this.getHTMLInjection(ws_port, extensionUri);
-			this._ws_port = ws_port
-			this._port = port
+			this._ws_port = ws_port;
+			this._port = port;
 			const success = this.start(path.uri.fsPath, extensionUri);
 			if (success) {
 				this._isServerOn = true;
@@ -91,61 +90,66 @@ export class Server extends Disposable {
 		}
 	}
 
-
 	private startMainServer(basePath: string): boolean {
-
 		this._server = this.createServer(basePath);
-			
-		this._server.on('listening', () =>{
+
+		this._server.on('listening', () => {
 			console.log(`Server is running on port ${this._port}`);
-			vscode.window.showInformationMessage(`Server is running on port ${this._port}`);
-			this._onPortChangeEmitter.fire({'port':this._port})
+			vscode.window.showInformationMessage(
+				`Server is running on port ${this._port}`
+			);
+			this._onPortChangeEmitter.fire({ port: this._port });
 		});
 
-		this._server.on('error',(err:any) =>{
-			if(err.code == 'EADDRINUSE') {
+		this._server.on('error', (err: any) => {
+			if (err.code == 'EADDRINUSE') {
 				this._port++;
-				this._server.listen(this._port,"127.0.0.1");
+				this._server.listen(this._port, '127.0.0.1');
 			} else {
-				console.log(`Unknown error: ${err}`)
+				console.log(`Unknown error: ${err}`);
 			}
 		});
 
-		this._server.listen(this._port,"127.0.0.1");
-		return true
+		this._server.listen(this._port, '127.0.0.1');
+		return true;
 	}
 
-
-	private startWSServer(basePath: string,extensionUri: vscode.Uri):boolean {
+	private startWSServer(basePath: string, extensionUri: vscode.Uri): boolean {
 		this._wss = new WebSocket.Server({ port: this._ws_port });
-		this._wss.on('connection', (ws: any) => this.handleWSConnection(basePath,ws));
-		this._wss.on('error',(err:any) => this.handleWSError(basePath,extensionUri, err));
-		this._wss.on('listening',() => this.handleWSListen(extensionUri));
-		return true
+		this._wss.on('connection', (ws: any) =>
+			this.handleWSConnection(basePath, ws)
+		);
+		this._wss.on('error', (err: any) =>
+			this.handleWSError(basePath, extensionUri, err)
+		);
+		this._wss.on('listening', () => this.handleWSListen(extensionUri));
+		return true;
 	}
 
-
-	private handleWSError(basePath: string,extensionUri: vscode.Uri, err:any) {
-		if(err.code == 'EADDRINUSE') {
+	private handleWSError(basePath: string, extensionUri: vscode.Uri, err: any) {
+		if (err.code == 'EADDRINUSE') {
 			this._ws_port++;
-			this.startWSServer(basePath,extensionUri);
+			this.startWSServer(basePath, extensionUri);
 		} else {
-			console.log(`Unknown error: ${err}`)
+			console.log(`Unknown error: ${err}`);
 		}
 	}
 
-	private handleWSListen(extensionUri:vscode.Uri)  {
+	private handleWSListen(extensionUri: vscode.Uri) {
 		console.log(`Websocket server is running on port ${this._ws_port}`);
-		this._onPortChangeEmitter.fire({'ws_port':this._ws_port})
-		this._scriptInjection = this.getHTMLInjection(this._ws_port,extensionUri)
+		this._onPortChangeEmitter.fire({ ws_port: this._ws_port });
+		this._scriptInjection = this.getHTMLInjection(this._ws_port, extensionUri);
 	}
 
-	private handleWSConnection(basePath:string, ws: any) {
+	private handleWSConnection(basePath: string, ws: any) {
 		ws.on('message', (message: string) => {
 			const parsedMessage = JSON.parse(message);
 			switch (parsedMessage.command) {
 				case 'urlCheck': {
-					const results = this.performTargetInjectableCheck(basePath, parsedMessage.url);
+					const results = this.performTargetInjectableCheck(
+						basePath,
+						parsedMessage.url
+					);
 					if (!results.injectable) {
 						ws.send(
 							`{"command":"foundNonInjectable","path":"${results.pathname}"}`
@@ -157,12 +161,14 @@ export class Server extends Disposable {
 	}
 
 	private start(basePath: string, extensionUri: vscode.Uri): boolean {
-		return this.startMainServer(basePath) && this.startWSServer(basePath,extensionUri); 
+		return (
+			this.startMainServer(basePath) &&
+			this.startWSServer(basePath, extensionUri)
+		);
 	}
 
 	private createServer(basePath: string) {
-		return http
-		.createServer((req, res) => {
+		return http.createServer((req, res) => {
 			if (!req || !req.url) {
 				res.writeHead(500);
 				res.end();
@@ -173,20 +179,17 @@ export class Server extends Disposable {
 			const URLPathName =
 				endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
 
-
 			let absoluteReadPath = path.join(basePath, URLPathName);
 			let stream;
 
 			if (!fs.existsSync(absoluteReadPath)) {
-				stream = this.createPageDoesNotExist(
-					absoluteReadPath
-				);
+				stream = this.createPageDoesNotExist(absoluteReadPath);
 			} else if (fs.statSync(absoluteReadPath).isDirectory()) {
-
-				if(!URLPathName.endsWith("/")){
-					res.statusCode=302;// redirect to use slash
-					const queries = endOfPath == -1 ? "" :  `${req.url.substring(endOfPath)}`;
-					res.setHeader('Location',URLPathName + '/' + queries);
+				if (!URLPathName.endsWith('/')) {
+					res.statusCode = 302; // redirect to use slash
+					const queries =
+						endOfPath == -1 ? '' : `${req.url.substring(endOfPath)}`;
+					res.setHeader('Location', URLPathName + '/' + queries);
 					return res.end();
 				}
 				// Redirect to index.html if the request URL is a directory
@@ -195,10 +198,7 @@ export class Server extends Disposable {
 					stream = this.getStream(absoluteReadPath);
 				} else {
 					// create a default index page
-					stream = this.createIndexStream(
-						absoluteReadPath,
-						URLPathName
-					);
+					stream = this.createIndexStream(absoluteReadPath, URLPathName);
 				}
 			} else {
 				stream = this.getStream(absoluteReadPath);
@@ -215,9 +215,8 @@ export class Server extends Disposable {
 				res.writeHead(500);
 				res.end();
 			}
-		})
+		});
 	}
-
 
 	private end(): boolean {
 		this._server.close();
@@ -228,22 +227,22 @@ export class Server extends Disposable {
 		return true; // TODO: find error conditions and return false when needed
 	}
 
-	private performTargetInjectableCheck(basePath: string, urlString: string): { 'injectable': boolean, 'pathname': string } {
-
+	private performTargetInjectableCheck(
+		basePath: string,
+		urlString: string
+	): { injectable: boolean; pathname: string } {
 		const url = new URL(urlString);
 		const absolutePath = path.join(basePath, url.pathname);
 		if (
 			fs.statSync(absolutePath).isDirectory() ||
 			path.extname(absolutePath) == '.html'
 		) {
-			return { 'injectable': true, 'pathname': url.pathname };
+			return { injectable: true, pathname: url.pathname };
 		}
-		return { 'injectable': false, 'pathname': url.pathname };
+		return { injectable: false, pathname: url.pathname };
 	}
 
-	private createPageDoesNotExist(
-		relativePath: string
-	): Stream.Readable {
+	private createPageDoesNotExist(relativePath: string): Stream.Readable {
 		// TODO: make look better
 		const htmlString = `
 		<!DOCTYPE html>
@@ -300,7 +299,7 @@ export class Server extends Disposable {
 
 		dirEntries.forEach(
 			(elem: IndexDirEntry) =>
-			(directoryContents += `
+				(directoryContents += `
 				<tr>
 				<td><a href="${elem.LinkSrc}">${elem.LinkName}/</a></td>
 				<td></td>
@@ -310,7 +309,7 @@ export class Server extends Disposable {
 
 		fileEntries.forEach(
 			(elem: IndexFileEntry) =>
-			(directoryContents += `
+				(directoryContents += `
 				<tr>
 				<td><a href="${elem.LinkSrc}">${elem.LinkName}</a></td>
 				<td>${elem.FileSize}</td>
@@ -343,7 +342,7 @@ export class Server extends Disposable {
 		return Stream.Readable.from(htmlString);
 	}
 
-	private getHTMLInjection(ws_port:number, extensionUri: vscode.Uri): string {
+	private getHTMLInjection(ws_port: number, extensionUri: vscode.Uri): string {
 		const scriptPath = path.join(
 			extensionUri.fsPath,
 			'media',
@@ -358,8 +357,9 @@ export class Server extends Disposable {
 
 	private refreshBrowsers(): void {
 		if (this._wss) {
-			this._wss.clients.forEach((client: any) => client.send(
-				`{"command":"reload"}`));
+			this._wss.clients.forEach((client: any) =>
+				client.send(`{"command":"reload"}`)
+			);
 		}
 	}
 
@@ -387,9 +387,7 @@ export class Server extends Disposable {
 		if (i == workspaceDocuments.length) {
 			if (readPath.endsWith('.html')) {
 				const buffer = fs.readFileSync(readPath);
-				const injectedFileContents = this.injectNotifier(
-					buffer.toString()
-				);
+				const injectedFileContents = this.injectNotifier(buffer.toString());
 				stream = Stream.Readable.from(injectedFileContents);
 			} else {
 				stream = fs.createReadStream(readPath);
@@ -400,7 +398,7 @@ export class Server extends Disposable {
 	}
 
 	private injectNotifier(contents: string): string {
-		const newContents =  this._scriptInjection + contents;
+		const newContents = this._scriptInjection + contents;
 		return newContents;
 	}
 }

@@ -3,7 +3,6 @@ import { Disposable } from './dispose';
 import { pageHistory, NavEditCommands } from './pageHistoryTracker';
 
 export class BrowserPreview extends Disposable {
-
 	public static readonly viewType = 'browserPreview';
 	private readonly _pageHistory: pageHistory;
 	private readonly _panel: vscode.WebviewPanel;
@@ -24,18 +23,23 @@ export class BrowserPreview extends Disposable {
 		this._panel.reveal(column);
 	}
 
-	public updatePortNums(port:number, wsPort: number):void {
+	public updatePortNums(port: number, wsPort: number): void {
 		this._port = port;
 		this._wsPort = wsPort;
-		this.goToFile("/")
+		this.goToFile('/');
 	}
 
 	private get currentAddress() {
 		return this._panel.title;
 	}
-	constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, port:number, wsPort: number) {
+	constructor(
+		panel: vscode.WebviewPanel,
+		extensionUri: vscode.Uri,
+		port: number,
+		wsPort: number
+	) {
 		super();
-		
+
 		this._port = port;
 		this._wsPort = wsPort;
 		this._panel = panel;
@@ -102,12 +106,12 @@ export class BrowserPreview extends Disposable {
 
 	private handleOpenBrowser(givenURL: string) {
 		const urlString =
-		givenURL == ''
-			? this.constructHostAddress(this._panel.title)
-			: givenURL;
+			givenURL == '' ? this.constructHostAddress(this._panel.title) : givenURL;
 		const url = vscode.Uri.parse(urlString);
 		vscode.env.openExternal(url);
-		vscode.window.showInformationMessage(`Externally hosted links are not supported in the embedded browser. ${urlString} opened in external browser.`)
+		vscode.window.showInformationMessage(
+			`Externally hosted links are not supported in the embedded browser. ${urlString} opened in external browser.`
+		);
 		this.goToFile(this.currentAddress);
 		this.updateForwardBackArrows();
 	}
