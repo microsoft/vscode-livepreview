@@ -110,7 +110,7 @@ export class BrowserPreview extends Disposable {
 		const url = vscode.Uri.parse(urlString);
 		vscode.env.openExternal(url);
 		vscode.window.showInformationMessage(
-			`Externally hosted links are not supported in the embedded browser. ${urlString} opened in external browser.`
+			`The link ${urlString} was opened in an external browser. Externally hosted links are not supported in the embedded browser. `
 		);
 		this.goToFile(this.currentAddress);
 		this.updateForwardBackArrows();
