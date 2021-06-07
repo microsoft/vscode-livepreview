@@ -19,7 +19,9 @@ export class Manager extends Disposable {
 
 		this._server.onPortChange((e) => {
 			if (this.currentPanel) {
-				this.currentPanel.updatePortNums(e.port ?? this._serverPort,e.ws_port ?? this._serverWSPort)
+				this._serverPort = e.port ?? this._serverPort;
+				this._serverWSPort = e.ws_port ?? this._serverWSPort;
+				this.currentPanel.updatePortNums(this._serverPort,this._serverWSPort)
 			}
 		});
 	}
@@ -69,7 +71,6 @@ export class Manager extends Disposable {
 	public openServer(showMsgAlreadyOn = false): void {
 		if (!this._server.running) {
 			this._server.openServer(this._serverPort, this._serverWSPort, this._path, this._extensionUri);
-			vscode.window.showInformationMessage('Started server');
 		} else if (showMsgAlreadyOn) {
 			vscode.window.showErrorMessage('Server already on');
 		}
@@ -82,7 +83,6 @@ export class Manager extends Disposable {
 			if (this.currentPanel) {
 				this.currentPanel.close();
 			}
-
 			vscode.window.showInformationMessage('Closed server');
 		} else if (showMsgAlreadyOff) {
 			vscode.window.showErrorMessage('Server already closed');

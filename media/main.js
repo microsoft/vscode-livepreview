@@ -48,6 +48,7 @@
 
 	window.addEventListener('message', (event) => {
 		const message = event.data; // The json data that the extension sent
+		console.log(message)
 		switch (message.command) {
 			case 'refresh':
 				document

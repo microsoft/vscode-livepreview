@@ -98,6 +98,7 @@ export class Server extends Disposable {
 			
 		this._server.on('listening', () =>{
 			console.log(`Server is running on port ${this._port}`);
+			vscode.window.showInformationMessage(`Server is running on port ${this._port}`);
 			this._onPortChangeEmitter.fire({'port':this._port})
 		});
 

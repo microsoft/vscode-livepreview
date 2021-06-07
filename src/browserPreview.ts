@@ -30,6 +30,9 @@ export class BrowserPreview extends Disposable {
 		this.goToFile("/")
 	}
 
+	private get currentAddress() {
+		return this._panel.title;
+	}
 	constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, port:number, wsPort: number) {
 		super();
 		
@@ -72,6 +75,8 @@ export class BrowserPreview extends Disposable {
 						return;
 					case 'open-browser':
 						this.handleOpenBrowser(message.text);
+						this.goToFile(this.currentAddress)
+						this.updateForwardBackArrows()
 						return;
 					case 'add-history':
 						// called from main.js in the case where the target is non-injectable
@@ -169,7 +174,7 @@ export class BrowserPreview extends Disposable {
 				font-src ${this._panel.webview.cspSource};
 				style-src ${this._panel.webview.cspSource};
 				script-src 'nonce-${nonce}';
-				frame-src *;
+				frame-src ${url};
 				">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -263,9 +268,8 @@ export class BrowserPreview extends Disposable {
 		if (panelTitle.length > 0 && panelTitle[0] != '/') {
 			return;
 		}
-
 		this.setPanelTitle(panelTitle);
-
+		console.log("here!!")
 		const response = this._pageHistory?.addHistory(panelTitle);
 		if (response) {
 			for (const i in response.actions) {

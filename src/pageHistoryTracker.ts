@@ -87,7 +87,8 @@ export class pageHistory extends Disposable {
 		) {
 			return undefined;
 		}
-
+		console.log(address)
+		console.log(this._history[this._backstep]);
 		if (this._backstep > 0) {
 			this._history = this._history.slice(this._backstep);
 		}
