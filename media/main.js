@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 // This script will be run within the webview itself
 // It cannot access the main VS Code APIs directly.
 (function () {
@@ -6,9 +7,10 @@
 	const connection = new WebSocket(WS_URL);
 
 	connection.onerror = (error) => {
-		console.log('WebSocket error: ' + error);
+		console.log('WebSocket error: ');
+		console.log(error);
 	};
-
+	
 	connection.onmessage = (e) => {
 		const parsedMessage = JSON.parse(e.data);
 		switch (parsedMessage.command) {
