@@ -159,6 +159,7 @@ export class Server extends Disposable {
 	private start(basePath: string, extensionUri: vscode.Uri): boolean {
 		return this.startMainServer(basePath) && this.startWSServer(basePath,extensionUri); 
 	}
+
 	private createServer(basePath: string) {
 		return http
 		.createServer((req, res) => {
@@ -167,20 +168,13 @@ export class Server extends Disposable {
 				res.end();
 				return;
 			}
-			console.log(req)
-			
-			let referrerPath = ""
-			if (req.headers.referer) {
-				const referrerURL = new URL(req.headers.referer);
-				referrerPath = referrerURL.pathname;
-				// check if a file or directory and get referrer path accordingly.
-			}
 
 			const endOfPath = req.url.lastIndexOf('?');
 			const URLPathName =
 				endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
 
-			let absoluteReadPath = path.join(basePath, referrerPath, URLPathName);
+
+			let absoluteReadPath = path.join(basePath, URLPathName);
 			let stream;
 
 			if (!fs.existsSync(absoluteReadPath)) {
@@ -188,6 +182,13 @@ export class Server extends Disposable {
 					absoluteReadPath
 				);
 			} else if (fs.statSync(absoluteReadPath).isDirectory()) {
+
+				if(!URLPathName.endsWith("/")){
+					res.statusCode=302;// redirect to use slash
+					const queries = endOfPath == -1 ? "" :  `${req.url.substring(endOfPath)}`;
+					res.setHeader('Location',URLPathName + '/' + queries);
+					return res.end();
+				}
 				// Redirect to index.html if the request URL is a directory
 				if (fs.existsSync(path.join(absoluteReadPath, 'index.html'))) {
 					absoluteReadPath = path.join(absoluteReadPath, 'index.html');

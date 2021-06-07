@@ -75,8 +75,6 @@ export class BrowserPreview extends Disposable {
 						return;
 					case 'open-browser':
 						this.handleOpenBrowser(message.text);
-						this.goToFile(this.currentAddress)
-						this.updateForwardBackArrows()
 						return;
 					case 'add-history':
 						// called from main.js in the case where the target is non-injectable
@@ -109,6 +107,9 @@ export class BrowserPreview extends Disposable {
 			: givenURL;
 		const url = vscode.Uri.parse(urlString);
 		vscode.env.openExternal(url);
+		vscode.window.showInformationMessage(`Externally hosted links are not supported in the embedded browser. ${urlString} opened in external browser.`)
+		this.goToFile(this.currentAddress);
+		this.updateForwardBackArrows();
 	}
 	private updateForwardBackArrows(): void {
 		const navigationStatus = this._pageHistory.currentCommands;

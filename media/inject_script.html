@@ -1,5 +1,8 @@
 <!-- Script injected by VS Live Server -->
+
+<!-- <base href="/test/" /> -->
 <script type="text/javascript" defer>
+
 	const url = 'ws://localhost:${WS_PORTNUM}';
 	const connection = new WebSocket(url);
 
@@ -15,7 +18,6 @@
 			}
 		}
 	};
-	console.log(window.location.pathname)
 	window.parent.postMessage(
 		{ command: 'update-path', text: window.location.pathname },
 		'*'
@@ -32,6 +34,7 @@
 	);
 
 	document.addEventListener("DOMContentLoaded", function(e) {
+		
 		var l = document.getElementsByTagName('a');
 		for (var i = 0; i < l.length; i++) {
 			l[i].onclick = (e) => {

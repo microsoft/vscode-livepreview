@@ -4,7 +4,7 @@
 	"description": "A simple live server hosting extension for static HTML/CSS Projects",
 	"version": "0.0.2",
 	"publisher": "andrea-mah",
-	"icon" : "icon.png",
+	"icon": "icon.png",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/andreamah/VS-Code-LiveServer-V2-Extension"
