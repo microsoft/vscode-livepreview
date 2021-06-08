@@ -1,9 +1,9 @@
-import { Disposable } from '../dispose';
-import { PortInfo } from './serverManager';
 import * as vscode from 'vscode';
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Disposable } from '../utils/dispose';
+import { PortInfo } from './serverManager';
 import { ContentLoader } from './contentLoader';
 import { HTMLInjector } from './htmlInjector';
 
@@ -11,10 +11,11 @@ import { HTMLInjector } from './htmlInjector';
 export class MainServer extends Disposable {
 	private _server: any;
 	private _port = 0;
-	private _contentLoader = new ContentLoader;
+	private _contentLoader: ContentLoader;
 	
 	constructor() {
 		super();
+		this._contentLoader = this._register(new ContentLoader());
 	}
 
 	private readonly _onPortChangeEmitter = this._register(

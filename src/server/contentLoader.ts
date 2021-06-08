@@ -1,10 +1,10 @@
-import { Disposable } from '../dispose';
-import { FormatFileSize, FormatDateTime } from '../utils';
 import * as Stream from 'stream';
-import { HTMLInjector } from './htmlInjector';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { Disposable } from '../utils/dispose';
+import { FormatFileSize, FormatDateTime } from '../utils/utils';
+import { HTMLInjector } from './htmlInjector';
 
 export interface IndexFileEntry {
 	LinkSrc: string;
@@ -19,13 +19,8 @@ export interface IndexDirEntry {
 	DateTime: string;
 }
 
-
 export class ContentLoader extends Disposable {
 	public scriptInjector: HTMLInjector | undefined;
-
-	constructor() {
-		super();
-	}
 
 	public createPageDoesNotExist(relativePath: string): Stream.Readable {
 		// TODO: make look better

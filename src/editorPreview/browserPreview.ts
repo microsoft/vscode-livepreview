@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { Disposable } from './dispose';
-import { pageHistory, NavEditCommands } from './pageHistoryTracker';
+import { Disposable } from '../utils/dispose';
+import { PageHistory, NavEditCommands } from './pageHistoryTracker';
 
 export class BrowserPreview extends Disposable {
 	public static readonly viewType = 'browserPreview';
-	private readonly _pageHistory: pageHistory;
+	private readonly _pageHistory: PageHistory;
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
 
@@ -44,7 +44,7 @@ export class BrowserPreview extends Disposable {
 		this._wsPort = wsPort;
 		this._panel = panel;
 		this._extensionUri = extensionUri;
-		this._pageHistory = this._register(new pageHistory());
+		this._pageHistory = this._register(new PageHistory());
 
 		this.updateForwardBackArrows();
 
@@ -132,7 +132,6 @@ export class BrowserPreview extends Disposable {
 		}
 		return `${this._host}/${URLExt}`;
 	}
-
 
 	private setHtml(webview: vscode.Webview, url: string): void {
 		this._panel.webview.html = this.getHtmlForWebview(webview, url);

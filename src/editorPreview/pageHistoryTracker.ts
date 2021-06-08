@@ -1,4 +1,4 @@
-import { Disposable } from './dispose';
+import { Disposable } from '../utils/dispose';
 
 export enum NavEditCommands {
 	DISABLE_BACK,
@@ -10,7 +10,7 @@ export interface NavResponse {
 	actions: Array<NavEditCommands>;
 	address?: string;
 }
-export class pageHistory extends Disposable {
+export class PageHistory extends Disposable {
 	private _history = new Array<string>();
 	private _backstep = 0;
 	private _current_back_enabled = false;

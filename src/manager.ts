@@ -1,14 +1,14 @@
-import { BrowserPreview } from './browserPreview';
-import { Disposable } from './dispose';
-import { Server } from './server/serverManager';
 import * as vscode from 'vscode';
+import { BrowserPreview } from './editorPreview/browserPreview';
+import { Disposable } from './utils/dispose';
+import { Server } from './server/serverManager';
 import {
 	INIT_PANEL_TITLE,
 	CLOSE_SERVER,
 	DONT_CLOSE,
 	PORTNUM,
 	WS_PORTNUM,
-} from './constants';
+} from './utils/constants';
 
 export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;

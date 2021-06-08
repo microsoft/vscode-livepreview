@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as bp from './browserPreview';
+import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -24,7 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	if (vscode.window.registerWebviewPanelSerializer) {
-		vscode.window.registerWebviewPanelSerializer(bp.BrowserPreview.viewType, {
+		vscode.window.registerWebviewPanelSerializer(BrowserPreview.viewType, {
 			async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel) {
 				// Reset the webview options so we use latest uri for `localResourceRoots`.
 				webviewPanel.webview.options = getWebviewOptions(context.extensionUri);

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Disposable } from '../dispose';
+import { Disposable } from '../utils/dispose';
 import { WSServer } from './wsServer';
 import { MainServer } from './mainServer';
 
@@ -9,11 +9,13 @@ export interface PortInfo {
 
 export class Server extends Disposable {
 	private _isServerOn = false;
-	private _mainServer = new MainServer;
-	private _wsServer = new WSServer;
+	private _mainServer: MainServer;
+	private _wsServer: WSServer;
 
 	constructor() {
 		super();
+		this._mainServer = this._register(new MainServer());
+		this._wsServer = this._register(new WSServer());
 
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
@@ -38,6 +40,7 @@ export class Server extends Disposable {
 				this._wsServer.refreshBrowsers();
 			})
 		);
+		
 		this._register(
 			this.onPortChange((e) => {
 				if (e.ws_port) {

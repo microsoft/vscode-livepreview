@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { URL } from 'url';
 import { PortInfo } from './serverManager';
-import { Disposable } from '../dispose';
+import { Disposable } from '../utils/dispose';
 
 export class WSServer extends Disposable {
 	private _wss: WebSocket.Server | undefined;
