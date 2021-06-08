@@ -1,14 +1,14 @@
-import { BrowserPreview } from './browserPreview';
-import { Disposable } from './dispose';
-import { Server } from './server';
 import * as vscode from 'vscode';
+import { BrowserPreview } from './editorPreview/browserPreview';
+import { Disposable } from './utils/dispose';
+import { Server } from './server/serverManager';
 import {
 	INIT_PANEL_TITLE,
 	CLOSE_SERVER,
 	DONT_CLOSE,
 	PORTNUM,
 	WS_PORTNUM,
-} from './constants';
+} from './utils/constants';
 
 export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
@@ -63,7 +63,7 @@ export class Manager extends Disposable {
 
 		this.currentPanel.onDispose(() => {
 			this.currentPanel = undefined;
-			if (this._server.running) {
+			if (this._server.isRunning) {
 				vscode.window
 					.showInformationMessage(
 						'You closed the embedded preview. Would you like to also close the server?',
@@ -80,7 +80,7 @@ export class Manager extends Disposable {
 	}
 
 	public openServer(showMsgAlreadyOn = false): void {
-		if (!this._server.running) {
+		if (!this._server.isRunning) {
 			this._server.openServer(
 				this._serverPort,
 				this._serverWSPort,
@@ -93,7 +93,7 @@ export class Manager extends Disposable {
 	}
 
 	public closeServer(showMsgAlreadyOff = false): void {
-		if (this._server.running) {
+		if (this._server.isRunning) {
 			this._server.closeServer();
 
 			if (this.currentPanel) {

@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { Disposable } from './dispose';
-import { pageHistory, NavEditCommands } from './pageHistoryTracker';
+import { Disposable } from '../utils/dispose';
+import { PageHistory, NavEditCommands } from './pageHistoryTracker';
 
 export class BrowserPreview extends Disposable {
 	public static readonly viewType = 'browserPreview';
-	private readonly _pageHistory: pageHistory;
+	private readonly _pageHistory: PageHistory;
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
 
@@ -44,7 +44,7 @@ export class BrowserPreview extends Disposable {
 		this._wsPort = wsPort;
 		this._panel = panel;
 		this._extensionUri = extensionUri;
-		this._pageHistory = this._register(new pageHistory());
+		this._pageHistory = this._register(new PageHistory());
 
 		this.updateForwardBackArrows();
 
@@ -104,9 +104,13 @@ export class BrowserPreview extends Disposable {
 		super.dispose();
 	}
 
+	private get _host() {
+		return `http://127.0.0.1:${this._port}`;
+	}
+
 	private handleOpenBrowser(givenURL: string) {
 		const urlString =
-			givenURL == '' ? this.constructHostAddress(this._panel.title) : givenURL;
+			givenURL == '' ? this.constructAddress(this._panel.title) : givenURL;
 		const url = vscode.Uri.parse(urlString);
 		vscode.env.openExternal(url);
 		vscode.window.showInformationMessage(
@@ -122,11 +126,11 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	private constructHostAddress(URLExt: string): string {
+	private constructAddress(URLExt: string): string {
 		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);
 		}
-		return `http://127.0.0.1:${this._port}/${URLExt}`;
+		return `${this._host}/${URLExt}`;
 	}
 
 	private setHtml(webview: vscode.Webview, url: string): void {
@@ -179,7 +183,7 @@ export class BrowserPreview extends Disposable {
 				font-src ${this._panel.webview.cspSource};
 				style-src ${this._panel.webview.cspSource};
 				script-src 'nonce-${nonce}';
-				frame-src ${url};
+				frame-src ${this._host};
 				">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -283,7 +287,7 @@ export class BrowserPreview extends Disposable {
 	}
 
 	private goToFile(URLExt: string): void {
-		this.setHtml(this._panel.webview, this.constructHostAddress(URLExt));
+		this.setHtml(this._panel.webview, this.constructAddress(URLExt));
 	}
 
 	private setPanelTitle(title = '/'): void {
