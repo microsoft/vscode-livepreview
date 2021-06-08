@@ -72,7 +72,6 @@ export class MainServer extends Disposable {
 				res.end();
 				return;
 			}
-			console.log(req.url);
 			const endOfPath = req.url.lastIndexOf('?');
 			const URLPathName =
 				endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
