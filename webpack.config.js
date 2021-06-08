@@ -1,18 +1,24 @@
+/* eslint-disable no-undef */
 //@ts-check
 
 'use strict';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require('path');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const CopyPlugin = require('copy-webpack-plugin');
 
 /**@type {import('webpack').Configuration}*/
 const config = {
+	context: path.resolve(__dirname),
 	target: 'node', // vscode extensions run in a Node.js-context 📖 -> https://webpack.js.org/configuration/node/
 
 	entry: './src/extension.ts', // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/
 	output: {
 		// the bundle is stored in the 'dist' folder (check package.json), 📖 -> https://webpack.js.org/configuration/output/
-		path: path.resolve(__dirname, 'media'),
+		path: path.resolve(__dirname, 'out'),
 		filename: 'extension.js',
 		libraryTarget: 'commonjs2',
 		devtoolModuleFilenameTemplate: '../[resource-path]',
@@ -32,29 +38,25 @@ const config = {
 			{
 				test: /\.ts$/,
 				exclude: /node_modules/,
-				use: [
-					{
-						loader: 'ts-loader',
-					},
-				],
+				use: 'ts-loader',
 			},
 		],
 	},
 
 	plugins: [
-		// @ts-ignore
 		new CopyPlugin({
 			patterns: [
 				{
 					from: './node_modules/vscode-codicons/dist/codicon.css',
-					to: 'codicon.css',
+					to: '../media/codicon.css',
 				},
 				{
 					from: './node_modules/vscode-codicons/dist/codicon.ttf',
-					to: 'codicon.ttf',
+					to: '../media/codicon.ttf',
 				},
 			],
 		}),
+        new CleanWebpackPlugin(),
 	],
 };
 module.exports = config;
