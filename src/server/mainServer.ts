@@ -5,7 +5,7 @@ import * as path from 'path';
 import { Disposable } from '../utils/dispose';
 import { PortInfo } from './serverManager';
 import { ContentLoader } from './contentLoader';
-import { HTMLInjector } from './htmlInjector';
+import { HTMLInjector } from './HTMLInjector';
 
 
 export class MainServer extends Disposable {
