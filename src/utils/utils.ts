@@ -61,22 +61,28 @@ export function GetConfig(resource: vscode.Uri): LiveServerConfigItem {
 	};
 }
 
-export function GetRelativeActiveFile() {
+export function GetRelativeActiveFile(): string{
 	const workspaceFolder =
 		vscode.workspace.workspaceFolders?.[0].uri.fsPath;
 	const activeFile = vscode.window.activeTextEditor?.document.fileName;
 
-	return activeFile
+	const ret = activeFile
 	?.substr(workspaceFolder?.length ?? 0)
 	.replace(/\\/gi, '/');
+	return ret ?? "";
 }
 
 
-export function SettingsSavedMessage() {
+export function SettingsSavedMessage(): void {
 	vscode.window.showInformationMessage("Your selection has been saved in settings.", GO_TO_SETTINGS)
 	.then((selection: vscode.MessageItem | undefined) => {
 		if (selection === GO_TO_SETTINGS) {
 			vscode.commands.executeCommand("workbench.action.openSettings",SETTINGS_SECTION_ID);
 		}
 	});
+}
+
+export function UpdateSettings<T>(settingSuffix: string, value: T, isGlobal = true): void {
+	vscode.workspace.getConfiguration(SETTINGS_SECTION_ID).update(settingSuffix, value, isGlobal);
+	SettingsSavedMessage();
 }

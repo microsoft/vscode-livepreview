@@ -3,7 +3,8 @@ import { Disposable } from '../utils/dispose';
 import { WSServer } from './wsServer';
 import { MainServer } from './mainServer';
 import { StatusBarNotifier } from './serverUtils/statusBarNotifier';
-import { AutoRefreshPreview, GetConfig } from '../utils/utils';
+import { AutoRefreshPreview, GetConfig, UpdateSettings } from '../utils/utils';
+import { CLOSE_SERVER, DONT_SHOW_AGAIN, Settings } from '../utils/constants';
 
 export interface PortInfo {
 	port?: number;
@@ -113,9 +114,7 @@ export class Server extends Disposable {
 		this._isServerOn = false; // TODO: find error conditions and return false when needed
 		this._statusBar.ServerOff();
 
-		if (GetConfig(this._extensionUri).showServerStatusPopUps) {
-			vscode.window.showInformationMessage("Server Closed");
-		}
+		this.showServerStatusMessage("Server Closed");
 	}
 
 	public openServer(
@@ -133,14 +132,22 @@ export class Server extends Disposable {
 			this._isServerOn = true;
 			this._statusBar.ServerOn(this._mainServer.port);
 			
-			if (GetConfig(this._extensionUri).showServerStatusPopUps) {
-				vscode.window.showInformationMessage(`Server Opened on Port ${this._mainServer.port}`);
-			}
+			this.showServerStatusMessage(`Server Opened on Port ${this._mainServer.port}`);
 			return true;
 		}
-		if (GetConfig(this._extensionUri).showServerStatusPopUps) {
-			vscode.window.showInformationMessage("Server Failed To Open");
-		}
+		this.showServerStatusMessage("Server Failed To Open");
 		return false;
 	}
+
+	private showServerStatusMessage(messsage:string) {
+		if (GetConfig(this._extensionUri).showServerStatusPopUps) {
+			vscode.window.showInformationMessage(messsage,DONT_SHOW_AGAIN)
+			.then((selection: vscode.MessageItem | undefined) => {
+				if (selection == DONT_SHOW_AGAIN) {
+					UpdateSettings(Settings.showServerStatusPopUps, false);
+				}
+			});
+		}
+	}
+
 }

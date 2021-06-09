@@ -8,9 +8,10 @@ import {
 	DONT_CLOSE,
 	HOST,
 	HAS_SET_CLOSE_PREVEW_BEHAVIOR,
-	SETTINGS_SECTION_ID
+	SETTINGS_SECTION_ID,
+	Settings
 } from './utils/constants';
-import { GetConfig, SettingsSavedMessage } from './utils/utils';
+import { GetConfig, SettingsSavedMessage, UpdateSettings } from './utils/utils';
 
 export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
@@ -97,8 +98,7 @@ export class Manager extends Disposable {
 							if (selection === CLOSE_SERVER) {
 								this.closeServer(true);
 							}
-							this.updateClosePreviewBehavior(selection == CLOSE_SERVER);
-							SettingsSavedMessage();
+							UpdateSettings(Settings.closeServerWithEmbeddedPreview, selection == CLOSE_SERVER);
 						}
 					});
 					this._globalState.update(HAS_SET_CLOSE_PREVEW_BEHAVIOR, true);
@@ -150,11 +150,6 @@ export class Manager extends Disposable {
 	dispose() {
 		this._server.closeServer();
 		super.dispose();
-	}
-
-	private updateClosePreviewBehavior(shouldClose:boolean) {
-		// change in global settings
-		vscode.workspace.getConfiguration(SETTINGS_SECTION_ID).update("closeServerWithEmbeddedPreview",shouldClose, true);
 	}
 }
 

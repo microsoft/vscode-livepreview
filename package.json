@@ -31,12 +31,12 @@
 			},
 			{
 				"command": "liveserver.start.preview.atActiveFile",
-				"title": "LiveServer v2: Show Preview at Active File",
+				"title": "LiveServer v2: Show Preview",
 				"icon": "$(open-preview)"
 			},
 			{
 				"command": "liveserver.end",
-				"title": "LiveServer v2: Close Development Server"
+				"title": "LiveServer v2: Stop Development Server"
 			}
 		],
 		"menus": {
