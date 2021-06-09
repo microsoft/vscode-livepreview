@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { Disposable } from '../utils/dispose';
 
+// flow is inspired by status bar in original Live Server extension
+// https://github.com/ritwickdey/vscode-live-server/blob/master/src/StatusbarUi.ts
 export class StatusBarNotifier extends Disposable {
 	private _statusBar: vscode.StatusBarItem;
 
