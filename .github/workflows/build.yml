@@ -6,7 +6,6 @@ on:
       - master
 jobs:
   build-and-test:
-
     runs-on: ${{ matrix.os }}
 
     strategy:
