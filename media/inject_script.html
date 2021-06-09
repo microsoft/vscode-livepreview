@@ -1,6 +1,5 @@
 <!-- Script injected by VS Live Server -->
 <script type="text/javascript" defer>
-
 	const url = 'ws://localhost:${WS_PORTNUM}';
 	const connection = new WebSocket(url);
 
@@ -32,8 +31,7 @@
 		false
 	);
 
-	document.addEventListener("DOMContentLoaded", function(e) {
-		
+	document.addEventListener('DOMContentLoaded', function (e) {
 		var l = document.getElementsByTagName('a');
 		for (var i = 0; i < l.length; i++) {
 			l[i].onclick = (e) => {
@@ -50,15 +48,13 @@
 						'*'
 					);
 				}
-		};
-	}
-	
-	})
+			};
+		}
+	});
 
 	window.addEventListener('message', (event) => {
 		if (event.data.command == 'open-external-link') {
 			window.parent.postMessage(event.data, '*');
 		}
 	});
-
 </script>

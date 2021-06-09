@@ -4,15 +4,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Disposable } from '../utils/dispose';
 import { PortInfo } from './serverManager';
-import { ContentLoader } from './contentLoader';
-import { HTMLInjector } from './HTMLInjector';
-
+import { ContentLoader } from './serverUtils/contentLoader';
+import { HTMLInjector } from './serverUtils/HTMLInjector';
 
 export class MainServer extends Disposable {
 	private _server: any;
-	private _port = 0;
 	private _contentLoader: ContentLoader;
-	
+	public port = 0;
+
 	constructor() {
 		super();
 		this._contentLoader = this._register(new ContentLoader());
@@ -22,9 +21,9 @@ export class MainServer extends Disposable {
 		new vscode.EventEmitter<PortInfo>()
 	);
 	public readonly onPortChange = this._onPortChangeEmitter.event;
-	
-	public start(port:number, basePath: string) {
-		this._port = port;
+
+	public start(port: number, basePath: string) {
+		this.port = port;
 		this.startMainServer(basePath);
 	}
 
@@ -32,9 +31,12 @@ export class MainServer extends Disposable {
 		this._server.close();
 	}
 
-	public setInjectorWSPort(ws_port:number,extensionUri?: vscode.Uri) {
+	public setInjectorWSPort(ws_port: number, extensionUri?: vscode.Uri) {
 		if (!this._contentLoader.scriptInjector && extensionUri) {
-			this._contentLoader.scriptInjector = new HTMLInjector(extensionUri, ws_port);
+			this._contentLoader.scriptInjector = new HTMLInjector(
+				extensionUri,
+				ws_port
+			);
 		} else if (this._contentLoader.scriptInjector) {
 			this._contentLoader.scriptInjector.ws_port = ws_port;
 		}
@@ -43,27 +45,22 @@ export class MainServer extends Disposable {
 		this._server = this.createServer(basePath);
 
 		this._server.on('listening', () => {
-			console.log(`Server is running on port ${this._port}`);
-			vscode.window.showInformationMessage(
-				`Server is running on port ${this._port}`
-			);
-			this._onPortChangeEmitter.fire({ port: this._port });
+			console.log(`Server is running on port ${this.port}`);
+			this._onPortChangeEmitter.fire({ port: this.port });
 		});
 
 		this._server.on('error', (err: any) => {
 			if (err.code == 'EADDRINUSE') {
-				this._port++;
-				this._server.listen(this._port, '127.0.0.1');
+				this.port++;
+				this._server.listen(this.port, '127.0.0.1');
 			} else {
 				console.log(`Unknown error: ${err}`);
 			}
 		});
 
-		this._server.listen(this._port, '127.0.0.1');
+		this._server.listen(this.port, '127.0.0.1');
 		return true;
 	}
-
-
 
 	private createServer(basePath: string) {
 		return http.createServer((req, res) => {
@@ -95,7 +92,10 @@ export class MainServer extends Disposable {
 					stream = this._contentLoader.getFileStream(absoluteReadPath);
 				} else {
 					// create a default index page
-					stream = this._contentLoader.createIndexPage(absoluteReadPath, URLPathName);
+					stream = this._contentLoader.createIndexPage(
+						absoluteReadPath,
+						URLPathName
+					);
 				}
 			} else {
 				stream = this._contentLoader.getFileStream(absoluteReadPath);
@@ -114,7 +114,4 @@ export class MainServer extends Disposable {
 			}
 		});
 	}
-
-	
-	
 }

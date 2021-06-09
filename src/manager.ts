@@ -6,23 +6,25 @@ import {
 	INIT_PANEL_TITLE,
 	CLOSE_SERVER,
 	DONT_CLOSE,
-	PORTNUM,
-	WS_PORTNUM,
+	INIT_PORTNUM,
+	INIT_WS_PORTNUM,
 } from './utils/constants';
 
 export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
-	private readonly _server = new Server();
+	private readonly _server: Server;
 	private readonly _extensionUri: vscode.Uri;
 	private readonly _path: vscode.WorkspaceFolder | undefined;
-	private _serverPort: number = PORTNUM;
-	private _serverWSPort: number = WS_PORTNUM;
+
+	// always leave off at previous port numbers to avoid retrying on many busy ports
+	private _serverPort: number = INIT_PORTNUM;
+	private _serverWSPort: number = INIT_WS_PORTNUM;
 
 	constructor(extensionUri: vscode.Uri) {
 		super();
 		this._extensionUri = extensionUri;
 		this._path = vscode.workspace.workspaceFolders?.[0];
-
+		this._server = this._register(new Server());
 		this._server.onPortChange((e) => {
 			if (this.currentPanel) {
 				this._serverPort = e.port ?? this._serverPort;
@@ -34,7 +36,7 @@ export class Manager extends Disposable {
 
 	public createOrShowPreview(
 		panel: vscode.WebviewPanel | undefined = undefined,
-		file = "/"
+		file = '/'
 	): void {
 		const currentColumn = vscode.window.activeTextEditor?.viewColumn ?? 1;
 		const column = currentColumn + 1;
@@ -101,7 +103,6 @@ export class Manager extends Disposable {
 			if (this.currentPanel) {
 				this.currentPanel.close();
 			}
-			vscode.window.showInformationMessage('Closed server');
 		} else if (showMsgAlreadyOff) {
 			vscode.window.showErrorMessage('Server already closed');
 		}

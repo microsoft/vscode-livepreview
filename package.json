@@ -16,11 +16,7 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:liveserver.start",
-		"onCommand:liveserver.end",
-		"onCommand:liveserver.start.preview.atIndex",
-		"onCommand:liveserver.start.preview.atActiveFile",
-		"onWebviewPanel:browserPreview"
+		"*"
 	],
 	"main": "./out/extension.js",
 	"contributes": {

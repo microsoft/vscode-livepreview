@@ -6,7 +6,8 @@
 	--input-margin-horizontal: 0;
 }
 
-html, body {
+html,
+body {
 	height: 100%;
 	min-height: 100%;
 	padding: 0;
@@ -49,39 +50,38 @@ iframe {
 }
 
 .controls {
-	display:block;
-	width:100%;
-	height:2em;
-	margin-top:0;
+	display: block;
+	width: 100%;
+	height: 2em;
+	margin-top: 0;
 	background: var(--vscode-editor-background);
 }
 
 .controls button i {
 	display: flex;
 	margin-right: 0.3em;
-
 }
 
 .displayContents {
-	position:fixed;
-    display: table; 
-    width: 100%;
-    height: 100%;
+	position: fixed;
+	display: table;
+	width: 100%;
+	height: 100%;
 }
 
-.displayContents > div {   
-    display: table-row;   
-    width: 100%;
+.displayContents > div {
+	display: table-row;
+	width: 100%;
 }
 
 .headercontent {
-    display: table-cell;   
-	text-align:right;
-	width:100%;
-	height:2em;
+	display: table-cell;
+	text-align: right;
+	width: 100%;
+	height: 2em;
 }
 .header nav {
-	display:flex;
+	display: flex;
 }
 
 .header nav button {
@@ -92,8 +92,8 @@ iframe {
 	outline-offset: 2px !important;
 	color: var(--vscode-icon-foreground);
 	background: none;
-	width:25%;
-	display:inline-block;
+	width: 25%;
+	display: inline-block;
 }
 
 .header nav button:hover:not(:disabled) {
@@ -111,7 +111,7 @@ iframe {
 	outline-color: var(--vscode-focusBorder);
 }
 .content iframe {
-    display: table-cell;   
+	display: table-cell;
 	width: 100%;
 	height: 100%;
 	background: white; /* Browsers default to a white background */

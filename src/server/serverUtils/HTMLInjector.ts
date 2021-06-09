@@ -1,15 +1,15 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { WS_PORTNUM_PLACEHOLDER } from '../utils/constants';
-import { Disposable } from '../utils/dispose';
+import { WS_PORTNUM_PLACEHOLDER } from '../../utils/constants';
+import { Disposable } from '../../utils/dispose';
 
 export class HTMLInjector extends Disposable {
 	private readonly _pre_port_script: string;
 	private readonly _post_port_script: string;
 	public ws_port;
 
-	constructor(extensionUri: vscode.Uri, ws_port:number) {
+	constructor(extensionUri: vscode.Uri, ws_port: number) {
 		super();
 		const scriptPath = path.join(
 			extensionUri.fsPath,
@@ -19,8 +19,10 @@ export class HTMLInjector extends Disposable {
 		this.ws_port = ws_port;
 		const fileString = fs.readFileSync(scriptPath).toString();
 		const placeHolderIndex = fileString.indexOf(WS_PORTNUM_PLACEHOLDER);
-		this._pre_port_script = fileString.substr(0,placeHolderIndex);
-		this._post_port_script = fileString.substr(placeHolderIndex + WS_PORTNUM_PLACEHOLDER.length);
+		this._pre_port_script = fileString.substr(0, placeHolderIndex);
+		this._post_port_script = fileString.substr(
+			placeHolderIndex + WS_PORTNUM_PLACEHOLDER.length
+		);
 	}
 
 	public get script() {

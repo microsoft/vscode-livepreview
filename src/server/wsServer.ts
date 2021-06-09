@@ -17,8 +17,8 @@ export class WSServer extends Disposable {
 		new vscode.EventEmitter<PortInfo>()
 	);
 	public readonly onPortChange = this._onPortChangeEmitter.event;
-	
-	public start(ws_port:number, basePath: string, extensionUri: vscode.Uri) {
+
+	public start(ws_port: number, basePath: string, extensionUri: vscode.Uri) {
 		this._ws_port = ws_port;
 		this.startWSServer(basePath, extensionUri);
 	}
@@ -30,8 +30,7 @@ export class WSServer extends Disposable {
 	}
 
 	private startWSServer(basePath: string, extensionUri: vscode.Uri): boolean {
-
-		this._wss = new WebSocket.Server({port: this._ws_port });
+		this._wss = new WebSocket.Server({ port: this._ws_port });
 		this._wss.on('connection', (ws: any) =>
 			this.handleWSConnection(basePath, ws)
 		);
@@ -90,7 +89,6 @@ export class WSServer extends Disposable {
 		return { injectable: false, pathname: url.pathname };
 	}
 
-	
 	public refreshBrowsers(): void {
 		if (this._wss) {
 			this._wss.clients.forEach((client: any) =>

@@ -2,8 +2,8 @@ import * as Stream from 'stream';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { Disposable } from '../utils/dispose';
-import { FormatFileSize, FormatDateTime } from '../utils/utils';
+import { Disposable } from '../../utils/dispose';
+import { FormatFileSize, FormatDateTime } from '../../utils/utils';
 import { HTMLInjector } from './HTMLInjector';
 
 export interface IndexFileEntry {
@@ -147,7 +147,8 @@ export class ContentLoader extends Disposable {
 		if (i == workspaceDocuments.length) {
 			if (readPath.endsWith('.html')) {
 				const buffer = fs.readFileSync(readPath);
-				const injectedFileContents = this.scriptInjector?.script + buffer.toString();
+				const injectedFileContents =
+					this.scriptInjector?.script + buffer.toString();
 				stream = Stream.Readable.from(injectedFileContents);
 			} else {
 				stream = fs.createReadStream(readPath);

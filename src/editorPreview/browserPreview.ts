@@ -19,7 +19,7 @@ export class BrowserPreview extends Disposable {
 		this._panel.dispose();
 	}
 
-	public reveal(column: number, file = "/"): void {
+	public reveal(column: number, file = '/'): void {
 		this.goToFile(file);
 		this.handleNewPageLoad(file);
 		this._panel.reveal(column);
@@ -34,13 +34,13 @@ export class BrowserPreview extends Disposable {
 	private get currentAddress() {
 		return this._panel.title;
 	}
-	
+
 	constructor(
 		panel: vscode.WebviewPanel,
 		extensionUri: vscode.Uri,
 		port: number,
 		wsPort: number,
-		initialFile: string,
+		initialFile: string
 	) {
 		super();
 
@@ -108,7 +108,7 @@ export class BrowserPreview extends Disposable {
 	private reloadWebview() {
 		this.goToFile(this._panel.title);
 	}
-	
+
 	private handleOpenBrowser(givenURL: string) {
 		const urlString =
 			givenURL == '' ? this.constructAddress(this._panel.title) : givenURL;
@@ -240,6 +240,12 @@ export class BrowserPreview extends Disposable {
 			this.goToFile(pagename);
 		}
 
+		// If we can't rely on inline script to update panel title,
+		// then set panel title manually
+		if (!pagename?.endsWith(".html")) {
+			this.setPanelTitle(pagename);
+		}
+
 		for (const i in response.actions) {
 			this.handleNavAction(response.actions[i]);
 		}
@@ -252,6 +258,13 @@ export class BrowserPreview extends Disposable {
 		if (pagename != undefined) {
 			this.goToFile(pagename);
 		}
+
+		// If we can't rely on inline script to update panel title,
+		// then set panel title manually
+		if (!pagename?.endsWith(".html")) {
+			this.setPanelTitle(pagename);
+		}
+
 		for (const i in response.actions) {
 			this.handleNavAction(response.actions[i]);
 		}
