@@ -243,7 +243,7 @@ export class BrowserPreview extends Disposable {
 
 		// If we can't rely on inline script to update panel title,
 		// then set panel title manually
-		if (!pagename?.endsWith(".html")) {
+		if (!pagename?.endsWith('.html')) {
 			this.setPanelTitle(pagename);
 		}
 
@@ -262,7 +262,7 @@ export class BrowserPreview extends Disposable {
 
 		// If we can't rely on inline script to update panel title,
 		// then set panel title manually
-		if (!pagename?.endsWith(".html")) {
+		if (!pagename?.endsWith('.html')) {
 			this.setPanelTitle(pagename);
 		}
 

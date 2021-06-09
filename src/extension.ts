@@ -27,12 +27,15 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		)
 	);
-	
+
 	context.subscriptions.push(
-		vscode.commands.registerCommand('liveserver.start.externalPreview.atActiveFile', () => {
-			const relativeActiveFile = GetRelativeActiveFile();
-			manager.showPreviewInBrowser(relativeActiveFile);
-		})
+		vscode.commands.registerCommand(
+			'liveserver.start.externalPreview.atActiveFile',
+			() => {
+				const relativeActiveFile = GetRelativeActiveFile();
+				manager.showPreviewInBrowser(relativeActiveFile);
+			}
+		)
 	);
 
 	context.subscriptions.push(

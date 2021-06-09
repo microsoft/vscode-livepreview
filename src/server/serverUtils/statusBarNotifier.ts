@@ -15,14 +15,14 @@ export class StatusBarNotifier extends Disposable {
 		);
 		this._extensionUri = extensionUri;
 
-		if(GetConfig(extensionUri).showStatusBarItem) {
+		if (GetConfig(extensionUri).showStatusBarItem) {
 			this._statusBar.show();
 		} else {
 			this._statusBar.hide();
 		}
 		this.ServerOff();
 	}
-	
+
 	public ServerOn(port: number) {
 		this._statusBar.text = `$(circle-slash) Server on Port ${port}`;
 		this._statusBar.tooltip = 'Click to stop the server';
@@ -48,7 +48,7 @@ export class StatusBarNotifier extends Disposable {
 	}
 
 	public updateConfigurations() {
-		if(GetConfig(this._extensionUri).showStatusBarItem) {
+		if (GetConfig(this._extensionUri).showStatusBarItem) {
 			this._statusBar.show();
 		} else {
 			this._statusBar.hide();

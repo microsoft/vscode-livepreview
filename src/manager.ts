@@ -9,7 +9,7 @@ import {
 	HOST,
 	HAS_SET_CLOSE_PREVEW_BEHAVIOR,
 	SETTINGS_SECTION_ID,
-	Settings
+	Settings,
 } from './utils/constants';
 import { GetConfig, SettingsSavedMessage, UpdateSettings } from './utils/utils';
 
@@ -53,7 +53,7 @@ export class Manager extends Disposable {
 	): void {
 		const currentColumn = vscode.window.activeTextEditor?.viewColumn ?? 1;
 		const column = currentColumn + 1;
-		file = file.endsWith(".html") ? file : "/";
+		file = file.endsWith('.html') ? file : '/';
 		// If we already have a panel, show it.
 		if (this.currentPanel) {
 			this.currentPanel.reveal(column, file);
@@ -88,30 +88,34 @@ export class Manager extends Disposable {
 			if (this._server.isRunning) {
 				if (!this._globalState.get<boolean>(HAS_SET_CLOSE_PREVEW_BEHAVIOR)) {
 					vscode.window
-					.showInformationMessage(
-						'You closed the embedded preview. Would you like to also close the server?',
-						CLOSE_SERVER,
-						DONT_CLOSE
-					)
-					.then((selection: vscode.MessageItem | undefined) => {
-						if (selection) {
-							if (selection === CLOSE_SERVER) {
-								this.closeServer(true);
+						.showInformationMessage(
+							'You closed the embedded preview. Would you like to also close the server?',
+							CLOSE_SERVER,
+							DONT_CLOSE
+						)
+						.then((selection: vscode.MessageItem | undefined) => {
+							if (selection) {
+								if (selection === CLOSE_SERVER) {
+									this.closeServer(true);
+								}
+								UpdateSettings(
+									Settings.closeServerWithEmbeddedPreview,
+									selection == CLOSE_SERVER
+								);
 							}
-							UpdateSettings(Settings.closeServerWithEmbeddedPreview, selection == CLOSE_SERVER);
-						}
-					});
+						});
 					this._globalState.update(HAS_SET_CLOSE_PREVEW_BEHAVIOR, true);
-				} else if (GetConfig(this._extensionUri).closeServerWithEmbeddedPreview) {
+				} else if (
+					GetConfig(this._extensionUri).closeServerWithEmbeddedPreview
+				) {
 					this.closeServer(true);
 				}
 			}
 		});
 	}
 
-	public showPreviewInBrowser(
-		file = '/') {
-		file = file.endsWith(".html") ? file : "/";
+	public showPreviewInBrowser(file = '/') {
+		file = file.endsWith('.html') ? file : '/';
 		const serverOn = this.openServer();
 
 		if (!serverOn) {

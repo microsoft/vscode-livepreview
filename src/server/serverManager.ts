@@ -27,7 +27,11 @@ export class Server extends Disposable {
 
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
-				if (e.contentChanges && e.contentChanges.length > 0 && this._reloadOnAnyChange) {
+				if (
+					e.contentChanges &&
+					e.contentChanges.length > 0 &&
+					this._reloadOnAnyChange
+				) {
 					this._wsServer.refreshBrowsers();
 				}
 			})
@@ -100,11 +104,17 @@ export class Server extends Disposable {
 	public readonly onPortChange = this._onPortChangeEmitter.event;
 
 	private get _reloadOnAnyChange() {
-		return GetConfig(this._extensionUri).autoRefreshPreview == AutoRefreshPreview.onAnyChange;
+		return (
+			GetConfig(this._extensionUri).autoRefreshPreview ==
+			AutoRefreshPreview.onAnyChange
+		);
 	}
 
 	private get _reloadOnSave() {
-		return GetConfig(this._extensionUri).autoRefreshPreview == AutoRefreshPreview.onSave;
+		return (
+			GetConfig(this._extensionUri).autoRefreshPreview ==
+			AutoRefreshPreview.onSave
+		);
 	}
 
 	public closeServer(): void {
@@ -114,7 +124,7 @@ export class Server extends Disposable {
 		this._isServerOn = false; // TODO: find error conditions and return false when needed
 		this._statusBar.ServerOff();
 
-		this.showServerStatusMessage("Server Closed");
+		this.showServerStatusMessage('Server Closed');
 	}
 
 	public openServer(
@@ -131,23 +141,25 @@ export class Server extends Disposable {
 			this._wsServer.start(ws_port, basePath, this._extensionUri);
 			this._isServerOn = true;
 			this._statusBar.ServerOn(this._mainServer.port);
-			
-			this.showServerStatusMessage(`Server Opened on Port ${this._mainServer.port}`);
+
+			this.showServerStatusMessage(
+				`Server Opened on Port ${this._mainServer.port}`
+			);
 			return true;
 		}
-		this.showServerStatusMessage("Server Failed To Open");
+		this.showServerStatusMessage('Server Failed To Open');
 		return false;
 	}
 
-	private showServerStatusMessage(messsage:string) {
+	private showServerStatusMessage(messsage: string) {
 		if (GetConfig(this._extensionUri).showServerStatusPopUps) {
-			vscode.window.showInformationMessage(messsage,DONT_SHOW_AGAIN)
-			.then((selection: vscode.MessageItem | undefined) => {
-				if (selection == DONT_SHOW_AGAIN) {
-					UpdateSettings(Settings.showServerStatusPopUps, false);
-				}
-			});
+			vscode.window
+				.showInformationMessage(messsage, DONT_SHOW_AGAIN)
+				.then((selection: vscode.MessageItem | undefined) => {
+					if (selection == DONT_SHOW_AGAIN) {
+						UpdateSettings(Settings.showServerStatusPopUps, false);
+					}
+				});
 		}
 	}
-
 }

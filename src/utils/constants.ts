@@ -12,24 +12,25 @@ export const DONT_CLOSE: vscode.MessageItem = {
 };
 
 export const GO_TO_SETTINGS: vscode.MessageItem = {
-	title: "Go To Settings",
+	title: 'Go To Settings',
 };
 
 export const DONT_SHOW_AGAIN: vscode.MessageItem = {
 	title: "Don't Show Again",
 };
 
-export const HOST = "127.0.0.1";
+export const HOST = '127.0.0.1';
 
-export const HAS_SET_CLOSE_PREVEW_BEHAVIOR = "liveserver.hasSetClosePreviewBehavior";
+export const HAS_SET_CLOSE_PREVEW_BEHAVIOR =
+	'liveserver.hasSetClosePreviewBehavior';
 
-export const SETTINGS_SECTION_ID = "liveserver";
+export const SETTINGS_SECTION_ID = 'liveserver';
 
 export const Settings: any = {
-	portNum: "portNum",
-	showStatusBarItem:"showStatusBarItem",
-	showServerStatusPopUps: "showServerStatusPopUps",
-	autoRefreshPreview: "autoRefreshPreview",
-	launchPreviewOnServerStart: "launchPreviewOnServerStart",
-	closeServerWithEmbeddedPreview: "closeServerWithEmbeddedPreview"
+	portNum: 'portNum',
+	showStatusBarItem: 'showStatusBarItem',
+	showServerStatusPopUps: 'showServerStatusPopUps',
+	autoRefreshPreview: 'autoRefreshPreview',
+	launchPreviewOnServerStart: 'launchPreviewOnServerStart',
+	closeServerWithEmbeddedPreview: 'closeServerWithEmbeddedPreview',
 };
