@@ -1,3 +1,27 @@
+import * as vscode from 'vscode';
+import { GO_TO_SETTINGS, SETTINGS_SECTION_ID } from './constants';
+
+interface LiveServerConfigItem {
+	portNum: number;
+	showStatusBarItem: boolean;
+	showServerStatusPopUps: boolean;
+	autoRefreshPreview: AutoRefreshPreview;
+	launchPreviewOnServerStart: LaunchPreviewOnServerStart;
+	closeServerWithEmbeddedPreview: boolean;
+}
+
+export enum AutoRefreshPreview {
+	onAnyChange = 'On All Changes in Editor',
+	onSave = 'On Changes to Saved Files',
+	never = 'Never',
+}
+
+export enum LaunchPreviewOnServerStart {
+	embeddedPreview = 'Embedded Preview',
+	externalBrowser = 'External Browser',
+	nothing = 'Nothing',
+}
+
 export function FormatDateTime(date: Date): string {
 	const mm = date.getMonth() + 1;
 	const dd = date.getDate().toString().padStart(2, '0');
@@ -23,4 +47,65 @@ export function FormatFileSize(bytes: number) {
 	}
 	const modifiedSize = (bytes / Math.pow(1024, i)).toFixed(1);
 	return `${modifiedSize} TB`;
+}
+
+export function GetConfig(resource: vscode.Uri): LiveServerConfigItem {
+	const config = vscode.workspace.getConfiguration(
+		SETTINGS_SECTION_ID,
+		resource
+	);
+	return {
+		portNum: config.get<number>('portNum', 3000),
+		showStatusBarItem: config.get<boolean>('showStatusBarItem', true),
+		showServerStatusPopUps: config.get<boolean>('showServerStatusPopUps', true),
+		autoRefreshPreview: config.get<AutoRefreshPreview>(
+			'autoRefreshPreview',
+			AutoRefreshPreview.onAnyChange
+		),
+		launchPreviewOnServerStart: config.get<LaunchPreviewOnServerStart>(
+			'launchPreviewOnServerStart',
+			LaunchPreviewOnServerStart.embeddedPreview
+		),
+		closeServerWithEmbeddedPreview: config.get<boolean>(
+			'closeServerWithEmbeddedPreview',
+			false
+		),
+	};
+}
+
+export function GetRelativeActiveFile(): string {
+	const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+	const activeFile = vscode.window.activeTextEditor?.document.fileName;
+
+	const ret = activeFile
+		?.substr(workspaceFolder?.length ?? 0)
+		.replace(/\\/gi, '/');
+	return ret ?? '';
+}
+
+export function SettingsSavedMessage(): void {
+	vscode.window
+		.showInformationMessage(
+			'Your selection has been saved in settings.',
+			GO_TO_SETTINGS
+		)
+		.then((selection: vscode.MessageItem | undefined) => {
+			if (selection === GO_TO_SETTINGS) {
+				vscode.commands.executeCommand(
+					'workbench.action.openSettings',
+					SETTINGS_SECTION_ID
+				);
+			}
+		});
+}
+
+export function UpdateSettings<T>(
+	settingSuffix: string,
+	value: T,
+	isGlobal = true
+): void {
+	vscode.workspace
+		.getConfiguration(SETTINGS_SECTION_ID)
+		.update(settingSuffix, value, isGlobal);
+	SettingsSavedMessage();
 }

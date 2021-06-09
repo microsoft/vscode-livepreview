@@ -6,6 +6,7 @@ import { Disposable } from '../utils/dispose';
 import { PortInfo } from './serverManager';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { HTMLInjector } from './serverUtils/HTMLInjector';
+import { HOST } from '../utils/constants';
 
 export class MainServer extends Disposable {
 	private _server: any;
@@ -52,13 +53,13 @@ export class MainServer extends Disposable {
 		this._server.on('error', (err: any) => {
 			if (err.code == 'EADDRINUSE') {
 				this.port++;
-				this._server.listen(this.port, '127.0.0.1');
+				this._server.listen(this.port, HOST);
 			} else {
 				console.log(`Unknown error: ${err}`);
 			}
 		});
 
-		this._server.listen(this.port, '127.0.0.1');
+		this._server.listen(this.port, HOST);
 		return true;
 	}
 
