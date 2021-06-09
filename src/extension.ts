@@ -12,8 +12,18 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('liveserver.start.withpreview', () => {
+		vscode.commands.registerCommand('liveserver.start.preview.atIndex', () => {
 			manager.createOrShowPreview();
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('liveserver.start.preview.atActiveFile', () => {
+			const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+			const activeFile = vscode.window.activeTextEditor?.document.fileName;
+
+			const relativeActiveFile = activeFile?.substr(workspaceFolder?.length ?? 0).replace(/\\/gi, "/");
+			manager.createOrShowPreview(undefined,relativeActiveFile);
 		})
 	);
 
@@ -28,8 +38,7 @@ export function activate(context: vscode.ExtensionContext) {
 			async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel) {
 				// Reset the webview options so we use latest uri for `localResourceRoots`.
 				webviewPanel.webview.options = getWebviewOptions(context.extensionUri);
-				manager.createOrShowPreview(webviewPanel);
-				// bp.BrowserPreview.revive(webviewPanel, context.extensionUri);
+				manager.createOrShowPreview(webviewPanel,webviewPanel.title);
 			},
 		});
 	}

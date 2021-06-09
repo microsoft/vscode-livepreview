@@ -33,14 +33,15 @@ export class Manager extends Disposable {
 	}
 
 	public createOrShowPreview(
-		panel: vscode.WebviewPanel | undefined = undefined
+		panel: vscode.WebviewPanel | undefined = undefined,
+		file = "/"
 	): void {
 		const currentColumn = vscode.window.activeTextEditor?.viewColumn ?? 1;
 		const column = currentColumn + 1;
 
 		// If we already have a panel, show it.
 		if (this.currentPanel) {
-			this.currentPanel.reveal(column);
+			this.currentPanel.reveal(column, file);
 			return;
 		}
 
@@ -58,7 +59,8 @@ export class Manager extends Disposable {
 			panel,
 			this._extensionUri,
 			this._serverPort,
-			this._serverWSPort
+			this._serverWSPort,
+			file
 		);
 
 		this.currentPanel.onDispose(() => {

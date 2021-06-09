@@ -18,7 +18,8 @@
 	"activationEvents": [
 		"onCommand:liveserver.start",
 		"onCommand:liveserver.end",
-		"onCommand:liveserver.start.withpreview",
+		"onCommand:liveserver.start.preview.atIndex",
+		"onCommand:liveserver.start.preview.atActiveFile",
 		"onWebviewPanel:browserPreview"
 	],
 	"main": "./out/extension.js",
@@ -29,14 +30,28 @@
 				"title": "LiveServer v2: Start Development Server"
 			},
 			{
-				"command": "liveserver.start.withpreview",
-				"title": "LiveServer v2: Show Preview"
+				"command": "liveserver.start.preview.atIndex",
+				"title": "LiveServer v2: Show Preview at Index"
+			},
+			{
+				"command": "liveserver.start.preview.atActiveFile",
+				"title": "LiveServer v2: Show Preview at Active File",
+				"icon": "$(open-preview)"
 			},
 			{
 				"command": "liveserver.end",
 				"title": "LiveServer v2: Close Development Server"
 			}
-		]
+		],
+		"menus": {
+			"editor/title": [
+				{
+					"command": "liveserver.start.preview.atActiveFile",
+					"when": "editorLangId == html && !notebookEditorFocused",
+					"group": "navigation"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "webpack --mode production",

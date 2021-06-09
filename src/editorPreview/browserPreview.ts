@@ -19,24 +19,28 @@ export class BrowserPreview extends Disposable {
 		this._panel.dispose();
 	}
 
-	public reveal(column: number): void {
+	public reveal(column: number, file = "/"): void {
+		this.goToFile(file);
+		this.handleNewPageLoad(file);
 		this._panel.reveal(column);
 	}
 
 	public updatePortNums(port: number, wsPort: number): void {
 		this._port = port;
 		this._wsPort = wsPort;
-		this.goToFile('/');
+		this.reloadWebview();
 	}
 
 	private get currentAddress() {
 		return this._panel.title;
 	}
+	
 	constructor(
 		panel: vscode.WebviewPanel,
 		extensionUri: vscode.Uri,
 		port: number,
-		wsPort: number
+		wsPort: number,
+		initialFile: string,
 	) {
 		super();
 
@@ -49,9 +53,9 @@ export class BrowserPreview extends Disposable {
 		this.updateForwardBackArrows();
 
 		// Set the webview's html content at index.html
-		this.goToFile('/');
-		this._pageHistory?.addHistory('/');
-		this.setPanelTitle('/');
+		this.goToFile(initialFile);
+		this._pageHistory?.addHistory(initialFile);
+		this.setPanelTitle(initialFile);
 
 		// Listen for when the panel is disposed
 		// This happens when the user closes the panel or when the panel is closed programmatically
@@ -84,15 +88,8 @@ export class BrowserPreview extends Disposable {
 						// called from main.js in the case where the target is non-injectable
 						this.handleNewPageLoad(message.text);
 						return;
-				}
-			})
-		);
-
-		// Update the content based on view changes
-		this._register(
-			this._panel.onDidChangeViewState((e) => {
-				if (this._panel.visible) {
-					this.updateForwardBackArrows();
+					case 'refresh-back-forward-buttons':
+						this.updateForwardBackArrows();
 				}
 			})
 		);
@@ -108,6 +105,10 @@ export class BrowserPreview extends Disposable {
 		return `http://127.0.0.1:${this._port}`;
 	}
 
+	private reloadWebview() {
+		this.goToFile(this._panel.title);
+	}
+	
 	private handleOpenBrowser(givenURL: string) {
 		const urlString =
 			givenURL == '' ? this.constructAddress(this._panel.title) : givenURL;
@@ -119,6 +120,7 @@ export class BrowserPreview extends Disposable {
 		this.goToFile(this.currentAddress);
 		this.updateForwardBackArrows();
 	}
+
 	private updateForwardBackArrows(): void {
 		const navigationStatus = this._pageHistory.currentCommands;
 		for (const i in navigationStatus) {
