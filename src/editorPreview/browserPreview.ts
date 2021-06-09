@@ -88,15 +88,8 @@ export class BrowserPreview extends Disposable {
 						// called from main.js in the case where the target is non-injectable
 						this.handleNewPageLoad(message.text);
 						return;
-				}
-			})
-		);
-
-		// Update the content based on view changes
-		this._register(
-			this._panel.onDidChangeViewState((e) => {
-				if (this._panel.visible) {
-					this.updateForwardBackArrows();
+					case 'refresh-back-forward-buttons':
+						this.updateForwardBackArrows();
 				}
 			})
 		);

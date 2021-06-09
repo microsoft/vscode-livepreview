@@ -23,6 +23,12 @@
 		}
 	};
 
+	document.addEventListener("DOMContentLoaded", function(e) {
+		vscode.postMessage({
+			command: 'refresh-back-forward-buttons',
+		});
+	});
+
 	document.getElementById('back').onclick = function () {
 		vscode.postMessage({
 			command: 'go-back',
