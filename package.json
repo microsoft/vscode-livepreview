@@ -1,7 +1,7 @@
 {
 	"name": "live-server",
 	"displayName": "Live Server",
-	"description": "A simple live server hosting extension for static HTML/CSS Projects",
+	"description": "An extension that hosts your web project for previewing.",
 	"version": "0.0.2",
 	"publisher": "andrea-mah",
 	"icon": "icon.png",
@@ -23,20 +23,20 @@
 		"commands": [
 			{
 				"command": "liveserver.start",
-				"title": "LiveServer v2: Start Development Server"
+				"title": "Live Server: Start Development Server"
 			},
 			{
 				"command": "liveserver.start.preview.atIndex",
-				"title": "LiveServer v2: Show Preview at Index"
+				"title": "Live Server: Show Preview at Index Page"
 			},
 			{
 				"command": "liveserver.start.preview.atActiveFile",
-				"title": "LiveServer v2: Show Preview",
+				"title": "Live Server: Show Preview",
 				"icon": "$(open-preview)"
 			},
 			{
 				"command": "liveserver.end",
-				"title": "LiveServer v2: Stop Development Server"
+				"title": "Live Server: Stop Development Server"
 			}
 		],
 		"menus": {
