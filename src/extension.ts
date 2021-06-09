@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
+import { GetRelativeActiveFile } from './utils/utils';
 
 export function activate(context: vscode.ExtensionContext) {
-	const manager = new Manager(context.extensionUri);
+	const manager = new Manager(context.extensionUri, context.globalState);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('liveserver.start', () => {
@@ -21,16 +22,17 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			'liveserver.start.preview.atActiveFile',
 			() => {
-				const workspaceFolder =
-					vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-				const activeFile = vscode.window.activeTextEditor?.document.fileName;
-
-				const relativeActiveFile = activeFile
-					?.substr(workspaceFolder?.length ?? 0)
-					.replace(/\\/gi, '/');
+				const relativeActiveFile = GetRelativeActiveFile();
 				manager.createOrShowPreview(undefined, relativeActiveFile);
 			}
 		)
+	);
+	
+	context.subscriptions.push(
+		vscode.commands.registerCommand('liveserver.start.externalPreview.atActiveFile', () => {
+			const relativeActiveFile = GetRelativeActiveFile();
+			manager.showPreviewInBrowser(relativeActiveFile);
+		})
 	);
 
 	context.subscriptions.push(

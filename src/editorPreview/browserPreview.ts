@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { HOST, INIT_PANEL_TITLE } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { PageHistory, NavEditCommands } from './pageHistoryTracker';
 
@@ -102,7 +103,7 @@ export class BrowserPreview extends Disposable {
 	}
 
 	private get _host() {
-		return `http://127.0.0.1:${this._port}`;
+		return `http://${HOST}:${this._port}`;
 	}
 
 	private reloadWebview() {
@@ -112,8 +113,8 @@ export class BrowserPreview extends Disposable {
 	private handleOpenBrowser(givenURL: string) {
 		const urlString =
 			givenURL == '' ? this.constructAddress(this._panel.title) : givenURL;
-		const url = vscode.Uri.parse(urlString);
-		vscode.env.openExternal(url);
+		const uri = vscode.Uri.parse(urlString);
+		vscode.env.openExternal(uri);
 		vscode.window.showInformationMessage(
 			`The link ${urlString} was opened in an external browser. Externally hosted links are not supported in the embedded browser. `
 		);
@@ -192,7 +193,7 @@ export class BrowserPreview extends Disposable {
 				<link href="${stylesMainUri}" rel="stylesheet">
 				<link rel="stylesheet" type="text/css" href="${codiconsUri}">
 
-				<title>LocalHost Preview</title>
+				<title>${INIT_PANEL_TITLE}</title>
 			</head>
 			<body>
 			<div class="displayContents">

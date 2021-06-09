@@ -6,30 +6,42 @@ import {
 	INIT_PANEL_TITLE,
 	CLOSE_SERVER,
 	DONT_CLOSE,
-	INIT_PORTNUM,
-	INIT_WS_PORTNUM,
+	HOST,
+	HAS_SET_CLOSE_PREVEW_BEHAVIOR,
+	SETTINGS_SECTION_ID
 } from './utils/constants';
+import { GetConfig, SettingsSavedMessage } from './utils/utils';
 
 export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
 	private readonly _server: Server;
 	private readonly _extensionUri: vscode.Uri;
 	private readonly _path: vscode.WorkspaceFolder | undefined;
+	private readonly _globalState;
 
 	// always leave off at previous port numbers to avoid retrying on many busy ports
-	private _serverPort: number = INIT_PORTNUM;
-	private _serverWSPort: number = INIT_WS_PORTNUM;
+	private _serverPort: number;
+	private _serverWSPort: number;
 
-	constructor(extensionUri: vscode.Uri) {
+	constructor(extensionUri: vscode.Uri, globalState: vscode.Memento) {
 		super();
 		this._extensionUri = extensionUri;
+		this._globalState = globalState;
+		this._serverPort = GetConfig(extensionUri).portNum;
+		this._serverWSPort = GetConfig(extensionUri).portNum;
 		this._path = vscode.workspace.workspaceFolders?.[0];
-		this._server = this._register(new Server());
+		this._server = this._register(new Server(extensionUri));
 		this._server.onPortChange((e) => {
 			if (this.currentPanel) {
 				this._serverPort = e.port ?? this._serverPort;
 				this._serverWSPort = e.ws_port ?? this._serverWSPort;
 				this.currentPanel.updatePortNums(this._serverPort, this._serverWSPort);
+			}
+		});
+
+		vscode.workspace.onDidChangeConfiguration((e) => {
+			if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
+				this._server.updateConfigurations();
 			}
 		});
 	}
@@ -40,7 +52,7 @@ export class Manager extends Disposable {
 	): void {
 		const currentColumn = vscode.window.activeTextEditor?.viewColumn ?? 1;
 		const column = currentColumn + 1;
-
+		file = file.endsWith(".html") ? file : "/";
 		// If we already have a panel, show it.
 		if (this.currentPanel) {
 			this.currentPanel.reveal(column, file);
@@ -56,7 +68,12 @@ export class Manager extends Disposable {
 				getWebviewOptions(this._extensionUri)
 			);
 		}
-		this.openServer();
+		const serverOn = this.openServer();
+
+		if (!serverOn) {
+			return;
+		}
+
 		this.currentPanel = new BrowserPreview(
 			panel,
 			this._extensionUri,
@@ -68,32 +85,54 @@ export class Manager extends Disposable {
 		this.currentPanel.onDispose(() => {
 			this.currentPanel = undefined;
 			if (this._server.isRunning) {
-				vscode.window
+				if (!this._globalState.get<boolean>(HAS_SET_CLOSE_PREVEW_BEHAVIOR)) {
+					vscode.window
 					.showInformationMessage(
 						'You closed the embedded preview. Would you like to also close the server?',
 						CLOSE_SERVER,
 						DONT_CLOSE
 					)
 					.then((selection: vscode.MessageItem | undefined) => {
-						if (selection === CLOSE_SERVER) {
-							this.closeServer(true);
+						if (selection) {
+							if (selection === CLOSE_SERVER) {
+								this.closeServer(true);
+							}
+							this.updateClosePreviewBehavior(selection == CLOSE_SERVER);
+							SettingsSavedMessage();
 						}
 					});
+					this._globalState.update(HAS_SET_CLOSE_PREVEW_BEHAVIOR, true);
+				} else if (GetConfig(this._extensionUri).closeServerWithEmbeddedPreview) {
+					this.closeServer(true);
+				}
 			}
 		});
 	}
 
-	public openServer(showMsgAlreadyOn = false): void {
+	public showPreviewInBrowser(
+		file = '/') {
+		file = file.endsWith(".html") ? file : "/";
+		const serverOn = this.openServer();
+
+		if (!serverOn) {
+			return;
+		}
+
+		const uri = vscode.Uri.parse(`http://${HOST}:${this._serverPort}${file}`);
+		vscode.env.openExternal(uri);
+	}
+
+	public openServer(showMsgAlreadyOn = false): boolean {
 		if (!this._server.isRunning) {
-			this._server.openServer(
+			return this._server.openServer(
 				this._serverPort,
 				this._serverWSPort,
-				this._path,
-				this._extensionUri
+				this._path
 			);
 		} else if (showMsgAlreadyOn) {
 			vscode.window.showErrorMessage('Server already on');
 		}
+		return true;
 	}
 
 	public closeServer(showMsgAlreadyOff = false): void {
@@ -111,6 +150,11 @@ export class Manager extends Disposable {
 	dispose() {
 		this._server.closeServer();
 		super.dispose();
+	}
+
+	private updateClosePreviewBehavior(shouldClose:boolean) {
+		// change in global settings
+		vscode.workspace.getConfiguration(SETTINGS_SECTION_ID).update("closeServerWithEmbeddedPreview",shouldClose, true);
 	}
 }
 

@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
 
-export const INIT_PORTNUM = 3000;
-export const INIT_WS_PORTNUM = 3000;
 export const WS_PORTNUM_PLACEHOLDER = '${WS_PORTNUM}';
-export const INIT_PANEL_TITLE = 'LocalHost Preview';
+export const INIT_PANEL_TITLE = '\\';
 
 export const CLOSE_SERVER: vscode.MessageItem = {
 	title: 'Close Server',
@@ -12,3 +10,13 @@ export const CLOSE_SERVER: vscode.MessageItem = {
 export const DONT_CLOSE: vscode.MessageItem = {
 	title: "Don't Close",
 };
+
+export const GO_TO_SETTINGS: vscode.MessageItem = {
+	title: "Go To Settings",
+};
+
+export const HOST = "127.0.0.1";
+
+export const HAS_SET_CLOSE_PREVEW_BEHAVIOR = "liveserver.hasSetClosePreviewBehavior";
+
+export const SETTINGS_SECTION_ID = "liveserver";

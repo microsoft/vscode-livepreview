@@ -47,8 +47,56 @@
 					"group": "navigation"
 				}
 			]
+		},
+		"configuration": {
+			"title": "Live Server",
+			"properties": {
+				"liveserver.portNum": {
+				  "type": "number",
+				  "default": 3000,
+				  "minimum": 0,
+				  "maximum": 65535,
+				  "description": "Which local port the live server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port. Reload window to apply."
+				},
+				"liveserver.showStatusBarItem": {
+				  "type": "boolean",
+				  "default": true,
+				  "description": "Whether to show the status bar button showing the server status."
+				},
+				"liveserver.showServerStatusPopUps": {
+					"type": "boolean",
+					"default": true,
+					"description": "Whether or not to show information messages on server on/off status change."
+				},
+				"liveserver.autoRefreshPreview": {
+					"enum": [
+					  "On All Changes in Editor",
+					  "On Changes to Saved Files",
+					  "Never"
+					],
+					"default": "On All Changes in Editor",
+					"description": "How often to automatically refresh the preview."
+				},
+				
+				"liveserver.launchPreviewOnServerStart": {
+					"enum": [
+					  "Embedded Preview",
+					  "External Browser",
+					  "Nothing"
+					],
+					"default": "Embedded Preview",
+					"description": "Which preview to launch when starting the server from the status bar."
+				},
+				"liveserver.closeServerWithEmbeddedPreview": {
+					"type": "boolean",
+					"default": "false",
+					"description": "Whether the server should stop when the embedded preview is closed."
+				}
+			}
 		}
 	},
+	
+   
 	"scripts": {
 		"vscode:prepublish": "webpack --mode production",
 		"webpack": "webpack --mode development",
