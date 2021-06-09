@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { WS_PORTNUM_PLACEHOLDER } from '../utils/constants';
-import { Disposable } from '../utils/dispose';
+import { WS_PORTNUM_PLACEHOLDER } from '../../utils/constants';
+import { Disposable } from '../../utils/dispose';
 
 export class HTMLInjector extends Disposable {
 	private readonly _pre_port_script: string;

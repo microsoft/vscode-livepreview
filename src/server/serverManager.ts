@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { Disposable } from '../utils/dispose';
 import { WSServer } from './wsServer';
 import { MainServer } from './mainServer';
-import { StatusBarNotifier } from './statusBarNotifier';
+import { StatusBarNotifier } from './serverUtils/statusBarNotifier';
 
 export interface PortInfo {
 	port?: number;

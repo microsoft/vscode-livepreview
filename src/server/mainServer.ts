@@ -4,8 +4,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Disposable } from '../utils/dispose';
 import { PortInfo } from './serverManager';
-import { ContentLoader } from './contentLoader';
-import { HTMLInjector } from './HTMLInjector';
+import { ContentLoader } from './serverUtils/contentLoader';
+import { HTMLInjector } from './serverUtils/HTMLInjector';
 
 export class MainServer extends Disposable {
 	private _server: any;
