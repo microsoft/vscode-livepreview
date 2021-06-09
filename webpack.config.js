@@ -56,7 +56,7 @@ const config = {
 				},
 			],
 		}),
-        new CleanWebpackPlugin(),
+		new CleanWebpackPlugin(),
 	],
 };
 module.exports = config;

@@ -10,7 +10,7 @@
 		console.log('WebSocket error: ');
 		console.log(error);
 	};
-	
+
 	connection.onmessage = (e) => {
 		const parsedMessage = JSON.parse(e.data);
 		switch (parsedMessage.command) {
@@ -23,7 +23,7 @@
 		}
 	};
 
-	document.addEventListener("DOMContentLoaded", function(e) {
+	document.addEventListener('DOMContentLoaded', function (e) {
 		vscode.postMessage({
 			command: 'refresh-back-forward-buttons',
 		});
