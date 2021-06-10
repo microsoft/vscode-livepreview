@@ -11,13 +11,12 @@ import {
 	SETTINGS_SECTION_ID,
 	Settings,
 } from './utils/constants';
-import { GetConfig, SettingsSavedMessage, UpdateSettings } from './utils/utils';
+import { GetConfig, UpdateSettings } from './utils/utils';
 
 export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
 	private readonly _server: Server;
 	private readonly _extensionUri: vscode.Uri;
-	private readonly _path: vscode.WorkspaceFolder | undefined;
 	private readonly _globalState;
 
 	// always leave off at previous port numbers to avoid retrying on many busy ports
@@ -29,9 +28,8 @@ export class Manager extends Disposable {
 		this._extensionUri = extensionUri;
 		this._globalState = globalState;
 		this._serverPort = GetConfig(extensionUri).portNum;
-		this._serverWSPort = GetConfig(extensionUri).portNum;
-		this._path = vscode.workspace.workspaceFolders?.[0];
-		this._server = this._register(new Server(extensionUri));
+		this._serverWSPort = GetConfig(extensionUri).portNum + 1;
+		this._server = this._register(new Server(extensionUri,vscode.workspace.workspaceFolders?.[0]));
 		this._server.onPortChange((e) => {
 			if (this.currentPanel) {
 				this._serverPort = e.port ?? this._serverPort;
@@ -129,9 +127,7 @@ export class Manager extends Disposable {
 	public openServer(showMsgAlreadyOn = false): boolean {
 		if (!this._server.isRunning) {
 			return this._server.openServer(
-				this._serverPort,
-				this._serverWSPort,
-				this._path
+				this._serverPort
 			);
 		} else if (showMsgAlreadyOn) {
 			vscode.window.showErrorMessage('Server already on');

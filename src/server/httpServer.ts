@@ -8,7 +8,7 @@ import { ContentLoader } from './serverUtils/contentLoader';
 import { HTMLInjector } from './serverUtils/HTMLInjector';
 import { HOST } from '../utils/constants';
 
-export class MainServer extends Disposable {
+export class HttpServer extends Disposable {
 	private _server: any;
 	private _contentLoader: ContentLoader;
 	public port = 0;
@@ -17,15 +17,15 @@ export class MainServer extends Disposable {
 		super();
 		this._contentLoader = this._register(new ContentLoader());
 	}
-
-	private readonly _onPortChangeEmitter = this._register(
-		new vscode.EventEmitter<PortInfo>()
+	
+	private readonly _onConnected = this._register(
+		new vscode.EventEmitter<number>()
 	);
-	public readonly onPortChange = this._onPortChangeEmitter.event;
+	public readonly onConnected = this._onConnected.event;
 
 	public start(port: number, basePath: string) {
 		this.port = port;
-		this.startMainServer(basePath);
+		this.startHttpServer(basePath);
 	}
 
 	public close() {
@@ -42,12 +42,12 @@ export class MainServer extends Disposable {
 			this._contentLoader.scriptInjector.ws_port = ws_port;
 		}
 	}
-	private startMainServer(basePath: string): boolean {
+	private startHttpServer(basePath: string): boolean {
 		this._server = this.createServer(basePath);
 
 		this._server.on('listening', () => {
 			console.log(`Server is running on port ${this.port}`);
-			this._onPortChangeEmitter.fire({ port: this.port });
+			this._onConnected.fire(this.port);
 		});
 
 		this._server.on('error', (err: any) => {
