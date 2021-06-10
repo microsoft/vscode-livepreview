@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Disposable } from '../utils/dispose';
 import { WSServer } from './wsServer';
-import { MainServer } from './mainServer';
+import { HttpServer } from './httpServer';
 import { StatusBarNotifier } from './serverUtils/statusBarNotifier';
 import { AutoRefreshPreview, GetConfig, UpdateSettings } from '../utils/utils';
 import { CLOSE_SERVER, DONT_SHOW_AGAIN, Settings } from '../utils/constants';
@@ -12,19 +12,23 @@ export interface PortInfo {
 }
 
 export class Server extends Disposable {
+	private readonly _httpServer: HttpServer;
+	private readonly _wsServer: WSServer;
+	private readonly _statusBar: StatusBarNotifier;
+	private readonly _extensionUri: vscode.Uri;
 	private _isServerOn = false;
-	private _mainServer: MainServer;
-	private _wsServer: WSServer;
-	private _statusBar: StatusBarNotifier;
-	private _extensionUri: vscode.Uri;
+	private _workspacePath: string | undefined;
 
-	constructor(extensionUri: vscode.Uri) {
+	constructor(
+		extensionUri: vscode.Uri,
+		path: vscode.WorkspaceFolder | undefined
+	) {
 		super();
 		this._extensionUri = extensionUri;
-		this._mainServer = this._register(new MainServer());
+		this._httpServer = this._register(new HttpServer());
 		this._wsServer = this._register(new WSServer());
 		this._statusBar = this._register(new StatusBarNotifier(extensionUri));
-
+		this._workspacePath = path?.uri.fsPath;
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
 				if (
@@ -70,21 +74,22 @@ export class Server extends Disposable {
 		this._register(
 			this.onPortChange((e) => {
 				if (e.ws_port) {
-					this._mainServer.setInjectorWSPort(e.ws_port);
+					this._httpServer.setInjectorWSPort(e.ws_port);
 				}
 			})
 		);
 
 		this._register(
-			this._wsServer.onPortChange((e) => {
-				this._onPortChangeEmitter.fire(e);
+			this._wsServer.onConnected((e) => {
+				this._onPortChangeEmitter.fire({ ws_port: e });
+				this.wsServerConnected();
 			})
 		);
 
 		this._register(
-			this._mainServer.onPortChange((e) => {
-				this._onPortChangeEmitter.fire(e);
-				this._statusBar.ServerOn(this._mainServer.port);
+			this._httpServer.onConnected((e) => {
+				this._onPortChangeEmitter.fire({ port: e });
+				this.httpServerConnected();
 			})
 		);
 	}
@@ -118,8 +123,8 @@ export class Server extends Disposable {
 	}
 
 	public closeServer(): void {
-		this._statusBar.loading('on');
-		this._mainServer.close();
+		this._statusBar.loading('off');
+		this._httpServer.close();
 		this._wsServer.close();
 		this._isServerOn = false; // TODO: find error conditions and return false when needed
 		this._statusBar.ServerOff();
@@ -127,28 +132,37 @@ export class Server extends Disposable {
 		this.showServerStatusMessage('Server Closed');
 	}
 
-	public openServer(
-		port: number,
-		ws_port: number,
-		path: vscode.WorkspaceFolder | undefined
-	): boolean {
-		if (path && this._extensionUri) {
-			this._statusBar.loading('off');
-			this._mainServer.setInjectorWSPort(ws_port, this._extensionUri);
-			const basePath = path.uri.fsPath;
+	public openServer(port: number): boolean {
+		if (this._workspacePath && this._extensionUri) {
+			this._statusBar.loading('on');
 
-			this._mainServer.start(port, basePath);
-			this._wsServer.start(ws_port, basePath, this._extensionUri);
-			this._isServerOn = true;
-			this._statusBar.ServerOn(this._mainServer.port);
+			// initialize websockets to use port after http server port
+			this._httpServer.setInjectorWSPort(port + 1, this._extensionUri);
 
-			this.showServerStatusMessage(
-				`Server Opened on Port ${this._mainServer.port}`
-			);
+			this._httpServer.start(port, this._workspacePath);
 			return true;
 		}
 		this.showServerStatusMessage('Server Failed To Open');
 		return false;
+	}
+
+	private httpServerConnected() {
+		if (this._workspacePath) {
+			this._wsServer.start(
+				this._httpServer.port + 1,
+				this._workspacePath,
+				this._extensionUri
+			);
+		}
+	}
+
+	private wsServerConnected() {
+		this._isServerOn = true;
+		this._statusBar.ServerOn(this._httpServer.port);
+
+		this.showServerStatusMessage(
+			`Server Opened on Port ${this._httpServer.port}`
+		);
 	}
 
 	private showServerStatusMessage(messsage: string) {

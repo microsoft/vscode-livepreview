@@ -13,10 +13,10 @@ export class WSServer extends Disposable {
 		super();
 	}
 
-	private readonly _onPortChangeEmitter = this._register(
-		new vscode.EventEmitter<PortInfo>()
+	private readonly _onConnected = this._register(
+		new vscode.EventEmitter<number>()
 	);
-	public readonly onPortChange = this._onPortChangeEmitter.event;
+	public readonly onConnected = this._onConnected.event;
 
 	public start(ws_port: number, basePath: string, extensionUri: vscode.Uri) {
 		this._ws_port = ws_port;
@@ -52,7 +52,7 @@ export class WSServer extends Disposable {
 
 	private handleWSListen(extensionUri: vscode.Uri) {
 		console.log(`Websocket server is running on port ${this._ws_port}`);
-		this._onPortChangeEmitter.fire({ ws_port: this._ws_port });
+		this._onConnected.fire(this._ws_port);
 	}
 
 	private handleWSConnection(basePath: string, ws: any) {

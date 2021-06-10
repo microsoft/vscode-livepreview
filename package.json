@@ -16,7 +16,8 @@
 		"Other"
 	],
 	"activationEvents": [
-		"*"
+		"onLanguage:html",
+		"onWebviewPanel:browserPreview"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
