@@ -3,7 +3,6 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Disposable } from '../utils/dispose';
-import { PortInfo } from './serverManager';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { HTMLInjector } from './serverUtils/HTMLInjector';
 import { HOST } from '../utils/constants';
@@ -108,6 +107,7 @@ export class HttpServer extends Disposable {
 					res.end();
 				});
 
+				res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8'});
 				stream.pipe(res);
 			} else {
 				res.writeHead(500);

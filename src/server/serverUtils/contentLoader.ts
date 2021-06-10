@@ -146,7 +146,7 @@ export class ContentLoader extends Disposable {
 
 		if (i == workspaceDocuments.length) {
 			if (readPath.endsWith('.html')) {
-				const buffer = fs.readFileSync(readPath);
+				const buffer = fs.readFileSync(readPath, "utf8");
 				const injectedFileContents =
 					this.scriptInjector?.script + buffer.toString();
 				stream = Stream.Readable.from(injectedFileContents);
