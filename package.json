@@ -2,7 +2,7 @@
 	"name": "live-server",
 	"displayName": "Live Server",
 	"description": "An extension that hosts your web project for previewing.",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"publisher": "andrea-mah",
 	"icon": "icon.png",
 	"repository": {
@@ -28,11 +28,11 @@
 			},
 			{
 				"command": "liveserver.start.preview.atIndex",
-				"title": "Live Server: Show Preview at Index Page"
+				"title": "Live Server: Show Preview to the side at Index Page"
 			},
 			{
 				"command": "liveserver.start.preview.atActiveFile",
-				"title": "Live Server: Show Preview",
+				"title": "Live Server: Show Preview to the side",
 				"icon": "$(open-preview)"
 			},
 			{
@@ -66,7 +66,7 @@
 				},
 				"liveserver.showServerStatusPopUps": {
 					"type": "boolean",
-					"default": true,
+					"default": false,
 					"description": "Whether or not to show information messages on server on/off status change."
 				},
 				"liveserver.autoRefreshPreview": {

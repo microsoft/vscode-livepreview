@@ -102,9 +102,9 @@ export class Manager extends Disposable {
 									Settings.closeServerWithEmbeddedPreview,
 									selection == CLOSE_SERVER
 								);
+								this._globalState.update(HAS_SET_CLOSE_PREVEW_BEHAVIOR, true);
 							}
 						});
-					this._globalState.update(HAS_SET_CLOSE_PREVEW_BEHAVIOR, true);
 				} else if (
 					GetConfig(this._extensionUri).closeServerWithEmbeddedPreview
 				) {
