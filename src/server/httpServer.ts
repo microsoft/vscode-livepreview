@@ -17,7 +17,7 @@ export class HttpServer extends Disposable {
 		super();
 		this._contentLoader = this._register(new ContentLoader());
 	}
-	
+
 	private readonly _onConnected = this._register(
 		new vscode.EventEmitter<number>()
 	);

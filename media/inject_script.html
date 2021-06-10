@@ -36,10 +36,10 @@
 		for (var i = 0; i < l.length; i++) {
 			l[i].onclick = (e) => {
 				const linkTarget = e.target.href;
-				if (linkTarget != "") {
+				if (linkTarget != '') {
 					if (!linkTarget.startsWith('http://127.0.0.1:')) {
-						console.log("here!!!")
-						console.log(linkTarget)
+						console.log('here!!!');
+						console.log(linkTarget);
 						window.parent.postMessage(
 							{ command: 'open-external-link', text: linkTarget },
 							'*'

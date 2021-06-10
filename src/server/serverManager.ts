@@ -19,7 +19,10 @@ export class Server extends Disposable {
 	private _isServerOn = false;
 	private _workspacePath: string | undefined;
 
-	constructor(extensionUri: vscode.Uri, path: vscode.WorkspaceFolder | undefined) {
+	constructor(
+		extensionUri: vscode.Uri,
+		path: vscode.WorkspaceFolder | undefined
+	) {
 		super();
 		this._extensionUri = extensionUri;
 		this._httpServer = this._register(new HttpServer());
@@ -78,14 +81,14 @@ export class Server extends Disposable {
 
 		this._register(
 			this._wsServer.onConnected((e) => {
-				this._onPortChangeEmitter.fire({"ws_port":e});
+				this._onPortChangeEmitter.fire({ ws_port: e });
 				this.wsServerConnected();
 			})
 		);
 
 		this._register(
 			this._httpServer.onConnected((e) => {
-				this._onPortChangeEmitter.fire({"port": e});
+				this._onPortChangeEmitter.fire({ port: e });
 				this.httpServerConnected();
 			})
 		);
@@ -129,14 +132,12 @@ export class Server extends Disposable {
 		this.showServerStatusMessage('Server Closed');
 	}
 
-	public openServer(
-		port: number
-	): boolean {
+	public openServer(port: number): boolean {
 		if (this._workspacePath && this._extensionUri) {
 			this._statusBar.loading('on');
 
 			// initialize websockets to use port after http server port
-			this._httpServer.setInjectorWSPort(port+1, this._extensionUri);
+			this._httpServer.setInjectorWSPort(port + 1, this._extensionUri);
 
 			this._httpServer.start(port, this._workspacePath);
 			return true;
@@ -147,10 +148,14 @@ export class Server extends Disposable {
 
 	private httpServerConnected() {
 		if (this._workspacePath) {
-			this._wsServer.start(this._httpServer.port+1, this._workspacePath, this._extensionUri);
+			this._wsServer.start(
+				this._httpServer.port + 1,
+				this._workspacePath,
+				this._extensionUri
+			);
 		}
 	}
-	
+
 	private wsServerConnected() {
 		this._isServerOn = true;
 		this._statusBar.ServerOn(this._httpServer.port);
