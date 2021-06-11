@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { HOST, INIT_PANEL_TITLE } from '../utils/constants';
+import { HOST, INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { PageHistory, NavEditCommands } from './pageHistoryTracker';
 
@@ -137,10 +137,21 @@ export class BrowserPreview extends Disposable {
 		const urlString =
 			givenURL == '' ? this.constructAddress(this.currentAddress) : givenURL;
 		const uri = vscode.Uri.parse(urlString);
-		vscode.env.openExternal(uri);
-		vscode.window.showInformationMessage(
-			`The link ${urlString} was opened in an external browser. Externally hosted links are not supported in the embedded browser. `
-		);
+
+		vscode.window
+			.showInformationMessage(
+				`Externally hosted links are not supported in the embedded preview. Do you want to open ${urlString} in an external browser?`,
+				{ modal: true },
+				OPEN_EXTERNALLY
+			)
+			.then((selection: vscode.MessageItem | undefined) => {
+				if (selection) {
+					if (selection === OPEN_EXTERNALLY) {
+						vscode.env.openExternal(uri);
+					}
+				}
+			});
+
 		this.goToFile(this.currentAddress);
 		this.updateForwardBackArrows();
 	}
