@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { web } from 'webpack';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
 import { GetRelativeActiveFile } from './utils/utils';
