@@ -9,7 +9,7 @@ export class BrowserPreview extends Disposable {
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
 
-	private currentAddress:string;
+	private currentAddress: string;
 	private _port;
 	private _wsPort;
 	private readonly _onDisposeEmitter = this._register(
@@ -46,15 +46,18 @@ export class BrowserPreview extends Disposable {
 		this._wsPort = wsPort;
 		this._panel = panel;
 		this._extensionUri = extensionUri;
-		this._panel.iconPath =  {light: vscode.Uri.joinPath(
-			this._extensionUri,
-			'media',
-			'preview-light.svg'
-		), dark: vscode.Uri.joinPath(
-			this._extensionUri,
-			'media',
-			'preview-dark.svg'
-		)};
+		this._panel.iconPath = {
+			light: vscode.Uri.joinPath(
+				this._extensionUri,
+				'media',
+				'preview-light.svg'
+			),
+			dark: vscode.Uri.joinPath(
+				this._extensionUri,
+				'media',
+				'preview-dark.svg'
+			),
+		};
 		this._pageHistory = this._register(new PageHistory());
 
 		this.updateForwardBackArrows();
@@ -267,7 +270,7 @@ export class BrowserPreview extends Disposable {
 		// If we can't rely on inline script to update panel title,
 		// then set panel title manually
 		if (!pagename?.endsWith('.html')) {
-			this.setPanelTitle('',pagename);
+			this.setPanelTitle('', pagename);
 		}
 
 		for (const i in response.actions) {
@@ -286,7 +289,7 @@ export class BrowserPreview extends Disposable {
 		// If we can't rely on inline script to update panel title,
 		// then set panel title manually
 		if (!pagename?.endsWith('.html')) {
-			this.setPanelTitle('',pagename);
+			this.setPanelTitle('', pagename);
 		}
 
 		for (const i in response.actions) {
@@ -311,12 +314,12 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	private handleNewPageLoad(pathname:string, panelTitle = ""): void {
+	private handleNewPageLoad(pathname: string, panelTitle = ''): void {
 		// only load relative addresses
 		if (pathname.length > 0 && pathname[0] != '/') {
 			return;
 		}
-		this.setPanelTitle(panelTitle,pathname);
+		this.setPanelTitle(panelTitle, pathname);
 		this.currentAddress = pathname;
 		const response = this._pageHistory?.addHistory(pathname);
 		if (response) {
@@ -341,6 +344,5 @@ export class BrowserPreview extends Disposable {
 		} else {
 			this._panel.title = title;
 		}
-
 	}
 }
