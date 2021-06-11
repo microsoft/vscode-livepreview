@@ -4,7 +4,7 @@ import { WSServer } from './wsServer';
 import { HttpServer } from './httpServer';
 import { StatusBarNotifier } from './serverUtils/statusBarNotifier';
 import { AutoRefreshPreview, GetConfig, UpdateSettings } from '../utils/utils';
-import { CLOSE_SERVER, DONT_SHOW_AGAIN, Settings } from '../utils/constants';
+import { DONT_SHOW_AGAIN, Settings } from '../utils/constants';
 
 export interface PortInfo {
 	port?: number;

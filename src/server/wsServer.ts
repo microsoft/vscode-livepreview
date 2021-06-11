@@ -3,7 +3,6 @@ import * as WebSocket from 'ws';
 import * as fs from 'fs';
 import * as path from 'path';
 import { URL } from 'url';
-import { PortInfo } from './serverManager';
 import { Disposable } from '../utils/dispose';
 
 export class WSServer extends Disposable {
