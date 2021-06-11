@@ -94,12 +94,12 @@ iframe {
 	color: var(--vscode-icon-foreground);
 	background: none;
 	margin: 0 0.3em;
+	border-radius: 5px;
 }
 
 .header nav button:hover:not(:disabled) {
 	cursor: pointer;
-	color: var(--vscode-button-foreground);
-	background: var(--vscode-button-hoverBackground);
+	background: var(--vscode-toolbar-hoverBackground);
 }
 
 .header nav button:disabled {
