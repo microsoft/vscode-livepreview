@@ -57,7 +57,10 @@ export function GetConfig(resource: vscode.Uri): LiveServerConfigItem {
 	return {
 		portNum: config.get<number>('portNum', 3000),
 		showStatusBarItem: config.get<boolean>('showStatusBarItem', true),
-		showServerStatusPopUps: config.get<boolean>('showServerStatusPopUps', false),
+		showServerStatusPopUps: config.get<boolean>(
+			'showServerStatusPopUps',
+			false
+		),
 		autoRefreshPreview: config.get<AutoRefreshPreview>(
 			'autoRefreshPreview',
 			AutoRefreshPreview.onAnyChange

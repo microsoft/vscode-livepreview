@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { HOST, INIT_PANEL_TITLE } from '../utils/constants';
+import { HOST, INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { PageHistory, NavEditCommands } from './pageHistoryTracker';
 
@@ -9,6 +9,7 @@ export class BrowserPreview extends Disposable {
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
 
+	private currentAddress: string;
 	private _port;
 	private _wsPort;
 	private readonly _onDisposeEmitter = this._register(
@@ -32,10 +33,6 @@ export class BrowserPreview extends Disposable {
 		this.reloadWebview();
 	}
 
-	private get currentAddress() {
-		return this._panel.title;
-	}
-
 	constructor(
 		panel: vscode.WebviewPanel,
 		extensionUri: vscode.Uri,
@@ -49,6 +46,18 @@ export class BrowserPreview extends Disposable {
 		this._wsPort = wsPort;
 		this._panel = panel;
 		this._extensionUri = extensionUri;
+		this._panel.iconPath = {
+			light: vscode.Uri.joinPath(
+				this._extensionUri,
+				'media',
+				'preview-light.svg'
+			),
+			dark: vscode.Uri.joinPath(
+				this._extensionUri,
+				'media',
+				'preview-dark.svg'
+			),
+		};
 		this._pageHistory = this._register(new PageHistory());
 
 		this.updateForwardBackArrows();
@@ -56,7 +65,7 @@ export class BrowserPreview extends Disposable {
 		// Set the webview's html content at index.html
 		this.goToFile(initialFile);
 		this._pageHistory?.addHistory(initialFile);
-		this.setPanelTitle(initialFile);
+		this.currentAddress = initialFile;
 
 		// Listen for when the panel is disposed
 		// This happens when the user closes the panel or when the panel is closed programmatically
@@ -73,9 +82,11 @@ export class BrowserPreview extends Disposable {
 					case 'alert':
 						vscode.window.showErrorMessage(message.text);
 						return;
-					case 'update-path':
-						this.handleNewPageLoad(message.text);
+					case 'update-path': {
+						const msgJSON = JSON.parse(message.text);
+						this.handleNewPageLoad(msgJSON.pathname, msgJSON.title);
 						return;
+					}
 					case 'go-back':
 						this.goBack();
 						return;
@@ -91,6 +102,10 @@ export class BrowserPreview extends Disposable {
 						return;
 					case 'refresh-back-forward-buttons':
 						this.updateForwardBackArrows();
+						return;
+					case 'go-to-file':
+						this.goToFullAddress(message.text);
+						return;
 				}
 			})
 		);
@@ -106,18 +121,37 @@ export class BrowserPreview extends Disposable {
 		return `http://${HOST}:${this._port}`;
 	}
 
+	private goToFullAddress(address: string) {
+		if (address.startsWith(this._host)) {
+			this.goToFile(address.substr(this._host.length));
+		} else {
+			this.handleOpenBrowser(address);
+		}
+	}
+
 	private reloadWebview() {
-		this.goToFile(this._panel.title);
+		this.goToFile(this.currentAddress);
 	}
 
 	private handleOpenBrowser(givenURL: string) {
 		const urlString =
-			givenURL == '' ? this.constructAddress(this._panel.title) : givenURL;
+			givenURL == '' ? this.constructAddress(this.currentAddress) : givenURL;
 		const uri = vscode.Uri.parse(urlString);
-		vscode.env.openExternal(uri);
-		vscode.window.showInformationMessage(
-			`The link ${urlString} was opened in an external browser. Externally hosted links are not supported in the embedded browser. `
-		);
+
+		vscode.window
+			.showInformationMessage(
+				`Externally hosted links are not supported in the embedded preview. Do you want to open ${urlString} in an external browser?`,
+				{ modal: true },
+				OPEN_EXTERNALLY
+			)
+			.then((selection: vscode.MessageItem | undefined) => {
+				if (selection) {
+					if (selection === OPEN_EXTERNALLY) {
+						vscode.env.openExternal(uri);
+					}
+				}
+			});
+
 		this.goToFile(this.currentAddress);
 		this.updateForwardBackArrows();
 	}
@@ -214,6 +248,9 @@ export class BrowserPreview extends Disposable {
 								id="reload"
 								title="Reload"
 								class="reload-button icon"><i class="codicon codicon-refresh"></i></button>
+
+								
+							<input id="url-input" class="url-input" type="text">
 							<button
 								id="browserOpen"
 								title="Open in browser"
@@ -244,7 +281,7 @@ export class BrowserPreview extends Disposable {
 		// If we can't rely on inline script to update panel title,
 		// then set panel title manually
 		if (!pagename?.endsWith('.html')) {
-			this.setPanelTitle(pagename);
+			this.setPanelTitle('', pagename);
 		}
 
 		for (const i in response.actions) {
@@ -263,7 +300,7 @@ export class BrowserPreview extends Disposable {
 		// If we can't rely on inline script to update panel title,
 		// then set panel title manually
 		if (!pagename?.endsWith('.html')) {
-			this.setPanelTitle(pagename);
+			this.setPanelTitle('', pagename);
 		}
 
 		for (const i in response.actions) {
@@ -288,13 +325,14 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	private handleNewPageLoad(panelTitle: string): void {
+	private handleNewPageLoad(pathname: string, panelTitle = ''): void {
 		// only load relative addresses
-		if (panelTitle.length > 0 && panelTitle[0] != '/') {
+		if (pathname.length > 0 && pathname[0] != '/') {
 			return;
 		}
-		this.setPanelTitle(panelTitle);
-		const response = this._pageHistory?.addHistory(panelTitle);
+		this.setPanelTitle(panelTitle, pathname);
+		this.currentAddress = pathname;
+		const response = this._pageHistory?.addHistory(pathname);
 		if (response) {
 			for (const i in response.actions) {
 				this.handleNavAction(response.actions[i]);
@@ -304,9 +342,18 @@ export class BrowserPreview extends Disposable {
 
 	private goToFile(URLExt: string): void {
 		this.setHtml(this._panel.webview, this.constructAddress(URLExt));
+		this.currentAddress = URLExt;
 	}
 
-	private setPanelTitle(title = '/'): void {
-		this._panel.title = title;
+	private setPanelTitle(title = '', pathname = 'Preview'): void {
+		if (title == '') {
+			if (pathname.length > 0 && pathname[0] == '/') {
+				this._panel.title = pathname.substr(1);
+			} else {
+				this._panel.title = pathname;
+			}
+		} else {
+			this._panel.title = title;
+		}
 	}
 }

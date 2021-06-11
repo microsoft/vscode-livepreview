@@ -46,10 +46,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 	if (vscode.window.registerWebviewPanelSerializer) {
 		vscode.window.registerWebviewPanelSerializer(BrowserPreview.viewType, {
-			async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel) {
+			async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
+				const file = state.currentAddress ?? '/';
 				// Reset the webview options so we use latest uri for `localResourceRoots`.
 				webviewPanel.webview.options = getWebviewOptions(context.extensionUri);
-				manager.createOrShowPreview(webviewPanel, webviewPanel.title);
+				manager.createOrShowPreview(webviewPanel, file);
 			},
 		});
 	}
