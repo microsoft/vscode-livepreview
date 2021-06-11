@@ -106,8 +106,8 @@ export class HttpServer extends Disposable {
 					res.writeHead(404);
 					res.end();
 				});
-
-				res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8' });
+				const content_type = (absoluteReadPath.endsWith(".html")) ? 'text/html; charset=UTF-8': 'charset=UTF-8';
+				res.writeHead(200, { 'Content-Type': content_type});
 				stream.pipe(res);
 			} else {
 				res.writeHead(500);
