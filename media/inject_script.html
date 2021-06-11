@@ -16,30 +16,35 @@
 			}
 		}
 	};
-	window.parent.postMessage(
-		{ command: 'update-path', text: window.location.pathname },
-		'*'
-	);
-
 	window.addEventListener(
 		'message',
 		function () {
 			if (this.event.data == 'refresh') {
 				window.location.reload();
+			} else if (this.event.data == 'setup-parent-listener') {
+				window.parent.postMessage(
+				{ command: 'update-path', text: `{"pathname":"${window.location.pathname}","fullPath":"${window.location}","title":"${document.title}"}` },
+					'*'
+				);
 			}
 		},
 		false
 	);
+	
 
 	document.addEventListener('DOMContentLoaded', function (e) {
+
+		window.parent.postMessage(
+		{ command: 'update-path', text: `{"pathname":"${window.location.pathname}","fullPath":"${window.location}","title":"${document.title}"}` },
+			'*'
+		);
+
 		var l = document.getElementsByTagName('a');
 		for (var i = 0; i < l.length; i++) {
 			l[i].onclick = (e) => {
 				const linkTarget = e.target.href;
 				if (linkTarget != '') {
 					if (!linkTarget.startsWith('http://127.0.0.1:')) {
-						console.log('here!!!');
-						console.log(linkTarget);
 						window.parent.postMessage(
 							{ command: 'open-external-link', text: linkTarget },
 							'*'

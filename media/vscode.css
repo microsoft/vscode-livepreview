@@ -76,9 +76,8 @@ iframe {
 
 .headercontent {
 	display: table-cell;
-	text-align: right;
 	width: 100%;
-	height: 2em;
+	height:2.5em;
 }
 .header nav {
 	display: flex;
@@ -86,14 +85,15 @@ iframe {
 
 .header nav button {
 	border: none;
-	padding: var(--input-padding-vertical) var(--input-padding-horizontal);
-	text-align: center;
+	padding: var(--input-padding-vertical) 0em var(--input-padding-vertical) var(--input-padding-horizontal);
+	display: flex;
+	text-align:right;
+	float: right;
 	outline: 1px solid transparent;
 	outline-offset: 2px !important;
 	color: var(--vscode-icon-foreground);
 	background: none;
-	width: 25%;
-	display: inline-block;
+	margin: 0 0.3em;
 }
 
 .header nav button:hover:not(:disabled) {
@@ -104,7 +104,6 @@ iframe {
 
 .header nav button:disabled {
 	opacity: 0.5;
-	background: var(--vscode-button-background);
 }
 
 .header nav button:focus {
@@ -115,4 +114,25 @@ iframe {
 	width: 100%;
 	height: 100%;
 	background: white; /* Browsers default to a white background */
+}
+
+.url-input {
+	flex: 1;
+}
+
+input:not([type='checkbox']),
+textarea {
+	display: block;
+	width: 100%;
+	border: none;
+	font-family: var(--vscode-font-family);
+	padding: var(--input-padding-vertical) var(--input-padding-horizontal);
+	color: var(--vscode-input-foreground);
+	outline-color: var(--vscode-input-border);
+	background-color: var(--vscode-input-background);
+}
+
+input::placeholder,
+textarea::placeholder {
+	color: var(--vscode-input-placeholderForeground);
 }

@@ -27,9 +27,33 @@ export class ContentLoader extends Disposable {
 		const htmlString = `
 		<!DOCTYPE html>
 		<html>
+			<head>
+				<title>File not found</title>
+			</head>
 			<body>
-			<h1>File not found</h1>
-			<p>The file <b>"${relativePath}"</b> cannot be found. It may have been moved, edited, or deleted.</p>
+				<h1>File not found</h1>
+				<p>The file <b>"${relativePath}"</b> cannot be found. It may have been moved, edited, or deleted.</p>
+			</body>
+			${this.scriptInjector?.script}
+		</html>
+		`;
+
+		return Stream.Readable.from(htmlString);
+	}
+
+	public createRedirectPage(externalLink: string): Stream.Readable {
+		// TODO: make look better
+		const htmlString = `
+		<!DOCTYPE html>
+		<html>
+			<head>
+				<title>Redirect Editor?</title>
+			</head>
+			<body>
+				<h1>File not found</h1>
+				<p>The embedded preview cannot open external websites</p>
+				<button>Click here to proceed in an external browser</button>
+				<button>Click here to go back</button>
 			</body>
 			${this.scriptInjector?.script}
 		</html>
@@ -106,6 +130,7 @@ export class ContentLoader extends Disposable {
 						padding:4px;
 					}
 				</style>
+				<title>Index of ${relativePath}</title>
 			</head>
 			<body>
 			<h1>Index of ${relativePath}</h1>

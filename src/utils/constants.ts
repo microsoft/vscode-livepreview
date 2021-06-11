@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 export const WS_PORTNUM_PLACEHOLDER = '${WS_PORTNUM}';
-export const INIT_PANEL_TITLE = '\\';
+export const INIT_PANEL_TITLE = '/';
 
 export const CLOSE_SERVER: vscode.MessageItem = {
 	title: 'Close Server',

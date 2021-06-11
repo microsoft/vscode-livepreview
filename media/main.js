@@ -4,6 +4,7 @@
 (function () {
 	const vscode = acquireVsCodeApi();
 
+	vscode.setState({currentAddress: window.location.pathname});
 	const connection = new WebSocket(WS_URL);
 
 	connection.onerror = (error) => {
@@ -54,6 +55,18 @@
 		});
 	};
 
+	document.getElementById('url-input').addEventListener("keyup", function(event) {
+		// Number 13 is the "Enter" key on the keyboard
+		if (event.keyCode === 13) {
+			// Cancel the default action, if needed
+			event.preventDefault();
+			linkTarget = document.getElementById('url-input').value;
+			vscode.postMessage({
+				command: 'go-to-file',
+				text: linkTarget,
+			});
+		}
+	});
 	window.addEventListener('message', (event) => {
 		const message = event.data; // The json data that the extension sent
 		switch (message.command) {
@@ -77,10 +90,13 @@
 
 			// from child iframe
 			case 'update-path': {
+				msgJSON = JSON.parse(message.text);
 				vscode.postMessage({
 					command: 'update-path',
 					text: message.text,
 				});
+				document.getElementById('url-input').value = msgJSON.fullPath;
+				vscode.setState({currentAddress: msgJSON.pathname});
 				break;
 			}
 			case 'open-external-link': {
@@ -97,4 +113,9 @@
 			}
 		}
 	});
+	
+	document
+	.getElementById('hostedContent')
+	.contentWindow.postMessage('setup-parent-listener', '*');
+
 })();
