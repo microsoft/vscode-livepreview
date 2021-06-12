@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { serverMsg } from '../manager';
-import { Disposable } from "../utils/dispose";
+import { Disposable } from '../utils/dispose';
 import { FormatDateTime } from '../utils/utils';
 
 interface ServerTaskDefinition extends vscode.TaskDefinition {
@@ -10,19 +10,24 @@ interface ServerTaskDefinition extends vscode.TaskDefinition {
 	flavor: string;
 }
 
-export class ServerTaskProvider extends Disposable implements vscode.TaskProvider {
-	static CustomBuildScriptType = 'Live Server'
+export class ServerTaskProvider
+	extends Disposable
+	implements vscode.TaskProvider
+{
+	static CustomBuildScriptType = 'Live Server';
 	private tasks: vscode.Task[] | undefined;
 	private _terminal: ServerTaskTerminal | undefined;
 	private readonly _onRequestToOpenServerEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
-	public readonly onRequestToOpenServer = this._onRequestToOpenServerEmitter.event;
+	public readonly onRequestToOpenServer =
+		this._onRequestToOpenServerEmitter.event;
 
 	private readonly _onRequestToCloseServerEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
-	public readonly onRequestToCloseServer = this._onRequestToCloseServerEmitter.event;
+	public readonly onRequestToCloseServer =
+		this._onRequestToCloseServerEmitter.event;
 
 	public get serverRunning() {
 		if (this._terminal) {
@@ -41,7 +46,7 @@ export class ServerTaskProvider extends Disposable implements vscode.TaskProvide
 			this._terminal.serverStarted(port, isNew);
 		}
 	}
-	
+
 	public serverStop(now: boolean) {
 		if (this._terminal && this._terminal.running) {
 			if (now) {
@@ -52,9 +57,9 @@ export class ServerTaskProvider extends Disposable implements vscode.TaskProvide
 		}
 	}
 
-	// We use a CustomExecution task when state needs to be shared accross runs of the task or when 
+	// We use a CustomExecution task when state needs to be shared accross runs of the task or when
 	// the task requires use of some VS Code API to run.
-	// If you don't need to share state between runs and if you don't need to execute VS Code API in your task, 
+	// If you don't need to share state between runs and if you don't need to execute VS Code API in your task,
 	// then a simple ShellExecution or ProcessExecution should be enough.
 	// Since our build has this shared state, the CustomExecution is used below.
 	private sharedState: string | undefined;
@@ -84,50 +89,65 @@ export class ServerTaskProvider extends Disposable implements vscode.TaskProvide
 		const flavors: string[] = ['Run Live Server'];
 
 		this.tasks = [];
-		flavors.forEach(flavor => {
-				this.tasks!.push(this.getTask(flavor));
+		flavors.forEach((flavor) => {
+			this.tasks!.push(this.getTask(flavor));
 		});
 		return this.tasks;
 	}
 
-	private getTask(flavor: string, definition?: ServerTaskDefinition): vscode.Task {
+	private getTask(
+		flavor: string,
+		definition?: ServerTaskDefinition
+	): vscode.Task {
 		if (definition === undefined) {
 			definition = {
 				type: ServerTaskProvider.CustomBuildScriptType,
-				flavor
+				flavor,
 			};
 		}
 
 		if (this._terminal && this._terminal.running) {
-			vscode.window.showErrorMessage("cannot run more than one server task at once.");
-			return new vscode.Task(definition, vscode.TaskScope.Workspace, flavor,
-				ServerTaskProvider.CustomBuildScriptType, undefined);
+			vscode.window.showErrorMessage(
+				'cannot run more than one server task at once.'
+			);
+			return new vscode.Task(
+				definition,
+				vscode.TaskScope.Workspace,
+				flavor,
+				ServerTaskProvider.CustomBuildScriptType,
+				undefined
+			);
 		}
 
-		const custExec = new vscode.CustomExecution(async (): Promise<ServerTaskTerminal> => {
-			// When the task is executed, this callback will run. Here, we setup for running the task.
-			this._terminal = new ServerTaskTerminal(this.workspaceRoot, flavor);
-			this._terminal.onRequestToOpenServer((e)=> {
+		const custExec = new vscode.CustomExecution(
+			async (): Promise<ServerTaskTerminal> => {
+				// When the task is executed, this callback will run. Here, we setup for running the task.
+				this._terminal = new ServerTaskTerminal(this.workspaceRoot, flavor);
+				this._terminal.onRequestToOpenServer((e) => {
 					this._onRequestToOpenServerEmitter.fire(e);
 				});
-		
-			this._terminal.onRequestToCloseServer((e)=> {
-				this._onRequestToCloseServerEmitter.fire(e);
-			});
-	
-			return this._terminal;
-		});
 
-		return new vscode.Task(definition, vscode.TaskScope.Workspace, flavor,
-			ServerTaskProvider.CustomBuildScriptType, custExec);
+				this._terminal.onRequestToCloseServer((e) => {
+					this._onRequestToCloseServerEmitter.fire(e);
+				});
+
+				return this._terminal;
+			}
+		);
+
+		return new vscode.Task(
+			definition,
+			vscode.TaskScope.Workspace,
+			flavor,
+			ServerTaskProvider.CustomBuildScriptType,
+			custExec
+		);
 	}
 
-	
 	private readonly _onDisposeEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
 	public readonly onDispose = this._onDisposeEmitter.event;
-
 }
 
 class ServerTaskTerminal extends Disposable implements vscode.Pseudoterminal {
@@ -135,12 +155,14 @@ class ServerTaskTerminal extends Disposable implements vscode.Pseudoterminal {
 	private readonly _onRequestToOpenServerEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
-	public readonly onRequestToOpenServer = this._onRequestToOpenServerEmitter.event;
+	public readonly onRequestToOpenServer =
+		this._onRequestToOpenServerEmitter.event;
 
 	private readonly _onRequestToCloseServerEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
-	public readonly onRequestToCloseServer = this._onRequestToCloseServerEmitter.event;
+	public readonly onRequestToCloseServer =
+		this._onRequestToCloseServerEmitter.event;
 
 	private writeEmitter = new vscode.EventEmitter<string>();
 	onDidWrite: vscode.Event<string> = this.writeEmitter.event;
@@ -154,7 +176,9 @@ class ServerTaskTerminal extends Disposable implements vscode.Pseudoterminal {
 		if (isNew) {
 			this.writeEmitter.fire(`Started Server on http://127.0.0.1:${port}\r\n`);
 		} else {
-			this.writeEmitter.fire(`Server already started with embedded preview on http://127.0.0.1:${port}\r\n`);
+			this.writeEmitter.fire(
+				`Server already started with embedded preview on http://127.0.0.1:${port}\r\n`
+			);
 		}
 		this.writeEmitter.fire(`Press ENTER to close the server.\r\n\r\n`);
 	}
@@ -165,11 +189,15 @@ class ServerTaskTerminal extends Disposable implements vscode.Pseudoterminal {
 	}
 
 	public serverWillBeStopped() {
-		this.writeEmitter.fire(`This task will finish now, but the server will stop once you close your embedded preview.\r\n`);
-		this.writeEmitter.fire(`Run 'Live Server: Stop Development Server' in the command palette to force close the server and close any previews.\r\n\r\n`);
+		this.writeEmitter.fire(
+			`This task will finish now, but the server will stop once you close your embedded preview.\r\n`
+		);
+		this.writeEmitter.fire(
+			`Run 'Live Server: Stop Development Server' in the command palette to force close the server and close any previews.\r\n\r\n`
+		);
 		this.close();
 	}
-	
+
 	open(initialDimensions: vscode.TerminalDimensions | undefined): void {
 		// At this point we can start using the terminal.
 		this.running = true;
@@ -183,16 +211,22 @@ class ServerTaskTerminal extends Disposable implements vscode.Pseudoterminal {
 		this.closeEmitter.fire(0);
 	}
 
-	
 	public sendServerMsg(msg: serverMsg) {
 		const date = new Date();
 
-		const coloredStatusCode = msg.status >= 400 ? `\x1b[31m${msg.status}\x1b[0m`:`\x1b[32m${msg.status}\x1b[0m`;
-		this.writeEmitter.fire(`[${FormatDateTime(date)}] ${msg.method}: \x1b[34m${msg.url}\x1b[0m | ${coloredStatusCode}\r\n`);
+		const coloredStatusCode =
+			msg.status >= 400
+				? `\x1b[31m${msg.status}\x1b[0m`
+				: `\x1b[32m${msg.status}\x1b[0m`;
+		this.writeEmitter.fire(
+			`[${FormatDateTime(date)}] ${msg.method}: \x1b[34m${
+				msg.url
+			}\x1b[0m | ${coloredStatusCode}\r\n`
+		);
 	}
 
 	handleInput(data: string) {
-		if (data == "\r") {
+		if (data == '\r') {
 			this.writeEmitter.fire(`Closing the server...\r\n`);
 			this._onRequestToCloseServerEmitter.fire();
 		}

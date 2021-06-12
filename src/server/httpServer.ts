@@ -85,7 +85,11 @@ export class HttpServer extends Disposable {
 			if (!fs.existsSync(absoluteReadPath)) {
 				stream = this._contentLoader.createPageDoesNotExist(absoluteReadPath);
 				stream.pipe(res);
-				this._onNewReqProcessed.fire({method:req.method??'',url:req.url??'', status:404}); //TODO: very hacky, needs fix
+				this._onNewReqProcessed.fire({
+					method: req.method ?? '',
+					url: req.url ?? '',
+					status: 404,
+				}); //TODO: very hacky, needs fix
 				res.end();
 				return;
 			} else if (fs.statSync(absoluteReadPath).isDirectory()) {
@@ -112,21 +116,35 @@ export class HttpServer extends Disposable {
 			}
 
 			if (stream) {
-				stream.on('error',  () => {
+				stream.on('error', () => {
 					res.writeHead(404);
-					this._onNewReqProcessed.fire({method:req.method??'',url:req.url??'', status:res.statusCode});
+					this._onNewReqProcessed.fire({
+						method: req.method ?? '',
+						url: req.url ?? '',
+						status: res.statusCode,
+					});
 					res.end();
 					return;
 				});
 				// explicitly set text/html for html files to allow for special character rendering
-				const content_type = (absoluteReadPath.endsWith(".html")) ? 'text/html; charset=UTF-8': 'charset=UTF-8';
-				res.writeHead(200, { 'Content-Type': content_type});
+				const content_type = absoluteReadPath.endsWith('.html')
+					? 'text/html; charset=UTF-8'
+					: 'charset=UTF-8';
+				res.writeHead(200, { 'Content-Type': content_type });
 
 				stream.pipe(res);
-				this._onNewReqProcessed.fire({method:req.method??'',url:req.url??'', status:res.statusCode});
+				this._onNewReqProcessed.fire({
+					method: req.method ?? '',
+					url: req.url ?? '',
+					status: res.statusCode,
+				});
 			} else {
 				res.writeHead(500);
-				this._onNewReqProcessed.fire({method:req.method??'',url:req.url??'', status:res.statusCode});
+				this._onNewReqProcessed.fire({
+					method: req.method ?? '',
+					url: req.url ?? '',
+					status: res.statusCode,
+				});
 				res.end();
 				return;
 			}

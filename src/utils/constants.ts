@@ -20,7 +20,7 @@ export const DONT_SHOW_AGAIN: vscode.MessageItem = {
 };
 
 export const OPEN_EXTERNALLY: vscode.MessageItem = {
-	title: "Open Externally",
+	title: 'Open Externally',
 };
 export const HOST = '127.0.0.1';
 

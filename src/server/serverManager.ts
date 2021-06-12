@@ -134,7 +134,7 @@ export class Server extends Disposable {
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
 	private readonly _onFullyConnected = this._register(
-		new vscode.EventEmitter<{port:number}>()
+		new vscode.EventEmitter<{ port: number }>()
 	);
 
 	public readonly onFullyConnected = this._onFullyConnected.event;
@@ -194,7 +194,7 @@ export class Server extends Disposable {
 		this.showServerStatusMessage(
 			`Server Opened on Port ${this._httpServer.port}`
 		);
-		this._onFullyConnected.fire({port: this._httpServer.port});
+		this._onFullyConnected.fire({ port: this._httpServer.port });
 	}
 
 	private showServerStatusMessage(messsage: string) {
