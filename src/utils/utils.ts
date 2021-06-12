@@ -22,7 +22,7 @@ export enum LaunchPreviewOnServerStart {
 	nothing = 'Nothing',
 }
 
-export function FormatDateTime(date: Date): string {
+export function FormatDateTime(date: Date, delimeter = ', '): string {
 	const mm = date.getMonth() + 1;
 	const dd = date.getDate().toString().padStart(2, '0');
 	const yy = date.getFullYear().toString().substring(2);
@@ -31,7 +31,7 @@ export function FormatDateTime(date: Date): string {
 	const mi = date.getMinutes().toString().padStart(2, '0');
 	const ss = date.getSeconds().toString().padStart(2, '0');
 
-	return `${mm}/${dd}/${yy}, ${hh}:${mi}:${ss}`;
+	return `${mm}/${dd}/${yy}${delimeter}${hh}:${mi}:${ss}`;
 }
 
 export function FormatFileSize(bytes: number) {

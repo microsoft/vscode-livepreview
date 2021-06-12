@@ -28,16 +28,16 @@
 			},
 			{
 				"command": "liveserver.start.preview.atIndex",
-				"title": "Live Server: Show Preview to the side at Index Page"
+				"title": "Live Server: Show Preview to the Side at Index Page"
 			},
 			{
 				"command": "liveserver.start.preview.atActiveFile",
-				"title": "Live Server: Show Preview to the side",
+				"title": "Live Server: Show Preview to the Side",
 				"icon": "$(open-preview)"
 			},
 			{
 				"command": "liveserver.end",
-				"title": "Live Server: Stop Development Server"
+				"title": "Live Server: Force Stop Development Server"
 			}
 		],
 		"menus": {
@@ -104,7 +104,7 @@
 				"properties": {
 					"flavor": {
 						"type": "string",
-						"description": "Whether to show incoming messages."
+						"description": "Whether to show incoming server messages and status codes."
 					}
 				}
 			}

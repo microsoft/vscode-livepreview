@@ -84,7 +84,7 @@ export class ContentLoader extends Disposable {
 			(elem: IndexDirEntry) =>
 				(directoryContents += `
 				<tr>
-				<td><a href="${elem.LinkSrc}">${elem.LinkName}/</a></td>
+				<td><a href="${elem.LinkSrc}/">${elem.LinkName}/</a></td>
 				<td></td>
 				<td>${elem.DateTime}</td>
 				</tr>\n`)

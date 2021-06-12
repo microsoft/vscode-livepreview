@@ -84,20 +84,18 @@ export class HttpServer extends Disposable {
 
 			if (!fs.existsSync(absoluteReadPath)) {
 				stream = this._contentLoader.createPageDoesNotExist(absoluteReadPath);
+				res.writeHead(404);
+				this.reportStatus(req, res);
 				stream.pipe(res);
-				this._onNewReqProcessed.fire({
-					method: req.method ?? '',
-					url: req.url ?? '',
-					status: 404,
-				}); //TODO: very hacky, needs fix
-				res.end();
 				return;
 			} else if (fs.statSync(absoluteReadPath).isDirectory()) {
 				if (!URLPathName.endsWith('/')) {
-					res.statusCode = 302; // redirect to use slash
 					const queries =
 						endOfPath == -1 ? '' : `${req.url.substring(endOfPath)}`;
 					res.setHeader('Location', URLPathName + '/' + queries);
+					res.writeHead(302); // redirect to use slash
+
+					this.reportStatus(req, res);
 					return res.end();
 				}
 				// Redirect to index.html if the request URL is a directory
@@ -118,11 +116,7 @@ export class HttpServer extends Disposable {
 			if (stream) {
 				stream.on('error', () => {
 					res.writeHead(404);
-					this._onNewReqProcessed.fire({
-						method: req.method ?? '',
-						url: req.url ?? '',
-						status: res.statusCode,
-					});
+					this.reportStatus(req, res);
 					res.end();
 					return;
 				});
@@ -131,23 +125,22 @@ export class HttpServer extends Disposable {
 					? 'text/html; charset=UTF-8'
 					: 'charset=UTF-8';
 				res.writeHead(200, { 'Content-Type': content_type });
-
 				stream.pipe(res);
-				this._onNewReqProcessed.fire({
-					method: req.method ?? '',
-					url: req.url ?? '',
-					status: res.statusCode,
-				});
 			} else {
 				res.writeHead(500);
-				this._onNewReqProcessed.fire({
-					method: req.method ?? '',
-					url: req.url ?? '',
-					status: res.statusCode,
-				});
 				res.end();
-				return;
 			}
+
+			this.reportStatus(req, res);
+			return;
+		});
+	}
+
+	private reportStatus(req: http.IncomingMessage, res: http.ServerResponse) {
+		this._onNewReqProcessed.fire({
+			method: req.method ?? '',
+			url: req.url ?? '',
+			status: res.statusCode,
 		});
 	}
 }

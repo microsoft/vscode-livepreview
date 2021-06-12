@@ -21,6 +21,7 @@
 					command: 'add-history',
 					text: parsedMessage.path,
 				});
+				return;
 		}
 	};
 

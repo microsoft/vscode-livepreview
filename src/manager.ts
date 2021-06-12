@@ -16,7 +16,7 @@ import { ServerTaskProvider } from './server/serverTask';
 
 export interface serverMsg {
 	method: string;
-	url?: string;
+	url: string;
 	status: number;
 }
 export class Manager extends Disposable {
@@ -41,7 +41,7 @@ export class Manager extends Disposable {
 		this._server = this._register(
 			new Server(extensionUri, currentWorkspace)
 		);
-		this._serverTaskProvider = new ServerTaskProvider(currentWorkspace?.uri.fsPath ?? "");
+		this._serverTaskProvider = new ServerTaskProvider();
 		this._register(vscode.tasks.registerTaskProvider(
 			ServerTaskProvider.CustomBuildScriptType,
 			this._serverTaskProvider

@@ -278,12 +278,6 @@ export class BrowserPreview extends Disposable {
 			this.goToFile(pagename);
 		}
 
-		// If we can't rely on inline script to update panel title,
-		// then set panel title manually
-		if (!pagename?.endsWith('.html')) {
-			this.setPanelTitle('', pagename);
-		}
-
 		for (const i in response.actions) {
 			this.handleNavAction(response.actions[i]);
 		}
@@ -295,12 +289,6 @@ export class BrowserPreview extends Disposable {
 		const pagename = response.address;
 		if (pagename != undefined) {
 			this.goToFile(pagename);
-		}
-
-		// If we can't rely on inline script to update panel title,
-		// then set panel title manually
-		if (!pagename?.endsWith('.html')) {
-			this.setPanelTitle('', pagename);
 		}
 
 		for (const i in response.actions) {
@@ -342,6 +330,11 @@ export class BrowserPreview extends Disposable {
 
 	private goToFile(URLExt: string): void {
 		this.setHtml(this._panel.webview, this.constructAddress(URLExt));
+		// If we can't rely on inline script to update panel title,
+		// then set panel title manually
+		if (!URLExt?.endsWith('.html')) {
+			this.setPanelTitle('', URLExt);
+		}
 		this.currentAddress = URLExt;
 	}
 

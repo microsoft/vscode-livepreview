@@ -10,6 +10,15 @@ interface ServerTaskDefinition extends vscode.TaskDefinition {
 	flavor: string;
 }
 
+enum TerminalColor {
+	red = 31,
+	green = 32,
+	yellow = 33,
+	blue = 34,
+	purple = 35,
+	cyan = 36,
+}
+
 export class ServerTaskProvider
 	extends Disposable
 	implements vscode.TaskProvider
@@ -57,17 +66,6 @@ export class ServerTaskProvider
 		}
 	}
 
-	// We use a CustomExecution task when state needs to be shared accross runs of the task or when
-	// the task requires use of some VS Code API to run.
-	// If you don't need to share state between runs and if you don't need to execute VS Code API in your task,
-	// then a simple ShellExecution or ProcessExecution should be enough.
-	// Since our build has this shared state, the CustomExecution is used below.
-	private sharedState: string | undefined;
-
-	constructor(private workspaceRoot: string) {
-		super();
-	}
-
 	public async provideTasks(): Promise<vscode.Task[]> {
 		return this.getTasks();
 	}
@@ -86,7 +84,7 @@ export class ServerTaskProvider
 			return this.tasks;
 		}
 		// In our fictional build, we have two build flavors
-		const flavors: string[] = ['Run Live Server'];
+		const flavors: string[] = ['Server Logging'];
 
 		this.tasks = [];
 		flavors.forEach((flavor) => {
@@ -107,9 +105,6 @@ export class ServerTaskProvider
 		}
 
 		if (this._terminal && this._terminal.running) {
-			vscode.window.showErrorMessage(
-				'cannot run more than one server task at once.'
-			);
 			return new vscode.Task(
 				definition,
 				vscode.TaskScope.Workspace,
@@ -122,7 +117,7 @@ export class ServerTaskProvider
 		const custExec = new vscode.CustomExecution(
 			async (): Promise<ServerTaskTerminal> => {
 				// When the task is executed, this callback will run. Here, we setup for running the task.
-				this._terminal = new ServerTaskTerminal(this.workspaceRoot, flavor);
+				this._terminal = new ServerTaskTerminal(flavor);
 				this._terminal.onRequestToOpenServer((e) => {
 					this._onRequestToOpenServerEmitter.fire(e);
 				});
@@ -169,7 +164,7 @@ class ServerTaskTerminal extends Disposable implements vscode.Pseudoterminal {
 	public closeEmitter = new vscode.EventEmitter<number>();
 	onDidClose?: vscode.Event<number> = this.closeEmitter.event;
 
-	constructor(private workspaceRoot: string, private flavor: string) {
+	constructor(private flavor: string) {
 		super();
 	}
 	public serverStarted(port: number, isNew: boolean) {
@@ -193,7 +188,10 @@ class ServerTaskTerminal extends Disposable implements vscode.Pseudoterminal {
 			`This task will finish now, but the server will stop once you close your embedded preview.\r\n`
 		);
 		this.writeEmitter.fire(
-			`Run 'Live Server: Stop Development Server' in the command palette to force close the server and close any previews.\r\n\r\n`
+			this.colorTerminalString(
+				TerminalColor.yellow,
+				`Run 'Live Server: Force Stop Development Server' in the command palette to force close the server and close any previews.\r\n\r\n`
+			)
 		);
 		this.close();
 	}
@@ -214,15 +212,26 @@ class ServerTaskTerminal extends Disposable implements vscode.Pseudoterminal {
 	public sendServerMsg(msg: serverMsg) {
 		const date = new Date();
 
-		const coloredStatusCode =
-			msg.status >= 400
-				? `\x1b[31m${msg.status}\x1b[0m`
-				: `\x1b[32m${msg.status}\x1b[0m`;
 		this.writeEmitter.fire(
-			`[${FormatDateTime(date)}] ${msg.method}: \x1b[34m${
+			`[${FormatDateTime(date, ' ')}] ${msg.method}: ${this.colorTerminalString(
+				TerminalColor.blue,
 				msg.url
-			}\x1b[0m | ${coloredStatusCode}\r\n`
+			)} | ${this.colorHttpStatus(msg.status)}\r\n`
 		);
+	}
+
+	private colorHttpStatus(status: number) {
+		let color = TerminalColor.green;
+		if (status >= 400) {
+			color = TerminalColor.red;
+		} else if (status >= 300) {
+			color = TerminalColor.yellow;
+		}
+		return this.colorTerminalString(color, status.toString());
+	}
+
+	private colorTerminalString(color: TerminalColor, input: string) {
+		return `\x1b[${color}m${input}\x1b[0m`;
 	}
 
 	handleInput(data: string) {

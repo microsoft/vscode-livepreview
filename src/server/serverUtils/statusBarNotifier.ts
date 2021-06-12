@@ -7,6 +7,7 @@ import { GetConfig, LaunchPreviewOnServerStart } from '../../utils/utils';
 export class StatusBarNotifier extends Disposable {
 	private _statusBar: vscode.StatusBarItem;
 	private _extensionUri: vscode.Uri;
+	private _on: boolean;
 
 	constructor(extensionUri: vscode.Uri) {
 		super();
@@ -14,31 +15,24 @@ export class StatusBarNotifier extends Disposable {
 			vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100)
 		);
 		this._extensionUri = extensionUri;
-
-		if (GetConfig(extensionUri).showStatusBarItem) {
-			this._statusBar.show();
-		} else {
-			this._statusBar.hide();
-		}
 		this.ServerOff();
+		this._on = false;
 	}
 
 	public ServerOn(port: number) {
+		this._on = true;
+		if (GetConfig(this._extensionUri).showStatusBarItem) {
+			this._statusBar.show();
+		}
+
 		this._statusBar.text = `$(circle-slash) Server on Port ${port}`;
 		this._statusBar.tooltip = 'Click to stop the server';
 		this._statusBar.command = 'liveserver.end';
 	}
 
 	public ServerOff() {
-		this._statusBar.text = `$(broadcast) Start Server`;
-		this._statusBar.tooltip = 'Click to start the server and open the preview.';
-
-		const config = GetConfig(this._extensionUri).launchPreviewOnServerStart;
-		if (config == LaunchPreviewOnServerStart.embeddedPreview) {
-			this._statusBar.command = 'liveserver.start.preview.atActiveFile';
-		} else if (config == LaunchPreviewOnServerStart.externalBrowser) {
-			this._statusBar.command = 'liveserver.start.externalPreview.atActiveFile';
-		}
+		this._on = false;
+		this._statusBar.hide();
 	}
 
 	public loading(command: string) {
@@ -49,7 +43,9 @@ export class StatusBarNotifier extends Disposable {
 
 	public updateConfigurations() {
 		if (GetConfig(this._extensionUri).showStatusBarItem) {
-			this._statusBar.show();
+			if (this._on) {
+				this._statusBar.show();
+			}
 		} else {
 			this._statusBar.hide();
 		}
