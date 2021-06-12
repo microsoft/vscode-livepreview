@@ -2,7 +2,7 @@
 	"name": "live-server",
 	"displayName": "Live Server",
 	"description": "An extension that hosts your web project for previewing.",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"publisher": "andrea-mah",
 	"icon": "icon.png",
 	"repository": {
@@ -94,7 +94,21 @@
 					"description": "Whether the server should stop when the embedded preview is closed."
 				}
 			}
-		}
+		},
+		"taskDefinition": 
+			{
+				"type": "Live Server",
+				"required": [
+					"flavor"
+				],
+				"properties": {
+					"flavor": {
+						"type": "string",
+						"description": "Whether to show incoming messages."
+					}
+				}
+			}
+		
 	},
 	
    

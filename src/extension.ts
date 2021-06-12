@@ -40,13 +40,16 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('liveserver.end', () => {
-			manager.closeServer(true);
+			manager.closeServer();
 		})
 	);
 
 	if (vscode.window.registerWebviewPanelSerializer) {
 		vscode.window.registerWebviewPanelSerializer(BrowserPreview.viewType, {
-			async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
+			async deserializeWebviewPanel(
+				webviewPanel: vscode.WebviewPanel,
+				state: any
+			) {
 				const file = state.currentAddress ?? '/';
 				// Reset the webview options so we use latest uri for `localResourceRoots`.
 				webviewPanel.webview.options = getWebviewOptions(context.extensionUri);

@@ -4,7 +4,8 @@ import { WSServer } from './wsServer';
 import { HttpServer } from './httpServer';
 import { StatusBarNotifier } from './serverUtils/statusBarNotifier';
 import { AutoRefreshPreview, GetConfig, UpdateSettings } from '../utils/utils';
-import { CLOSE_SERVER, DONT_SHOW_AGAIN, Settings } from '../utils/constants';
+import { DONT_SHOW_AGAIN, Settings } from '../utils/constants';
+import { serverMsg } from '../manager';
 
 export interface PortInfo {
 	port?: number;
@@ -29,6 +30,19 @@ export class Server extends Disposable {
 		this._wsServer = this._register(new WSServer());
 		this._statusBar = this._register(new StatusBarNotifier(extensionUri));
 		this._workspacePath = path?.uri.fsPath;
+
+		this._register(
+			vscode.workspace.onDidChangeTextDocument((e) => {
+				if (
+					e.contentChanges &&
+					e.contentChanges.length > 0 &&
+					this._reloadOnAnyChange
+				) {
+					this._wsServer.refreshBrowsers();
+				}
+			})
+		);
+
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
 				if (
@@ -80,6 +94,12 @@ export class Server extends Disposable {
 		);
 
 		this._register(
+			this._httpServer.onNewReqProcessed((e) => {
+				this._onNewReqProcessed.fire(e);
+			})
+		);
+
+		this._register(
 			this._wsServer.onConnected((e) => {
 				this._onPortChangeEmitter.fire({ ws_port: e });
 				this.wsServerConnected();
@@ -107,6 +127,17 @@ export class Server extends Disposable {
 	);
 
 	public readonly onPortChange = this._onPortChangeEmitter.event;
+
+	private readonly _onNewReqProcessed = this._register(
+		new vscode.EventEmitter<serverMsg>()
+	);
+	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
+
+	private readonly _onFullyConnected = this._register(
+		new vscode.EventEmitter<{port:number}>()
+	);
+
+	public readonly onFullyConnected = this._onFullyConnected.event;
 
 	private get _reloadOnAnyChange() {
 		return (
@@ -163,6 +194,7 @@ export class Server extends Disposable {
 		this.showServerStatusMessage(
 			`Server Opened on Port ${this._httpServer.port}`
 		);
+		this._onFullyConnected.fire({port: this._httpServer.port});
 	}
 
 	private showServerStatusMessage(messsage: string) {

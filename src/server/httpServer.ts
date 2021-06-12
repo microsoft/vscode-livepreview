@@ -6,6 +6,7 @@ import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { HTMLInjector } from './serverUtils/HTMLInjector';
 import { HOST } from '../utils/constants';
+import { serverMsg } from '../manager';
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -21,6 +22,11 @@ export class HttpServer extends Disposable {
 		new vscode.EventEmitter<number>()
 	);
 	public readonly onConnected = this._onConnected.event;
+
+	private readonly _onNewReqProcessed = this._register(
+		new vscode.EventEmitter<serverMsg>()
+	);
+	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
 	public start(port: number, basePath: string) {
 		this.port = port;
@@ -78,6 +84,10 @@ export class HttpServer extends Disposable {
 
 			if (!fs.existsSync(absoluteReadPath)) {
 				stream = this._contentLoader.createPageDoesNotExist(absoluteReadPath);
+				stream.pipe(res);
+				this._onNewReqProcessed.fire({method:req.method??'',url:req.url??'', status:404}); //TODO: very hacky, needs fix
+				res.end();
+				return;
 			} else if (fs.statSync(absoluteReadPath).isDirectory()) {
 				if (!URLPathName.endsWith('/')) {
 					res.statusCode = 302; // redirect to use slash
@@ -102,18 +112,23 @@ export class HttpServer extends Disposable {
 			}
 
 			if (stream) {
-				stream.on('error', function () {
+				stream.on('error',  () => {
 					res.writeHead(404);
+					this._onNewReqProcessed.fire({method:req.method??'',url:req.url??'', status:res.statusCode});
 					res.end();
+					return;
 				});
 				// explicitly set text/html for html files to allow for special character rendering
 				const content_type = (absoluteReadPath.endsWith(".html")) ? 'text/html; charset=UTF-8': 'charset=UTF-8';
 				res.writeHead(200, { 'Content-Type': content_type});
 
 				stream.pipe(res);
+				this._onNewReqProcessed.fire({method:req.method??'',url:req.url??'', status:res.statusCode});
 			} else {
 				res.writeHead(500);
+				this._onNewReqProcessed.fire({method:req.method??'',url:req.url??'', status:res.statusCode});
 				res.end();
+				return;
 			}
 		});
 	}

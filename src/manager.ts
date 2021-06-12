@@ -12,12 +12,19 @@ import {
 	Settings,
 } from './utils/constants';
 import { GetConfig, UpdateSettings } from './utils/utils';
+import { ServerTaskProvider } from './server/serverTask';
 
+export interface serverMsg {
+	method: string;
+	url?: string;
+	status: number;
+}
 export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
 	private readonly _server: Server;
 	private readonly _extensionUri: vscode.Uri;
 	private readonly _globalState;
+	private _serverTaskProvider: ServerTaskProvider;
 
 	// always leave off at previous port numbers to avoid retrying on many busy ports
 	private _serverPort: number;
@@ -29,9 +36,46 @@ export class Manager extends Disposable {
 		this._globalState = globalState;
 		this._serverPort = GetConfig(extensionUri).portNum;
 		this._serverWSPort = GetConfig(extensionUri).portNum + 1;
+
+		const currentWorkspace = vscode.workspace.workspaceFolders?.[0];
 		this._server = this._register(
-			new Server(extensionUri, vscode.workspace.workspaceFolders?.[0])
+			new Server(extensionUri, currentWorkspace)
 		);
+		this._serverTaskProvider = new ServerTaskProvider(currentWorkspace?.uri.fsPath ?? "");
+		this._register(vscode.tasks.registerTaskProvider(
+			ServerTaskProvider.CustomBuildScriptType,
+			this._serverTaskProvider
+		));
+
+		this._register(
+			this._server.onNewReqProcessed((e) => {
+				this._serverTaskProvider.sendServerInfoToTerminal(e);
+			})
+		);
+
+		this._register(
+			this._serverTaskProvider.onRequestToOpenServer(() => {
+				this.openServer(true);
+			})
+		);
+
+		this._register(
+			this._serverTaskProvider.onRequestToCloseServer(() => {
+				if (this.currentPanel) {
+					this._serverTaskProvider.serverStop(false);
+				} else {
+					this.closeServer();
+					this._serverTaskProvider.serverStop(true);
+				}
+			})
+		);
+
+		this._server.onFullyConnected((e) => {
+			if (e.port) {
+				this._serverTaskProvider.serverStarted(e.port, true);
+			}
+		});
+
 		this._server.onPortChange((e) => {
 			if (this.currentPanel) {
 				this._serverPort = e.port ?? this._serverPort;
@@ -85,31 +129,8 @@ export class Manager extends Disposable {
 
 		this.currentPanel.onDispose(() => {
 			this.currentPanel = undefined;
-			if (this._server.isRunning) {
-				if (!this._globalState.get<boolean>(HAS_SET_CLOSE_PREVEW_BEHAVIOR)) {
-					vscode.window
-						.showInformationMessage(
-							'You closed the embedded preview. Would you like to also close the server?',
-							CLOSE_SERVER,
-							DONT_CLOSE
-						)
-						.then((selection: vscode.MessageItem | undefined) => {
-							if (selection) {
-								if (selection === CLOSE_SERVER) {
-									this.closeServer(true);
-								}
-								UpdateSettings(
-									Settings.closeServerWithEmbeddedPreview,
-									selection == CLOSE_SERVER
-								);
-								this._globalState.update(HAS_SET_CLOSE_PREVEW_BEHAVIOR, true);
-							}
-						});
-				} else if (
-					GetConfig(this._extensionUri).closeServerWithEmbeddedPreview
-				) {
-					this.closeServer(true);
-				}
+			if (this._server.isRunning && !this._serverTaskProvider.serverRunning) {
+				this.closeServer();
 			}
 		});
 	}
@@ -126,25 +147,24 @@ export class Manager extends Disposable {
 		vscode.env.openExternal(uri);
 	}
 
-	public openServer(showMsgAlreadyOn = false): boolean {
+	public openServer(fromTask = false): boolean {
 		if (!this._server.isRunning) {
 			return this._server.openServer(this._serverPort);
-		} else if (showMsgAlreadyOn) {
-			vscode.window.showErrorMessage('Server already on');
+		} else if (fromTask) {
+			this._serverTaskProvider.serverStarted(this._serverPort, false);
 		}
+		
 		return true;
 	}
 
-	public closeServer(showMsgAlreadyOff = false): void {
+	public closeServer(): void {
 		if (this._server.isRunning) {
 			this._server.closeServer();
 
 			if (this.currentPanel) {
 				this.currentPanel.close();
 			}
-		} else if (showMsgAlreadyOff) {
-			vscode.window.showErrorMessage('Server already closed');
-		}
+		} 
 	}
 
 	dispose() {
