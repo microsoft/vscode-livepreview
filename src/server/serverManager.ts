@@ -154,7 +154,6 @@ export class Server extends Disposable {
 	}
 
 	public closeServer(): void {
-		this._statusBar.loading('off');
 		this._httpServer.close();
 		this._wsServer.close();
 		this._isServerOn = false; // TODO: find error conditions and return false when needed
@@ -165,7 +164,6 @@ export class Server extends Disposable {
 
 	public openServer(port: number): boolean {
 		if (this._workspacePath && this._extensionUri) {
-			this._statusBar.loading('on');
 
 			// initialize websockets to use port after http server port
 			this._httpServer.setInjectorWSPort(port + 1, this._extensionUri);

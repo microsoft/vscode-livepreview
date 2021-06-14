@@ -25,20 +25,13 @@ export class StatusBarNotifier extends Disposable {
 			this._statusBar.show();
 		}
 
-		this._statusBar.text = `$(circle-slash) Server on Port ${port}`;
-		this._statusBar.tooltip = 'Click to stop the server';
-		this._statusBar.command = 'liveserver.end';
+		this._statusBar.text = `$(radio-tower) Port: ${port}`;
+		this._statusBar.tooltip = `Live Sever running on port ${port}`;
 	}
 
 	public ServerOff() {
 		this._on = false;
 		this._statusBar.hide();
-	}
-
-	public loading(command: string) {
-		this._statusBar.text = `$(pulse) loading...`;
-		this._statusBar.tooltip = `Loading server ${command} command`;
-		this._statusBar.command = undefined;
 	}
 
 	public updateConfigurations() {
