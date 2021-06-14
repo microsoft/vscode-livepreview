@@ -4,7 +4,7 @@ import { Disposable } from './utils/dispose';
 import { Server } from './server/serverManager';
 import { INIT_PANEL_TITLE, HOST, SETTINGS_SECTION_ID } from './utils/constants';
 import { GetConfig } from './utils/utils';
-import { ServerTaskProvider } from './server/serverTask';
+import { ServerTaskProvider } from './task/serverTaskProvider';
 
 export interface serverMsg {
 	method: string;
