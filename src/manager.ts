@@ -2,11 +2,7 @@ import * as vscode from 'vscode';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { Disposable } from './utils/dispose';
 import { Server } from './server/serverManager';
-import {
-	INIT_PANEL_TITLE,
-	HOST,
-	SETTINGS_SECTION_ID,
-} from './utils/constants';
+import { INIT_PANEL_TITLE, HOST, SETTINGS_SECTION_ID } from './utils/constants';
 import { GetConfig } from './utils/utils';
 import { ServerTaskProvider } from './server/serverTask';
 
@@ -41,18 +37,17 @@ export class Manager extends Disposable {
 		this._extensionUri = extensionUri;
 
 		const currentWorkspace = vscode.workspace.workspaceFolders?.[0];
-		this._server = this._register(
-			new Server(extensionUri, currentWorkspace)
-		);
+		this._server = this._register(new Server(extensionUri, currentWorkspace));
 		this._serverPort = GetConfig(extensionUri).portNum;
 		this._serverWSPort = GetConfig(extensionUri).portNum + 1;
 
-
 		this._serverTaskProvider = new ServerTaskProvider();
-		this._register(vscode.tasks.registerTaskProvider(
-			ServerTaskProvider.CustomBuildScriptType,
-			this._serverTaskProvider
-		));
+		this._register(
+			vscode.tasks.registerTaskProvider(
+				ServerTaskProvider.CustomBuildScriptType,
+				this._serverTaskProvider
+			)
+		);
 
 		this._register(
 			this._server.onNewReqProcessed((e) => {
@@ -94,11 +89,10 @@ export class Manager extends Disposable {
 		vscode.workspace.onDidChangeConfiguration((e) => {
 			if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
 				this._server.updateConfigurations();
-				const newPortNum =  GetConfig(this._extensionUri).portNum;
+				const newPortNum = GetConfig(this._extensionUri).portNum;
 				if (newPortNum != this._serverPort) {
 					if (!this._server.isRunning) {
 						this._serverPort = GetConfig(this._extensionUri).portNum;
-						
 					} else {
 						this._serverPortNeedsUpdate = true;
 					}
@@ -169,7 +163,7 @@ export class Manager extends Disposable {
 		} else if (fromTask) {
 			this._serverTaskProvider.serverStarted(this._serverPort, false);
 		}
-		
+
 		return true;
 	}
 
@@ -185,7 +179,7 @@ export class Manager extends Disposable {
 				this._serverPort = GetConfig(this._extensionUri).portNum;
 				this._serverPortNeedsUpdate = false;
 			}
-		} 
+		}
 	}
 
 	dispose() {
