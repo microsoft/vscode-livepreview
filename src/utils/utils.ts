@@ -6,20 +6,12 @@ interface LiveServerConfigItem {
 	showStatusBarItem: boolean;
 	showServerStatusPopUps: boolean;
 	autoRefreshPreview: AutoRefreshPreview;
-	launchPreviewOnServerStart: LaunchPreviewOnServerStart;
-	closeServerWithEmbeddedPreview: boolean;
 }
 
 export enum AutoRefreshPreview {
 	onAnyChange = 'On All Changes in Editor',
 	onSave = 'On Changes to Saved Files',
 	never = 'Never',
-}
-
-export enum LaunchPreviewOnServerStart {
-	embeddedPreview = 'Embedded Preview',
-	externalBrowser = 'External Browser',
-	nothing = 'Nothing',
 }
 
 export function FormatDateTime(date: Date, delimeter = ', '): string {
@@ -64,15 +56,7 @@ export function GetConfig(resource: vscode.Uri): LiveServerConfigItem {
 		autoRefreshPreview: config.get<AutoRefreshPreview>(
 			'autoRefreshPreview',
 			AutoRefreshPreview.onAnyChange
-		),
-		launchPreviewOnServerStart: config.get<LaunchPreviewOnServerStart>(
-			'launchPreviewOnServerStart',
-			LaunchPreviewOnServerStart.embeddedPreview
-		),
-		closeServerWithEmbeddedPreview: config.get<boolean>(
-			'closeServerWithEmbeddedPreview',
-			false
-		),
+		)
 	};
 }
 

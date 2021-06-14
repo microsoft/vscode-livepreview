@@ -12,6 +12,14 @@ export class WSServer extends Disposable {
 		super();
 	}
 
+	public get ws_port() {
+		return this._ws_port;
+	}
+
+	public set ws_port(portNum: number) {
+		this._ws_port = portNum;
+	}
+
 	private readonly _onConnected = this._register(
 		new vscode.EventEmitter<number>()
 	);

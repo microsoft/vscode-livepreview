@@ -10,6 +10,11 @@ interface ServerTaskDefinition extends vscode.TaskDefinition {
 	flavor: string;
 }
 
+const ServerTaskFlavors: any  = {
+	verbose: "Server With Logging",
+	nonVerbose: "Server With No Logging"
+};
+
 enum TerminalColor {
 	red = 31,
 	green = 32,
@@ -83,8 +88,8 @@ export class ServerTaskProvider
 		if (this.tasks !== undefined) {
 			return this.tasks;
 		}
-		// In our fictional build, we have two build flavors
-		const flavors: string[] = ['Server Logging'];
+
+		const flavors: string[] = [ServerTaskFlavors.verbose, ServerTaskFlavors.nonVerbose];
 
 		this.tasks = [];
 		flavors.forEach((flavor) => {
@@ -159,13 +164,15 @@ class ServerTaskTerminal extends Disposable implements vscode.Pseudoterminal {
 	public readonly onRequestToCloseServer =
 		this._onRequestToCloseServerEmitter.event;
 
+	private readonly _verbose;
 	private writeEmitter = new vscode.EventEmitter<string>();
 	onDidWrite: vscode.Event<string> = this.writeEmitter.event;
 	public closeEmitter = new vscode.EventEmitter<number>();
 	onDidClose?: vscode.Event<number> = this.closeEmitter.event;
 
-	constructor(private flavor: string) {
+	constructor(flavor: string) {
 		super();
+		this._verbose = (flavor == ServerTaskFlavors.verbose);
 	}
 	public serverStarted(port: number, isNew: boolean) {
 		if (isNew) {
@@ -196,7 +203,7 @@ class ServerTaskTerminal extends Disposable implements vscode.Pseudoterminal {
 		this.close();
 	}
 
-	open(initialDimensions: vscode.TerminalDimensions | undefined): void {
+	open(): void {
 		// At this point we can start using the terminal.
 		this.running = true;
 		this.writeEmitter.fire('Opening Server...\r\n');
@@ -210,14 +217,16 @@ class ServerTaskTerminal extends Disposable implements vscode.Pseudoterminal {
 	}
 
 	public sendServerMsg(msg: serverMsg) {
-		const date = new Date();
+		if (this._verbose) {
+			const date = new Date();
 
-		this.writeEmitter.fire(
-			`[${FormatDateTime(date, ' ')}] ${msg.method}: ${this.colorTerminalString(
-				TerminalColor.blue,
-				msg.url
-			)} | ${this.colorHttpStatus(msg.status)}\r\n`
-		);
+			this.writeEmitter.fire(
+				`[${FormatDateTime(date, ' ')}] ${msg.method}: ${this.colorTerminalString(
+					TerminalColor.blue,
+					msg.url
+				)} | ${this.colorHttpStatus(msg.status)}\r\n`
+			);
+		}
 	}
 
 	private colorHttpStatus(status: number) {

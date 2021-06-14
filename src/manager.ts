@@ -4,14 +4,10 @@ import { Disposable } from './utils/dispose';
 import { Server } from './server/serverManager';
 import {
 	INIT_PANEL_TITLE,
-	CLOSE_SERVER,
-	DONT_CLOSE,
 	HOST,
-	HAS_SET_CLOSE_PREVEW_BEHAVIOR,
 	SETTINGS_SECTION_ID,
-	Settings,
 } from './utils/constants';
-import { GetConfig, UpdateSettings } from './utils/utils';
+import { GetConfig } from './utils/utils';
 import { ServerTaskProvider } from './server/serverTask';
 
 export interface serverMsg {
@@ -23,24 +19,35 @@ export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
 	private readonly _server: Server;
 	private readonly _extensionUri: vscode.Uri;
-	private readonly _globalState;
 	private _serverTaskProvider: ServerTaskProvider;
+	private _serverPortNeedsUpdate = false;
 
 	// always leave off at previous port numbers to avoid retrying on many busy ports
-	private _serverPort: number;
-	private _serverWSPort: number;
 
-	constructor(extensionUri: vscode.Uri, globalState: vscode.Memento) {
+	private get _serverPort() {
+		return this._server.port;
+	}
+	private set _serverPort(portNum: number) {
+		this._server.port = portNum;
+	}
+	private get _serverWSPort() {
+		return this._server.ws_port;
+	}
+	private set _serverWSPort(portNum: number) {
+		this._server.ws_port = portNum;
+	}
+	constructor(extensionUri: vscode.Uri) {
 		super();
 		this._extensionUri = extensionUri;
-		this._globalState = globalState;
-		this._serverPort = GetConfig(extensionUri).portNum;
-		this._serverWSPort = GetConfig(extensionUri).portNum + 1;
 
 		const currentWorkspace = vscode.workspace.workspaceFolders?.[0];
 		this._server = this._register(
 			new Server(extensionUri, currentWorkspace)
 		);
+		this._serverPort = GetConfig(extensionUri).portNum;
+		this._serverWSPort = GetConfig(extensionUri).portNum + 1;
+
+
 		this._serverTaskProvider = new ServerTaskProvider();
 		this._register(vscode.tasks.registerTaskProvider(
 			ServerTaskProvider.CustomBuildScriptType,
@@ -87,6 +94,15 @@ export class Manager extends Disposable {
 		vscode.workspace.onDidChangeConfiguration((e) => {
 			if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
 				this._server.updateConfigurations();
+				const newPortNum =  GetConfig(this._extensionUri).portNum;
+				if (newPortNum != this._serverPort) {
+					if (!this._server.isRunning) {
+						this._serverPort = GetConfig(this._extensionUri).portNum;
+						
+					} else {
+						this._serverPortNeedsUpdate = true;
+					}
+				}
 			}
 		});
 	}
@@ -163,6 +179,11 @@ export class Manager extends Disposable {
 
 			if (this.currentPanel) {
 				this.currentPanel.close();
+			}
+
+			if (this._serverPortNeedsUpdate) {
+				this._serverPort = GetConfig(this._extensionUri).portNum;
+				this._serverPortNeedsUpdate = false;
 			}
 		} 
 	}

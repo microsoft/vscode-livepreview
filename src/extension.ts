@@ -4,7 +4,7 @@ import { getWebviewOptions, Manager } from './manager';
 import { GetRelativeActiveFile } from './utils/utils';
 
 export function activate(context: vscode.ExtensionContext) {
-	const manager = new Manager(context.extensionUri, context.globalState);
+	const manager = new Manager(context.extensionUri);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('liveserver.start', () => {

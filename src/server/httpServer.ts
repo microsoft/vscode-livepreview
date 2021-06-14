@@ -92,7 +92,7 @@ export class HttpServer extends Disposable {
 				if (!URLPathName.endsWith('/')) {
 					const queries =
 						endOfPath == -1 ? '' : `${req.url.substring(endOfPath)}`;
-					res.setHeader('Location', URLPathName + '/' + queries);
+					res.setHeader('Location', `${URLPathName}/${queries}`);
 					res.writeHead(302); // redirect to use slash
 
 					this.reportStatus(req, res);

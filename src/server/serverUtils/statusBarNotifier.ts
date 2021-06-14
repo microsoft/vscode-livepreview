@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Disposable } from '../../utils/dispose';
-import { GetConfig, LaunchPreviewOnServerStart } from '../../utils/utils';
+import { GetConfig } from '../../utils/utils';
 
 // flow is inspired by status bar in original Live Server extension
 // https://github.com/ritwickdey/vscode-live-server/blob/master/src/StatusbarUi.ts

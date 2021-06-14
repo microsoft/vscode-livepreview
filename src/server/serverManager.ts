@@ -114,6 +114,22 @@ export class Server extends Disposable {
 		);
 	}
 
+	public get port() {
+		return this._httpServer.port;
+	}
+
+	public set port(portNum: number) {
+		this._httpServer.port = portNum;
+	}
+
+	public get ws_port() {
+		return this._wsServer.ws_port;
+	}
+	
+	public set ws_port(portNum: number) {
+		this._wsServer.ws_port = portNum;
+	}
+
 	public get isRunning(): boolean {
 		return this._isServerOn;
 	}
