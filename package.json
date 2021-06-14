@@ -38,6 +38,10 @@
 			{
 				"command": "liveserver.end",
 				"title": "Live Server: Force Stop Development Server"
+			},
+			{
+				"command": "liveserver.start.externalPreview.atActiveFile",
+				"title": "Live Server: Show Preview in External Browser"
 			}
 		],
 		"menus": {
@@ -77,6 +81,11 @@
 					],
 					"default": "On All Changes in Editor",
 					"description": "How often to automatically refresh the preview."
+				},
+				"liveserver.browserPreviewServerLogging": {
+					"type": "boolean",
+					"default": true,
+					"description": "Upon running `Live Server: Show Preview in External Browser`, whether the auto-general terminal has logging."
 				}
 			}
 		},

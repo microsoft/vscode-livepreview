@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { serverMsg } from '../manager';
+import { HOST } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { FormatDateTime } from '../utils/utils';
 import { ServerTaskFlavors } from './ServerTaskProvider';
@@ -12,6 +13,12 @@ enum TerminalColor {
 	purple = 35,
 	cyan = 36,
 }
+enum TerminalDeco {
+	reset = 0,
+	bold = 1,
+	underline = 4
+}
+const CHAR_CODE_CTRL_C = 3;
 
 export class ServerTaskTerminal extends Disposable implements vscode.Pseudoterminal {
 	public running = false;
@@ -37,15 +44,24 @@ export class ServerTaskTerminal extends Disposable implements vscode.Pseudotermi
 		super();
 		this._verbose = (flavor == ServerTaskFlavors.verbose);
 	}
+
+	private formatAddr(port: number) {
+		return this.colorTerminalString(`http://${HOST}`,TerminalColor.blue,TerminalDeco.bold) + this.colorTerminalString(`:${port}`,TerminalColor.purple,TerminalDeco.bold);
+	}
+
 	public serverStarted(port: number, isNew: boolean) {
 		if (isNew) {
-			this.writeEmitter.fire(`Started Server on http://127.0.0.1:${port}\r\n`);
+			this.writeEmitter.fire(`Started Server on ${this.formatAddr(port)}\r\n`);
 		} else {
 			this.writeEmitter.fire(
-				`Server already started with embedded preview on http://127.0.0.1:${port}\r\n`
+				`Server already on at ${this.formatAddr(port)}\r\n> `
 			);
 		}
-		this.writeEmitter.fire(`Press ENTER to close the server.\r\n\r\n`);
+		this.writeEmitter.fire(`Type ${this.colorTerminalString(
+			`CTRL+C`,
+			TerminalColor.red,
+			TerminalDeco.bold
+		)} to close the server.\r\n\r\n> `);
 	}
 
 	public serverStopped() {
@@ -59,8 +75,8 @@ export class ServerTaskTerminal extends Disposable implements vscode.Pseudotermi
 		);
 		this.writeEmitter.fire(
 			this.colorTerminalString(
+				`Run 'Live Server: Force Stop Development Server' in the command palette to force close the server and close any previews.\r\n\r\n`,
 				TerminalColor.yellow,
-				`Run 'Live Server: Force Stop Development Server' in the command palette to force close the server and close any previews.\r\n\r\n`
 			)
 		);
 		this.close();
@@ -85,9 +101,8 @@ export class ServerTaskTerminal extends Disposable implements vscode.Pseudotermi
 
 			this.writeEmitter.fire(
 				`[${FormatDateTime(date, ' ')}] ${msg.method}: ${this.colorTerminalString(
-					TerminalColor.blue,
-					msg.url
-				)} | ${this.colorHttpStatus(msg.status)}\r\n`
+					msg.url,TerminalColor.blue
+				)} | ${this.colorHttpStatus(msg.status)}\r\n> `
 			);
 		}
 	}
@@ -99,15 +114,15 @@ export class ServerTaskTerminal extends Disposable implements vscode.Pseudotermi
 		} else if (status >= 300) {
 			color = TerminalColor.yellow;
 		}
-		return this.colorTerminalString(color, status.toString());
+		return this.colorTerminalString(status.toString(), color);
 	}
 
-	private colorTerminalString(color: TerminalColor, input: string) {
-		return `\x1b[${color}m${input}\x1b[0m`;
+	private colorTerminalString(input: string, color: TerminalColor, decoration = TerminalDeco.reset) {
+		return `\x1b[${decoration};${color}m${input}\x1b[0m`;
 	}
 
 	handleInput(data: string) {
-		if (data == '\r') {
+		if (data.length > 0 && data.charCodeAt(0) == CHAR_CODE_CTRL_C) {
 			this.writeEmitter.fire(`Closing the server...\r\n`);
 			this._onRequestToCloseServerEmitter.fire();
 		}

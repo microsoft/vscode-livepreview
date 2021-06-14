@@ -3,8 +3,6 @@ import * as vscode from 'vscode';
 export const WS_PORTNUM_PLACEHOLDER = '${WS_PORTNUM}';
 export const INIT_PANEL_TITLE = '/';
 
-
-
 export const GO_TO_SETTINGS: vscode.MessageItem = {
 	title: 'Go To Settings',
 };
@@ -24,5 +22,6 @@ export const Settings: any = {
 	portNum: 'portNum',
 	showStatusBarItem: 'showStatusBarItem',
 	showServerStatusPopUps: 'showServerStatusPopUps',
-	autoRefreshPreview: 'autoRefreshPreview'
+	autoRefreshPreview: 'autoRefreshPreview',
+	browserPreviewServerLogging: 'browserPreviewServerLogging'
 };

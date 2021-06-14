@@ -139,20 +139,21 @@ export class Manager extends Disposable {
 
 		this.currentPanel.onDispose(() => {
 			this.currentPanel = undefined;
-			if (this._server.isRunning && !this._serverTaskProvider.serverRunning) {
+			if (this._server.isRunning && !this._serverTaskProvider.isRunning) {
 				this.closeServer();
 			}
 		});
 	}
 
 	public showPreviewInBrowser(file = '/') {
-		file = file.endsWith('.html') ? file : '/';
-		const serverOn = this.openServer();
-
-		if (!serverOn) {
-			return;
+		if (!this._serverTaskProvider.isRunning) {
+			this._serverTaskProvider.extRunTask(GetConfig(this._extensionUri).browserPreviewServerLogging);
 		}
-
+		// const serverOn = this.openServer(true);
+		// if (!serverOn) {
+		// 	return;
+		// }
+		file = file.endsWith('.html') ? file : '/';
 		const uri = vscode.Uri.parse(`http://${HOST}:${this._serverPort}${file}`);
 		vscode.env.openExternal(uri);
 	}
@@ -167,12 +168,17 @@ export class Manager extends Disposable {
 		return true;
 	}
 
+	// caller is reponsible for only calling this if nothing is using the server
 	public closeServer(): void {
 		if (this._server.isRunning) {
 			this._server.closeServer();
 
 			if (this.currentPanel) {
 				this.currentPanel.close();
+			}
+
+			if (this._serverTaskProvider.isRunning) {
+				this._serverTaskProvider.serverStop(true);
 			}
 
 			if (this._serverPortNeedsUpdate) {

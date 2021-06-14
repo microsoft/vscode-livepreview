@@ -31,7 +31,7 @@ export class ServerTaskProvider
 	public readonly onRequestToCloseServer =
 		this._onRequestToCloseServerEmitter.event;
 
-	public get serverRunning() {
+	public get isRunning() {
 		if (this._terminal) {
 			return this._terminal.running;
 		}
@@ -57,6 +57,11 @@ export class ServerTaskProvider
 				this._terminal.serverWillBeStopped();
 			}
 		}
+	}
+
+	// run task manually from extension.
+	public extRunTask(verbose: boolean) {
+		vscode.tasks.executeTask(this.getTask(verbose ? ServerTaskFlavors.verbose : ServerTaskFlavors.nonVerbose));
 	}
 
 	public async provideTasks(): Promise<vscode.Task[]> {
@@ -131,6 +136,8 @@ export class ServerTaskProvider
 			custExec
 		);
 	}
+
+	// public startTerminal()
 
 	private readonly _onDisposeEmitter = this._register(
 		new vscode.EventEmitter<void>()

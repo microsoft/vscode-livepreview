@@ -6,6 +6,7 @@ interface LiveServerConfigItem {
 	showStatusBarItem: boolean;
 	showServerStatusPopUps: boolean;
 	autoRefreshPreview: AutoRefreshPreview;
+	browserPreviewServerLogging: boolean;
 }
 
 export enum AutoRefreshPreview {
@@ -56,6 +57,10 @@ export function GetConfig(resource: vscode.Uri): LiveServerConfigItem {
 		autoRefreshPreview: config.get<AutoRefreshPreview>(
 			'autoRefreshPreview',
 			AutoRefreshPreview.onAnyChange
+		),
+		browserPreviewServerLogging: config.get<boolean>(
+			'browserPreviewServerLogging',
+			true
 		)
 	};
 }
