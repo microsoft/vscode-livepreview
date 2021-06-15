@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { serverMsg } from '../manager';
 import { Disposable } from '../utils/dispose';
-import { ServerTaskTerminal } from './ServerTaskTerminal';
+import { ServerTaskTerminal } from './serverTaskTerminal';
 
 interface ServerTaskDefinition extends vscode.TaskDefinition {
 	args: string[];

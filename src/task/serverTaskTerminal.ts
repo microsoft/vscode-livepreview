@@ -1,10 +1,9 @@
-import { Server } from 'http';
 import * as vscode from 'vscode';
 import { serverMsg } from '../manager';
 import { HOST } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { FormatDateTime } from '../utils/utils';
-import { ServerStartedStatus, ServerArgs } from './ServerTaskProvider';
+import { ServerStartedStatus, ServerArgs } from './serverTaskProvider';
 
 enum TerminalColor {
 	red = 31,
