@@ -157,10 +157,6 @@ export class Manager extends Disposable {
 				GetConfig(this._extensionUri).browserPreviewLaunchServerLogging
 			);
 		}
-		// const serverOn = this.openServer(true);
-		// if (!serverOn) {
-		// 	return;
-		// }
 		file = file.endsWith('.html') ? file : '/';
 		const uri = vscode.Uri.parse(`http://${HOST}:${this._serverPort}${file}`);
 		vscode.env.openExternal(uri);
