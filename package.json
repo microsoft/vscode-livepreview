@@ -16,38 +16,38 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onLanguage:html",
+		"workspaceContains:**/*.html",
 		"onWebviewPanel:browserPreview"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "liveserver.start",
+				"command": "LiveServer.start",
 				"title": "Live Server: Start Development Server"
 			},
 			{
-				"command": "liveserver.start.preview.atIndex",
+				"command": "LiveServer.start.preview.atIndex",
 				"title": "Live Server: Show Preview to the Side at Index Page"
 			},
 			{
-				"command": "liveserver.start.preview.atActiveFile",
+				"command": "LiveServer.start.preview.atActiveFile",
 				"title": "Live Server: Show Preview to the Side",
 				"icon": "$(open-preview)"
 			},
 			{
-				"command": "liveserver.end",
+				"command": "LiveServer.end",
 				"title": "Live Server: Force Stop Development Server"
 			},
 			{
-				"command": "liveserver.start.externalPreview.atActiveFile",
+				"command": "LiveServer.start.externalPreview.atActiveFile",
 				"title": "Live Server: Show Preview in External Browser"
 			}
 		],
 		"menus": {
 			"editor/title": [
 				{
-					"command": "liveserver.start.preview.atActiveFile",
+					"command": "LiveServer.start.preview.atActiveFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "navigation"
 				}
@@ -56,24 +56,24 @@
 		"configuration": {
 			"title": "Live Server",
 			"properties": {
-				"liveserver.portNum": {
+				"LiveServer.portNum": {
 				  "type": "number",
 				  "default": 3000,
 				  "minimum": 0,
 				  "maximum": 65535,
 				  "description": "Which local port the live server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port."
 				},
-				"liveserver.showStatusBarItem": {
+				"LiveServer.showStatusBarItem": {
 				  "type": "boolean",
 				  "default": true,
 				  "description": "Whether to show the current hosting port when server is open on the status bar."
 				},
-				"liveserver.showServerStatusPopUps": {
+				"LiveServer.showServerStatusPopUps": {
 					"type": "boolean",
 					"default": false,
 					"description": "Whether or not to show information messages on server on/off status change."
 				},
-				"liveserver.autoRefreshPreview": {
+				"LiveServer.autoRefreshPreview": {
 					"enum": [
 					  "On All Changes in Editor",
 					  "On Changes to Saved Files",
@@ -82,7 +82,7 @@
 					"default": "On All Changes in Editor",
 					"description": "How often to automatically refresh the preview."
 				},
-				"liveserver.browserPreviewServerLogging": {
+				"LiveServer.browserPreviewLaunchServerLogging": {
 					"type": "boolean",
 					"default": true,
 					"description": "Upon running `Live Server: Show Preview in External Browser`, whether the auto-general terminal has logging."

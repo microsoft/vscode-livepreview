@@ -16,12 +16,12 @@ export const OPEN_EXTERNALLY: vscode.MessageItem = {
 };
 export const HOST = '127.0.0.1';
 
-export const SETTINGS_SECTION_ID = 'liveserver';
+export const SETTINGS_SECTION_ID = 'LiveServer';
 
 export const Settings: any = {
 	portNum: 'portNum',
 	showStatusBarItem: 'showStatusBarItem',
 	showServerStatusPopUps: 'showServerStatusPopUps',
 	autoRefreshPreview: 'autoRefreshPreview',
-	browserPreviewServerLogging: 'browserPreviewServerLogging'
+	browserPreviewLaunchServerLogging: 'browserPreviewLaunchServerLogging'
 };

@@ -1,26 +1,27 @@
 import * as vscode from 'vscode';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
+import { SETTINGS_SECTION_ID } from './utils/constants';
 import { GetRelativeActiveFile } from './utils/utils';
 
 export function activate(context: vscode.ExtensionContext) {
 	const manager = new Manager(context.extensionUri);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('liveserver.start', () => {
+		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start`, () => {
 			manager.openServer(true);
 		})
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('liveserver.start.preview.atIndex', () => {
+		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start.preview.atIndex`, () => {
 			manager.createOrShowPreview();
 		})
 	);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
-			'liveserver.start.preview.atActiveFile',
+			`${SETTINGS_SECTION_ID}.start.preview.atActiveFile`,
 			() => {
 				const relativeActiveFile = GetRelativeActiveFile();
 				manager.createOrShowPreview(undefined, relativeActiveFile);
@@ -30,7 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
-			'liveserver.start.externalPreview.atActiveFile',
+			`${SETTINGS_SECTION_ID}.start.externalPreview.atActiveFile`,
 			() => {
 				const relativeActiveFile = GetRelativeActiveFile();
 				manager.showPreviewInBrowser(relativeActiveFile);
@@ -39,7 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('liveserver.end', () => {
+		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.end`, () => {
 			manager.closeServer();
 		})
 	);

@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import { GO_TO_SETTINGS, SETTINGS_SECTION_ID } from './constants';
+import { GO_TO_SETTINGS, Settings, SETTINGS_SECTION_ID } from './constants';
 
 interface LiveServerConfigItem {
 	portNum: number;
 	showStatusBarItem: boolean;
 	showServerStatusPopUps: boolean;
 	autoRefreshPreview: AutoRefreshPreview;
-	browserPreviewServerLogging: boolean;
+	browserPreviewLaunchServerLogging: boolean;
 }
 
 export enum AutoRefreshPreview {
@@ -51,15 +51,15 @@ export function GetConfig(resource: vscode.Uri): LiveServerConfigItem {
 		portNum: config.get<number>('portNum', 3000),
 		showStatusBarItem: config.get<boolean>('showStatusBarItem', true),
 		showServerStatusPopUps: config.get<boolean>(
-			'showServerStatusPopUps',
+			Settings.showServerStatusPopUps,
 			false
 		),
 		autoRefreshPreview: config.get<AutoRefreshPreview>(
-			'autoRefreshPreview',
+			Settings.autoRefreshPreview,
 			AutoRefreshPreview.onAnyChange
 		),
-		browserPreviewServerLogging: config.get<boolean>(
-			'browserPreviewServerLogging',
+		browserPreviewLaunchServerLogging: config.get<boolean>(
+			Settings.browserPreviewLaunchServerLogging,
 			true
 		)
 	};

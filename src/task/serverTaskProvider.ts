@@ -4,14 +4,22 @@ import { Disposable } from '../utils/dispose';
 import { ServerTaskTerminal } from './ServerTaskTerminal';
 
 interface ServerTaskDefinition extends vscode.TaskDefinition {
-	flavor: string;
+	args: string[];
 }
 
-export const ServerTaskFlavors: any  = {
-	verbose: "Server With Logging",
-	nonVerbose: "Server With No Logging"
+// export const ServerTaskFlavors: any  = {
+// 	verbose: "Server With Logging",
+// 	nonVerbose: "Server With No Logging"
+// };
+
+export const ServerArgs: any = {
+	verbose: "--verbose"
 };
 
+export enum ServerStartedStatus {
+	JUST_STARTED,
+	STARTED_BY_EMBEDDED_PREV
+}
 export class ServerTaskProvider
 	extends Disposable
 	implements vscode.TaskProvider
@@ -43,9 +51,9 @@ export class ServerTaskProvider
 			this._terminal.sendServerMsg(msg);
 		}
 	}
-	public serverStarted(port: number, isNew: boolean) {
+	public serverStarted(port: number, status: ServerStartedStatus) {
 		if (this._terminal && this._terminal.running) {
-			this._terminal.serverStarted(port, isNew);
+			this._terminal.serverStarted(port, status);
 		}
 	}
 
@@ -61,7 +69,13 @@ export class ServerTaskProvider
 
 	// run task manually from extension.
 	public extRunTask(verbose: boolean) {
-		vscode.tasks.executeTask(this.getTask(verbose ? ServerTaskFlavors.verbose : ServerTaskFlavors.nonVerbose));
+
+		vscode.tasks.fetchTasks({type: ServerTaskProvider.CustomBuildScriptType}).then((tasks) => {
+			const selTasks = tasks.filter(x => (verbose && x.definition.args.length > 0 &&  x.definition.args[0] == ServerArgs.verbose) || (!verbose && x.definition.args.length == 0));
+			if (selTasks.length > 0) {
+				vscode.tasks.executeTask(selTasks[0]);
+			}
+		});
 	}
 
 	public async provideTasks(): Promise<vscode.Task[]> {
@@ -82,31 +96,37 @@ export class ServerTaskProvider
 			return this.tasks;
 		}
 
-		const flavors: string[] = [ServerTaskFlavors.verbose, ServerTaskFlavors.nonVerbose];
+		const args: string[][] = [[ServerArgs.verbose], []];
 
 		this.tasks = [];
-		flavors.forEach((flavor) => {
-			this.tasks!.push(this.getTask(flavor));
+		args.forEach((args) => {
+			this.tasks!.push(this.getTask(args));
 		});
 		return this.tasks;
 	}
 
 	private getTask(
-		flavor: string,
+		args: string[],
 		definition?: ServerTaskDefinition
 	): vscode.Task {
 		if (definition === undefined) {
 			definition = {
 				type: ServerTaskProvider.CustomBuildScriptType,
-				flavor,
+				args,
 			};
+		}
+
+		let termName = `Run Server`;
+
+		for (const i in args) {
+			termName += ` ${args[i]}`;
 		}
 
 		if (this._terminal && this._terminal.running) {
 			return new vscode.Task(
 				definition,
 				vscode.TaskScope.Workspace,
-				flavor,
+				termName,
 				ServerTaskProvider.CustomBuildScriptType,
 				undefined
 			);
@@ -115,7 +135,12 @@ export class ServerTaskProvider
 		const custExec = new vscode.CustomExecution(
 			async (): Promise<ServerTaskTerminal> => {
 				// When the task is executed, this callback will run. Here, we setup for running the task.
-				this._terminal = new ServerTaskTerminal(flavor);
+				if (this._terminal && this._terminal.running) {
+					return new ServerTaskTerminal([],false);
+				}
+
+				this._terminal = new ServerTaskTerminal(args);
+
 				this._terminal.onRequestToOpenServer((e) => {
 					this._onRequestToOpenServerEmitter.fire(e);
 				});
@@ -131,13 +156,11 @@ export class ServerTaskProvider
 		return new vscode.Task(
 			definition,
 			vscode.TaskScope.Workspace,
-			flavor,
+			termName,
 			ServerTaskProvider.CustomBuildScriptType,
 			custExec
 		);
 	}
-
-	// public startTerminal()
 
 	private readonly _onDisposeEmitter = this._register(
 		new vscode.EventEmitter<void>()

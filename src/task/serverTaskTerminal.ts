@@ -1,9 +1,10 @@
+import { Server } from 'http';
 import * as vscode from 'vscode';
 import { serverMsg } from '../manager';
 import { HOST } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { FormatDateTime } from '../utils/utils';
-import { ServerTaskFlavors } from './ServerTaskProvider';
+import { ServerStartedStatus, ServerArgs } from './ServerTaskProvider';
 
 enum TerminalColor {
 	red = 31,
@@ -40,22 +41,30 @@ export class ServerTaskTerminal extends Disposable implements vscode.Pseudotermi
 	public closeEmitter = new vscode.EventEmitter<number>();
 	onDidClose?: vscode.Event<number> = this.closeEmitter.event;
 
-	constructor(flavor: string) {
+	constructor(args: string[], private readonly _executeServer = true) {
 		super();
-		this._verbose = (flavor == ServerTaskFlavors.verbose);
+		if (this._executeServer) {
+			this._verbose = args.some(x => x == ServerArgs.verbose);
+		} 
 	}
 
 	private formatAddr(port: number) {
 		return this.colorTerminalString(`http://${HOST}`,TerminalColor.blue,TerminalDeco.bold) + this.colorTerminalString(`:${port}`,TerminalColor.purple,TerminalDeco.bold);
 	}
 
-	public serverStarted(port: number, isNew: boolean) {
-		if (isNew) {
-			this.writeEmitter.fire(`Started Server on ${this.formatAddr(port)}\r\n`);
-		} else {
-			this.writeEmitter.fire(
-				`Server already on at ${this.formatAddr(port)}\r\n> `
-			);
+	public serverStarted(port: number, status: ServerStartedStatus) {
+		switch (status) {
+			case (ServerStartedStatus.JUST_STARTED): {
+
+				this.writeEmitter.fire(`Started Server on ${this.formatAddr(port)}\r\n`);
+				break;
+			}
+			case (ServerStartedStatus.STARTED_BY_EMBEDDED_PREV): {
+				this.writeEmitter.fire(
+					`Server already on at ${this.formatAddr(port)}\r\n> `
+				);
+				break;
+			}
 		}
 		this.writeEmitter.fire(`Type ${this.colorTerminalString(
 			`CTRL+C`,
@@ -84,14 +93,23 @@ export class ServerTaskTerminal extends Disposable implements vscode.Pseudotermi
 
 	open(): void {
 		// At this point we can start using the terminal.
-		this.running = true;
-		this.writeEmitter.fire('Opening Server...\r\n');
-		this._onRequestToOpenServerEmitter.fire();
+		if (this._executeServer) {
+			this.running = true;
+			this.writeEmitter.fire('Opening Server...\r\n');
+			this._onRequestToOpenServerEmitter.fire();
+		} else {
+			this.writeEmitter.fire(
+				`Server already running in another task. Closing now.\r\n`
+			);
+			this.close();
+		}
 	}
 
 	close(): void {
 		this.running = false;
-		this._onRequestToCloseServerEmitter.fire();
+		if (this._executeServer) {
+			this._onRequestToCloseServerEmitter.fire();
+		}
 		this.closeEmitter.fire(0);
 	}
 

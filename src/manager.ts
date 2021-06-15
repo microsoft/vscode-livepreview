@@ -4,7 +4,7 @@ import { Disposable } from './utils/dispose';
 import { Server } from './server/serverManager';
 import { INIT_PANEL_TITLE, HOST, SETTINGS_SECTION_ID } from './utils/constants';
 import { GetConfig } from './utils/utils';
-import { ServerTaskProvider } from './task/serverTaskProvider';
+import { ServerStartedStatus, ServerTaskProvider } from './task/serverTaskProvider';
 
 export interface serverMsg {
 	method: string;
@@ -74,7 +74,7 @@ export class Manager extends Disposable {
 
 		this._server.onFullyConnected((e) => {
 			if (e.port) {
-				this._serverTaskProvider.serverStarted(e.port, true);
+				this._serverTaskProvider.serverStarted(e.port, ServerStartedStatus.JUST_STARTED);
 			}
 		});
 
@@ -147,7 +147,7 @@ export class Manager extends Disposable {
 
 	public showPreviewInBrowser(file = '/') {
 		if (!this._serverTaskProvider.isRunning) {
-			this._serverTaskProvider.extRunTask(GetConfig(this._extensionUri).browserPreviewServerLogging);
+			this._serverTaskProvider.extRunTask(GetConfig(this._extensionUri).browserPreviewLaunchServerLogging);
 		}
 		// const serverOn = this.openServer(true);
 		// if (!serverOn) {
@@ -162,7 +162,7 @@ export class Manager extends Disposable {
 		if (!this._server.isRunning) {
 			return this._server.openServer(this._serverPort);
 		} else if (fromTask) {
-			this._serverTaskProvider.serverStarted(this._serverPort, false);
+			this._serverTaskProvider.serverStarted(this._serverPort, ServerStartedStatus.STARTED_BY_EMBEDDED_PREV);
 		}
 
 		return true;
