@@ -109,8 +109,10 @@ export class ServerTaskTerminal extends Disposable implements vscode.Pseudotermi
 		this.running = false;
 		if (this._executeServer) {
 			this._onRequestToCloseServerEmitter.fire();
+			this.closeEmitter.fire(0);
+		} else {
+			this.closeEmitter.fire(1);
 		}
-		this.closeEmitter.fire(0);
 	}
 
 	public sendServerMsg(msg: serverMsg) {
