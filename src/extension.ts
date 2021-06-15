@@ -14,9 +14,12 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start.preview.atIndex`, () => {
-			manager.createOrShowPreview();
-		})
+		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.start.preview.atIndex`,
+			() => {
+				manager.createOrShowPreview();
+			}
+		)
 	);
 
 	context.subscriptions.push(
