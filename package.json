@@ -120,7 +120,7 @@
 					  "External Browser"
 					],
 					"default": "On All Changes in Editor",
-					"description": "Where to open previews."
+					"description": "Preferred target for previews."
 				},
 				"LiveServer.browserPreviewLaunchServerLogging": {
 					"type": "boolean",
