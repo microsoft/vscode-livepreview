@@ -66,13 +66,17 @@ export function GetConfig(resource: vscode.Uri): LiveServerConfigItem {
 }
 
 export function GetRelativeActiveFile(): string {
-	const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
 	const activeFile = vscode.window.activeTextEditor?.document.fileName;
+	return activeFile ? GetRelativeFile(activeFile) : '';
+}
 
-	const ret = activeFile
-		?.substr(workspaceFolder?.length ?? 0)
+
+export function GetRelativeFile(file: string): string {
+	const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+	const ret = file
+		.substr(workspaceFolder?.length ?? 0)
 		.replace(/\\/gi, '/');
-	return ret ?? '';
+	return ret;
 }
 
 export function SettingsSavedMessage(): void {

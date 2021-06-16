@@ -7,11 +7,6 @@ interface ServerTaskDefinition extends vscode.TaskDefinition {
 	args: string[];
 }
 
-// export const ServerTaskFlavors: any  = {
-// 	verbose: "Server With Logging",
-// 	nonVerbose: "Server With No Logging"
-// };
-
 export const ServerArgs: any = {
 	verbose: "--verbose"
 };
@@ -121,11 +116,11 @@ export class ServerTaskProvider
 		for (const i in args) {
 			termName += ` ${args[i]}`;
 		}
-
+		const currentWorkspace = vscode.workspace.workspaceFolders?.[0];
 		if (this._terminal && this._terminal.running) {
 			return new vscode.Task(
 				definition,
-				vscode.TaskScope.Workspace,
+				currentWorkspace ?? vscode.TaskScope.Workspace,
 				termName,
 				ServerTaskProvider.CustomBuildScriptType,
 				undefined
@@ -152,14 +147,15 @@ export class ServerTaskProvider
 				return this._terminal;
 			}
 		);
-
-		return new vscode.Task(
+		const task = new vscode.Task(
 			definition,
 			vscode.TaskScope.Workspace,
 			termName,
 			ServerTaskProvider.CustomBuildScriptType,
 			custExec
 		);
+		task.isBackground = true;
+		return task;
 	}
 
 	private readonly _onDisposeEmitter = this._register(

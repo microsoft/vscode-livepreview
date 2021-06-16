@@ -31,23 +31,47 @@
 				"title": "Live Server: Show Preview to the Side at Index Page"
 			},
 			{
-				"command": "LiveServer.start.preview.atActiveFile",
-				"title": "Live Server: Show Preview to the Side",
+				"command": "LiveServer.start.externalPreview.atFile",
+				"title": "Live Server: Show Preview in External Browser"
+			},
+			{
+				"command": "LiveServer.start.preview.atFile",
+				"title": "Live Server: Show Preview",
 				"icon": "$(open-preview)"
 			},
 			{
 				"command": "LiveServer.end",
 				"title": "Live Server: Force Stop Development Server"
-			},
-			{
-				"command": "LiveServer.start.externalPreview.atActiveFile",
-				"title": "Live Server: Show Preview in External Browser"
 			}
 		],
 		"menus": {
 			"editor/title": [
 				{
-					"command": "LiveServer.start.preview.atActiveFile",
+					"command": "LiveServer.start.preview.atFile",
+					"when": "editorLangId == html && !notebookEditorFocused",
+					"group": "navigation"
+				}
+			],
+			"explorer/context": [
+				{
+					"command": "LiveServer.start.preview.atFile",
+					"when": "resourceLangId == html",
+					"group": "1_liveserver"
+				},
+				{
+					"command": "LiveServer.start.externalPreview.atFile",
+					"when": "resourceLangId == html",
+					"group": "1_liveserver"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "LiveServer.start.preview.atFile",
+					"when": "editorLangId == html && !notebookEditorFocused",
+					"group": "navigation"
+				},
+				{
+					"command": "LiveServer.start.externalPreview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "navigation"
 				}
@@ -93,10 +117,10 @@
 			{
 				"type": "Live Server",
 				"required": [
-					"flavor"
+					"args"
 				],
 				"properties": {
-					"flavor": {
+					"args": {
 						"type": "string",
 						"description": "Whether to show incoming server messages and status codes."
 					}
