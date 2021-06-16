@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
 import { HOST, SETTINGS_SECTION_ID } from './utils/constants';
-import { GetRelativeActiveFile, GetRelativeFile } from './utils/utils';
+import { GetPreviewType, GetConfig, GetRelativeActiveFile, GetRelativeFile, OpenPreviewTarget } from './utils/utils';
 
 export function activate(context: vscode.ExtensionContext) {
 	const manager = new Manager(context.extensionUri);
@@ -16,7 +16,36 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
+			(file?: any) => {
+				const previewType = GetPreviewType(context.extensionUri);
+				vscode.commands.executeCommand(`${SETTINGS_SECTION_ID}.start.${previewType}.atFile`,file);
+			}
+		)
+	);
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atIndex`,
+			(file?: any) => {
+				const previewType = GetPreviewType(context.extensionUri);
+				vscode.commands.executeCommand(`${SETTINGS_SECTION_ID}.start.${previewType}.atIndex`,file);
+			}
+		)
+	);
+
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.start.externalpreview.atIndex`,
+			() => {
+				manager.showPreviewInBrowser();
+			}
+		)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.start.internalPreview.atIndex`,
 			() => {
 				manager.createOrShowPreview();
 			}
@@ -42,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
-			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
+			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
 			(file?: any) => {
 				let relativeFile;
 				if (file instanceof vscode.Uri) {
@@ -52,6 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
 				} else {
 					relativeFile = GetRelativeActiveFile();
 				}
+
 				manager.createOrShowPreview(undefined, relativeFile);
 			}
 		)
@@ -62,7 +92,6 @@ export function activate(context: vscode.ExtensionContext) {
 			manager.closeServer();
 		})
 	);
-
 
 	if (vscode.window.registerWebviewPanelSerializer) {
 		vscode.window.registerWebviewPanelSerializer(BrowserPreview.viewType, {
@@ -104,7 +133,6 @@ export function activate(context: vscode.ExtensionContext) {
 		},
 		handleTerminalLink: (link: any) => {
 			vscode.commands.executeCommand("LiveServer.start.preview.atFile",link.data);
-
 		}
 	});
 }

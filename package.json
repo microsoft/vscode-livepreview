@@ -23,21 +23,29 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "LiveServer.start",
-				"title": "Live Server: Start Development Server"
-			},
-			{
 				"command": "LiveServer.start.preview.atIndex",
-				"title": "Live Server: Show Preview to the Side at Index Page"
-			},
-			{
-				"command": "LiveServer.start.externalPreview.atFile",
-				"title": "Live Server: Show Preview in External Browser"
+				"title": "Live Server: Show Preview at Index Page"
 			},
 			{
 				"command": "LiveServer.start.preview.atFile",
 				"title": "Live Server: Show Preview",
 				"icon": "$(open-preview)"
+			},
+			{
+				"command": "LiveServer.start.externalPreview.atIndex",
+				"title": "Live Server: Show Preview at Index (External Browser)"
+			},
+			{
+				"command": "LiveServer.start.internalPreview.atIndex",
+				"title": "Live Server: Show Preview at Index (Internal Browser)"
+			},
+			{
+				"command": "LiveServer.start.externalPreview.atFile",
+				"title": "Live Server: Show Preview (External Browser)"
+			},
+			{
+				"command": "LiveServer.start.internalPreview.atFile",
+				"title": "Live Server: Show Preview (Internal Browser)"
 			},
 			{
 				"command": "LiveServer.end",
@@ -57,16 +65,16 @@
 					"command": "LiveServer.start.preview.atFile",
 					"when": "resourceLangId == html",
 					"group": "1_liveserver"
-				},
-				{
-					"command": "LiveServer.start.externalPreview.atFile",
-					"when": "resourceLangId == html",
-					"group": "1_liveserver"
 				}
 			],
 			"commandPalette": [
 				{
 					"command": "LiveServer.start.preview.atFile",
+					"when": "editorLangId == html && !notebookEditorFocused",
+					"group": "navigation"
+				},
+				{
+					"command": "LiveServer.start.internalPreview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "navigation"
 				},
@@ -105,6 +113,14 @@
 					],
 					"default": "On All Changes in Editor",
 					"description": "How often to automatically refresh the preview."
+				},
+				"LiveServer.openPreviewTarget": {
+					"enum": [
+					  "Embedded Preview",
+					  "External Browser"
+					],
+					"default": "On All Changes in Editor",
+					"description": "Where to open previews."
 				},
 				"LiveServer.browserPreviewLaunchServerLogging": {
 					"type": "boolean",

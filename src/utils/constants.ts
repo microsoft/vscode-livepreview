@@ -24,4 +24,10 @@ export const Settings: any = {
 	showServerStatusPopUps: 'showServerStatusPopUps',
 	autoRefreshPreview: 'autoRefreshPreview',
 	browserPreviewLaunchServerLogging: 'browserPreviewLaunchServerLogging',
+	openPreviewTarget: 'openPreviewTarget',
+};
+
+export const PreviewType: any = {
+	internalPreview: 'internalPreview',
+	externalPreview: 'externalPreview',
 };

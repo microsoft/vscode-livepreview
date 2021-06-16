@@ -1,18 +1,28 @@
 import * as vscode from 'vscode';
-import { GO_TO_SETTINGS, Settings, SETTINGS_SECTION_ID } from './constants';
-
+import {
+	GO_TO_SETTINGS,
+	Settings,
+	SETTINGS_SECTION_ID,
+	PreviewType,
+} from './constants';
 interface LiveServerConfigItem {
 	portNum: number;
 	showStatusBarItem: boolean;
 	showServerStatusPopUps: boolean;
 	autoRefreshPreview: AutoRefreshPreview;
 	browserPreviewLaunchServerLogging: boolean;
+	openPreviewTarget: OpenPreviewTarget;
 }
 
 export enum AutoRefreshPreview {
 	onAnyChange = 'On All Changes in Editor',
 	onSave = 'On Changes to Saved Files',
 	never = 'Never',
+}
+
+export enum OpenPreviewTarget {
+	embeddedPreview = 'Embedded Preview',
+	externalBrowser = 'External Browser',
 }
 
 export function FormatDateTime(date: Date, delimeter = ', '): string {
@@ -62,6 +72,10 @@ export function GetConfig(resource: vscode.Uri): LiveServerConfigItem {
 			Settings.browserPreviewLaunchServerLogging,
 			true
 		),
+		openPreviewTarget: config.get<OpenPreviewTarget>(
+			Settings.openPreviewTarget,
+			OpenPreviewTarget.embeddedPreview
+		),
 	};
 }
 
@@ -101,4 +115,16 @@ export function UpdateSettings<T>(
 		.getConfiguration(SETTINGS_SECTION_ID)
 		.update(settingSuffix, value, isGlobal);
 	SettingsSavedMessage();
+}
+
+export function GetPreviewType(extensionUri: vscode.Uri): string {
+	console.log(GetConfig(extensionUri).openPreviewTarget);
+	if (
+		GetConfig(extensionUri).openPreviewTarget ==
+		OpenPreviewTarget.embeddedPreview
+	) {
+		return PreviewType.internalPreview;
+	} else {
+		return PreviewType.externalPreview;
+	}
 }
