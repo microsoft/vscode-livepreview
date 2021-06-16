@@ -125,7 +125,7 @@ export class Server extends Disposable {
 	public get ws_port() {
 		return this._wsServer.ws_port;
 	}
-	
+
 	public set ws_port(portNum: number) {
 		this._wsServer.ws_port = portNum;
 	}
@@ -180,7 +180,6 @@ export class Server extends Disposable {
 
 	public openServer(port: number): boolean {
 		if (this._workspacePath && this._extensionUri) {
-
 			// initialize websockets to use port after http server port
 			this._httpServer.setInjectorWSPort(port + 1, this._extensionUri);
 

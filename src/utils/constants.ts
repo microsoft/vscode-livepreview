@@ -23,5 +23,5 @@ export const Settings: any = {
 	showStatusBarItem: 'showStatusBarItem',
 	showServerStatusPopUps: 'showServerStatusPopUps',
 	autoRefreshPreview: 'autoRefreshPreview',
-	browserPreviewLaunchServerLogging: 'browserPreviewLaunchServerLogging'
+	browserPreviewLaunchServerLogging: 'browserPreviewLaunchServerLogging',
 };

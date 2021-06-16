@@ -16,11 +16,14 @@ enum TerminalColor {
 enum TerminalDeco {
 	reset = 0,
 	bold = 1,
-	underline = 4
+	underline = 4,
 }
 const CHAR_CODE_CTRL_C = 3;
 
-export class ServerTaskTerminal extends Disposable implements vscode.Pseudoterminal {
+export class ServerTaskTerminal
+	extends Disposable
+	implements vscode.Pseudoterminal
+{
 	public running = false;
 	private readonly _onRequestToOpenServerEmitter = this._register(
 		new vscode.EventEmitter<void>()
@@ -43,33 +46,47 @@ export class ServerTaskTerminal extends Disposable implements vscode.Pseudotermi
 	constructor(args: string[], private readonly _executeServer = true) {
 		super();
 		if (this._executeServer) {
-			this._verbose = args.some(x => x == ServerArgs.verbose);
-		} 
+			this._verbose = args.some((x) => x == ServerArgs.verbose);
+		}
 	}
 
 	private formatAddr(port: number) {
-		return this.colorTerminalString(`http://${HOST}`,TerminalColor.blue,TerminalDeco.bold) + this.colorTerminalString(`:${port}`,TerminalColor.purple,TerminalDeco.bold);
+		return (
+			this.colorTerminalString(
+				`http://${HOST}`,
+				TerminalColor.blue,
+				TerminalDeco.bold
+			) +
+			this.colorTerminalString(
+				`:${port}`,
+				TerminalColor.purple,
+				TerminalDeco.bold
+			)
+		);
 	}
 
 	public serverStarted(port: number, status: ServerStartedStatus) {
 		switch (status) {
-			case (ServerStartedStatus.JUST_STARTED): {
-
-				this.writeEmitter.fire(`Started Server on ${this.formatAddr(port)}\r\n`);
+			case ServerStartedStatus.JUST_STARTED: {
+				this.writeEmitter.fire(
+					`Started Server on ${this.formatAddr(port)}\r\n`
+				);
 				break;
 			}
-			case (ServerStartedStatus.STARTED_BY_EMBEDDED_PREV): {
+			case ServerStartedStatus.STARTED_BY_EMBEDDED_PREV: {
 				this.writeEmitter.fire(
 					`Server already on at ${this.formatAddr(port)}\r\n> `
 				);
 				break;
 			}
 		}
-		this.writeEmitter.fire(`Type ${this.colorTerminalString(
-			`CTRL+C`,
-			TerminalColor.red,
-			TerminalDeco.bold
-		)} to close the server.\r\n\r\n> `);
+		this.writeEmitter.fire(
+			`Type ${this.colorTerminalString(
+				`CTRL+C`,
+				TerminalColor.red,
+				TerminalDeco.bold
+			)} to close the server.\r\n\r\n> `
+		);
 	}
 
 	public serverStopped() {
@@ -84,7 +101,7 @@ export class ServerTaskTerminal extends Disposable implements vscode.Pseudotermi
 		this.writeEmitter.fire(
 			this.colorTerminalString(
 				`Run 'Live Server: Force Stop Development Server' in the command palette to force close the server and close any previews.\r\n\r\n`,
-				TerminalColor.yellow,
+				TerminalColor.yellow
 			)
 		);
 		this.close();
@@ -119,8 +136,11 @@ export class ServerTaskTerminal extends Disposable implements vscode.Pseudotermi
 			const date = new Date();
 
 			this.writeEmitter.fire(
-				`[${FormatDateTime(date, ' ')}] ${msg.method}: ${this.colorTerminalString(
-					msg.url,TerminalColor.blue
+				`[${FormatDateTime(date, ' ')}] ${
+					msg.method
+				}: ${this.colorTerminalString(
+					msg.url,
+					TerminalColor.blue
 				)} | ${this.colorHttpStatus(msg.status)}\r\n> `
 			);
 		}
@@ -136,7 +156,11 @@ export class ServerTaskTerminal extends Disposable implements vscode.Pseudotermi
 		return this.colorTerminalString(status.toString(), color);
 	}
 
-	private colorTerminalString(input: string, color: TerminalColor, decoration = TerminalDeco.reset) {
+	private colorTerminalString(
+		input: string,
+		color: TerminalColor,
+		decoration = TerminalDeco.reset
+	) {
 		return `\x1b[${decoration};${color}m${input}\x1b[0m`;
 	}
 

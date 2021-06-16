@@ -8,12 +8,12 @@ interface ServerTaskDefinition extends vscode.TaskDefinition {
 }
 
 export const ServerArgs: any = {
-	verbose: "--verbose"
+	verbose: '--verbose',
 };
 
 export enum ServerStartedStatus {
 	JUST_STARTED,
-	STARTED_BY_EMBEDDED_PREV
+	STARTED_BY_EMBEDDED_PREV,
 }
 export class ServerTaskProvider
 	extends Disposable
@@ -64,13 +64,20 @@ export class ServerTaskProvider
 
 	// run task manually from extension.
 	public extRunTask(verbose: boolean) {
-
-		vscode.tasks.fetchTasks({type: ServerTaskProvider.CustomBuildScriptType}).then((tasks) => {
-			const selTasks = tasks.filter(x => (verbose && x.definition.args.length > 0 &&  x.definition.args[0] == ServerArgs.verbose) || (!verbose && x.definition.args.length == 0));
-			if (selTasks.length > 0) {
-				vscode.tasks.executeTask(selTasks[0]);
-			}
-		});
+		vscode.tasks
+			.fetchTasks({ type: ServerTaskProvider.CustomBuildScriptType })
+			.then((tasks) => {
+				const selTasks = tasks.filter(
+					(x) =>
+						(verbose &&
+							x.definition.args.length > 0 &&
+							x.definition.args[0] == ServerArgs.verbose) ||
+						(!verbose && x.definition.args.length == 0)
+				);
+				if (selTasks.length > 0) {
+					vscode.tasks.executeTask(selTasks[0]);
+				}
+			});
 	}
 
 	public async provideTasks(): Promise<vscode.Task[]> {
@@ -131,7 +138,7 @@ export class ServerTaskProvider
 			async (): Promise<ServerTaskTerminal> => {
 				// When the task is executed, this callback will run. Here, we setup for running the task.
 				if (this._terminal && this._terminal.running) {
-					return new ServerTaskTerminal([],false);
+					return new ServerTaskTerminal([], false);
 				}
 
 				this._terminal = new ServerTaskTerminal(args);

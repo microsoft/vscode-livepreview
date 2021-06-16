@@ -61,7 +61,7 @@ export function GetConfig(resource: vscode.Uri): LiveServerConfigItem {
 		browserPreviewLaunchServerLogging: config.get<boolean>(
 			Settings.browserPreviewLaunchServerLogging,
 			true
-		)
+		),
 	};
 }
 
@@ -70,12 +70,9 @@ export function GetRelativeActiveFile(): string {
 	return activeFile ? GetRelativeFile(activeFile) : '';
 }
 
-
 export function GetRelativeFile(file: string): string {
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-	const ret = file
-		.substr(workspaceFolder?.length ?? 0)
-		.replace(/\\/gi, '/');
+	const ret = file.substr(workspaceFolder?.length ?? 0).replace(/\\/gi, '/');
 	return ret;
 }
 
