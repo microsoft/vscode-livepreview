@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
 // This script will be run within the webview itself
+
 // It cannot access the main VS Code APIs directly.
 (function () {
 	const vscode = acquireVsCodeApi();
@@ -98,6 +99,10 @@
 				});
 				document.getElementById('url-input').value = msgJSON.fullPath;
 				vscode.setState({currentAddress: msgJSON.pathname});
+				break;
+			}
+			case 'set-url': {
+				document.getElementById('url-input').value = message.text;
 				break;
 			}
 			case 'open-external-link': {

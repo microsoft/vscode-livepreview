@@ -172,6 +172,10 @@ export class BrowserPreview extends Disposable {
 
 	private setHtml(webview: vscode.Webview, url: string): void {
 		this._panel.webview.html = this.getHtmlForWebview(webview, url);
+		
+		if (!url.endsWith(".html")) {
+			this._panel.webview.postMessage({ command: 'set-url', text: url});
+		}
 	}
 
 	private getHtmlForWebview(webview: vscode.Webview, url: string): string {

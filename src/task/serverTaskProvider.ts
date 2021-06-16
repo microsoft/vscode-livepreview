@@ -22,9 +22,15 @@ export class ServerTaskProvider
 	static CustomBuildScriptType = 'Live Server';
 	private tasks: vscode.Task[] | undefined;
 	private _terminal: ServerTaskTerminal | undefined;
+	private _termName = '';
 	private readonly _onRequestToOpenServerEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
+
+	public get terminalName() {
+		return this._termName;
+	}
+
 	public readonly onRequestToOpenServer =
 		this._onRequestToOpenServerEmitter.event;
 
@@ -142,7 +148,7 @@ export class ServerTaskProvider
 				}
 
 				this._terminal = new ServerTaskTerminal(args);
-
+				this._termName = termName;
 				this._terminal.onRequestToOpenServer((e) => {
 					this._onRequestToOpenServerEmitter.fire(e);
 				});

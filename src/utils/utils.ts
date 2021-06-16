@@ -118,7 +118,6 @@ export function UpdateSettings<T>(
 }
 
 export function GetPreviewType(extensionUri: vscode.Uri): string {
-	console.log(GetConfig(extensionUri).openPreviewTarget);
 	if (
 		GetConfig(extensionUri).openPreviewTarget ==
 		OpenPreviewTarget.embeddedPreview

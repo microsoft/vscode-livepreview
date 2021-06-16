@@ -113,7 +113,7 @@ export class Manager extends Disposable {
 	): void {
 		const currentColumn = vscode.window.activeTextEditor?.viewColumn ?? 1;
 		const column = currentColumn + 1;
-		file = file.endsWith('.html') ? file : '/';
+		// file = file.endsWith('.html') ? file : '/';
 		// If we already have a panel, show it.
 		if (this.currentPanel) {
 			this.currentPanel.reveal(column, file);
@@ -126,7 +126,7 @@ export class Manager extends Disposable {
 				BrowserPreview.viewType,
 				INIT_PANEL_TITLE,
 				column,
-				getWebviewOptions(this._extensionUri)
+				{...getWebviewOptions(this._extensionUri),...getWebviewPanelOptions()}
 			);
 		}
 		const serverOn = this.openServer();
@@ -160,6 +160,10 @@ export class Manager extends Disposable {
 		file = file.endsWith('.html') ? file : '/';
 		const uri = vscode.Uri.parse(`http://${HOST}:${this._serverPort}${file}`);
 		vscode.env.openExternal(uri);
+	}
+
+	public isPtyTerm(terminalName: string) {
+		return (this._serverTaskProvider.terminalName == terminalName);
 	}
 
 	public openServer(fromTask = false): boolean {
@@ -217,6 +221,13 @@ export function getWebviewOptions(
 				'vscode-codicons',
 				'dist'
 			),
-		],
+		]
+	};
+}
+
+export function getWebviewPanelOptions(
+): vscode.WebviewPanelOptions {
+	return {
+		retainContextWhenHidden: true,
 	};
 }
