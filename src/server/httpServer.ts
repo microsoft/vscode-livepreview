@@ -125,7 +125,7 @@ export class HttpServer extends Disposable {
 				// explicitly set text/html for html files to allow for special character rendering
 				let contentType = 'charset=UTF-8';
 
-				if (absoluteReadPath.endsWith(".html")) {
+				if (isFileInjectable(absoluteReadPath)) {
 					contentType = 'text/html; ' + contentType;
 				}
 				res.writeHead(200, { 'Content-Type': contentType });
