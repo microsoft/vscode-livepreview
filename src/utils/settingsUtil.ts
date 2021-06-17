@@ -10,7 +10,8 @@ export const Settings: any = {
 	autoRefreshPreview: 'autoRefreshPreview',
 	browserPreviewLaunchServerLogging: 'browserPreviewLaunchServerLogging',
 	openPreviewTarget: 'openPreviewTarget',
-	serverKeepAliveAfterEmbeddedPreviewClose: 'serverKeepAliveAfterEmbeddedPreviewClose',
+	serverKeepAliveAfterEmbeddedPreviewClose:
+		'serverKeepAliveAfterEmbeddedPreviewClose',
 };
 
 interface LiveServerConfigItem {
@@ -22,7 +23,6 @@ interface LiveServerConfigItem {
 	openPreviewTarget: OpenPreviewTarget;
 	serverKeepAliveAfterEmbeddedPreviewClose: number;
 }
-
 
 export enum AutoRefreshPreview {
 	onAnyChange = 'On All Changes in Editor',
@@ -92,7 +92,6 @@ export function UpdateSettings<T>(
 		.update(settingSuffix, value, isGlobal);
 	SettingsSavedMessage();
 }
-
 
 export function SettingsSavedMessage(): void {
 	vscode.window

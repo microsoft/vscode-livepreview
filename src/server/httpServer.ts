@@ -67,7 +67,7 @@ export class HttpServer extends Disposable {
 		this._server.listen(this.port, HOST);
 		return true;
 	}
-	
+
 	private createServer(basePath: string) {
 		return http.createServer((req, res) => {
 			if (!req || !req.url) {

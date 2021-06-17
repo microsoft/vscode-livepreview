@@ -37,7 +37,3 @@ export function GetRelativeFile(file: string): string {
 	const ret = file.substr(workspaceFolder?.length ?? 0).replace(/\\/gi, '/');
 	return ret;
 }
-
-
-
-

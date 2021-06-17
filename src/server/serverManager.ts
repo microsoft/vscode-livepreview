@@ -3,7 +3,12 @@ import { Disposable } from '../utils/dispose';
 import { WSServer } from './wsServer';
 import { HttpServer } from './httpServer';
 import { StatusBarNotifier } from './serverUtils/statusBarNotifier';
-import { AutoRefreshPreview, GetConfig, UpdateSettings, Settings } from '../utils/settingsUtil';
+import {
+	AutoRefreshPreview,
+	GetConfig,
+	UpdateSettings,
+	Settings,
+} from '../utils/settingsUtil';
 import { DONT_SHOW_AGAIN } from '../utils/constants';
 import { serverMsg } from '../manager';
 
