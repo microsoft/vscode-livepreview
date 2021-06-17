@@ -2,7 +2,7 @@
 	"name": "live-server",
 	"displayName": "Live Server",
 	"description": "An extension that hosts your web project for previewing.",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"publisher": "andrea-mah",
 	"icon": "icon.png",
 	"repository": {
@@ -16,34 +16,70 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onLanguage:html",
+		"workspaceContains:**/*.html",
 		"onWebviewPanel:browserPreview"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "liveserver.start",
-				"title": "Live Server: Start Development Server"
+				"command": "LiveServer.start.preview.atIndex",
+				"title": "Live Server: Show Preview at Index Page"
 			},
 			{
-				"command": "liveserver.start.preview.atIndex",
-				"title": "Live Server: Show Preview to the side at Index Page"
-			},
-			{
-				"command": "liveserver.start.preview.atActiveFile",
-				"title": "Live Server: Show Preview to the side",
+				"command": "LiveServer.start.preview.atFile",
+				"title": "Live Server: Show Preview",
 				"icon": "$(open-preview)"
 			},
 			{
-				"command": "liveserver.end",
-				"title": "Live Server: Stop Development Server"
+				"command": "LiveServer.start.externalPreview.atIndex",
+				"title": "Live Server: Show Preview at Index (External Browser)"
+			},
+			{
+				"command": "LiveServer.start.internalPreview.atIndex",
+				"title": "Live Server: Show Preview at Index (Internal Browser)"
+			},
+			{
+				"command": "LiveServer.start.externalPreview.atFile",
+				"title": "Live Server: Show Preview (External Browser)"
+			},
+			{
+				"command": "LiveServer.start.internalPreview.atFile",
+				"title": "Live Server: Show Preview (Internal Browser)"
+			},
+			{
+				"command": "LiveServer.end",
+				"title": "Live Server: Force Stop Development Server"
 			}
 		],
 		"menus": {
 			"editor/title": [
 				{
-					"command": "liveserver.start.preview.atActiveFile",
+					"command": "LiveServer.start.preview.atFile",
+					"when": "editorLangId == html && !notebookEditorFocused",
+					"group": "navigation"
+				}
+			],
+			"explorer/context": [
+				{
+					"command": "LiveServer.start.preview.atFile",
+					"when": "resourceLangId == html",
+					"group": "1_liveserver"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "LiveServer.start.preview.atFile",
+					"when": "editorLangId == html && !notebookEditorFocused",
+					"group": "navigation"
+				},
+				{
+					"command": "LiveServer.start.internalPreview.atFile",
+					"when": "editorLangId == html && !notebookEditorFocused",
+					"group": "navigation"
+				},
+				{
+					"command": "LiveServer.start.externalPreview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "navigation"
 				}
@@ -52,24 +88,24 @@
 		"configuration": {
 			"title": "Live Server",
 			"properties": {
-				"liveserver.portNum": {
+				"LiveServer.portNum": {
 				  "type": "number",
 				  "default": 3000,
 				  "minimum": 0,
 				  "maximum": 65535,
-				  "description": "Which local port the live server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port. Reload window to apply."
+				  "description": "Which local port the live server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port."
 				},
-				"liveserver.showStatusBarItem": {
+				"LiveServer.showStatusBarItem": {
 				  "type": "boolean",
 				  "default": true,
-				  "description": "Whether to show the status bar button showing the server status."
+				  "description": "Whether to show the current hosting port when server is open on the status bar."
 				},
-				"liveserver.showServerStatusPopUps": {
+				"LiveServer.showServerStatusPopUps": {
 					"type": "boolean",
 					"default": false,
 					"description": "Whether or not to show information messages on server on/off status change."
 				},
-				"liveserver.autoRefreshPreview": {
+				"LiveServer.autoRefreshPreview": {
 					"enum": [
 					  "On All Changes in Editor",
 					  "On Changes to Saved Files",
@@ -78,23 +114,35 @@
 					"default": "On All Changes in Editor",
 					"description": "How often to automatically refresh the preview."
 				},
-				
-				"liveserver.launchPreviewOnServerStart": {
+				"LiveServer.openPreviewTarget": {
 					"enum": [
 					  "Embedded Preview",
-					  "External Browser",
-					  "Nothing"
+					  "External Browser"
 					],
-					"default": "Embedded Preview",
-					"description": "Which preview to launch when starting the server from the status bar."
+					"default": "On All Changes in Editor",
+					"description": "Preferred target for previews."
 				},
-				"liveserver.closeServerWithEmbeddedPreview": {
+				"LiveServer.browserPreviewLaunchServerLogging": {
 					"type": "boolean",
-					"default": "false",
-					"description": "Whether the server should stop when the embedded preview is closed."
+					"default": true,
+					"description": "Upon running `Live Server: Show Preview in External Browser`, whether the auto-general terminal has logging."
 				}
 			}
-		}
+		},
+		"taskDefinition": 
+			{
+				"type": "Live Server",
+				"required": [
+					"args"
+				],
+				"properties": {
+					"args": {
+						"type": "string",
+						"description": "Whether to show incoming server messages and status codes."
+					}
+				}
+			}
+		
 	},
 	
    

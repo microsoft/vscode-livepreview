@@ -5,6 +5,7 @@ import { HttpServer } from './httpServer';
 import { StatusBarNotifier } from './serverUtils/statusBarNotifier';
 import { AutoRefreshPreview, GetConfig, UpdateSettings } from '../utils/utils';
 import { DONT_SHOW_AGAIN, Settings } from '../utils/constants';
+import { serverMsg } from '../manager';
 
 export interface PortInfo {
 	port?: number;
@@ -29,6 +30,19 @@ export class Server extends Disposable {
 		this._wsServer = this._register(new WSServer());
 		this._statusBar = this._register(new StatusBarNotifier(extensionUri));
 		this._workspacePath = path?.uri.fsPath;
+
+		this._register(
+			vscode.workspace.onDidChangeTextDocument((e) => {
+				if (
+					e.contentChanges &&
+					e.contentChanges.length > 0 &&
+					this._reloadOnAnyChange
+				) {
+					this._wsServer.refreshBrowsers();
+				}
+			})
+		);
+
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
 				if (
@@ -80,6 +94,12 @@ export class Server extends Disposable {
 		);
 
 		this._register(
+			this._httpServer.onNewReqProcessed((e) => {
+				this._onNewReqProcessed.fire(e);
+			})
+		);
+
+		this._register(
 			this._wsServer.onConnected((e) => {
 				this._onPortChangeEmitter.fire({ ws_port: e });
 				this.wsServerConnected();
@@ -92,6 +112,22 @@ export class Server extends Disposable {
 				this.httpServerConnected();
 			})
 		);
+	}
+
+	public get port() {
+		return this._httpServer.port;
+	}
+
+	public set port(portNum: number) {
+		this._httpServer.port = portNum;
+	}
+
+	public get ws_port() {
+		return this._wsServer.ws_port;
+	}
+
+	public set ws_port(portNum: number) {
+		this._wsServer.ws_port = portNum;
 	}
 
 	public get isRunning(): boolean {
@@ -108,6 +144,17 @@ export class Server extends Disposable {
 
 	public readonly onPortChange = this._onPortChangeEmitter.event;
 
+	private readonly _onNewReqProcessed = this._register(
+		new vscode.EventEmitter<serverMsg>()
+	);
+	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
+
+	private readonly _onFullyConnected = this._register(
+		new vscode.EventEmitter<{ port: number }>()
+	);
+
+	public readonly onFullyConnected = this._onFullyConnected.event;
+
 	private get _reloadOnAnyChange() {
 		return (
 			GetConfig(this._extensionUri).autoRefreshPreview ==
@@ -123,7 +170,6 @@ export class Server extends Disposable {
 	}
 
 	public closeServer(): void {
-		this._statusBar.loading('off');
 		this._httpServer.close();
 		this._wsServer.close();
 		this._isServerOn = false; // TODO: find error conditions and return false when needed
@@ -134,8 +180,6 @@ export class Server extends Disposable {
 
 	public openServer(port: number): boolean {
 		if (this._workspacePath && this._extensionUri) {
-			this._statusBar.loading('on');
-
 			// initialize websockets to use port after http server port
 			this._httpServer.setInjectorWSPort(port + 1, this._extensionUri);
 
@@ -163,6 +207,7 @@ export class Server extends Disposable {
 		this.showServerStatusMessage(
 			`Server Opened on Port ${this._httpServer.port}`
 		);
+		this._onFullyConnected.fire({ port: this._httpServer.port });
 	}
 
 	private showServerStatusMessage(messsage: string) {

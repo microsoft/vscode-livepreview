@@ -1,13 +1,17 @@
 import * as vscode from 'vscode';
-import { GO_TO_SETTINGS, SETTINGS_SECTION_ID } from './constants';
-
+import {
+	GO_TO_SETTINGS,
+	Settings,
+	SETTINGS_SECTION_ID,
+	PreviewType,
+} from './constants';
 interface LiveServerConfigItem {
 	portNum: number;
 	showStatusBarItem: boolean;
 	showServerStatusPopUps: boolean;
 	autoRefreshPreview: AutoRefreshPreview;
-	launchPreviewOnServerStart: LaunchPreviewOnServerStart;
-	closeServerWithEmbeddedPreview: boolean;
+	browserPreviewLaunchServerLogging: boolean;
+	openPreviewTarget: OpenPreviewTarget;
 }
 
 export enum AutoRefreshPreview {
@@ -16,13 +20,12 @@ export enum AutoRefreshPreview {
 	never = 'Never',
 }
 
-export enum LaunchPreviewOnServerStart {
+export enum OpenPreviewTarget {
 	embeddedPreview = 'Embedded Preview',
 	externalBrowser = 'External Browser',
-	nothing = 'Nothing',
 }
 
-export function FormatDateTime(date: Date): string {
+export function FormatDateTime(date: Date, delimeter = ', '): string {
 	const mm = date.getMonth() + 1;
 	const dd = date.getDate().toString().padStart(2, '0');
 	const yy = date.getFullYear().toString().substring(2);
@@ -31,7 +34,7 @@ export function FormatDateTime(date: Date): string {
 	const mi = date.getMinutes().toString().padStart(2, '0');
 	const ss = date.getSeconds().toString().padStart(2, '0');
 
-	return `${mm}/${dd}/${yy}, ${hh}:${mi}:${ss}`;
+	return `${mm}/${dd}/${yy}${delimeter}${hh}:${mi}:${ss}`;
 }
 
 export function FormatFileSize(bytes: number) {
@@ -58,32 +61,33 @@ export function GetConfig(resource: vscode.Uri): LiveServerConfigItem {
 		portNum: config.get<number>('portNum', 3000),
 		showStatusBarItem: config.get<boolean>('showStatusBarItem', true),
 		showServerStatusPopUps: config.get<boolean>(
-			'showServerStatusPopUps',
+			Settings.showServerStatusPopUps,
 			false
 		),
 		autoRefreshPreview: config.get<AutoRefreshPreview>(
-			'autoRefreshPreview',
+			Settings.autoRefreshPreview,
 			AutoRefreshPreview.onAnyChange
 		),
-		launchPreviewOnServerStart: config.get<LaunchPreviewOnServerStart>(
-			'launchPreviewOnServerStart',
-			LaunchPreviewOnServerStart.embeddedPreview
+		browserPreviewLaunchServerLogging: config.get<boolean>(
+			Settings.browserPreviewLaunchServerLogging,
+			true
 		),
-		closeServerWithEmbeddedPreview: config.get<boolean>(
-			'closeServerWithEmbeddedPreview',
-			false
+		openPreviewTarget: config.get<OpenPreviewTarget>(
+			Settings.openPreviewTarget,
+			OpenPreviewTarget.embeddedPreview
 		),
 	};
 }
 
 export function GetRelativeActiveFile(): string {
-	const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
 	const activeFile = vscode.window.activeTextEditor?.document.fileName;
+	return activeFile ? GetRelativeFile(activeFile) : '';
+}
 
-	const ret = activeFile
-		?.substr(workspaceFolder?.length ?? 0)
-		.replace(/\\/gi, '/');
-	return ret ?? '';
+export function GetRelativeFile(file: string): string {
+	const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+	const ret = file.substr(workspaceFolder?.length ?? 0).replace(/\\/gi, '/');
+	return ret;
 }
 
 export function SettingsSavedMessage(): void {
@@ -111,4 +115,15 @@ export function UpdateSettings<T>(
 		.getConfiguration(SETTINGS_SECTION_ID)
 		.update(settingSuffix, value, isGlobal);
 	SettingsSavedMessage();
+}
+
+export function GetPreviewType(extensionUri: vscode.Uri): string {
+	if (
+		GetConfig(extensionUri).openPreviewTarget ==
+		OpenPreviewTarget.embeddedPreview
+	) {
+		return PreviewType.internalPreview;
+	} else {
+		return PreviewType.externalPreview;
+	}
 }

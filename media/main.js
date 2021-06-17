@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
 // This script will be run within the webview itself
+
 // It cannot access the main VS Code APIs directly.
 (function () {
 	const vscode = acquireVsCodeApi();
@@ -21,6 +22,7 @@
 					command: 'add-history',
 					text: parsedMessage.path,
 				});
+				return;
 		}
 	};
 
@@ -95,6 +97,12 @@
 					command: 'update-path',
 					text: message.text,
 				});
+				document.getElementById('url-input').value = msgJSON.fullPath;
+				vscode.setState({currentAddress: msgJSON.pathname});
+				break;
+			}
+			case 'set-url': {
+				msgJSON = JSON.parse(message.text);
 				document.getElementById('url-input').value = msgJSON.fullPath;
 				vscode.setState({currentAddress: msgJSON.pathname});
 				break;

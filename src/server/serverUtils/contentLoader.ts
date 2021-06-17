@@ -41,27 +41,6 @@ export class ContentLoader extends Disposable {
 		return Stream.Readable.from(htmlString);
 	}
 
-	public createRedirectPage(externalLink: string): Stream.Readable {
-		// TODO: make look better
-		const htmlString = `
-		<!DOCTYPE html>
-		<html>
-			<head>
-				<title>Redirect Editor?</title>
-			</head>
-			<body>
-				<h1>File not found</h1>
-				<p>The embedded preview cannot open external websites</p>
-				<button>Click here to proceed in an external browser</button>
-				<button>Click here to go back</button>
-			</body>
-			${this.scriptInjector?.script}
-		</html>
-		`;
-
-		return Stream.Readable.from(htmlString);
-	}
-
 	public createIndexPage(
 		readPath: string,
 		relativePath: string
@@ -105,7 +84,7 @@ export class ContentLoader extends Disposable {
 			(elem: IndexDirEntry) =>
 				(directoryContents += `
 				<tr>
-				<td><a href="${elem.LinkSrc}">${elem.LinkName}/</a></td>
+				<td><a href="${elem.LinkSrc}/">${elem.LinkName}/</a></td>
 				<td></td>
 				<td>${elem.DateTime}</td>
 				</tr>\n`)
