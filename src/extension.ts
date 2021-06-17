@@ -2,10 +2,9 @@ import { URL } from 'url';
 import * as vscode from 'vscode';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
-import { ServerTaskTerminal } from './task/serverTaskTerminal';
-import { HOST, SETTINGS_SECTION_ID } from './utils/constants';
+import { HOST } from './utils/constants';
+import { GetPreviewType, SETTINGS_SECTION_ID } from './utils/settingsUtil';
 import {
-	GetPreviewType,
 	GetRelativeActiveFile,
 	GetRelativeFile,
 } from './utils/utils';
@@ -110,7 +109,6 @@ export function activate(context: vscode.ExtensionContext) {
 				state: any
 			) {
 				const file = state.currentAddress ?? '/';
-				// console.log(state.currentAddress);
 				// Reset the webview options so we use latest uri for `localResourceRoots`.
 				webviewPanel.webview.options = getWebviewOptions(context.extensionUri);
 				manager.createOrShowPreview(webviewPanel, file);

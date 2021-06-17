@@ -168,6 +168,10 @@ export class ServerTaskProvider
 			custExec
 		);
 		task.isBackground = true;
+
+		// currently, re-using a terminal will cause the link provider to fail
+		// so we can create a new task terminal each time.
+		task.presentationOptions.panel = vscode.TaskPanelKind.New;
 		return task;
 	}
 

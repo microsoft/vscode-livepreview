@@ -96,7 +96,7 @@ export class ServerTaskTerminal
 
 	public serverWillBeStopped() {
 		this.writeEmitter.fire(
-			`This task will finish now, but the server will stop once you close your embedded preview.\r\n`
+			`This task will finish now, but the server will stay on since you've used the embedded preview recently.\r\n`
 		);
 		this.writeEmitter.fire(
 			this.colorTerminalString(
