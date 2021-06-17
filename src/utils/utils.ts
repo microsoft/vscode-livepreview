@@ -37,3 +37,10 @@ export function GetRelativeFile(file: string): string {
 	const ret = file.substr(workspaceFolder?.length ?? 0).replace(/\\/gi, '/');
 	return ret;
 }
+
+export function isFileInjectable(file: string | undefined) {
+	if (!file) {
+		return false;
+	}
+	return (file.endsWith(".html") || file.endsWith(".svg"));
+}

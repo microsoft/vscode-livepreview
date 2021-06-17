@@ -7,6 +7,7 @@ import { ContentLoader } from './serverUtils/contentLoader';
 import { HTMLInjector } from './serverUtils/HTMLInjector';
 import { HOST } from '../utils/constants';
 import { serverMsg } from '../manager';
+import { isFileInjectable } from '../utils/utils';
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -120,11 +121,14 @@ export class HttpServer extends Disposable {
 					res.end();
 					return;
 				});
+				
 				// explicitly set text/html for html files to allow for special character rendering
-				const content_type = absoluteReadPath.endsWith('.html')
-					? 'text/html; charset=UTF-8'
-					: 'charset=UTF-8';
-				res.writeHead(200, { 'Content-Type': content_type });
+				let contentType = 'charset=UTF-8';
+
+				if (absoluteReadPath.endsWith(".html")) {
+					contentType = 'text/html; ' + contentType;
+				}
+				res.writeHead(200, { 'Content-Type': contentType });
 				stream.pipe(res);
 			} else {
 				res.writeHead(500);
