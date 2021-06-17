@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { Disposable } from './utils/dispose';
 import { Server } from './server/serverManager';
-import { INIT_PANEL_TITLE, HOST, SETTINGS_SECTION_ID } from './utils/constants';
-import { GetConfig } from './utils/utils';
+import { INIT_PANEL_TITLE, HOST } from './utils/constants';
+import { GetConfig, SETTINGS_SECTION_ID } from './utils/settingsUtil';
 import {
 	ServerStartedStatus,
 	ServerTaskProvider,
@@ -20,6 +20,8 @@ export class Manager extends Disposable {
 	private readonly _extensionUri: vscode.Uri;
 	private _serverTaskProvider: ServerTaskProvider;
 	private _serverPortNeedsUpdate = false;
+	private _previewActive = false;
+	private _currentTimeout: NodeJS.Timeout | undefined;
 
 	// always leave off at previous port numbers to avoid retrying on many busy ports
 
@@ -66,7 +68,7 @@ export class Manager extends Disposable {
 
 		this._register(
 			this._serverTaskProvider.onRequestToCloseServer(() => {
-				if (this.currentPanel) {
+				if (this._previewActive) {
 					this._serverTaskProvider.serverStop(false);
 				} else {
 					this.closeServer();
@@ -113,7 +115,7 @@ export class Manager extends Disposable {
 	): void {
 		const currentColumn = vscode.window.activeTextEditor?.viewColumn ?? 1;
 		const column = currentColumn + 1;
-		// file = file.endsWith('.html') ? file : '/';
+
 		// If we already have a panel, show it.
 		if (this.currentPanel) {
 			this.currentPanel.reveal(column, file);
@@ -137,21 +139,7 @@ export class Manager extends Disposable {
 		if (!serverOn) {
 			return;
 		}
-
-		this.currentPanel = new BrowserPreview(
-			panel,
-			this._extensionUri,
-			this._serverPort,
-			this._serverWSPort,
-			file
-		);
-
-		this.currentPanel.onDispose(() => {
-			this.currentPanel = undefined;
-			if (this._server.isRunning && !this._serverTaskProvider.isRunning) {
-				this.closeServer();
-			}
-		});
+		this.startPreview(panel, file);
 	}
 
 	public showPreviewInBrowser(file = '/') {
@@ -200,6 +188,36 @@ export class Manager extends Disposable {
 				this._serverPortNeedsUpdate = false;
 			}
 		}
+	}
+
+	private startPreview(panel: vscode.WebviewPanel, file: string) {
+
+		if (this._currentTimeout) {
+			clearTimeout(this._currentTimeout);
+		}
+
+		this.currentPanel = new BrowserPreview(
+			panel,
+			this._extensionUri,
+			this._serverPort,
+			this._serverWSPort,
+			file
+		);
+
+		this._previewActive = true;
+
+		this.currentPanel.onDispose(() => {
+			this.currentPanel = undefined;
+			const closeServerDelay = GetConfig(this._extensionUri).serverKeepAliveAfterEmbeddedPreviewClose;
+			this._currentTimeout = setTimeout(() => {
+				// set a delay to server shutdown to avoid bad performance from re-opening/closing server.
+				if (this._server.isRunning && !this._serverTaskProvider.isRunning) {
+					this.closeServer();
+				}
+				this._previewActive = false;
+			}, Math.floor(closeServerDelay * 1000 * 60));
+
+		});
 	}
 
 	dispose() {

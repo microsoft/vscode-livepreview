@@ -95,6 +95,13 @@
 				  "maximum": 65535,
 				  "description": "Which local port the live server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port."
 				},
+				"LiveServer.serverKeepAliveAfterEmbeddedPreviewClose": {
+				  "type": "number",
+				  "default": 3,
+				  "minimum": 0,
+				  "maximum": 20,
+				  "description": "How many minutes after closing the embedded preview you want the server to shut off. Set to 0 to have server stay on indefinetely."
+				},
 				"LiveServer.showStatusBarItem": {
 				  "type": "boolean",
 				  "default": true,
