@@ -4,7 +4,11 @@ import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
 import { ServerTaskTerminal } from './task/serverTaskTerminal';
 import { HOST, SETTINGS_SECTION_ID } from './utils/constants';
-import { GetPreviewType, GetRelativeActiveFile, GetRelativeFile } from './utils/utils';
+import {
+	GetPreviewType,
+	GetRelativeActiveFile,
+	GetRelativeFile,
+} from './utils/utils';
 
 export function activate(context: vscode.ExtensionContext) {
 	const manager = new Manager(context.extensionUri);
@@ -20,7 +24,10 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 			(file?: any) => {
 				const previewType = GetPreviewType(context.extensionUri);
-				vscode.commands.executeCommand(`${SETTINGS_SECTION_ID}.start.${previewType}.atFile`,file);
+				vscode.commands.executeCommand(
+					`${SETTINGS_SECTION_ID}.start.${previewType}.atFile`,
+					file
+				);
 			}
 		)
 	);
@@ -29,11 +36,13 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.preview.atIndex`,
 			(file?: any) => {
 				const previewType = GetPreviewType(context.extensionUri);
-				vscode.commands.executeCommand(`${SETTINGS_SECTION_ID}.start.${previewType}.atIndex`,file);
+				vscode.commands.executeCommand(
+					`${SETTINGS_SECTION_ID}.start.${previewType}.atIndex`,
+					file
+				);
 			}
 		)
 	);
-
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
@@ -60,7 +69,7 @@ export function activate(context: vscode.ExtensionContext) {
 				let relativeFile;
 				if (file instanceof vscode.Uri) {
 					relativeFile = GetRelativeFile(file?.fsPath);
-				} else if (typeof(file) ==  'string') {
+				} else if (typeof file == 'string') {
 					relativeFile = file;
 				} else {
 					relativeFile = GetRelativeActiveFile();
@@ -77,7 +86,7 @@ export function activate(context: vscode.ExtensionContext) {
 				let relativeFile;
 				if (file instanceof vscode.Uri) {
 					relativeFile = GetRelativeFile(file?.fsPath);
-				} else if (typeof(file) ==  'string') {
+				} else if (typeof file == 'string') {
 					relativeFile = file;
 				} else {
 					relativeFile = GetRelativeActiveFile();
@@ -101,6 +110,7 @@ export function activate(context: vscode.ExtensionContext) {
 				state: any
 			) {
 				const file = state.currentAddress ?? '/';
+				// console.log(state.currentAddress);
 				// Reset the webview options so we use latest uri for `localResourceRoots`.
 				webviewPanel.webview.options = getWebviewOptions(context.extensionUri);
 				manager.createOrShowPreview(webviewPanel, file);
@@ -109,52 +119,80 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	vscode.window.registerTerminalLinkProvider({
-		provideTerminalLinks: (context: vscode.TerminalLinkContext, token: vscode.CancellationToken) => {
+		provideTerminalLinks: (
+			context: vscode.TerminalLinkContext,
+			token: vscode.CancellationToken
+		) => {
 			const links = new Array<vscode.TerminalLink>();
-			if (!context.terminal.creationOptions.name || !manager.isPtyTerm(context.terminal.creationOptions.name)) {
+			if (
+				!context.terminal.creationOptions.name ||
+				!manager.isPtyTerm(context.terminal.creationOptions.name)
+			) {
 				return links;
 			}
-	
-			findFullLinkRegex(context.line,links);
-			findPathnameRegex(context.line,links);
+
+			findFullLinkRegex(context.line, links);
+			findPathnameRegex(context.line, links);
 			return links;
 		},
 		handleTerminalLink: (link: any) => {
-			vscode.commands.executeCommand("LiveServer.start.preview.atFile",link.data);
-		}
+			vscode.commands.executeCommand(
+				'LiveServer.start.preview.atFile',
+				link.data
+			);
+		},
 	});
 }
-export function findFullLinkRegex(input: string, links: Array<vscode.TerminalLink>) {
-	const fullLinkRegex = new RegExp(`\\b\\w{2,20}:\\/\\/(?:localhost|${HOST}|:\\d{2,5})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,'g');
+export function findFullLinkRegex(
+	input: string,
+	links: Array<vscode.TerminalLink>
+) {
+	const fullLinkRegex = new RegExp(
+		`\\b\\w{2,20}:\\/\\/(?:localhost|${HOST}|:\\d{2,5})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
+		'g'
+	);
 
 	let fullURLMatches;
-	do { 
+	do {
 		fullURLMatches = fullLinkRegex.exec(input);
 		if (fullURLMatches) {
 			for (let i = 0; i < fullURLMatches.length; i++) {
 				if (fullURLMatches[i]) {
-						const url = new URL(fullURLMatches[i]);
-						const tl = {startIndex: fullURLMatches.index, length: fullURLMatches[i].length, tooltip: `Open in Preview `, data:url.pathname + url.search};
-						links.push(tl);
-					}
+					const url = new URL(fullURLMatches[i]);
+					const tl = {
+						startIndex: fullURLMatches.index,
+						length: fullURLMatches[i].length,
+						tooltip: `Open in Preview `,
+						data: url.pathname + url.search,
+					};
+					links.push(tl);
 				}
 			}
+		}
 	} while (fullURLMatches);
 }
 
-export function findPathnameRegex(input: string, links: Array<vscode.TerminalLink>) {
+export function findPathnameRegex(
+	input: string,
+	links: Array<vscode.TerminalLink>
+) {
 	// match relative links
-	const partialLinkRegex= new RegExp(`(?<=\\s)\\/([/\\w.]*)\\?*[\\w=]*`,'g');
+	const partialLinkRegex = new RegExp(`(?<=\\s)\\/([/\\w.]*)\\?*[\\w=]*`, 'g');
 	let partialLinkMatches;
-	do { 
+	do {
 		partialLinkMatches = partialLinkRegex.exec(input);
 		if (partialLinkMatches) {
 			for (let i = 0; i < partialLinkMatches.length; i++) {
 				if (partialLinkMatches[i]) {
-						const tl = {startIndex: partialLinkMatches.index, length: partialLinkMatches[i].length, tooltip: `Open in Preview `, data: partialLinkMatches[i]};
-						links.push(tl);
-					}
+					const tl = {
+						startIndex: partialLinkMatches.index,
+						length: partialLinkMatches[i].length,
+						tooltip: `Open in Preview `,
+						data: partialLinkMatches[i],
+					};
+					links.push(tl);
 				}
 			}
+		}
 	} while (partialLinkMatches);
 }

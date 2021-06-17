@@ -126,7 +126,10 @@ export class Manager extends Disposable {
 				BrowserPreview.viewType,
 				INIT_PANEL_TITLE,
 				column,
-				{...getWebviewOptions(this._extensionUri),...getWebviewPanelOptions()}
+				{
+					...getWebviewOptions(this._extensionUri),
+					...getWebviewPanelOptions(),
+				}
 			);
 		}
 		const serverOn = this.openServer();
@@ -163,7 +166,7 @@ export class Manager extends Disposable {
 	}
 
 	public isPtyTerm(terminalName: string) {
-		return (this._serverTaskProvider.terminalName == terminalName);
+		return this._serverTaskProvider.terminalName == terminalName;
 	}
 
 	public openServer(fromTask = false): boolean {
@@ -221,12 +224,11 @@ export function getWebviewOptions(
 				'vscode-codicons',
 				'dist'
 			),
-		]
+		],
 	};
 }
 
-export function getWebviewPanelOptions(
-): vscode.WebviewPanelOptions {
+export function getWebviewPanelOptions(): vscode.WebviewPanelOptions {
 	return {
 		retainContextWhenHidden: true,
 	};

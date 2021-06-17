@@ -102,7 +102,9 @@
 				break;
 			}
 			case 'set-url': {
-				document.getElementById('url-input').value = message.text;
+				msgJSON = JSON.parse(message.text);
+				document.getElementById('url-input').value = msgJSON.fullPath;
+				vscode.setState({currentAddress: msgJSON.pathname});
 				break;
 			}
 			case 'open-external-link': {

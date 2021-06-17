@@ -172,10 +172,6 @@ export class BrowserPreview extends Disposable {
 
 	private setHtml(webview: vscode.Webview, url: string): void {
 		this._panel.webview.html = this.getHtmlForWebview(webview, url);
-		
-		if (!url.endsWith(".html")) {
-			this._panel.webview.postMessage({ command: 'set-url', text: url});
-		}
 	}
 
 	private getHtmlForWebview(webview: vscode.Webview, url: string): string {
@@ -333,11 +329,16 @@ export class BrowserPreview extends Disposable {
 	}
 
 	private goToFile(URLExt: string): void {
-		this.setHtml(this._panel.webview, this.constructAddress(URLExt));
+		const fullAddr = this.constructAddress(URLExt);
+		this.setHtml(this._panel.webview, fullAddr);
 		// If we can't rely on inline script to update panel title,
 		// then set panel title manually
 		if (!URLExt?.endsWith('.html')) {
 			this.setPanelTitle('', URLExt);
+			this._panel.webview.postMessage({
+				command: 'set-url',
+				text: JSON.stringify({ fullPath: fullAddr, pathname: URLExt }),
+			});
 		}
 		this.currentAddress = URLExt;
 	}
