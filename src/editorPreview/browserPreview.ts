@@ -129,7 +129,9 @@ export class BrowserPreview extends Disposable {
 
 	private goToFullAddress(address: string) {
 		if (address.startsWith(this._host)) {
-			this.goToFile(address.substr(this._host.length));
+			const file = address.substr(this._host.length);
+			this.goToFile(file);
+			this.handleNewPageLoad(file);
 		} else {
 			this.handleOpenBrowser(address);
 		}
