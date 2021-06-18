@@ -63,7 +63,7 @@ export class BrowserPreview extends Disposable {
 
 		this.updateForwardBackArrows();
 
-		// Set the webview's html content at index.html
+		// Set the webview's html content
 		this.goToFile(initialFile);
 		this._pageHistory?.addHistory(initialFile);
 		this.currentAddress = initialFile;

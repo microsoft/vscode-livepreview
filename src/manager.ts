@@ -8,7 +8,7 @@ import {
 	ServerStartedStatus,
 	ServerTaskProvider,
 } from './task/serverTaskProvider';
-import { isFileInjectable } from './utils/utils';
+import { isFileInjectable, GetWorkspace } from './utils/utils';
 
 export interface serverMsg {
 	method: string;
@@ -42,7 +42,7 @@ export class Manager extends Disposable {
 		super();
 		this._extensionUri = extensionUri;
 
-		const currentWorkspace = vscode.workspace.workspaceFolders?.[0];
+		const currentWorkspace = GetWorkspace();
 		this._server = this._register(new Server(extensionUri, currentWorkspace));
 		this._serverPort = GetConfig(extensionUri).portNum;
 		this._serverWSPort = GetConfig(extensionUri).portNum + 1;
@@ -114,8 +114,7 @@ export class Manager extends Disposable {
 		panel: vscode.WebviewPanel | undefined = undefined,
 		file = '/'
 	): void {
-		const currentColumn = vscode.window.activeTextEditor?.viewColumn ?? 1;
-		const column = currentColumn + 1;
+		const column = vscode.ViewColumn.Beside;
 
 		// If we already have a panel, show it.
 		if (this.currentPanel) {
