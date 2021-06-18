@@ -97,10 +97,15 @@ export class BrowserPreview extends Disposable {
 					case 'open-browser':
 						this.handleOpenBrowser(message.text);
 						return;
-					case 'add-history':
+					case 'add-history': {
+						this._panel.webview.postMessage({
+							command: 'set-url',
+							text: JSON.stringify({ fullPath: this.constructAddress(message.text), pathname: message.text }),
+						});
 						// called from main.js in the case where the target is non-injectable
 						this.handleNewPageLoad(message.text);
 						return;
+					}
 					case 'refresh-back-forward-buttons':
 						this.updateForwardBackArrows();
 						return;

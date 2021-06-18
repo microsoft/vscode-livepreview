@@ -42,5 +42,5 @@ export function isFileInjectable(file: string | undefined) {
 	if (!file) {
 		return false;
 	}
-	return (file.endsWith(".html") || file.endsWith(".svg"));
+	return (file.endsWith(".html"));
 }
