@@ -1,3 +1,4 @@
+import { relative } from 'path';
 import { URL } from 'url';
 import * as vscode from 'vscode';
 import { BrowserPreview } from './editorPreview/browserPreview';
@@ -73,6 +74,13 @@ export function activate(context: vscode.ExtensionContext) {
 				} else {
 					relativeFile = GetRelativeActiveFile();
 				}
+
+				
+				if (relativeFile == '') {
+					vscode.window.showErrorMessage("This file is not a part of the workspace where the server has started. Cannot preview.");
+					return;
+				}
+				
 				manager.showPreviewInBrowser(relativeFile);
 			}
 		)
@@ -91,6 +99,10 @@ export function activate(context: vscode.ExtensionContext) {
 					relativeFile = GetRelativeActiveFile();
 				}
 
+				if (relativeFile == '') {
+					vscode.window.showErrorMessage("This file is not a part of the workspace where the server has started. Cannot preview.");
+					return;
+				}
 				manager.createOrShowPreview(undefined, relativeFile);
 			}
 		)
