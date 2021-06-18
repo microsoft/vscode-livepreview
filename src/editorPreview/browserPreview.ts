@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { HOST, INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
+import { isFileInjectable } from '../utils/utils';
 import { PageHistory, NavEditCommands } from './pageHistoryTracker';
 
 export class BrowserPreview extends Disposable {
@@ -96,10 +97,15 @@ export class BrowserPreview extends Disposable {
 					case 'open-browser':
 						this.handleOpenBrowser(message.text);
 						return;
-					case 'add-history':
+					case 'add-history': {
+						this._panel.webview.postMessage({
+							command: 'set-url',
+							text: JSON.stringify({ fullPath: this.constructAddress(message.text), pathname: message.text }),
+						});
 						// called from main.js in the case where the target is non-injectable
 						this.handleNewPageLoad(message.text);
 						return;
+					}
 					case 'refresh-back-forward-buttons':
 						this.updateForwardBackArrows();
 						return;
@@ -123,7 +129,9 @@ export class BrowserPreview extends Disposable {
 
 	private goToFullAddress(address: string) {
 		if (address.startsWith(this._host)) {
-			this.goToFile(address.substr(this._host.length));
+			const file = address.substr(this._host.length);
+			this.goToFile(file);
+			this.handleNewPageLoad(file);
 		} else {
 			this.handleOpenBrowser(address);
 		}
@@ -259,7 +267,7 @@ export class BrowserPreview extends Disposable {
 					</div>
 				</div>
 				<div class="content">
-					<iframe id="hostedContent" src="${url}" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+					<iframe id="hostedContent" src="${url}"></iframe>
 				</div>
 			</div>
 				<script nonce="${nonce}">
@@ -333,7 +341,7 @@ export class BrowserPreview extends Disposable {
 		this.setHtml(this._panel.webview, fullAddr);
 		// If we can't rely on inline script to update panel title,
 		// then set panel title manually
-		if (!URLExt?.endsWith('.html')) {
+		if (!isFileInjectable(URLExt)) {
 			this.setPanelTitle('', URLExt);
 			this._panel.webview.postMessage({
 				command: 'set-url',

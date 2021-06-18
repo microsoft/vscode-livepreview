@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { Disposable } from '../../utils/dispose';
-import { FormatFileSize, FormatDateTime } from '../../utils/utils';
+import { FormatFileSize, FormatDateTime, isFileInjectable } from '../../utils/utils';
 import { HTMLInjector } from './HTMLInjector';
 
 export interface IndexFileEntry {
@@ -138,7 +138,7 @@ export class ContentLoader extends Disposable {
 			if (readPath == workspaceDocuments[i].fileName) {
 				let fileContents = workspaceDocuments[i].getText();
 
-				if (readPath.endsWith('.html')) {
+				if (isFileInjectable(readPath)) {
 					fileContents = this.scriptInjector?.script + fileContents;
 				}
 
@@ -149,7 +149,7 @@ export class ContentLoader extends Disposable {
 		}
 
 		if (i == workspaceDocuments.length) {
-			if (readPath.endsWith('.html')) {
+			if (isFileInjectable(readPath)) {
 				const buffer = fs.readFileSync(readPath, "utf8");
 				const injectedFileContents =
 					this.scriptInjector?.script + buffer.toString();

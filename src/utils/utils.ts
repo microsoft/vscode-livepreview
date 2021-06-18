@@ -49,3 +49,10 @@ export function GetWorkspacePath(): string | undefined {
 export function GetWorkspace() {
 	return vscode.workspace.workspaceFolders?.[0];
 }
+
+export function isFileInjectable(file: string | undefined) {
+	if (!file) {
+		return false;
+	}
+	return (file.endsWith(".html"));
+}

@@ -8,7 +8,7 @@ import {
 	ServerStartedStatus,
 	ServerTaskProvider,
 } from './task/serverTaskProvider';
-import { GetWorkspace } from './utils/utils';
+import { isFileInjectable, GetWorkspace } from './utils/utils';
 
 export interface serverMsg {
 	method: string;
@@ -148,7 +148,7 @@ export class Manager extends Disposable {
 				GetConfig(this._extensionUri).browserPreviewLaunchServerLogging
 			);
 		}
-		file = file.endsWith('.html') ? file : '/';
+		file = isFileInjectable(file) ? file : '/';
 		const uri = vscode.Uri.parse(`http://${HOST}:${this._serverPort}${file}`);
 		vscode.env.openExternal(uri);
 	}

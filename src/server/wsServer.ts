@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { URL } from 'url';
 import { Disposable } from '../utils/dispose';
+import { isFileInjectable } from '../utils/utils';
 
 export class WSServer extends Disposable {
 	private _wss: WebSocket.Server | undefined;
@@ -89,7 +90,7 @@ export class WSServer extends Disposable {
 		const absolutePath = path.join(basePath, url.pathname);
 		if (
 			fs.statSync(absolutePath).isDirectory() ||
-			path.extname(absolutePath) == '.html'
+			isFileInjectable(absolutePath)
 		) {
 			return { injectable: true, pathname: url.pathname };
 		}
