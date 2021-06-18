@@ -1,4 +1,3 @@
-import { relative } from 'path';
 import { URL } from 'url';
 import * as vscode from 'vscode';
 import { BrowserPreview } from './editorPreview/browserPreview';
@@ -9,7 +8,6 @@ import {
 	GetRelativeActiveFile,
 	GetRelativeFile,
 	GetWorkspace,
-	GetWorkspacePath,
 } from './utils/utils';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -204,7 +202,7 @@ export function findPathnameRegex(
 					const tl = {
 						startIndex: partialLinkMatches.index,
 						length: partialLinkMatches[i].length,
-						tooltip: `Open in Editor `,
+						tooltip: `Reveal in Explorer `,
 						data: partialLinkMatches[i],
 						inEditor: true
 					};
@@ -218,5 +216,5 @@ export function findPathnameRegex(
 export function openRelativeLinkInWorkspace(file: string) {
 	const fullPath = GetWorkspace()?.uri + file;
 	const uri = vscode.Uri.parse(fullPath);
-	vscode.commands.executeCommand('vscode.open', uri);
+	vscode.commands.executeCommand('revealInExplorer',uri);
 }

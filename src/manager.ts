@@ -114,8 +114,7 @@ export class Manager extends Disposable {
 		panel: vscode.WebviewPanel | undefined = undefined,
 		file = '/'
 	): void {
-		const currentColumn = vscode.window.activeTextEditor?.viewColumn ?? 1;
-		const column = currentColumn + 1;
+		const column = vscode.ViewColumn.Beside;
 
 		// If we already have a panel, show it.
 		if (this.currentPanel) {
