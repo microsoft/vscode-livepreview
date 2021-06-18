@@ -8,6 +8,8 @@ import { GetPreviewType, SETTINGS_SECTION_ID } from './utils/settingsUtil';
 import {
 	GetRelativeActiveFile,
 	GetRelativeFile,
+	GetWorkspace,
+	GetWorkspacePath,
 } from './utils/utils';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -146,10 +148,14 @@ export function activate(context: vscode.ExtensionContext) {
 			return links;
 		},
 		handleTerminalLink: (link: any) => {
-			vscode.commands.executeCommand(
-				'LiveServer.start.preview.atFile',
-				link.data
-			);
+			if (link.inEditor) {
+				openRelativeLinkInWorkspace(link.data);
+			} else {
+				vscode.commands.executeCommand(
+					'LiveServer.start.preview.atFile',
+					link.data
+				);
+			}
 		},
 	});
 }
@@ -174,6 +180,7 @@ export function findFullLinkRegex(
 						length: fullURLMatches[i].length,
 						tooltip: `Open in Preview `,
 						data: url.pathname + url.search,
+						inEditor: false
 					};
 					links.push(tl);
 				}
@@ -197,12 +204,19 @@ export function findPathnameRegex(
 					const tl = {
 						startIndex: partialLinkMatches.index,
 						length: partialLinkMatches[i].length,
-						tooltip: `Open in Preview `,
+						tooltip: `Open in Editor `,
 						data: partialLinkMatches[i],
+						inEditor: true
 					};
 					links.push(tl);
 				}
 			}
 		}
 	} while (partialLinkMatches);
+}
+
+export function openRelativeLinkInWorkspace(file: string) {
+	const fullPath = GetWorkspace()?.uri + file;
+	const uri = vscode.Uri.parse(fullPath);
+	vscode.commands.executeCommand('vscode.open', uri);
 }
