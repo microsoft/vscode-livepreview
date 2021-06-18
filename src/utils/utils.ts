@@ -33,7 +33,19 @@ export function GetRelativeActiveFile(): string {
 }
 
 export function GetRelativeFile(file: string): string {
-	const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-	const ret = file.substr(workspaceFolder?.length ?? 0).replace(/\\/gi, '/');
-	return ret;
+	const workspaceFolder = GetWorkspacePath();
+
+	if (workspaceFolder && file.startsWith(workspaceFolder)) {
+		return file.substr(workspaceFolder.length).replace(/\\/gi, '/');
+	} else {
+		return '';
+	}
+}
+
+export function GetWorkspacePath(): string | undefined {
+	return GetWorkspace()?.uri.fsPath;
+}
+
+export function GetWorkspace() {
+	return vscode.workspace.workspaceFolders?.[0];
 }

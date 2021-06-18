@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { serverMsg } from '../manager';
 import { Disposable } from '../utils/dispose';
+import { GetWorkspace } from '../utils/utils';
 import { ServerTaskTerminal } from './serverTaskTerminal';
 
 interface ServerTaskDefinition extends vscode.TaskDefinition {
@@ -129,7 +130,7 @@ export class ServerTaskProvider
 		for (const i in args) {
 			termName += ` ${args[i]}`;
 		}
-		const currentWorkspace = vscode.workspace.workspaceFolders?.[0];
+		const currentWorkspace = GetWorkspace();
 		if (this._terminal && this._terminal.running) {
 			return new vscode.Task(
 				definition,

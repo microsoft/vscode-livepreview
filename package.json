@@ -126,7 +126,7 @@
 					  "Embedded Preview",
 					  "External Browser"
 					],
-					"default": "On All Changes in Editor",
+					"default": "Embedded Preview",
 					"description": "Preferred target for previews."
 				},
 				"LiveServer.browserPreviewLaunchServerLogging": {
