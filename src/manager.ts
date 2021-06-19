@@ -188,7 +188,7 @@ export class Manager extends Disposable {
 	}
 
 	// caller is reponsible for only calling this if nothing is using the server
-	public closeServer(): void {
+	public closeServer(): boolean {
 		if (this._server.isRunning) {
 			this._server.closeServer();
 
@@ -204,9 +204,14 @@ export class Manager extends Disposable {
 				this._serverPort = GetConfig(this._extensionUri).portNum;
 				this._serverPortNeedsUpdate = false;
 			}
+			return true;
 		}
+		return false;
 	}
 
+	public inServerWorkspace(file: string) {
+		return this._server.canGetPath(file);
+	}
 	private startPreview(panel: vscode.WebviewPanel, file: string) {
 
 		if (this._currentTimeout) {

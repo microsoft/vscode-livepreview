@@ -37,7 +37,7 @@ export class Server extends Disposable {
 		this._workspacePath = GetWorkspacePath();
 
 		if (!this._workspacePath) {
-			vscode.window.showErrorMessage("Cannot find a root to start a server on. Live Server may not preview optimally.");
+			vscode.window.showWarningMessage("Cannot find a root to start a server on. Live Server may not preview optimally.");
 		} 
 
 		this._register(
@@ -202,25 +202,22 @@ export class Server extends Disposable {
 	}
 
 	public openServer(port: number,): boolean {
-		if (this._workspacePath && this._extensionUri) {
+		if (this._extensionUri) {
 			// initialize websockets to use port after http server port
 			this._httpServer.setInjectorWSPort(port + 1, this._extensionUri);
 
-			this._httpServer.start(port, this._workspacePath);
+			this._httpServer.start(port, this._workspacePath ?? "");
 			return true;
 		}
-		this.showServerStatusMessage('Server Failed To Open');
 		return false;
 	}
 
 	private httpServerConnected() {
-		if (this._workspacePath) {
-			this._wsServer.start(
-				this._httpServer.port + 1,
-				this._workspacePath,
-				this._extensionUri
-			);
-		}
+		this._wsServer.start(
+			this._httpServer.port + 1,
+			this._workspacePath ?? "",
+			this._extensionUri
+		);
 	}
 
 	private wsServerConnected() {

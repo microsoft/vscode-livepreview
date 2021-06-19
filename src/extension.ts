@@ -6,9 +6,11 @@ import { getWebviewOptions, Manager } from './manager';
 import { HOST } from './utils/constants';
 import { GetPreviewType, SETTINGS_SECTION_ID } from './utils/settingsUtil';
 import {
+	DecodeLooseFilePath,
 	GetActiveFile,
 	GetWorkspacePath,
 } from './utils/utils';
+import * as fs from 'fs';
 
 export function activate(context: vscode.ExtensionContext) {
 	const manager = new Manager(context.extensionUri);
@@ -118,7 +120,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.end`, () => {
-			manager.closeServer();
+			if (!manager.closeServer()) {
+				vscode.window.showErrorMessage("Server already off.");
+			}
 		})
 	);
 
@@ -200,7 +204,7 @@ export function findPathnameRegex(
 	links: Array<vscode.TerminalLink>
 ) {
 	// match relative links
-	const partialLinkRegex = new RegExp(`(?<=\\s)\\/([/\\w.]*)\\?*[\\w=]*`, 'g');
+	const partialLinkRegex = new RegExp(`(?<=\\s)\\/([/(\\w%\\-.)]*)\\?*[\\w=]*`, 'g');
 	let partialLinkMatches;
 	do {
 		partialLinkMatches = partialLinkRegex.exec(input);
@@ -223,6 +227,11 @@ export function findPathnameRegex(
 
 export function openRelativeLinkInWorkspace(file: string) {
 	const fullPath = path.join(GetWorkspacePath() ?? '', file);
+
+	// if (!fs.existsSync(fullPath)) {
+	// 	fullPath = DecodeLooseFilePath(file);
+	// } 
+	
 	const uri = vscode.Uri.parse(fullPath);
 	vscode.commands.executeCommand('revealInExplorer',uri);
 }

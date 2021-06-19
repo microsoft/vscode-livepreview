@@ -17,7 +17,14 @@
 	],
 	"activationEvents": [
 		"workspaceContains:**/*.html",
-		"onWebviewPanel:browserPreview"
+		"onWebviewPanel:browserPreview",
+		"onCommand:LiveServer.start.preview.atIndex",
+		"onCommand:LiveServer.start.preview.atFile",
+		"onCommand:LiveServer.start.externalPreview.atIndex",
+		"onCommand:LiveServer.start.internalPreview.atIndex",
+		"onCommand:LiveServer.start.externalPreview.atFile",
+		"onCommand:LiveServer.start.internalPreview.atFile",
+		"onCommand:LiveServer.end"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
