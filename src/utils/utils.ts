@@ -48,8 +48,11 @@ export function GetActiveFile(): string | undefined {
 // 	}
 // }
 
+export function GetWorkspace(): vscode.WorkspaceFolder | undefined {
+	return vscode.workspace.workspaceFolders?.[0];
+}
 export function GetWorkspacePath(): string | undefined {
-	return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+	return GetWorkspace()?.uri.fsPath;
 }
 
 export function GetActiveFolderPath() {

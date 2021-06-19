@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { serverMsg } from '../manager';
 import { Disposable } from '../utils/dispose';
+import { GetWorkspace } from '../utils/utils';
 import { ServerTaskTerminal } from './serverTaskTerminal';
 
 interface ServerTaskDefinition extends vscode.TaskDefinition {
@@ -132,7 +133,7 @@ export class ServerTaskProvider
 		if (this._terminal && this._terminal.running) {
 			return new vscode.Task(
 				definition,
-				vscode.TaskScope.Workspace,
+				GetWorkspace() ?? vscode.TaskScope.Workspace,
 				termName,
 				ServerTaskProvider.CustomBuildScriptType,
 				undefined
@@ -179,3 +180,4 @@ export class ServerTaskProvider
 	);
 	public readonly onDispose = this._onDisposeEmitter.event;
 }
+
