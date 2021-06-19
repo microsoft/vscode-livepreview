@@ -8,6 +8,7 @@ import { GetPreviewType, SETTINGS_SECTION_ID } from './utils/settingsUtil';
 import {
 	DecodeLooseFilePath,
 	GetActiveFile,
+	GetWorkspace,
 	GetWorkspacePath,
 } from './utils/utils';
 import * as fs from 'fs';
@@ -214,7 +215,7 @@ export function findPathnameRegex(
 					const tl = {
 						startIndex: partialLinkMatches.index,
 						length: partialLinkMatches[i].length,
-						tooltip: `Reveal in Explorer `,
+						tooltip: `Reveal File `,
 						data: partialLinkMatches[i],
 						inEditor: true
 					};
@@ -226,12 +227,20 @@ export function findPathnameRegex(
 }
 
 export function openRelativeLinkInWorkspace(file: string) {
-	const fullPath = path.join(GetWorkspacePath() ?? '', file);
 
-	// if (!fs.existsSync(fullPath)) {
-	// 	fullPath = DecodeLooseFilePath(file);
-	// } 
+	let uri;
+	if (fs.existsSync(GetWorkspace()?.uri.fsPath + file)) {
+		const fullPath = GetWorkspace()?.uri + file;
+		uri = vscode.Uri.parse(fullPath);
+	} else {
+		const fullPath = "file:///" + DecodeLooseFilePath(file);
+		uri = vscode.Uri.parse(fullPath);
+	}
 	
-	const uri = vscode.Uri.parse(fullPath);
-	vscode.commands.executeCommand('revealInExplorer',uri);
+	if (file.endsWith("/")) {
+		vscode.commands.executeCommand('revealInExplorer',uri);
+	} else {
+		vscode.commands.executeCommand('vscode.open',uri);
+	}
+	
 }
