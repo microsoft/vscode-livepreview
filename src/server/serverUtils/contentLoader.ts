@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { Disposable } from '../../utils/dispose';
-import { FormatFileSize, FormatDateTime, isFileInjectable } from '../../utils/utils';
+import { FormatFileSize, FormatDateTime, isFileInjectable, DecodeLooseFilePath } from '../../utils/utils';
 import { HTMLInjector } from './HTMLInjector';
 
 export interface IndexFileEntry {
@@ -127,11 +127,19 @@ export class ContentLoader extends Disposable {
 		return Stream.Readable.from(htmlString);
 	}
 
+	public decodeUrlPath(urlPath: string): Stream.Readable | fs.ReadStream | undefined {
+		const readPath = DecodeLooseFilePath(urlPath);
+
+		if (!fs.existsSync(readPath)) {
+			return undefined;
+		}
+		return this.getFileStream(readPath);
+	}
+
 	public getFileStream(
 		readPath: string
 	): Stream.Readable | fs.ReadStream | undefined {
 		const workspaceDocuments = vscode.workspace.textDocuments;
-
 		let i = 0;
 		let stream;
 		while (i < workspaceDocuments.length) {

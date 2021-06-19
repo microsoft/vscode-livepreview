@@ -1,13 +1,13 @@
 import { URL } from 'url';
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
 import { HOST } from './utils/constants';
 import { GetPreviewType, SETTINGS_SECTION_ID } from './utils/settingsUtil';
 import {
-	GetRelativeActiveFile,
-	GetRelativeFile,
-	GetWorkspace,
+	GetActiveFile,
+	GetWorkspacePath,
 } from './utils/utils';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -44,6 +44,42 @@ export function activate(context: vscode.ExtensionContext) {
 		)
 	);
 
+	const openPreview = (internal: boolean, file: string, isRelative: boolean) => {
+		if (internal) {
+			manager.createOrShowPreview(undefined, file, isRelative);
+		} else {
+			manager.showPreviewInBrowser(file, false);
+		}
+	};
+
+	const handleOpenFile = (internal: boolean, file: any) => {
+		if (typeof file == 'string') {
+			openPreview(internal, file, true);
+			return;
+		} else if (file instanceof vscode.Uri) {
+			const filePath = file?.fsPath;
+			if (filePath) {
+				openPreview(internal, filePath, false);
+				return;
+			} else {
+				const activeFilePath = GetActiveFile();
+				if (activeFilePath) {
+					openPreview(internal, activeFilePath, false);
+					return;
+				}
+			}
+		} else {
+			const activeFilePath = GetActiveFile();
+			if (activeFilePath) {
+				openPreview(internal, activeFilePath, false);
+				return;
+			}
+		}
+
+		vscode.window.showErrorMessage("This file is not a part of the workspace where the server has started. Cannot preview.");
+		return;
+	};
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalpreview.atIndex`,
@@ -66,22 +102,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalPreview.atFile`,
 			(file?: any) => {
-				let relativeFile;
-				if (file instanceof vscode.Uri) {
-					relativeFile = GetRelativeFile(file?.fsPath);
-				} else if (typeof file == 'string') {
-					relativeFile = file;
-				} else {
-					relativeFile = GetRelativeActiveFile();
-				}
-
-				
-				if (relativeFile == '') {
-					vscode.window.showErrorMessage("This file is not a part of the workspace where the server has started. Cannot preview.");
-					return;
-				}
-				
-				manager.showPreviewInBrowser(relativeFile);
+				handleOpenFile(false, file);
 			}
 		)
 	);
@@ -90,20 +111,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
 			(file?: any) => {
-				let relativeFile;
-				if (file instanceof vscode.Uri) {
-					relativeFile = GetRelativeFile(file?.fsPath);
-				} else if (typeof file == 'string') {
-					relativeFile = file;
-				} else {
-					relativeFile = GetRelativeActiveFile();
-				}
-
-				if (relativeFile == '') {
-					vscode.window.showErrorMessage("This file is not a part of the workspace where the server has started. Cannot preview.");
-					return;
-				}
-				manager.createOrShowPreview(undefined, relativeFile);
+				handleOpenFile(true, file);
 			}
 		)
 	);
@@ -214,7 +222,7 @@ export function findPathnameRegex(
 }
 
 export function openRelativeLinkInWorkspace(file: string) {
-	const fullPath = GetWorkspace()?.uri + file;
+	const fullPath = path.join(GetWorkspacePath() ?? '', file);
 	const uri = vscode.Uri.parse(fullPath);
 	vscode.commands.executeCommand('revealInExplorer',uri);
 }

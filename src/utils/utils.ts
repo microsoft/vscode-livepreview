@@ -1,4 +1,7 @@
+import { pathToFileURL } from 'url';
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export function FormatDateTime(date: Date, delimeter = ', '): string {
 	const mm = date.getMonth() + 1;
@@ -27,29 +30,55 @@ export function FormatFileSize(bytes: number) {
 	return `${modifiedSize} TB`;
 }
 
-export function GetRelativeActiveFile(): string {
-	const activeFile = vscode.window.activeTextEditor?.document.fileName;
-	return activeFile ? GetRelativeFile(activeFile) : '';
-}
+// export function GetRelativeActiveFile(): string {
+// 	const activeFile = GetActiveFile();
+// 	return activeFile ? GetRelativeFile(activeFile) : '';
+// }
 
-export function GetRelativeFile(file: string): string {
-	const workspaceFolder = GetWorkspacePath();
-
-	if (workspaceFolder && file.startsWith(workspaceFolder)) {
-		return file.substr(workspaceFolder.length).replace(/\\/gi, '/');
-	} else {
-		return '';
-	}
+export function GetActiveFile(): string | undefined {
+	return vscode.window.activeTextEditor?.document.fileName;
 }
+// export function GetRelativeFile(file: string): string {
+// 	const workspaceFolder = GetWorkspacePath();
+
+// 	if (workspaceFolder && file.startsWith(workspaceFolder)) {
+// 		return file.substr(workspaceFolder.length).replace(/\\/gi, '/');
+// 	} else {
+// 		return '';
+// 	}
+// }
 
 export function GetWorkspacePath(): string | undefined {
-	return GetWorkspace()?.uri.fsPath;
+	return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 }
 
-export function GetWorkspace() {
-	return vscode.workspace.workspaceFolders?.[0];
+export function GetActiveFolderPath() {
+	const path = vscode.window.activeTextEditor?.document.uri.fsPath ?? "";
+	return GetParentDir(path);
 }
 
+export function GetParentDir(file: string) {
+	return path.dirname(file);
+}
+
+export function GetFileName(file: string) {
+	return path.basename(file);
+}
+
+export function EncodeLooseFilePath(path: string) {
+	return "/" + escape(GetParentDir(path)) + "/" + GetFileName(path);
+}
+
+export function DecodeLooseFilePath(file: string) {
+	const parentPath = file.substr(file.indexOf("/")+1,file.lastIndexOf("/"));
+	const fileName = file.substr(file.lastIndexOf("/"),file.length);
+	return path.join(unescape(parentPath),fileName);
+}
+
+export function IsLooseFilePath(file: string) {
+	const absPath = path.join(GetWorkspacePath() ?? '', file);
+	return !fs.existsSync(absPath);
+}
 export function isFileInjectable(file: string | undefined) {
 	if (!file) {
 		return false;

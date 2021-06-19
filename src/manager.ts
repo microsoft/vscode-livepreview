@@ -8,7 +8,7 @@ import {
 	ServerStartedStatus,
 	ServerTaskProvider,
 } from './task/serverTaskProvider';
-import { isFileInjectable, GetWorkspace } from './utils/utils';
+import { EncodeLooseFilePath, GetParentDir, GetWorkspacePath, isFileInjectable } from './utils/utils';
 
 export interface serverMsg {
 	method: string;
@@ -41,9 +41,7 @@ export class Manager extends Disposable {
 	constructor(extensionUri: vscode.Uri) {
 		super();
 		this._extensionUri = extensionUri;
-
-		const currentWorkspace = GetWorkspace();
-		this._server = this._register(new Server(extensionUri, currentWorkspace));
+		this._server = this._register(new Server(extensionUri));
 		this._serverPort = GetConfig(extensionUri).portNum;
 		this._serverWSPort = GetConfig(extensionUri).portNum + 1;
 
@@ -112,8 +110,19 @@ export class Manager extends Disposable {
 
 	public createOrShowPreview(
 		panel: vscode.WebviewPanel | undefined = undefined,
-		file = '/'
+		file = '/', relative = true
 	): void {
+		
+
+		if (!relative) {
+			if (!this._server.canGetPath(file)) {
+				// handle loose file
+				file = EncodeLooseFilePath(file);
+			} else {
+				file = this._server.getFileRelativeToWorkspace(file);
+			}
+		}
+
 		const column = vscode.ViewColumn.Beside;
 
 		// If we already have a panel, show it.
@@ -142,13 +151,20 @@ export class Manager extends Disposable {
 		this.startPreview(panel, file);
 	}
 
-	public showPreviewInBrowser(file = '/') {
+	public showPreviewInBrowser(file = '/', relative = true) {
 		if (!this._serverTaskProvider.isRunning) {
 			this._serverTaskProvider.extRunTask(
 				GetConfig(this._extensionUri).browserPreviewLaunchServerLogging
 			);
 		}
-		file = isFileInjectable(file) ? file : '/';
+		if (!relative) {
+			if (!this._server.canGetPath(file)) {
+				// handle loose file
+				file = EncodeLooseFilePath(file);
+			} else {
+				file = this._server.getFileRelativeToWorkspace(file);
+			}
+		}
 		const uri = vscode.Uri.parse(`http://${HOST}:${this._serverPort}${file}`);
 		vscode.env.openExternal(uri);
 	}
@@ -158,6 +174,7 @@ export class Manager extends Disposable {
 	}
 
 	public openServer(fromTask = false): boolean {
+		
 		if (!this._server.isRunning) {
 			return this._server.openServer(this._serverPort);
 		} else if (fromTask) {

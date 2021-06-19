@@ -84,11 +84,15 @@ export class HttpServer extends Disposable {
 			let stream;
 
 			if (!fs.existsSync(absoluteReadPath)) {
-				stream = this._contentLoader.createPageDoesNotExist(absoluteReadPath);
-				res.writeHead(404);
-				this.reportStatus(req, res);
-				stream.pipe(res);
-				return;
+
+				stream = this._contentLoader.decodeUrlPath(URLPathName);
+				if (!stream) {
+					stream = this._contentLoader.createPageDoesNotExist(absoluteReadPath);
+					res.writeHead(404);
+					this.reportStatus(req, res);
+					stream.pipe(res);
+					return;
+				}
 			} else if (fs.statSync(absoluteReadPath).isDirectory()) {
 				if (!URLPathName.endsWith('/')) {
 					const queries =

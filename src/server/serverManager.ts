@@ -11,6 +11,7 @@ import {
 } from '../utils/settingsUtil';
 import { DONT_SHOW_AGAIN } from '../utils/constants';
 import { serverMsg } from '../manager';
+import { GetWorkspacePath } from '../utils/utils';
 
 export interface PortInfo {
 	port?: number;
@@ -26,15 +27,18 @@ export class Server extends Disposable {
 	private _workspacePath: string | undefined;
 
 	constructor(
-		extensionUri: vscode.Uri,
-		path: vscode.WorkspaceFolder | undefined
+		extensionUri: vscode.Uri
 	) {
 		super();
 		this._extensionUri = extensionUri;
 		this._httpServer = this._register(new HttpServer());
 		this._wsServer = this._register(new WSServer());
 		this._statusBar = this._register(new StatusBarNotifier(extensionUri));
-		this._workspacePath = path?.uri.fsPath;
+		this._workspacePath = GetWorkspacePath();
+
+		if (!this._workspacePath) {
+			vscode.window.showErrorMessage("Cannot find a root to start a server on. Live Server may not preview optimally.");
+		} 
 
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
@@ -139,6 +143,20 @@ export class Server extends Disposable {
 		return this._isServerOn;
 	}
 
+	public canGetPath(path: string) {
+		return this._workspacePath ? path.startsWith(this._workspacePath) : false;
+	}
+
+	public getFileRelativeToWorkspace(path: string): string {
+		const workspaceFolder = this._workspacePath;
+	
+		if (workspaceFolder && path.startsWith(workspaceFolder)) {
+			return path.substr(workspaceFolder.length).replace(/\\/gi, '/');
+		} else {
+			return '';
+		}
+	}
+
 	public updateConfigurations() {
 		this._statusBar.updateConfigurations();
 	}
@@ -183,7 +201,7 @@ export class Server extends Disposable {
 		this.showServerStatusMessage('Server Closed');
 	}
 
-	public openServer(port: number): boolean {
+	public openServer(port: number,): boolean {
 		if (this._workspacePath && this._extensionUri) {
 			// initialize websockets to use port after http server port
 			this._httpServer.setInjectorWSPort(port + 1, this._extensionUri);
