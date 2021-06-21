@@ -89,7 +89,7 @@ export class HttpServer extends Disposable {
 				if (fs.existsSync(decodedReadPath)) {
 					absoluteReadPath = decodedReadPath;
 				} else {
-					stream = this._contentLoader.createPageDoesNotExist(absoluteReadPath);
+					stream = this._contentLoader.createPageDoesNotExist(unescape(absoluteReadPath));
 					res.writeHead(404);
 					this.reportStatus(req, res);
 					stream.pipe(res);

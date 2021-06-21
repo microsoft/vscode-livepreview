@@ -160,7 +160,7 @@ export function activate(context: vscode.ExtensionContext) {
 		},
 		handleTerminalLink: (link: any) => {
 			if (link.inEditor) {
-				openRelativeLinkInWorkspace(link.data);
+				openRelativeLinkInWorkspace(link.data, link.isDir);
 			} else {
 				vscode.commands.executeCommand(
 					'LiveServer.start.preview.atFile',
@@ -212,12 +212,16 @@ export function findPathnameRegex(
 		if (partialLinkMatches) {
 			for (let i = 0; i < partialLinkMatches.length; i++) {
 				if (partialLinkMatches[i]) {
+					const link = partialLinkMatches[i];
+					const isDir = link.endsWith("/");
+					const tooltip = isDir ? "Reveal Folder ": "Open File ";
 					const tl = {
 						startIndex: partialLinkMatches.index,
 						length: partialLinkMatches[i].length,
-						tooltip: `Reveal File `,
-						data: partialLinkMatches[i],
-						inEditor: true
+						tooltip: tooltip,
+						data: link,
+						inEditor: true,
+						isDir: isDir
 					};
 					links.push(tl);
 				}
@@ -226,18 +230,16 @@ export function findPathnameRegex(
 	} while (partialLinkMatches);
 }
 
-export function openRelativeLinkInWorkspace(file: string) {
-
-	let uri;
-	if (fs.existsSync(GetWorkspace()?.uri.fsPath + file)) {
-		const fullPath = GetWorkspace()?.uri + file;
-		uri = vscode.Uri.parse(fullPath);
-	} else {
-		const fullPath = "file:///" + DecodeLooseFilePath(file);
-		uri = vscode.Uri.parse(fullPath);
-	}
+export function openRelativeLinkInWorkspace(file: string, isDir: boolean) {
+	const isWorkspaceFile = fs.existsSync(GetWorkspace()?.uri.fsPath + file);
+	const fullPath = isWorkspaceFile? (GetWorkspace()?.uri + file) : ("file:///" + DecodeLooseFilePath(file));
 	
-	if (file.endsWith("/")) {
+	const uri = vscode.Uri.parse(fullPath);
+
+	if (isDir) {
+		if (!isWorkspaceFile) {
+			vscode.window.showErrorMessage("Cannot reveal folder. It is not in the open workspace.");
+		}
 		vscode.commands.executeCommand('revealInExplorer',uri);
 	} else {
 		vscode.commands.executeCommand('vscode.open',uri);

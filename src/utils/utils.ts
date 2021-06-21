@@ -30,27 +30,14 @@ export function FormatFileSize(bytes: number) {
 	return `${modifiedSize} TB`;
 }
 
-// export function GetRelativeActiveFile(): string {
-// 	const activeFile = GetActiveFile();
-// 	return activeFile ? GetRelativeFile(activeFile) : '';
-// }
-
 export function GetActiveFile(): string | undefined {
 	return vscode.window.activeTextEditor?.document.fileName;
 }
-// export function GetRelativeFile(file: string): string {
-// 	const workspaceFolder = GetWorkspacePath();
-
-// 	if (workspaceFolder && file.startsWith(workspaceFolder)) {
-// 		return file.substr(workspaceFolder.length).replace(/\\/gi, '/');
-// 	} else {
-// 		return '';
-// 	}
-// }
 
 export function GetWorkspace(): vscode.WorkspaceFolder | undefined {
 	return vscode.workspace.workspaceFolders?.[0];
 }
+
 export function GetWorkspacePath(): string | undefined {
 	return GetWorkspace()?.uri.fsPath;
 }
@@ -75,9 +62,7 @@ export function EncodeLooseFilePath(path: string) {
 }
 
 export function DecodeLooseFilePath(file: string) {
-	const parentPath = file.substr(file.indexOf("/")+1,file.lastIndexOf("/"));
-	const fileName = file.substr(file.lastIndexOf("/"),file.length);
-	return path.join(unescape(parentPath),fileName);
+	return unescape(file).substr(1);
 }
 
 export function IsLooseFilePath(file: string) {
