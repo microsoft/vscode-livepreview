@@ -224,7 +224,7 @@ export class Manager extends Disposable {
 		) {
 			vscode.window
 				.showWarningMessage(
-					'Previewing a file that is not a child of the server root. For best functionality, please open a workspace at the project root.',
+					'Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root.',
 					DONT_SHOW_AGAIN
 				)
 				.then((selection: vscode.MessageItem | undefined) => {

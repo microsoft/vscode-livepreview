@@ -128,15 +128,6 @@ export class ContentLoader extends Disposable {
 		return Stream.Readable.from(htmlString);
 	}
 
-	// public decodeUrlPath(urlPath: string): Stream.Readable | fs.ReadStream | undefined {
-	// 	const readPath = DecodeLooseFilePath(urlPath);
-
-	// 	if (!fs.existsSync(readPath)) {
-	// 		return undefined;
-	// 	}
-	// 	return this.getFileStream(readPath);
-	// }
-
 	public getFileStream(
 		readPath: string
 	): Stream.Readable | fs.ReadStream | undefined {

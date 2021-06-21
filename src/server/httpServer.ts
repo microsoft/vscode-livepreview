@@ -87,7 +87,9 @@ export class HttpServer extends Disposable {
 			let stream;
 
 			if (!fs.existsSync(absoluteReadPath)) {
-				const decodedReadPath = PathUtil.DecodeLooseFilePath(URLPathName);
+				const decodedReadPath = path.normalize(
+					PathUtil.DecodeLooseFilePath(URLPathName)
+				);
 				looseFile = true;
 				if (fs.existsSync(decodedReadPath)) {
 					absoluteReadPath = decodedReadPath;
