@@ -1,14 +1,12 @@
 import { URL } from 'url';
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
 import { HOST } from './utils/constants';
-import { GetPreviewType, SETTINGS_SECTION_ID } from './utils/settingsUtil';
-import {
-	GetRelativeActiveFile,
-	GetRelativeFile,
-	GetWorkspace,
-} from './utils/utils';
+import { SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
+import { PathUtil } from './utils/pathUtil';
+import { GetActiveFile } from './utils/utils';
 
 export function activate(context: vscode.ExtensionContext) {
 	const manager = new Manager(context.extensionUri);
@@ -23,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 			(file?: any) => {
-				const previewType = GetPreviewType(context.extensionUri);
+				const previewType = SettingUtil.GetPreviewType(context.extensionUri);
 				vscode.commands.executeCommand(
 					`${SETTINGS_SECTION_ID}.start.${previewType}.atFile`,
 					file
@@ -35,7 +33,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atIndex`,
 			(file?: any) => {
-				const previewType = GetPreviewType(context.extensionUri);
+				const previewType = SettingUtil.GetPreviewType(context.extensionUri);
 				vscode.commands.executeCommand(
 					`${SETTINGS_SECTION_ID}.start.${previewType}.atIndex`,
 					file
@@ -43,6 +41,48 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		)
 	);
+
+	const openPreview = (
+		internal: boolean,
+		file: string,
+		isRelative: boolean
+	) => {
+		if (internal) {
+			manager.createOrShowPreview(undefined, file, isRelative);
+		} else {
+			manager.showPreviewInBrowser(file, false);
+		}
+	};
+
+	const handleOpenFile = (internal: boolean, file: any) => {
+		if (typeof file == 'string') {
+			openPreview(internal, file, true);
+			return;
+		} else if (file instanceof vscode.Uri) {
+			const filePath = file?.fsPath;
+			if (filePath) {
+				openPreview(internal, filePath, false);
+				return;
+			} else {
+				const activeFilePath = GetActiveFile();
+				if (activeFilePath) {
+					openPreview(internal, activeFilePath, false);
+					return;
+				}
+			}
+		} else {
+			const activeFilePath = GetActiveFile();
+			if (activeFilePath) {
+				openPreview(internal, activeFilePath, false);
+				return;
+			}
+		}
+
+		vscode.window.showErrorMessage(
+			'This file is not a part of the workspace where the server has started. Cannot preview.'
+		);
+		return;
+	};
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
@@ -66,22 +106,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalPreview.atFile`,
 			(file?: any) => {
-				let relativeFile;
-				if (file instanceof vscode.Uri) {
-					relativeFile = GetRelativeFile(file?.fsPath);
-				} else if (typeof file == 'string') {
-					relativeFile = file;
-				} else {
-					relativeFile = GetRelativeActiveFile();
-				}
-
-				
-				if (relativeFile == '') {
-					vscode.window.showErrorMessage("This file is not a part of the workspace where the server has started. Cannot preview.");
-					return;
-				}
-				
-				manager.showPreviewInBrowser(relativeFile);
+				handleOpenFile(false, file);
 			}
 		)
 	);
@@ -90,27 +115,16 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
 			(file?: any) => {
-				let relativeFile;
-				if (file instanceof vscode.Uri) {
-					relativeFile = GetRelativeFile(file?.fsPath);
-				} else if (typeof file == 'string') {
-					relativeFile = file;
-				} else {
-					relativeFile = GetRelativeActiveFile();
-				}
-
-				if (relativeFile == '') {
-					vscode.window.showErrorMessage("This file is not a part of the workspace where the server has started. Cannot preview.");
-					return;
-				}
-				manager.createOrShowPreview(undefined, relativeFile);
+				handleOpenFile(true, file);
 			}
 		)
 	);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.end`, () => {
-			manager.closeServer();
+			if (!manager.closeServer()) {
+				vscode.window.showErrorMessage('Server already off.');
+			}
 		})
 	);
 
@@ -147,7 +161,7 @@ export function activate(context: vscode.ExtensionContext) {
 		},
 		handleTerminalLink: (link: any) => {
 			if (link.inEditor) {
-				openRelativeLinkInWorkspace(link.data);
+				openRelativeLinkInWorkspace(link.data, link.isDir);
 			} else {
 				vscode.commands.executeCommand(
 					'LiveServer.start.preview.atFile',
@@ -178,7 +192,7 @@ export function findFullLinkRegex(
 						length: fullURLMatches[i].length,
 						tooltip: `Open in Preview `,
 						data: url.pathname + url.search,
-						inEditor: false
+						inEditor: false,
 					};
 					links.push(tl);
 				}
@@ -192,19 +206,26 @@ export function findPathnameRegex(
 	links: Array<vscode.TerminalLink>
 ) {
 	// match relative links
-	const partialLinkRegex = new RegExp(`(?<=\\s)\\/([/\\w.]*)\\?*[\\w=]*`, 'g');
+	const partialLinkRegex = new RegExp(
+		`(?<=\\s)\\/([/(\\w%\\-.)]*)\\?*[\\w=]*`,
+		'g'
+	);
 	let partialLinkMatches;
 	do {
 		partialLinkMatches = partialLinkRegex.exec(input);
 		if (partialLinkMatches) {
 			for (let i = 0; i < partialLinkMatches.length; i++) {
 				if (partialLinkMatches[i]) {
+					const link = partialLinkMatches[i];
+					const isDir = link.endsWith('/');
+					const tooltip = isDir ? 'Reveal Folder ' : 'Open File ';
 					const tl = {
 						startIndex: partialLinkMatches.index,
 						length: partialLinkMatches[i].length,
-						tooltip: `Reveal in Explorer `,
-						data: partialLinkMatches[i],
-						inEditor: true
+						tooltip: tooltip,
+						data: link,
+						inEditor: true,
+						isDir: isDir,
 					};
 					links.push(tl);
 				}
@@ -213,8 +234,24 @@ export function findPathnameRegex(
 	} while (partialLinkMatches);
 }
 
-export function openRelativeLinkInWorkspace(file: string) {
-	const fullPath = GetWorkspace()?.uri + file;
+export function openRelativeLinkInWorkspace(file: string, isDir: boolean) {
+	const isWorkspaceFile = fs.existsSync(
+		PathUtil.GetWorkspace()?.uri.fsPath + file
+	);
+	const fullPath = isWorkspaceFile
+		? PathUtil.GetWorkspace()?.uri + file
+		: 'file:///' + PathUtil.DecodeLooseFilePath(file);
+
 	const uri = vscode.Uri.parse(fullPath);
-	vscode.commands.executeCommand('revealInExplorer',uri);
+
+	if (isDir) {
+		if (!isWorkspaceFile) {
+			vscode.window.showErrorMessage(
+				'Cannot reveal folder. It is not in the open workspace.'
+			);
+		}
+		vscode.commands.executeCommand('revealInExplorer', uri);
+	} else {
+		vscode.commands.executeCommand('vscode.open', uri);
+	}
 }

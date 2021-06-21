@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { HOST, INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
+import { PathUtil } from '../utils/pathUtil';
 import { PageHistory, NavEditCommands } from './pageHistoryTracker';
 
 export class BrowserPreview extends Disposable {
@@ -100,7 +101,10 @@ export class BrowserPreview extends Disposable {
 					case 'add-history': {
 						this._panel.webview.postMessage({
 							command: 'set-url',
-							text: JSON.stringify({ fullPath: this.constructAddress(message.text), pathname: message.text }),
+							text: JSON.stringify({
+								fullPath: this.constructAddress(message.text),
+								pathname: message.text,
+							}),
 						});
 						// called from main.js in the case where the target is non-injectable
 						this.handleNewPageLoad(message.text);
@@ -119,7 +123,6 @@ export class BrowserPreview extends Disposable {
 
 	dispose() {
 		this._onDisposeEmitter.fire();
-		this._onDisposeEmitter.dispose();
 		super.dispose();
 	}
 
@@ -354,7 +357,11 @@ export class BrowserPreview extends Disposable {
 	private setPanelTitle(title = '', pathname = 'Preview'): void {
 		if (title == '') {
 			if (pathname.length > 0 && pathname[0] == '/') {
-				this._panel.title = pathname.substr(1);
+				if (PathUtil.IsLooseFilePath(pathname)) {
+					this._panel.title = PathUtil.GetFileName(pathname);
+				} else {
+					this._panel.title = pathname.substr(1);
+				}
 			} else {
 				this._panel.title = pathname;
 			}

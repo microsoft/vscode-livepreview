@@ -2,13 +2,17 @@ import * as vscode from 'vscode';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { Disposable } from './utils/dispose';
 import { Server } from './server/serverManager';
-import { INIT_PANEL_TITLE, HOST } from './utils/constants';
-import { GetConfig, SETTINGS_SECTION_ID } from './utils/settingsUtil';
+import { INIT_PANEL_TITLE, HOST, DONT_SHOW_AGAIN } from './utils/constants';
+import { PathUtil } from './utils/pathUtil';
 import {
 	ServerStartedStatus,
 	ServerTaskProvider,
 } from './task/serverTaskProvider';
-import { isFileInjectable, GetWorkspace } from './utils/utils';
+import {
+	Settings,
+	SETTINGS_SECTION_ID,
+	SettingUtil,
+} from './utils/settingsUtil';
 
 export interface serverMsg {
 	method: string;
@@ -23,7 +27,7 @@ export class Manager extends Disposable {
 	private _serverPortNeedsUpdate = false;
 	private _previewActive = false;
 	private _currentTimeout: NodeJS.Timeout | undefined;
-
+	private _notifiedAboutLooseFiles = false;
 	// always leave off at previous port numbers to avoid retrying on many busy ports
 
 	private get _serverPort() {
@@ -41,11 +45,9 @@ export class Manager extends Disposable {
 	constructor(extensionUri: vscode.Uri) {
 		super();
 		this._extensionUri = extensionUri;
-
-		const currentWorkspace = GetWorkspace();
-		this._server = this._register(new Server(extensionUri, currentWorkspace));
-		this._serverPort = GetConfig(extensionUri).portNum;
-		this._serverWSPort = GetConfig(extensionUri).portNum + 1;
+		this._server = this._register(new Server(extensionUri));
+		this._serverPort = SettingUtil.GetConfig(extensionUri).portNum;
+		this._serverWSPort = SettingUtil.GetConfig(extensionUri).portNum + 1;
 
 		this._serverTaskProvider = new ServerTaskProvider();
 		this._register(
@@ -98,10 +100,12 @@ export class Manager extends Disposable {
 		vscode.workspace.onDidChangeConfiguration((e) => {
 			if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
 				this._server.updateConfigurations();
-				const newPortNum = GetConfig(this._extensionUri).portNum;
+				const newPortNum = SettingUtil.GetConfig(this._extensionUri).portNum;
 				if (newPortNum != this._serverPort) {
 					if (!this._server.isRunning) {
-						this._serverPort = GetConfig(this._extensionUri).portNum;
+						this._serverPort = SettingUtil.GetConfig(
+							this._extensionUri
+						).portNum;
 					} else {
 						this._serverPortNeedsUpdate = true;
 					}
@@ -112,8 +116,11 @@ export class Manager extends Disposable {
 
 	public createOrShowPreview(
 		panel: vscode.WebviewPanel | undefined = undefined,
-		file = '/'
+		file = '/',
+		relative = true
 	): void {
+		file = this.transformNonRelativeFile(relative, file);
+
 		const column = vscode.ViewColumn.Beside;
 
 		// If we already have a panel, show it.
@@ -139,16 +146,18 @@ export class Manager extends Disposable {
 		if (!serverOn) {
 			return;
 		}
-		this.startPreview(panel, file);
+		this.startEmbeddedPreview(panel, file);
 	}
 
-	public showPreviewInBrowser(file = '/') {
+	public showPreviewInBrowser(file = '/', relative = true) {
 		if (!this._serverTaskProvider.isRunning) {
 			this._serverTaskProvider.extRunTask(
-				GetConfig(this._extensionUri).browserPreviewLaunchServerLogging
+				SettingUtil.GetConfig(this._extensionUri)
+					.browserPreviewLaunchServerLogging
 			);
 		}
-		file = isFileInjectable(file) ? file : '/';
+		file = this.transformNonRelativeFile(relative, file);
+
 		const uri = vscode.Uri.parse(`http://${HOST}:${this._serverPort}${file}`);
 		vscode.env.openExternal(uri);
 	}
@@ -171,7 +180,7 @@ export class Manager extends Disposable {
 	}
 
 	// caller is reponsible for only calling this if nothing is using the server
-	public closeServer(): void {
+	public closeServer(): boolean {
 		if (this._server.isRunning) {
 			this._server.closeServer();
 
@@ -184,14 +193,50 @@ export class Manager extends Disposable {
 			}
 
 			if (this._serverPortNeedsUpdate) {
-				this._serverPort = GetConfig(this._extensionUri).portNum;
+				this._serverPort = SettingUtil.GetConfig(this._extensionUri).portNum;
 				this._serverPortNeedsUpdate = false;
 			}
+			return true;
 		}
+		return false;
 	}
 
-	private startPreview(panel: vscode.WebviewPanel, file: string) {
+	public inServerWorkspace(file: string) {
+		return this._server.canGetPath(file);
+	}
 
+	private transformNonRelativeFile(relative: boolean, file: string): string {
+		if (!relative) {
+			if (!this._server.canGetPath(file)) {
+				this.notifyLooseFileOpen();
+				file = PathUtil.EncodeLooseFilePath(file);
+			} else {
+				file = this._server.getFileRelativeToWorkspace(file);
+			}
+		}
+		return file;
+	}
+
+	private notifyLooseFileOpen() {
+		if (
+			!this._notifiedAboutLooseFiles &&
+			SettingUtil.GetConfig(this._extensionUri).notifyOnOpenLooseFile
+		) {
+			vscode.window
+				.showWarningMessage(
+					'Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root.',
+					DONT_SHOW_AGAIN
+				)
+				.then((selection: vscode.MessageItem | undefined) => {
+					if (selection == DONT_SHOW_AGAIN) {
+						SettingUtil.UpdateSettings(Settings.notifyOnOpenLooseFile, false);
+					}
+				});
+		}
+		this._notifiedAboutLooseFiles = true;
+	}
+
+	private startEmbeddedPreview(panel: vscode.WebviewPanel, file: string) {
 		if (this._currentTimeout) {
 			clearTimeout(this._currentTimeout);
 		}
@@ -208,7 +253,9 @@ export class Manager extends Disposable {
 
 		this.currentPanel.onDispose(() => {
 			this.currentPanel = undefined;
-			const closeServerDelay = GetConfig(this._extensionUri).serverKeepAliveAfterEmbeddedPreviewClose;
+			const closeServerDelay = SettingUtil.GetConfig(
+				this._extensionUri
+			).serverKeepAliveAfterEmbeddedPreviewClose;
 			this._currentTimeout = setTimeout(() => {
 				// set a delay to server shutdown to avoid bad performance from re-opening/closing server.
 				if (this._server.isRunning && !this._serverTaskProvider.isRunning) {
@@ -216,7 +263,6 @@ export class Manager extends Disposable {
 				}
 				this._previewActive = false;
 			}, Math.floor(closeServerDelay * 1000 * 60));
-
 		});
 	}
 

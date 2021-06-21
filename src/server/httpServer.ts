@@ -8,15 +8,18 @@ import { HTMLInjector } from './serverUtils/HTMLInjector';
 import { HOST } from '../utils/constants';
 import { serverMsg } from '../manager';
 import { isFileInjectable } from '../utils/utils';
+import { PathUtil } from '../utils/pathUtil';
 
 export class HttpServer extends Disposable {
 	private _server: any;
 	private _contentLoader: ContentLoader;
+	private readonly _extensionUri;
 	public port = 0;
 
-	constructor() {
+	constructor(extensionUri: vscode.Uri) {
 		super();
 		this._contentLoader = this._register(new ContentLoader());
+		this._extensionUri = extensionUri;
 	}
 
 	private readonly _onConnected = this._register(
@@ -38,10 +41,10 @@ export class HttpServer extends Disposable {
 		this._server.close();
 	}
 
-	public setInjectorWSPort(ws_port: number, extensionUri?: vscode.Uri) {
-		if (!this._contentLoader.scriptInjector && extensionUri) {
+	public setInjectorWSPort(ws_port: number) {
+		if (!this._contentLoader.scriptInjector) {
 			this._contentLoader.scriptInjector = new HTMLInjector(
-				extensionUri,
+				this._extensionUri,
 				ws_port
 			);
 		} else if (this._contentLoader.scriptInjector) {
@@ -79,17 +82,29 @@ export class HttpServer extends Disposable {
 			const endOfPath = req.url.lastIndexOf('?');
 			const URLPathName =
 				endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
-
+			let looseFile = false;
 			let absoluteReadPath = path.join(basePath, URLPathName);
 			let stream;
 
 			if (!fs.existsSync(absoluteReadPath)) {
-				stream = this._contentLoader.createPageDoesNotExist(absoluteReadPath);
-				res.writeHead(404);
-				this.reportStatus(req, res);
-				stream.pipe(res);
-				return;
-			} else if (fs.statSync(absoluteReadPath).isDirectory()) {
+				const decodedReadPath = path.normalize(
+					PathUtil.DecodeLooseFilePath(URLPathName)
+				);
+				looseFile = true;
+				if (fs.existsSync(decodedReadPath)) {
+					absoluteReadPath = decodedReadPath;
+				} else {
+					stream = this._contentLoader.createPageDoesNotExist(
+						unescape(absoluteReadPath)
+					);
+					res.writeHead(404);
+					this.reportStatus(req, res);
+					stream.pipe(res);
+					return;
+				}
+			}
+
+			if (fs.statSync(absoluteReadPath).isDirectory()) {
 				if (!URLPathName.endsWith('/')) {
 					const queries =
 						endOfPath == -1 ? '' : `${req.url.substring(endOfPath)}`;
@@ -107,7 +122,8 @@ export class HttpServer extends Disposable {
 					// create a default index page
 					stream = this._contentLoader.createIndexPage(
 						absoluteReadPath,
-						URLPathName
+						URLPathName,
+						looseFile ? absoluteReadPath : undefined
 					);
 				}
 			} else {
@@ -121,11 +137,14 @@ export class HttpServer extends Disposable {
 					res.end();
 					return;
 				});
-				
+
 				// explicitly set text/html for html files to allow for special character rendering
 				let contentType = 'charset=UTF-8';
 
-				if (isFileInjectable(absoluteReadPath) || absoluteReadPath.endsWith('svg')) {
+				if (
+					isFileInjectable(absoluteReadPath) ||
+					absoluteReadPath.endsWith('svg')
+				) {
 					contentType = 'text/html; ' + contentType;
 				}
 				res.writeHead(200, { 'Content-Type': contentType });

@@ -43,7 +43,8 @@ export class ContentLoader extends Disposable {
 
 	public createIndexPage(
 		readPath: string,
-		relativePath: string
+		relativePath: string,
+		titlePath = relativePath
 	): Stream.Readable {
 		const childFiles = fs.readdirSync(readPath);
 
@@ -109,10 +110,10 @@ export class ContentLoader extends Disposable {
 						padding:4px;
 					}
 				</style>
-				<title>Index of ${relativePath}</title>
+				<title>Index of ${titlePath}</title>
 			</head>
 			<body>
-			<h1>Index of ${relativePath}</h1>
+			<h1>Index of ${titlePath}</h1>
 
 			<table>
 				<th>Name</th><th>Size</th><th>Date Modified</th>
@@ -131,7 +132,6 @@ export class ContentLoader extends Disposable {
 		readPath: string
 	): Stream.Readable | fs.ReadStream | undefined {
 		const workspaceDocuments = vscode.workspace.textDocuments;
-
 		let i = 0;
 		let stream;
 		while (i < workspaceDocuments.length) {

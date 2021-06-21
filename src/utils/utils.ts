@@ -27,32 +27,13 @@ export function FormatFileSize(bytes: number) {
 	return `${modifiedSize} TB`;
 }
 
-export function GetRelativeActiveFile(): string {
-	const activeFile = vscode.window.activeTextEditor?.document.fileName;
-	return activeFile ? GetRelativeFile(activeFile) : '';
-}
-
-export function GetRelativeFile(file: string): string {
-	const workspaceFolder = GetWorkspacePath();
-
-	if (workspaceFolder && file.startsWith(workspaceFolder)) {
-		return file.substr(workspaceFolder.length).replace(/\\/gi, '/');
-	} else {
-		return '';
-	}
-}
-
-export function GetWorkspacePath(): string | undefined {
-	return GetWorkspace()?.uri.fsPath;
-}
-
-export function GetWorkspace() {
-	return vscode.workspace.workspaceFolders?.[0];
+export function GetActiveFile(): string | undefined {
+	return vscode.window.activeTextEditor?.document.fileName;
 }
 
 export function isFileInjectable(file: string | undefined) {
 	if (!file) {
 		return false;
 	}
-	return (file.endsWith(".html"));
+	return file.endsWith('.html');
 }

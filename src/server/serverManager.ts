@@ -5,12 +5,12 @@ import { HttpServer } from './httpServer';
 import { StatusBarNotifier } from './serverUtils/statusBarNotifier';
 import {
 	AutoRefreshPreview,
-	GetConfig,
-	UpdateSettings,
+	SettingUtil,
 	Settings,
 } from '../utils/settingsUtil';
 import { DONT_SHOW_AGAIN } from '../utils/constants';
 import { serverMsg } from '../manager';
+import { PathUtil } from '../utils/pathUtil';
 
 export interface PortInfo {
 	port?: number;
@@ -25,16 +25,13 @@ export class Server extends Disposable {
 	private _isServerOn = false;
 	private _workspacePath: string | undefined;
 
-	constructor(
-		extensionUri: vscode.Uri,
-		path: vscode.WorkspaceFolder | undefined
-	) {
+	constructor(extensionUri: vscode.Uri) {
 		super();
 		this._extensionUri = extensionUri;
-		this._httpServer = this._register(new HttpServer());
+		this._httpServer = this._register(new HttpServer(extensionUri));
 		this._wsServer = this._register(new WSServer());
 		this._statusBar = this._register(new StatusBarNotifier(extensionUri));
-		this._workspacePath = path?.uri.fsPath;
+		this._workspacePath = PathUtil.GetWorkspacePath();
 
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
@@ -139,6 +136,20 @@ export class Server extends Disposable {
 		return this._isServerOn;
 	}
 
+	public canGetPath(path: string) {
+		return this._workspacePath ? path.startsWith(this._workspacePath) : false;
+	}
+
+	public getFileRelativeToWorkspace(path: string): string {
+		const workspaceFolder = this._workspacePath;
+
+		if (workspaceFolder && path.startsWith(workspaceFolder)) {
+			return path.substr(workspaceFolder.length).replace(/\\/gi, '/');
+		} else {
+			return '';
+		}
+	}
+
 	public updateConfigurations() {
 		this._statusBar.updateConfigurations();
 	}
@@ -162,14 +173,14 @@ export class Server extends Disposable {
 
 	private get _reloadOnAnyChange() {
 		return (
-			GetConfig(this._extensionUri).autoRefreshPreview ==
+			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
 			AutoRefreshPreview.onAnyChange
 		);
 	}
 
 	private get _reloadOnSave() {
 		return (
-			GetConfig(this._extensionUri).autoRefreshPreview ==
+			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
 			AutoRefreshPreview.onSave
 		);
 	}
@@ -184,25 +195,18 @@ export class Server extends Disposable {
 	}
 
 	public openServer(port: number): boolean {
-		if (this._workspacePath && this._extensionUri) {
+		if (this._extensionUri) {
 			// initialize websockets to use port after http server port
-			this._httpServer.setInjectorWSPort(port + 1, this._extensionUri);
+			this._httpServer.setInjectorWSPort(port + 1);
 
-			this._httpServer.start(port, this._workspacePath);
+			this._httpServer.start(port, this._workspacePath ?? '');
 			return true;
 		}
-		this.showServerStatusMessage('Server Failed To Open');
 		return false;
 	}
 
 	private httpServerConnected() {
-		if (this._workspacePath) {
-			this._wsServer.start(
-				this._httpServer.port + 1,
-				this._workspacePath,
-				this._extensionUri
-			);
-		}
+		this._wsServer.start(this._httpServer.port + 1, this._workspacePath ?? '');
 	}
 
 	private wsServerConnected() {
@@ -216,12 +220,12 @@ export class Server extends Disposable {
 	}
 
 	private showServerStatusMessage(messsage: string) {
-		if (GetConfig(this._extensionUri).showServerStatusPopUps) {
+		if (SettingUtil.GetConfig(this._extensionUri).showServerStatusPopUps) {
 			vscode.window
 				.showInformationMessage(messsage, DONT_SHOW_AGAIN)
 				.then((selection: vscode.MessageItem | undefined) => {
 					if (selection == DONT_SHOW_AGAIN) {
-						UpdateSettings(Settings.showServerStatusPopUps, false);
+						SettingUtil.UpdateSettings(Settings.showServerStatusPopUps, false);
 					}
 				});
 		}
