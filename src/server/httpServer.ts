@@ -7,7 +7,8 @@ import { ContentLoader } from './serverUtils/contentLoader';
 import { HTMLInjector } from './serverUtils/HTMLInjector';
 import { HOST } from '../utils/constants';
 import { serverMsg } from '../manager';
-import { DecodeLooseFilePath, isFileInjectable } from '../utils/utils';
+import { isFileInjectable } from '../utils/utils';
+import { PathUtil } from '../utils/pathUtil';
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -86,7 +87,7 @@ export class HttpServer extends Disposable {
 			let stream;
 
 			if (!fs.existsSync(absoluteReadPath)) {
-				const decodedReadPath = DecodeLooseFilePath(URLPathName);
+				const decodedReadPath = PathUtil.DecodeLooseFilePath(URLPathName);
 				looseFile = true;
 				if (fs.existsSync(decodedReadPath)) {
 					absoluteReadPath = decodedReadPath;

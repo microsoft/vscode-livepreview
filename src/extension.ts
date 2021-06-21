@@ -1,17 +1,12 @@
 import { URL } from 'url';
 import * as vscode from 'vscode';
-import * as path from 'path';
+import * as fs from 'fs';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
 import { HOST } from './utils/constants';
-import { GetPreviewType, SETTINGS_SECTION_ID } from './utils/settingsUtil';
-import {
-	DecodeLooseFilePath,
-	GetActiveFile,
-	GetWorkspace,
-	GetWorkspacePath,
-} from './utils/utils';
-import * as fs from 'fs';
+import { SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
+import { PathUtil } from './utils/pathUtil';
+import { GetActiveFile } from './utils/utils';
 
 export function activate(context: vscode.ExtensionContext) {
 	const manager = new Manager(context.extensionUri);
@@ -26,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 			(file?: any) => {
-				const previewType = GetPreviewType(context.extensionUri);
+				const previewType = SettingUtil.GetPreviewType(context.extensionUri);
 				vscode.commands.executeCommand(
 					`${SETTINGS_SECTION_ID}.start.${previewType}.atFile`,
 					file
@@ -38,7 +33,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atIndex`,
 			(file?: any) => {
-				const previewType = GetPreviewType(context.extensionUri);
+				const previewType = SettingUtil.GetPreviewType(context.extensionUri);
 				vscode.commands.executeCommand(
 					`${SETTINGS_SECTION_ID}.start.${previewType}.atIndex`,
 					file
@@ -231,8 +226,8 @@ export function findPathnameRegex(
 }
 
 export function openRelativeLinkInWorkspace(file: string, isDir: boolean) {
-	const isWorkspaceFile = fs.existsSync(GetWorkspace()?.uri.fsPath + file);
-	const fullPath = isWorkspaceFile? (GetWorkspace()?.uri + file) : ("file:///" + DecodeLooseFilePath(file));
+	const isWorkspaceFile = fs.existsSync(PathUtil.GetWorkspace()?.uri.fsPath + file);
+	const fullPath = isWorkspaceFile? (PathUtil.GetWorkspace()?.uri + file) : ("file:///" + PathUtil.DecodeLooseFilePath(file));
 	
 	const uri = vscode.Uri.parse(fullPath);
 

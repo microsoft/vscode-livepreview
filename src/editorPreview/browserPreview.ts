@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { HOST, INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
-import { GetFileName, isFileInjectable, IsLooseFilePath } from '../utils/utils';
+import { isFileInjectable } from '../utils/utils';
+import { PathUtil } from '../utils/pathUtil';
 import { PageHistory, NavEditCommands } from './pageHistoryTracker';
 
 export class BrowserPreview extends Disposable {
@@ -356,8 +357,8 @@ export class BrowserPreview extends Disposable {
 	private setPanelTitle(title = '', pathname = 'Preview'): void {
 		if (title == '') {
 			if (pathname.length > 0 && pathname[0] == '/') {
-				if (IsLooseFilePath(pathname)) {
-					this._panel.title = GetFileName(pathname);
+				if (PathUtil.IsLooseFilePath(pathname)) {
+					this._panel.title = PathUtil.GetFileName(pathname);
 				} else {
 					this._panel.title = pathname.substr(1);
 				}

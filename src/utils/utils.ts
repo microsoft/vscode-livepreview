@@ -1,7 +1,4 @@
-import { pathToFileURL } from 'url';
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
 
 export function FormatDateTime(date: Date, delimeter = ', '): string {
 	const mm = date.getMonth() + 1;
@@ -34,41 +31,6 @@ export function GetActiveFile(): string | undefined {
 	return vscode.window.activeTextEditor?.document.fileName;
 }
 
-export function GetWorkspace(): vscode.WorkspaceFolder | undefined {
-	return vscode.workspace.workspaceFolders?.[0];
-}
-
-export function GetWorkspacePath(): string | undefined {
-	return GetWorkspace()?.uri.fsPath;
-}
-
-export function GetActiveFolderPath() {
-	const path = vscode.window.activeTextEditor?.document.uri.fsPath ?? '';
-	return GetParentDir(path);
-}
-
-export function GetParentDir(file: string) {
-	return path.dirname(file);
-}
-
-export function GetFileName(file: string) {
-	return path.basename(file);
-}
-export function GetUnencodedBase(file: string) {
-	return path.basename(unescape(file));
-}
-export function EncodeLooseFilePath(path: string) {
-	return '/' + escape(GetParentDir(path)) + '/' + GetFileName(path);
-}
-
-export function DecodeLooseFilePath(file: string) {
-	return unescape(file).substr(1);
-}
-
-export function IsLooseFilePath(file: string) {
-	const absPath = path.join(GetWorkspacePath() ?? '', file);
-	return !fs.existsSync(absPath);
-}
 export function isFileInjectable(file: string | undefined) {
 	if (!file) {
 		return false;

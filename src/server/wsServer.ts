@@ -4,7 +4,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { URL } from 'url';
 import { Disposable } from '../utils/dispose';
-import { DecodeLooseFilePath, isFileInjectable } from '../utils/utils';
+import { isFileInjectable } from '../utils/utils';
+import { PathUtil } from '../utils/pathUtil';
 
 export class WSServer extends Disposable {
 	private _wss: WebSocket.Server | undefined;
@@ -90,7 +91,7 @@ export class WSServer extends Disposable {
 		let absolutePath = path.join(basePath, url.pathname);
 
 		if (!fs.existsSync(absolutePath)) {
-			absolutePath = DecodeLooseFilePath(absolutePath);
+			absolutePath = PathUtil.DecodeLooseFilePath(absolutePath);
 			if (!fs.existsSync(absolutePath)) {
 				return { injectable: false, pathname: url.pathname };
 			}

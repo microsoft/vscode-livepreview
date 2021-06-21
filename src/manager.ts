@@ -3,12 +3,12 @@ import { BrowserPreview } from './editorPreview/browserPreview';
 import { Disposable } from './utils/dispose';
 import { Server } from './server/serverManager';
 import { INIT_PANEL_TITLE, HOST, DONT_SHOW_AGAIN } from './utils/constants';
-import { GetConfig, Settings, SETTINGS_SECTION_ID, UpdateSettings } from './utils/settingsUtil';
+import { PathUtil } from './utils/pathUtil';
 import {
 	ServerStartedStatus,
 	ServerTaskProvider,
 } from './task/serverTaskProvider';
-import { EncodeLooseFilePath, GetParentDir, GetWorkspacePath, isFileInjectable } from './utils/utils';
+import { Settings, SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
 
 export interface serverMsg {
 	method: string;
@@ -42,8 +42,8 @@ export class Manager extends Disposable {
 		super();
 		this._extensionUri = extensionUri;
 		this._server = this._register(new Server(extensionUri));
-		this._serverPort = GetConfig(extensionUri).portNum;
-		this._serverWSPort = GetConfig(extensionUri).portNum + 1;
+		this._serverPort = SettingUtil.GetConfig(extensionUri).portNum;
+		this._serverWSPort = SettingUtil.GetConfig(extensionUri).portNum + 1;
 
 		this._serverTaskProvider = new ServerTaskProvider();
 		this._register(
@@ -96,10 +96,10 @@ export class Manager extends Disposable {
 		vscode.workspace.onDidChangeConfiguration((e) => {
 			if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
 				this._server.updateConfigurations();
-				const newPortNum = GetConfig(this._extensionUri).portNum;
+				const newPortNum = SettingUtil.GetConfig(this._extensionUri).portNum;
 				if (newPortNum != this._serverPort) {
 					if (!this._server.isRunning) {
-						this._serverPort = GetConfig(this._extensionUri).portNum;
+						this._serverPort = SettingUtil.GetConfig(this._extensionUri).portNum;
 					} else {
 						this._serverPortNeedsUpdate = true;
 					}
@@ -146,7 +146,7 @@ export class Manager extends Disposable {
 	public showPreviewInBrowser(file = '/', relative = true) {
 		if (!this._serverTaskProvider.isRunning) {
 			this._serverTaskProvider.extRunTask(
-				GetConfig(this._extensionUri).browserPreviewLaunchServerLogging
+				SettingUtil.GetConfig(this._extensionUri).browserPreviewLaunchServerLogging
 			);
 		}
 		file = this.transformNonRelativeFile(relative, file);
@@ -187,7 +187,7 @@ export class Manager extends Disposable {
 			}
 
 			if (this._serverPortNeedsUpdate) {
-				this._serverPort = GetConfig(this._extensionUri).portNum;
+				this._serverPort = SettingUtil.GetConfig(this._extensionUri).portNum;
 				this._serverPortNeedsUpdate = false;
 			}
 			return true;
@@ -204,7 +204,7 @@ export class Manager extends Disposable {
 		if (!relative) {
 			if (!this._server.canGetPath(file)) {
 				this.notifyLooseFileOpen();
-				file = EncodeLooseFilePath(file);
+				file = PathUtil.EncodeLooseFilePath(file);
 			} else {
 				file = this._server.getFileRelativeToWorkspace(file);
 			}
@@ -213,11 +213,11 @@ export class Manager extends Disposable {
 	}
 
 	private notifyLooseFileOpen() {
-		if (!this._notifiedAboutLooseFiles && GetConfig(this._extensionUri).notifyOnOpenLooseFile) {
+		if (!this._notifiedAboutLooseFiles && SettingUtil.GetConfig(this._extensionUri).notifyOnOpenLooseFile) {
 			vscode.window.showWarningMessage("Previewing a file that is not a child of the server root. For best functionality, please open a workspace at the project root.", DONT_SHOW_AGAIN)
 			.then((selection: vscode.MessageItem | undefined) => {
 				if (selection == DONT_SHOW_AGAIN) {
-					UpdateSettings(Settings.notifyOnOpenLooseFile, false);
+					SettingUtil.UpdateSettings(Settings.notifyOnOpenLooseFile, false);
 				}
 			});
 		}
@@ -242,7 +242,7 @@ export class Manager extends Disposable {
 
 		this.currentPanel.onDispose(() => {
 			this.currentPanel = undefined;
-			const closeServerDelay = GetConfig(this._extensionUri).serverKeepAliveAfterEmbeddedPreviewClose;
+			const closeServerDelay = SettingUtil.GetConfig(this._extensionUri).serverKeepAliveAfterEmbeddedPreviewClose;
 			this._currentTimeout = setTimeout(() => {
 				// set a delay to server shutdown to avoid bad performance from re-opening/closing server.
 				if (this._server.isRunning && !this._serverTaskProvider.isRunning) {

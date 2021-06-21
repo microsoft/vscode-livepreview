@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { serverMsg } from '../manager';
 import { Disposable } from '../utils/dispose';
-import { GetWorkspace } from '../utils/utils';
+import { PathUtil } from '../utils/pathUtil';
 import { ServerTaskTerminal } from './serverTaskTerminal';
 
 interface ServerTaskDefinition extends vscode.TaskDefinition {
@@ -133,7 +133,7 @@ export class ServerTaskProvider
 		if (this._terminal && this._terminal.running) {
 			return new vscode.Task(
 				definition,
-				GetWorkspace() ?? vscode.TaskScope.Workspace,
+				PathUtil.GetWorkspace() ?? vscode.TaskScope.Workspace,
 				termName,
 				ServerTaskProvider.CustomBuildScriptType,
 				undefined

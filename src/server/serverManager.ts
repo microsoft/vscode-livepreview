@@ -5,13 +5,12 @@ import { HttpServer } from './httpServer';
 import { StatusBarNotifier } from './serverUtils/statusBarNotifier';
 import {
 	AutoRefreshPreview,
-	GetConfig,
-	UpdateSettings,
+	SettingUtil,
 	Settings,
 } from '../utils/settingsUtil';
 import { DONT_SHOW_AGAIN } from '../utils/constants';
 import { serverMsg } from '../manager';
-import { GetWorkspacePath } from '../utils/utils';
+import { PathUtil } from '../utils/pathUtil';
 
 export interface PortInfo {
 	port?: number;
@@ -32,7 +31,7 @@ export class Server extends Disposable {
 		this._httpServer = this._register(new HttpServer(extensionUri));
 		this._wsServer = this._register(new WSServer());
 		this._statusBar = this._register(new StatusBarNotifier(extensionUri));
-		this._workspacePath = GetWorkspacePath();
+		this._workspacePath = PathUtil.GetWorkspacePath();
 
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
@@ -174,14 +173,14 @@ export class Server extends Disposable {
 
 	private get _reloadOnAnyChange() {
 		return (
-			GetConfig(this._extensionUri).autoRefreshPreview ==
+			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
 			AutoRefreshPreview.onAnyChange
 		);
 	}
 
 	private get _reloadOnSave() {
 		return (
-			GetConfig(this._extensionUri).autoRefreshPreview ==
+			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
 			AutoRefreshPreview.onSave
 		);
 	}
@@ -221,12 +220,12 @@ export class Server extends Disposable {
 	}
 
 	private showServerStatusMessage(messsage: string) {
-		if (GetConfig(this._extensionUri).showServerStatusPopUps) {
+		if (SettingUtil.GetConfig(this._extensionUri).showServerStatusPopUps) {
 			vscode.window
 				.showInformationMessage(messsage, DONT_SHOW_AGAIN)
 				.then((selection: vscode.MessageItem | undefined) => {
 					if (selection == DONT_SHOW_AGAIN) {
-						UpdateSettings(Settings.showServerStatusPopUps, false);
+						SettingUtil.UpdateSettings(Settings.showServerStatusPopUps, false);
 					}
 				});
 		}
