@@ -2,7 +2,7 @@
 	"name": "live-server",
 	"displayName": "Live Server",
 	"description": "An extension that hosts your web project for previewing.",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"publisher": "andrea-mah",
 	"icon": "icon.png",
 	"repository": {
@@ -148,7 +148,7 @@
 				}
 			}
 		},
-		"taskDefinition": 
+		"taskDefinitions": [
 			{
 				"type": "Live Server",
 				"required": [
@@ -156,11 +156,12 @@
 				],
 				"properties": {
 					"args": {
-						"type": "string",
+						"type": "array",
 						"description": "Whether to show incoming server messages and status codes."
 					}
 				}
 			}
+		]
 		
 	},
 	
