@@ -112,14 +112,4 @@ export class SettingUtil {
 				}
 			});
 	}
-
-
 }
-
-
-
-
-
-
-
-

@@ -8,7 +8,11 @@ import {
 	ServerStartedStatus,
 	ServerTaskProvider,
 } from './task/serverTaskProvider';
-import { Settings, SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
+import {
+	Settings,
+	SETTINGS_SECTION_ID,
+	SettingUtil,
+} from './utils/settingsUtil';
 
 export interface serverMsg {
 	method: string;
@@ -99,7 +103,9 @@ export class Manager extends Disposable {
 				const newPortNum = SettingUtil.GetConfig(this._extensionUri).portNum;
 				if (newPortNum != this._serverPort) {
 					if (!this._server.isRunning) {
-						this._serverPort = SettingUtil.GetConfig(this._extensionUri).portNum;
+						this._serverPort = SettingUtil.GetConfig(
+							this._extensionUri
+						).portNum;
 					} else {
 						this._serverPortNeedsUpdate = true;
 					}
@@ -110,9 +116,9 @@ export class Manager extends Disposable {
 
 	public createOrShowPreview(
 		panel: vscode.WebviewPanel | undefined = undefined,
-		file = '/', relative = true
+		file = '/',
+		relative = true
 	): void {
-		
 		file = this.transformNonRelativeFile(relative, file);
 
 		const column = vscode.ViewColumn.Beside;
@@ -146,7 +152,8 @@ export class Manager extends Disposable {
 	public showPreviewInBrowser(file = '/', relative = true) {
 		if (!this._serverTaskProvider.isRunning) {
 			this._serverTaskProvider.extRunTask(
-				SettingUtil.GetConfig(this._extensionUri).browserPreviewLaunchServerLogging
+				SettingUtil.GetConfig(this._extensionUri)
+					.browserPreviewLaunchServerLogging
 			);
 		}
 		file = this.transformNonRelativeFile(relative, file);
@@ -160,7 +167,6 @@ export class Manager extends Disposable {
 	}
 
 	public openServer(fromTask = false): boolean {
-		
 		if (!this._server.isRunning) {
 			return this._server.openServer(this._serverPort);
 		} else if (fromTask) {
@@ -200,7 +206,6 @@ export class Manager extends Disposable {
 	}
 
 	private transformNonRelativeFile(relative: boolean, file: string): string {
-
 		if (!relative) {
 			if (!this._server.canGetPath(file)) {
 				this.notifyLooseFileOpen();
@@ -213,19 +218,25 @@ export class Manager extends Disposable {
 	}
 
 	private notifyLooseFileOpen() {
-		if (!this._notifiedAboutLooseFiles && SettingUtil.GetConfig(this._extensionUri).notifyOnOpenLooseFile) {
-			vscode.window.showWarningMessage("Previewing a file that is not a child of the server root. For best functionality, please open a workspace at the project root.", DONT_SHOW_AGAIN)
-			.then((selection: vscode.MessageItem | undefined) => {
-				if (selection == DONT_SHOW_AGAIN) {
-					SettingUtil.UpdateSettings(Settings.notifyOnOpenLooseFile, false);
-				}
-			});
+		if (
+			!this._notifiedAboutLooseFiles &&
+			SettingUtil.GetConfig(this._extensionUri).notifyOnOpenLooseFile
+		) {
+			vscode.window
+				.showWarningMessage(
+					'Previewing a file that is not a child of the server root. For best functionality, please open a workspace at the project root.',
+					DONT_SHOW_AGAIN
+				)
+				.then((selection: vscode.MessageItem | undefined) => {
+					if (selection == DONT_SHOW_AGAIN) {
+						SettingUtil.UpdateSettings(Settings.notifyOnOpenLooseFile, false);
+					}
+				});
 		}
 		this._notifiedAboutLooseFiles = true;
 	}
 
 	private startEmbeddedPreview(panel: vscode.WebviewPanel, file: string) {
-
 		if (this._currentTimeout) {
 			clearTimeout(this._currentTimeout);
 		}
@@ -242,7 +253,9 @@ export class Manager extends Disposable {
 
 		this.currentPanel.onDispose(() => {
 			this.currentPanel = undefined;
-			const closeServerDelay = SettingUtil.GetConfig(this._extensionUri).serverKeepAliveAfterEmbeddedPreviewClose;
+			const closeServerDelay = SettingUtil.GetConfig(
+				this._extensionUri
+			).serverKeepAliveAfterEmbeddedPreviewClose;
 			this._currentTimeout = setTimeout(() => {
 				// set a delay to server shutdown to avoid bad performance from re-opening/closing server.
 				if (this._server.isRunning && !this._serverTaskProvider.isRunning) {
@@ -250,7 +263,6 @@ export class Manager extends Disposable {
 				}
 				this._previewActive = false;
 			}, Math.floor(closeServerDelay * 1000 * 60));
-
 		});
 	}
 

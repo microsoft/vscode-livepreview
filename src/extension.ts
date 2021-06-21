@@ -42,7 +42,11 @@ export function activate(context: vscode.ExtensionContext) {
 		)
 	);
 
-	const openPreview = (internal: boolean, file: string, isRelative: boolean) => {
+	const openPreview = (
+		internal: boolean,
+		file: string,
+		isRelative: boolean
+	) => {
 		if (internal) {
 			manager.createOrShowPreview(undefined, file, isRelative);
 		} else {
@@ -74,7 +78,9 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}
 
-		vscode.window.showErrorMessage("This file is not a part of the workspace where the server has started. Cannot preview.");
+		vscode.window.showErrorMessage(
+			'This file is not a part of the workspace where the server has started. Cannot preview.'
+		);
 		return;
 	};
 
@@ -117,7 +123,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.end`, () => {
 			if (!manager.closeServer()) {
-				vscode.window.showErrorMessage("Server already off.");
+				vscode.window.showErrorMessage('Server already off.');
 			}
 		})
 	);
@@ -186,7 +192,7 @@ export function findFullLinkRegex(
 						length: fullURLMatches[i].length,
 						tooltip: `Open in Preview `,
 						data: url.pathname + url.search,
-						inEditor: false
+						inEditor: false,
 					};
 					links.push(tl);
 				}
@@ -200,7 +206,10 @@ export function findPathnameRegex(
 	links: Array<vscode.TerminalLink>
 ) {
 	// match relative links
-	const partialLinkRegex = new RegExp(`(?<=\\s)\\/([/(\\w%\\-.)]*)\\?*[\\w=]*`, 'g');
+	const partialLinkRegex = new RegExp(
+		`(?<=\\s)\\/([/(\\w%\\-.)]*)\\?*[\\w=]*`,
+		'g'
+	);
 	let partialLinkMatches;
 	do {
 		partialLinkMatches = partialLinkRegex.exec(input);
@@ -208,15 +217,15 @@ export function findPathnameRegex(
 			for (let i = 0; i < partialLinkMatches.length; i++) {
 				if (partialLinkMatches[i]) {
 					const link = partialLinkMatches[i];
-					const isDir = link.endsWith("/");
-					const tooltip = isDir ? "Reveal Folder ": "Open File ";
+					const isDir = link.endsWith('/');
+					const tooltip = isDir ? 'Reveal Folder ' : 'Open File ';
 					const tl = {
 						startIndex: partialLinkMatches.index,
 						length: partialLinkMatches[i].length,
 						tooltip: tooltip,
 						data: link,
 						inEditor: true,
-						isDir: isDir
+						isDir: isDir,
 					};
 					links.push(tl);
 				}
@@ -226,18 +235,23 @@ export function findPathnameRegex(
 }
 
 export function openRelativeLinkInWorkspace(file: string, isDir: boolean) {
-	const isWorkspaceFile = fs.existsSync(PathUtil.GetWorkspace()?.uri.fsPath + file);
-	const fullPath = isWorkspaceFile? (PathUtil.GetWorkspace()?.uri + file) : ("file:///" + PathUtil.DecodeLooseFilePath(file));
-	
+	const isWorkspaceFile = fs.existsSync(
+		PathUtil.GetWorkspace()?.uri.fsPath + file
+	);
+	const fullPath = isWorkspaceFile
+		? PathUtil.GetWorkspace()?.uri + file
+		: 'file:///' + PathUtil.DecodeLooseFilePath(file);
+
 	const uri = vscode.Uri.parse(fullPath);
 
 	if (isDir) {
 		if (!isWorkspaceFile) {
-			vscode.window.showErrorMessage("Cannot reveal folder. It is not in the open workspace.");
+			vscode.window.showErrorMessage(
+				'Cannot reveal folder. It is not in the open workspace.'
+			);
 		}
-		vscode.commands.executeCommand('revealInExplorer',uri);
+		vscode.commands.executeCommand('revealInExplorer', uri);
 	} else {
-		vscode.commands.executeCommand('vscode.open',uri);
+		vscode.commands.executeCommand('vscode.open', uri);
 	}
-	
 }
