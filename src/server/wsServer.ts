@@ -26,9 +26,9 @@ export class WSServer extends Disposable {
 	);
 	public readonly onConnected = this._onConnected.event;
 
-	public start(ws_port: number, basePath: string, extensionUri: vscode.Uri) {
+	public start(ws_port: number, basePath: string) {
 		this._ws_port = ws_port;
-		this.startWSServer(basePath, extensionUri);
+		this.startWSServer(basePath);
 	}
 
 	public close() {
@@ -37,28 +37,26 @@ export class WSServer extends Disposable {
 		}
 	}
 
-	private startWSServer(basePath: string, extensionUri: vscode.Uri): boolean {
+	private startWSServer(basePath: string): boolean {
 		this._wss = new WebSocket.Server({ port: this._ws_port });
 		this._wss.on('connection', (ws: any) =>
 			this.handleWSConnection(basePath, ws)
 		);
-		this._wss.on('error', (err: any) =>
-			this.handleWSError(basePath, extensionUri, err)
-		);
-		this._wss.on('listening', () => this.handleWSListen(extensionUri));
+		this._wss.on('error', (err: any) => this.handleWSError(basePath, err));
+		this._wss.on('listening', () => this.handleWSListen());
 		return true;
 	}
 
-	private handleWSError(basePath: string, extensionUri: vscode.Uri, err: any) {
+	private handleWSError(basePath: string, err: any) {
 		if (err.code == 'EADDRINUSE') {
 			this._ws_port++;
-			this.startWSServer(basePath, extensionUri);
+			this.startWSServer(basePath);
 		} else {
 			console.log(`Unknown error: ${err}`);
 		}
 	}
 
-	private handleWSListen(extensionUri: vscode.Uri) {
+	private handleWSListen() {
 		console.log(`Websocket server is running on port ${this._ws_port}`);
 		this._onConnected.fire(this._ws_port);
 	}
@@ -73,9 +71,11 @@ export class WSServer extends Disposable {
 						parsedMessage.url
 					);
 					if (!results.injectable) {
-						ws.send(
-							`{"command":"foundNonInjectable","path":"${results.pathname}"}`
-						);
+						const sendData = {
+							command: 'foundNonInjectable',
+							path: results.pathname,
+						};
+						ws.send(JSON.stringify(sendData));
 					}
 				}
 			}
@@ -89,14 +89,13 @@ export class WSServer extends Disposable {
 		const url = new URL(urlString);
 		let absolutePath = path.join(basePath, url.pathname);
 
-		if (!fs.existsSync(absolutePath))
-		{
+		if (!fs.existsSync(absolutePath)) {
 			absolutePath = DecodeLooseFilePath(absolutePath);
 			if (!fs.existsSync(absolutePath)) {
 				return { injectable: false, pathname: url.pathname };
 			}
 		}
-		
+
 		if (
 			fs.statSync(absolutePath).isDirectory() ||
 			isFileInjectable(absolutePath)
@@ -109,7 +108,7 @@ export class WSServer extends Disposable {
 	public refreshBrowsers(): void {
 		if (this._wss) {
 			this._wss.clients.forEach((client: any) =>
-				client.send(`{"command":"reload"}`)
+				client.send(JSON.stringify({ command: 'reload' }))
 			);
 		}
 	}

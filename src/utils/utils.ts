@@ -43,7 +43,7 @@ export function GetWorkspacePath(): string | undefined {
 }
 
 export function GetActiveFolderPath() {
-	const path = vscode.window.activeTextEditor?.document.uri.fsPath ?? "";
+	const path = vscode.window.activeTextEditor?.document.uri.fsPath ?? '';
 	return GetParentDir(path);
 }
 
@@ -58,7 +58,7 @@ export function GetUnencodedBase(file: string) {
 	return path.basename(unescape(file));
 }
 export function EncodeLooseFilePath(path: string) {
-	return "/" + escape(GetParentDir(path)) + "/" + GetFileName(path);
+	return '/' + escape(GetParentDir(path)) + '/' + GetFileName(path);
 }
 
 export function DecodeLooseFilePath(file: string) {
@@ -73,5 +73,5 @@ export function isFileInjectable(file: string | undefined) {
 	if (!file) {
 		return false;
 	}
-	return (file.endsWith(".html"));
+	return file.endsWith('.html');
 }

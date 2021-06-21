@@ -12,11 +12,13 @@ import { DecodeLooseFilePath, isFileInjectable } from '../utils/utils';
 export class HttpServer extends Disposable {
 	private _server: any;
 	private _contentLoader: ContentLoader;
+	private readonly _extensionUri;
 	public port = 0;
 
-	constructor() {
+	constructor(extensionUri: vscode.Uri) {
 		super();
 		this._contentLoader = this._register(new ContentLoader());
+		this._extensionUri = extensionUri;
 	}
 
 	private readonly _onConnected = this._register(
@@ -38,10 +40,10 @@ export class HttpServer extends Disposable {
 		this._server.close();
 	}
 
-	public setInjectorWSPort(ws_port: number, extensionUri?: vscode.Uri) {
-		if (!this._contentLoader.scriptInjector && extensionUri) {
+	public setInjectorWSPort(ws_port: number) {
+		if (!this._contentLoader.scriptInjector) {
 			this._contentLoader.scriptInjector = new HTMLInjector(
-				extensionUri,
+				this._extensionUri,
 				ws_port
 			);
 		} else if (this._contentLoader.scriptInjector) {
@@ -89,14 +91,16 @@ export class HttpServer extends Disposable {
 				if (fs.existsSync(decodedReadPath)) {
 					absoluteReadPath = decodedReadPath;
 				} else {
-					stream = this._contentLoader.createPageDoesNotExist(unescape(absoluteReadPath));
+					stream = this._contentLoader.createPageDoesNotExist(
+						unescape(absoluteReadPath)
+					);
 					res.writeHead(404);
 					this.reportStatus(req, res);
 					stream.pipe(res);
 					return;
 				}
 			}
-			
+
 			if (fs.statSync(absoluteReadPath).isDirectory()) {
 				if (!URLPathName.endsWith('/')) {
 					const queries =
@@ -130,11 +134,14 @@ export class HttpServer extends Disposable {
 					res.end();
 					return;
 				});
-				
+
 				// explicitly set text/html for html files to allow for special character rendering
 				let contentType = 'charset=UTF-8';
 
-				if (isFileInjectable(absoluteReadPath) || absoluteReadPath.endsWith('svg')) {
+				if (
+					isFileInjectable(absoluteReadPath) ||
+					absoluteReadPath.endsWith('svg')
+				) {
 					contentType = 'text/html; ' + contentType;
 				}
 				res.writeHead(200, { 'Content-Type': contentType });

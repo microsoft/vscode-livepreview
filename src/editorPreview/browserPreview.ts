@@ -100,7 +100,10 @@ export class BrowserPreview extends Disposable {
 					case 'add-history': {
 						this._panel.webview.postMessage({
 							command: 'set-url',
-							text: JSON.stringify({ fullPath: this.constructAddress(message.text), pathname: message.text }),
+							text: JSON.stringify({
+								fullPath: this.constructAddress(message.text),
+								pathname: message.text,
+							}),
 						});
 						// called from main.js in the case where the target is non-injectable
 						this.handleNewPageLoad(message.text);

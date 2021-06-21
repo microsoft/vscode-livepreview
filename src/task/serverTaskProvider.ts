@@ -180,4 +180,3 @@ export class ServerTaskProvider
 	);
 	public readonly onDispose = this._onDisposeEmitter.event;
 }
-

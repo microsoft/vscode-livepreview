@@ -26,12 +26,10 @@ export class Server extends Disposable {
 	private _isServerOn = false;
 	private _workspacePath: string | undefined;
 
-	constructor(
-		extensionUri: vscode.Uri
-	) {
+	constructor(extensionUri: vscode.Uri) {
 		super();
 		this._extensionUri = extensionUri;
-		this._httpServer = this._register(new HttpServer());
+		this._httpServer = this._register(new HttpServer(extensionUri));
 		this._wsServer = this._register(new WSServer());
 		this._statusBar = this._register(new StatusBarNotifier(extensionUri));
 		this._workspacePath = GetWorkspacePath();
@@ -145,7 +143,7 @@ export class Server extends Disposable {
 
 	public getFileRelativeToWorkspace(path: string): string {
 		const workspaceFolder = this._workspacePath;
-	
+
 		if (workspaceFolder && path.startsWith(workspaceFolder)) {
 			return path.substr(workspaceFolder.length).replace(/\\/gi, '/');
 		} else {
@@ -197,23 +195,19 @@ export class Server extends Disposable {
 		this.showServerStatusMessage('Server Closed');
 	}
 
-	public openServer(port: number,): boolean {
+	public openServer(port: number): boolean {
 		if (this._extensionUri) {
 			// initialize websockets to use port after http server port
-			this._httpServer.setInjectorWSPort(port + 1, this._extensionUri);
+			this._httpServer.setInjectorWSPort(port + 1);
 
-			this._httpServer.start(port, this._workspacePath ?? "");
+			this._httpServer.start(port, this._workspacePath ?? '');
 			return true;
 		}
 		return false;
 	}
 
 	private httpServerConnected() {
-		this._wsServer.start(
-			this._httpServer.port + 1,
-			this._workspacePath ?? "",
-			this._extensionUri
-		);
+		this._wsServer.start(this._httpServer.port + 1, this._workspacePath ?? '');
 	}
 
 	private wsServerConnected() {

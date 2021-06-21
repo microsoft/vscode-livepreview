@@ -22,24 +22,31 @@
 			if (this.event.data == 'refresh') {
 				window.location.reload();
 			} else if (this.event.data == 'setup-parent-listener') {
+				commandPayload = {
+					pathname: window.location.pathname,
+					fullPath: window.location,
+					title: document.title,
+				};
 				window.parent.postMessage(
-				{ command: 'update-path', text: `{"pathname":"${window.location.pathname}","fullPath":"${window.location}","title":"${document.title}"}` },
+					{
+						command: 'update-path',
+						text: JSON.stringify(commandPayload),
+					},
 					'*'
 				);
 			}
 		},
 		false
 	);
-	
 
 	document.addEventListener('DOMContentLoaded', function (e) {
 		commandPayload = {
-			"pathname": window.location.pathname,
-			"fullPath": window.location,
-			"title": document.title
-		}
+			pathname: window.location.pathname,
+			fullPath: window.location,
+			title: document.title,
+		};
 		window.parent.postMessage(
-		{ command: 'update-path', text: JSON.stringify(commandPayload) },
+			{ command: 'update-path', text: JSON.stringify(commandPayload) },
 			'*'
 		);
 		// console.log(JSON.stringify(commandPayload))

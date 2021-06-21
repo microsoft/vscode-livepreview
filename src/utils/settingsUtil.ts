@@ -12,8 +12,7 @@ export const Settings: any = {
 	openPreviewTarget: 'openPreviewTarget',
 	serverKeepAliveAfterEmbeddedPreviewClose:
 		'serverKeepAliveAfterEmbeddedPreviewClose',
-	notifyOnOpenLooseFile:
-		'notifyOnOpenLooseFile',
+	notifyOnOpenLooseFile: 'notifyOnOpenLooseFile',
 };
 
 interface LiveServerConfigItem {
