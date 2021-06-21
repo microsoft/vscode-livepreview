@@ -1,35 +1,61 @@
-# LiveServer v2 - Visual Studio Code Extension
+# Live Server - VS Code Extension 📡
 
 ![Build](https://github.com/andreamah/VS-Code-LiveServer-V2-Extension/actions/workflows/build.yml/badge.svg)
 
-A simple live server hosting extension for static HTML/CSS Projects.
+⚠️ WARNING: this extension is still under initial development! Use at your own risk. ⚠️
 
-The goal of the extension is to allow local previews of web projects (ie: HTML/CSS/JS-based projects). The extension should support similar functionalities to that of the existing [vscode-live-server](https://github.com/ritwickdey/vscode-live-server); however, it should show the preview in an extra column within the VS Code window (amongst other optimizations).
+An extension that hosts a local server for you to preview your web projects on!
 
-Based off of the webview template found [here](https://github.com/microsoft/vscode-extension-samples/tree/main/webview-sample).
+Issues are currently being tracked using the [Live Server label](https://github.com/microsoft/vscode/issues?q=is%3Aopen+is%3Aissue+label%3Alive-server) on the main VS Code repo.
 
-Issues are currently being tracked on the [June Iteration Ticket](https://github.com/microsoft/vscode/issues/124608)
+## Table of Contents
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Running the Extension](#running-the-extension)
+- [FAQ](#faq)
+- [Issue Tracking](#issue-tracking)
 
+## Features
+### HTML File Previewing
+Preview your HTML files quickly by clicking the preview button in the top right corner of your editor or using the context menu.
+
+### Embedded Preview
+A preview is available in-editor for the files hosted by the server. The simple embedded browser features history tracking, a url bar, and a button to open the preview externally. 
+### Live Refreshing
+See the changes as you make them. By default, changes appear as you make them in the editor. You can also change this in settings to refresh the preview on save or not at all. 
+
+
+### Persistent Server Task with Server Logging
+If you're looking for a persistent server to run, you can run a `Live Server` task, which can optionally log the server traffic. You can also click on the traffic to open the file location of the file returned by the server.
+### Workspace-less Previewing
+No workspace? No problem! For a quick preview of your file, the server can also access files outside of your workspace to preview. 
+
+Note that linked files for these pages may not be correct if they are relative to a specific root (e.g. a project root). 
+
+## Prerequisites
+To use this extension, you must have [Node JS v14+](https://nodejs.org/en/download/). 
 ## Running the extension
-
-- Open this example in VS Code 1.47+
+### Download from the Marketplace
+You can install the extension [in the marketplace here](https://marketplace.visualstudio.com/items?itemName=ms-vscode.live-server)!
+### Manually Compiling and Running
+- Open this example in VS Code 1.56+
 - `npm install`
 - `npm run compile`
 - <kbd>F5</kbd> to start debugging
 
-## Using the extension
+## FAQ
+Q. What does the `"Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root."` message mean?
+A. Either:
+- You have no workspace open and opened a preview.
+- You opened a preview for a file that is not normally part of your workspace.
+- You are in a multi-root workspace and opened a file that is not a child of your first workspace root.
 
-Run commands using the command palette using <kbd>CTRL</kbd>+<kbd>SHIFT</kbd>+<kbd>P</kbd>
-Action | Command
-:----- | :----
-Starting the server on port 3000 | `LiveServer v2: Start Development Server`
-Closing the server | `LiveServer v2: Close Development Server`
-Viewing the embedded preview (does not require manually starting the server) | `LiveServer v2: Show Preview`
+Why does this happen? 
 
-[![Image from Gyazo](./release_notes/images/v0_1/live-server-v0_1-overview.gif)](https://gyazo.com/a3796821f5cc2ea2164725457d26f45c)
+The server is hosted from the root of the workspace that the user opens (or in a multi-root case, the first workspace that the user opens). Files outside of this can be previewed, but some file paths (such as a link to the root) may not go to the right place. **If you are working on a web project, it is advised that you open a workspace at the root of the project.**
 
-## Issue Tracking:
-
+## Issue Tracking
 - [May Iteration](https://github.com/microsoft/vscode/issues/124607)
 - [June Iteration](https://github.com/microsoft/vscode/issues/124608)
 - [Backlog](https://github.com/microsoft/vscode/issues/125343)
+- [Misc Issues](https://github.com/microsoft/vscode/issues?q=is%3Aopen+is%3Aissue+label%3Alive-server)
