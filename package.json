@@ -141,10 +141,10 @@
 					"default": true,
 					"description": "Upon running `Live Server: Show Preview in External Browser`, whether the auto-general terminal has logging."
 				},
-				"LiveServer.notifyOnOpenNonWorkspaceFile": {
+				"LiveServer.notifyOnOpenLooseFile": {
 					"type": "boolean",
 					"default": true,
-					"description": "Whether to notify the user when opening a preview for a file that is not part of the currently opened workspace."
+					"description": "Whether to notify the user when opening a preview for a file that is not part of the currently opened workspace (or the workspace where the server is hosted)."
 				}
 			}
 		},

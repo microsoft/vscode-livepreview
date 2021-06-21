@@ -119,7 +119,6 @@ export class BrowserPreview extends Disposable {
 
 	dispose() {
 		this._onDisposeEmitter.fire();
-		this._onDisposeEmitter.dispose();
 		super.dispose();
 	}
 
@@ -355,7 +354,7 @@ export class BrowserPreview extends Disposable {
 		if (title == '') {
 			if (pathname.length > 0 && pathname[0] == '/') {
 				if (IsLooseFilePath(pathname)) {
-					this._panel.title = `Loose File - ${GetFileName(pathname)}`;
+					this._panel.title = GetFileName(pathname);
 				} else {
 					this._panel.title = pathname.substr(1);
 				}

@@ -7,7 +7,7 @@ import { ContentLoader } from './serverUtils/contentLoader';
 import { HTMLInjector } from './serverUtils/HTMLInjector';
 import { HOST } from '../utils/constants';
 import { serverMsg } from '../manager';
-import { isFileInjectable } from '../utils/utils';
+import { DecodeLooseFilePath, isFileInjectable } from '../utils/utils';
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -79,21 +79,25 @@ export class HttpServer extends Disposable {
 			const endOfPath = req.url.lastIndexOf('?');
 			const URLPathName =
 				endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
-
+			let looseFile = false;
 			let absoluteReadPath = path.join(basePath, URLPathName);
 			let stream;
 
 			if (!fs.existsSync(absoluteReadPath)) {
-
-				stream = this._contentLoader.decodeUrlPath(URLPathName);
-				if (!stream) {
+				const decodedReadPath = DecodeLooseFilePath(URLPathName);
+				looseFile = true;
+				if (fs.existsSync(decodedReadPath)) {
+					absoluteReadPath = decodedReadPath;
+				} else {
 					stream = this._contentLoader.createPageDoesNotExist(absoluteReadPath);
 					res.writeHead(404);
 					this.reportStatus(req, res);
 					stream.pipe(res);
 					return;
 				}
-			} else if (fs.statSync(absoluteReadPath).isDirectory()) {
+			}
+			
+			if (fs.statSync(absoluteReadPath).isDirectory()) {
 				if (!URLPathName.endsWith('/')) {
 					const queries =
 						endOfPath == -1 ? '' : `${req.url.substring(endOfPath)}`;
@@ -111,7 +115,8 @@ export class HttpServer extends Disposable {
 					// create a default index page
 					stream = this._contentLoader.createIndexPage(
 						absoluteReadPath,
-						URLPathName
+						URLPathName,
+						looseFile ? absoluteReadPath : undefined
 					);
 				}
 			} else {

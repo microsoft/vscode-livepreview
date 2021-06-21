@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { Disposable } from './utils/dispose';
 import { Server } from './server/serverManager';
-import { INIT_PANEL_TITLE, HOST } from './utils/constants';
-import { GetConfig, SETTINGS_SECTION_ID } from './utils/settingsUtil';
+import { INIT_PANEL_TITLE, HOST, DONT_SHOW_AGAIN } from './utils/constants';
+import { GetConfig, Settings, SETTINGS_SECTION_ID, UpdateSettings } from './utils/settingsUtil';
 import {
 	ServerStartedStatus,
 	ServerTaskProvider,
@@ -23,7 +23,7 @@ export class Manager extends Disposable {
 	private _serverPortNeedsUpdate = false;
 	private _previewActive = false;
 	private _currentTimeout: NodeJS.Timeout | undefined;
-
+	private _notifiedAboutLooseFiles = false;
 	// always leave off at previous port numbers to avoid retrying on many busy ports
 
 	private get _serverPort() {
@@ -113,15 +113,7 @@ export class Manager extends Disposable {
 		file = '/', relative = true
 	): void {
 		
-
-		if (!relative) {
-			if (!this._server.canGetPath(file)) {
-				// handle loose file
-				file = EncodeLooseFilePath(file);
-			} else {
-				file = this._server.getFileRelativeToWorkspace(file);
-			}
-		}
+		file = this.transformNonRelativeFile(relative, file);
 
 		const column = vscode.ViewColumn.Beside;
 
@@ -148,7 +140,7 @@ export class Manager extends Disposable {
 		if (!serverOn) {
 			return;
 		}
-		this.startPreview(panel, file);
+		this.startEmbeddedPreview(panel, file);
 	}
 
 	public showPreviewInBrowser(file = '/', relative = true) {
@@ -157,14 +149,8 @@ export class Manager extends Disposable {
 				GetConfig(this._extensionUri).browserPreviewLaunchServerLogging
 			);
 		}
-		if (!relative) {
-			if (!this._server.canGetPath(file)) {
-				// handle loose file
-				file = EncodeLooseFilePath(file);
-			} else {
-				file = this._server.getFileRelativeToWorkspace(file);
-			}
-		}
+		file = this.transformNonRelativeFile(relative, file);
+
 		const uri = vscode.Uri.parse(`http://${HOST}:${this._serverPort}${file}`);
 		vscode.env.openExternal(uri);
 	}
@@ -212,7 +198,33 @@ export class Manager extends Disposable {
 	public inServerWorkspace(file: string) {
 		return this._server.canGetPath(file);
 	}
-	private startPreview(panel: vscode.WebviewPanel, file: string) {
+
+	private transformNonRelativeFile(relative: boolean, file: string): string {
+
+		if (!relative) {
+			if (!this._server.canGetPath(file)) {
+				this.notifyLooseFileOpen();
+				file = EncodeLooseFilePath(file);
+			} else {
+				file = this._server.getFileRelativeToWorkspace(file);
+			}
+		}
+		return file;
+	}
+
+	private notifyLooseFileOpen() {
+		if (!this._notifiedAboutLooseFiles && GetConfig(this._extensionUri).notifyOnOpenLooseFile) {
+			vscode.window.showWarningMessage("Previewing a file that is not a child of the server root. For best functionality, please open a workspace at the project root.", DONT_SHOW_AGAIN)
+			.then((selection: vscode.MessageItem | undefined) => {
+				if (selection == DONT_SHOW_AGAIN) {
+					UpdateSettings(Settings.notifyOnOpenLooseFile, false);
+				}
+			});
+		}
+		this._notifiedAboutLooseFiles = true;
+	}
+
+	private startEmbeddedPreview(panel: vscode.WebviewPanel, file: string) {
 
 		if (this._currentTimeout) {
 			clearTimeout(this._currentTimeout);

@@ -33,11 +33,16 @@
 	
 
 	document.addEventListener('DOMContentLoaded', function (e) {
-
+		commandPayload = {
+			"pathname": window.location.pathname,
+			"fullPath": window.location,
+			"title": document.title
+		}
 		window.parent.postMessage(
-		{ command: 'update-path', text: `{"pathname":"${window.location.pathname}","fullPath":"${window.location}","title":"${document.title}"}` },
+		{ command: 'update-path', text: JSON.stringify(commandPayload) },
 			'*'
 		);
+		// console.log(JSON.stringify(commandPayload))
 
 		var l = document.getElementsByTagName('a');
 		for (var i = 0; i < l.length; i++) {

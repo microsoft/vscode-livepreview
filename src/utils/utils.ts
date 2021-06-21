@@ -67,7 +67,9 @@ export function GetParentDir(file: string) {
 export function GetFileName(file: string) {
 	return path.basename(file);
 }
-
+export function GetUnencodedBase(file: string) {
+	return path.basename(unescape(file));
+}
 export function EncodeLooseFilePath(path: string) {
 	return "/" + escape(GetParentDir(path)) + "/" + GetFileName(path);
 }

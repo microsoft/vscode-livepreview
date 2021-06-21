@@ -36,10 +36,6 @@ export class Server extends Disposable {
 		this._statusBar = this._register(new StatusBarNotifier(extensionUri));
 		this._workspacePath = GetWorkspacePath();
 
-		if (!this._workspacePath) {
-			vscode.window.showWarningMessage("Cannot find a root to start a server on. Live Server may not preview optimally.");
-		} 
-
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
 				if (

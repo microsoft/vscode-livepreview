@@ -12,6 +12,8 @@ export const Settings: any = {
 	openPreviewTarget: 'openPreviewTarget',
 	serverKeepAliveAfterEmbeddedPreviewClose:
 		'serverKeepAliveAfterEmbeddedPreviewClose',
+	notifyOnOpenLooseFile:
+		'notifyOnOpenLooseFile',
 };
 
 interface LiveServerConfigItem {
@@ -22,6 +24,7 @@ interface LiveServerConfigItem {
 	browserPreviewLaunchServerLogging: boolean;
 	openPreviewTarget: OpenPreviewTarget;
 	serverKeepAliveAfterEmbeddedPreviewClose: number;
+	notifyOnOpenLooseFile: boolean;
 }
 
 export enum AutoRefreshPreview {
@@ -67,6 +70,10 @@ export function GetConfig(resource: vscode.Uri): LiveServerConfigItem {
 		serverKeepAliveAfterEmbeddedPreviewClose: config.get<number>(
 			Settings.serverKeepAliveAfterEmbeddedPreviewClose,
 			20
+		),
+		notifyOnOpenLooseFile: config.get<boolean>(
+			Settings.notifyOnOpenLooseFile,
+			true
 		),
 	};
 }

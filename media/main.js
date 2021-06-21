@@ -97,12 +97,14 @@
 					command: 'update-path',
 					text: message.text,
 				});
-				document.getElementById('url-input').value = msgJSON.fullPath;
+				// console.log(msgJSON);
+				document.getElementById('url-input').value = msgJSON.fullPath.href;
 				vscode.setState({currentAddress: msgJSON.pathname});
 				break;
 			}
 			case 'set-url': {
 				msgJSON = JSON.parse(message.text);
+				// console.log(msgJSON);
 				document.getElementById('url-input').value = msgJSON.fullPath;
 				vscode.setState({currentAddress: msgJSON.pathname});
 				break;

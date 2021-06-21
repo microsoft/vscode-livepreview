@@ -43,7 +43,8 @@ export class ContentLoader extends Disposable {
 
 	public createIndexPage(
 		readPath: string,
-		relativePath: string
+		relativePath: string,
+		titlePath = relativePath
 	): Stream.Readable {
 		const childFiles = fs.readdirSync(readPath);
 
@@ -109,10 +110,10 @@ export class ContentLoader extends Disposable {
 						padding:4px;
 					}
 				</style>
-				<title>Index of ${relativePath}</title>
+				<title>Index of ${titlePath}</title>
 			</head>
 			<body>
-			<h1>Index of ${relativePath}</h1>
+			<h1>Index of ${titlePath}</h1>
 
 			<table>
 				<th>Name</th><th>Size</th><th>Date Modified</th>
@@ -127,14 +128,14 @@ export class ContentLoader extends Disposable {
 		return Stream.Readable.from(htmlString);
 	}
 
-	public decodeUrlPath(urlPath: string): Stream.Readable | fs.ReadStream | undefined {
-		const readPath = DecodeLooseFilePath(urlPath);
+	// public decodeUrlPath(urlPath: string): Stream.Readable | fs.ReadStream | undefined {
+	// 	const readPath = DecodeLooseFilePath(urlPath);
 
-		if (!fs.existsSync(readPath)) {
-			return undefined;
-		}
-		return this.getFileStream(readPath);
-	}
+	// 	if (!fs.existsSync(readPath)) {
+	// 		return undefined;
+	// 	}
+	// 	return this.getFileStream(readPath);
+	// }
 
 	public getFileStream(
 		readPath: string
