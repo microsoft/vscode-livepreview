@@ -9,6 +9,7 @@ import { HOST } from '../utils/constants';
 import { serverMsg } from '../manager';
 import { isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
+import TelemetryReporter from 'vscode-extension-telemetry';
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -16,9 +17,12 @@ export class HttpServer extends Disposable {
 	private readonly _extensionUri;
 	public port = 0;
 
-	constructor(extensionUri: vscode.Uri) {
+	constructor(
+		extensionUri: vscode.Uri,
+		private readonly _reporter: TelemetryReporter | undefined
+	) {
 		super();
-		this._contentLoader = this._register(new ContentLoader());
+		this._contentLoader = this._register(new ContentLoader(_reporter));
 		this._extensionUri = extensionUri;
 	}
 
@@ -64,6 +68,10 @@ export class HttpServer extends Disposable {
 				this.port++;
 				this._server.listen(this.port, HOST);
 			} else {
+				/* __GDPR__
+					"error.http" : { classification: 'CallstackOrException', purpose: 'PerformanceAndHealth'}
+				*/
+				this._reporter?.sendTelemetryErrorEvent('error.http', { err: err });
 				console.log(`Unknown error: ${err}`);
 			}
 		});

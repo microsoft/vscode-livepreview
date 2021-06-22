@@ -2,8 +2,9 @@
 	"name": "live-server",
 	"displayName": "Live Server - Insiders",
 	"description": "Hosts a local server in your workspace for you to preview your webpages.",
-	"version": "0.0.66",
+	"version": "0.1.0",
 	"preview": true,
+	"aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
 	"publisher": "ms-vscode",
 	"icon": "icon.png",
 	"repository": {
@@ -100,23 +101,23 @@
 			"title": "Live Server",
 			"properties": {
 				"LiveServer.portNum": {
-				  "type": "number",
-				  "default": 3000,
-				  "minimum": 0,
-				  "maximum": 65535,
-				  "description": "Which local port the live server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port."
+					"type": "number",
+					"default": 3000,
+					"minimum": 0,
+					"maximum": 65535,
+					"description": "Which local port the live server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port."
 				},
 				"LiveServer.serverKeepAliveAfterEmbeddedPreviewClose": {
-				  "type": "number",
-				  "default": 3,
-				  "minimum": 0,
-				  "maximum": 20,
-				  "description": "How many minutes after closing the embedded preview you want the server to shut off. Set to 0 to have server stay on indefinetely."
+					"type": "number",
+					"default": 3,
+					"minimum": 0,
+					"maximum": 20,
+					"description": "How many minutes after closing the embedded preview you want the server to shut off. Set to 0 to have server stay on indefinetely."
 				},
 				"LiveServer.showStatusBarItem": {
-				  "type": "boolean",
-				  "default": true,
-				  "description": "Whether to show the current hosting port when server is open on the status bar."
+					"type": "boolean",
+					"default": true,
+					"description": "Whether to show the current hosting port when server is open on the status bar."
 				},
 				"LiveServer.showServerStatusPopUps": {
 					"type": "boolean",
@@ -125,17 +126,17 @@
 				},
 				"LiveServer.autoRefreshPreview": {
 					"enum": [
-					  "On All Changes in Editor",
-					  "On Changes to Saved Files",
-					  "Never"
+						"On All Changes in Editor",
+						"On Changes to Saved Files",
+						"Never"
 					],
 					"default": "On All Changes in Editor",
 					"description": "How often to automatically refresh the preview."
 				},
 				"LiveServer.openPreviewTarget": {
 					"enum": [
-					  "Embedded Preview",
-					  "External Browser"
+						"Embedded Preview",
+						"External Browser"
 					],
 					"default": "Embedded Preview",
 					"description": "Preferred target for previews."
@@ -166,10 +167,7 @@
 				}
 			}
 		]
-		
 	},
-	
-   
 	"scripts": {
 		"vscode:prepublish": "webpack --mode production",
 		"webpack": "webpack --mode development",
@@ -199,6 +197,7 @@
 		"url": "^0.11.0",
 		"vsce": "^1.91.0",
 		"vscode-codicons": "0.0.17",
+		"vscode-extension-telemetry": "^0.1.7",
 		"ws": "^7.4.6"
 	}
 }

@@ -6,11 +6,12 @@ import { URL } from 'url';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
+import TelemetryReporter from 'vscode-extension-telemetry';
 
 export class WSServer extends Disposable {
 	private _wss: WebSocket.Server | undefined;
 	private _ws_port = 0;
-	constructor() {
+	constructor(private readonly _reporter: TelemetryReporter | undefined) {
 		super();
 	}
 
@@ -53,6 +54,10 @@ export class WSServer extends Disposable {
 			this._ws_port++;
 			this.startWSServer(basePath);
 		} else {
+			/* __GDPR__
+				"error.ws" : { classification: 'CallstackOrException', purpose: 'PerformanceAndHealth'}
+			*/
+			this._reporter?.sendTelemetryErrorEvent('error.ws', { err: err });
 			console.log(`Unknown error: ${err}`);
 		}
 	}
@@ -72,6 +77,10 @@ export class WSServer extends Disposable {
 						parsedMessage.url
 					);
 					if (!results.injectable) {
+						/* __GDPR__
+							"server.ws.foundNonInjectable" : {}
+						*/
+						this._reporter?.sendTelemetryEvent('server.ws.foundNonInjectable');
 						const sendData = {
 							command: 'foundNonInjectable',
 							path: results.pathname,

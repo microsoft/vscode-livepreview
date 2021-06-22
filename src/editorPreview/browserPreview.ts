@@ -4,16 +4,13 @@ import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
 import { PageHistory, NavEditCommands } from './pageHistoryTracker';
+import TelemetryReporter from 'vscode-extension-telemetry';
 
 export class BrowserPreview extends Disposable {
 	public static readonly viewType = 'browserPreview';
 	private readonly _pageHistory: PageHistory;
-	private readonly _panel: vscode.WebviewPanel;
-	private readonly _extensionUri: vscode.Uri;
 
 	private currentAddress: string;
-	private _port;
-	private _wsPort;
 	private readonly _onDisposeEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
@@ -36,18 +33,15 @@ export class BrowserPreview extends Disposable {
 	}
 
 	constructor(
-		panel: vscode.WebviewPanel,
-		extensionUri: vscode.Uri,
-		port: number,
-		wsPort: number,
-		initialFile: string
+		private readonly _panel: vscode.WebviewPanel,
+		private readonly _extensionUri: vscode.Uri,
+		private _port: number,
+		private _wsPort: number,
+		initialFile: string,
+		private readonly _reporter: TelemetryReporter | undefined
 	) {
 		super();
 
-		this._port = port;
-		this._wsPort = wsPort;
-		this._panel = panel;
-		this._extensionUri = extensionUri;
 		this._panel.iconPath = {
 			light: vscode.Uri.joinPath(
 				this._extensionUri,
@@ -149,6 +143,10 @@ export class BrowserPreview extends Disposable {
 			givenURL == '' ? this.constructAddress(this.currentAddress) : givenURL;
 		const uri = vscode.Uri.parse(urlString);
 
+		/* __GDPR__
+			"preview.openExternalBrowser" : {}
+		*/
+		this._reporter?.sendTelemetryEvent('preview.openExternalBrowser');
 		vscode.window
 			.showInformationMessage(
 				`Externally hosted links are not supported in the embedded preview. Do you want to open ${urlString} in an external browser?`,
