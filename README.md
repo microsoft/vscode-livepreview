@@ -65,6 +65,7 @@ You can install the extension [in the marketplace here](https://marketplace.visu
 
 ## FAQ
 Q. What does the `"Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root."` message mean?
+
 A. Either:
 - You have no workspace open and opened a preview.
 - You opened a preview for a file that is not normally part of your workspace.
