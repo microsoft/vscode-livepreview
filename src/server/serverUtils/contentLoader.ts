@@ -5,6 +5,7 @@ import * as path from 'path';
 import { Disposable } from '../../utils/dispose';
 import { FormatFileSize, FormatDateTime, isFileInjectable } from '../../utils/utils';
 import { HTMLInjector } from './HTMLInjector';
+import TelemetryReporter from 'vscode-extension-telemetry';
 
 export interface IndexFileEntry {
 	LinkSrc: string;
@@ -22,7 +23,11 @@ export interface IndexDirEntry {
 export class ContentLoader extends Disposable {
 	public scriptInjector: HTMLInjector | undefined;
 
+	constructor(private readonly _reporter: TelemetryReporter) {
+		super();
+	}
 	public createPageDoesNotExist(relativePath: string): Stream.Readable {
+		this._reporter.sendTelemetryEvent("server.pageDoesNotExist");
 		// TODO: make look better
 		const htmlString = `
 		<!DOCTYPE html>
@@ -46,6 +51,8 @@ export class ContentLoader extends Disposable {
 		relativePath: string,
 		titlePath = relativePath
 	): Stream.Readable {
+		this._reporter.sendTelemetryEvent("server.indexPage");
+		
 		const childFiles = fs.readdirSync(readPath);
 
 		const fileEntries = new Array<IndexFileEntry>();

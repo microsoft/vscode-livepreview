@@ -11,6 +11,7 @@ import {
 import { DONT_SHOW_AGAIN } from '../utils/constants';
 import { serverMsg } from '../manager';
 import { PathUtil } from '../utils/pathUtil';
+import TelemetryReporter from 'vscode-extension-telemetry';
 
 export interface PortInfo {
 	port?: number;
@@ -21,16 +22,16 @@ export class Server extends Disposable {
 	private readonly _httpServer: HttpServer;
 	private readonly _wsServer: WSServer;
 	private readonly _statusBar: StatusBarNotifier;
-	private readonly _extensionUri: vscode.Uri;
+	// private readonly _extensionUri: vscode.Uri;
 	private _isServerOn = false;
 	private _workspacePath: string | undefined;
 
-	constructor(extensionUri: vscode.Uri) {
+	constructor(private readonly _extensionUri: vscode.Uri, private readonly _reporter: TelemetryReporter) {
 		super();
-		this._extensionUri = extensionUri;
-		this._httpServer = this._register(new HttpServer(extensionUri));
-		this._wsServer = this._register(new WSServer());
-		this._statusBar = this._register(new StatusBarNotifier(extensionUri));
+		// this._extensionUri = extensionUri;
+		this._httpServer = this._register(new HttpServer(_extensionUri,_reporter));
+		this._wsServer = this._register(new WSServer(_reporter));
+		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 		this._workspacePath = PathUtil.GetWorkspacePath();
 
 		this._register(

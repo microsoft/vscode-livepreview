@@ -1,21 +1,23 @@
-import { URL } from 'url';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import * as os from 'os';
+import TelemetryReporter from 'vscode-extension-telemetry';
+import { URL } from 'url';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
-import { HOST } from './utils/constants';
+import { EXTENSION_ID, HOST } from './utils/constants';
 import { SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
 import { PathUtil } from './utils/pathUtil';
 import { GetActiveFile } from './utils/utils';
 
 export function activate(context: vscode.ExtensionContext) {
-	const manager = new Manager(context.extensionUri);
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start`, () => {
-			manager.openServer(true);
-		})
-	);
+	const extPackageJSON = vscode.extensions.getExtension(EXTENSION_ID)!.packageJSON;
+	const reporter = new TelemetryReporter(EXTENSION_ID, extPackageJSON.version, extPackageJSON.aiKey);
+
+	const manager = new Manager(context.extensionUri, reporter);
+	context.subscriptions.push(reporter);
+	reporter.sendTelemetryEvent("extension.startUp", { 'OS': os.type(), "version": extPackageJSON.version, }, { 'numWorkspaceFolders': vscode.workspace.workspaceFolders?.length ?? 0 });
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
@@ -29,6 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		)
 	);
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atIndex`,
@@ -88,6 +91,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalpreview.atIndex`,
 			() => {
+				reporter.sendTelemetryEvent("preview.external.atIndex");
 				manager.showPreviewInBrowser();
 			}
 		)
@@ -97,6 +101,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atIndex`,
 			() => {
+				reporter.sendTelemetryEvent("preview.internal.atIndex");
 				manager.createOrShowPreview();
 			}
 		)
@@ -106,6 +111,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalPreview.atFile`,
 			(file?: any) => {
+				reporter.sendTelemetryEvent("preview.external.atFile");
 				handleOpenFile(false, file);
 			}
 		)
@@ -115,6 +121,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
 			(file?: any) => {
+				reporter.sendTelemetryEvent("preview.internal.atFile");
 				handleOpenFile(true, file);
 			}
 		)
@@ -123,6 +130,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.end`, () => {
 			if (!manager.closeServer()) {
+				reporter.sendTelemetryEvent("server.forceClose");
 				vscode.window.showErrorMessage('Server already off.');
 			}
 		})
@@ -160,6 +168,8 @@ export function activate(context: vscode.ExtensionContext) {
 			return links;
 		},
 		handleTerminalLink: (link: any) => {
+			
+			reporter.sendTelemetryEvent("task.terminal.handleTerminalLink");
 			if (link.inEditor) {
 				openRelativeLinkInWorkspace(link.data, link.isDir);
 			} else {

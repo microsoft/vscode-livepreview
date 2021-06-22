@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import TelemetryReporter from 'vscode-extension-telemetry';
 import { serverMsg } from '../manager';
 import { Disposable } from '../utils/dispose';
 import { PathUtil } from '../utils/pathUtil';
@@ -27,6 +28,10 @@ export class ServerTaskProvider
 	private readonly _onRequestToOpenServerEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
+
+	constructor(private readonly _reporter: TelemetryReporter) {
+		super();
+	}
 
 	public get terminalName() {
 		return this._termName;
@@ -71,6 +76,7 @@ export class ServerTaskProvider
 
 	// run task manually from extension.
 	public extRunTask(verbose: boolean) {
+		this._reporter.sendTelemetryEvent("tasks.terminal.startFromExtension");
 		vscode.tasks
 			.fetchTasks({ type: ServerTaskProvider.CustomBuildScriptType })
 			.then((tasks) => {
@@ -144,10 +150,10 @@ export class ServerTaskProvider
 			async (): Promise<ServerTaskTerminal> => {
 				// When the task is executed, this callback will run. Here, we setup for running the task.
 				if (this._terminal && this._terminal.running) {
-					return new ServerTaskTerminal([], false);
+					return new ServerTaskTerminal([], this._reporter, false);
 				}
 
-				this._terminal = new ServerTaskTerminal(args);
+				this._terminal = new ServerTaskTerminal(args, this._reporter);
 				this._termName = termName;
 				this._terminal.onRequestToOpenServer((e) => {
 					this._onRequestToOpenServerEmitter.fire(e);

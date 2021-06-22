@@ -13,6 +13,7 @@ import {
 	SETTINGS_SECTION_ID,
 	SettingUtil,
 } from './utils/settingsUtil';
+import TelemetryReporter from 'vscode-extension-telemetry';
 
 export interface serverMsg {
 	method: string;
@@ -22,7 +23,6 @@ export interface serverMsg {
 export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
 	private readonly _server: Server;
-	private readonly _extensionUri: vscode.Uri;
 	private _serverTaskProvider: ServerTaskProvider;
 	private _serverPortNeedsUpdate = false;
 	private _previewActive = false;
@@ -42,14 +42,13 @@ export class Manager extends Disposable {
 	private set _serverWSPort(portNum: number) {
 		this._server.ws_port = portNum;
 	}
-	constructor(extensionUri: vscode.Uri) {
+	constructor(private readonly _extensionUri: vscode.Uri, private readonly _reporter: TelemetryReporter) {
 		super();
-		this._extensionUri = extensionUri;
-		this._server = this._register(new Server(extensionUri));
-		this._serverPort = SettingUtil.GetConfig(extensionUri).portNum;
-		this._serverWSPort = SettingUtil.GetConfig(extensionUri).portNum + 1;
+		this._server = this._register(new Server(_extensionUri, _reporter));
+		this._serverPort = SettingUtil.GetConfig(_extensionUri).portNum;
+		this._serverWSPort = SettingUtil.GetConfig(_extensionUri).portNum + 1;
 
-		this._serverTaskProvider = new ServerTaskProvider();
+		this._serverTaskProvider = new ServerTaskProvider(this._reporter);
 		this._register(
 			vscode.tasks.registerTaskProvider(
 				ServerTaskProvider.CustomBuildScriptType,
@@ -227,6 +226,7 @@ export class Manager extends Disposable {
 	}
 
 	private notifyLooseFileOpen() {
+		this._reporter.sendTelemetryEvent("preview.fileOutOfWorkspace");
 		if (
 			!this._notifiedAboutLooseFiles &&
 			SettingUtil.GetConfig(this._extensionUri).notifyOnOpenLooseFile
@@ -255,7 +255,8 @@ export class Manager extends Disposable {
 			this._extensionUri,
 			this._serverPort,
 			this._serverWSPort,
-			file
+			file,
+			this._reporter
 		);
 
 		this._previewActive = true;

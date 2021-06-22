@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import TelemetryReporter from 'vscode-extension-telemetry';
 import { serverMsg } from '../manager';
 import { HOST } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
@@ -43,9 +44,10 @@ export class ServerTaskTerminal
 	public closeEmitter = new vscode.EventEmitter<number>();
 	onDidClose?: vscode.Event<number> = this.closeEmitter.event;
 
-	constructor(args: string[], private readonly _executeServer = true) {
+	constructor(args: string[], private readonly _reporter: TelemetryReporter, private readonly _executeServer = true) {
 		super();
 		if (this._executeServer) {
+			this._reporter.sendTelemetryEvent("tasks.terminal.start");
 			this._verbose = args.some((x) => x == ServerArgs.verbose);
 		}
 	}
