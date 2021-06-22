@@ -1,8 +1,8 @@
 {
 	"name": "live-server",
-	"displayName": "Live Preview",
-	"description": "Allows previewing web pages and hosting a local server in your workspace.",
-	"version": "0.0.6",
+	"displayName": "Live Server - Insiders",
+	"description": "Hosts a local server in your workspace for you to preview your webpages.",
+	"version": "0.0.65",
 	"publisher": "ms-vscode",
 	"icon": "icon.png",
 	"repository": {
