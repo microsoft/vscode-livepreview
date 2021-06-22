@@ -49,9 +49,9 @@ No workspace? No problem! For a quick preview of your file, the server can also 
 
 ![no-workspace-preview](./release_notes/images/misc/no-workspace-preview.gif)
 
-Note that linked files for these pages may not be correct if they are relative to a specific root (e.g. a project root). 
-
-Note that tasks do not work outside of a workspace, so a server will just launch in the background upon external preview when outside of a workspace.
+Notes about workspace-less extension use:
+- Linked files for these pages may not be correct if they are relative to a specific root (e.g. a project root). 
+- Tasks do not work outside of a workspace, so a server will just launch in the background upon external preview when outside of a workspace. You can use the `Live Server: Force Stop Development Server` command to kill the server in this case.
 ## Prerequisites
 To use this extension, you must have [Node JS v14+](https://nodejs.org/en/download/). 
 ## Running the extension
