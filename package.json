@@ -2,7 +2,7 @@
 	"name": "live-server",
 	"displayName": "Live Server - Insiders",
 	"description": "Hosts a local server in your workspace for you to preview your webpages.",
-	"version": "0.0.66",
+	"version": "0.1.0",
 	"preview": true,
 	"aiKey":"AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
 	"publisher": "ms-vscode",
