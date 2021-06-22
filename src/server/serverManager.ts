@@ -26,10 +26,13 @@ export class Server extends Disposable {
 	private _isServerOn = false;
 	private _workspacePath: string | undefined;
 
-	constructor(private readonly _extensionUri: vscode.Uri, private readonly _reporter: TelemetryReporter) {
+	constructor(
+		private readonly _extensionUri: vscode.Uri,
+		private readonly _reporter: TelemetryReporter | undefined
+	) {
 		super();
 		// this._extensionUri = extensionUri;
-		this._httpServer = this._register(new HttpServer(_extensionUri,_reporter));
+		this._httpServer = this._register(new HttpServer(_extensionUri, _reporter));
 		this._wsServer = this._register(new WSServer(_reporter));
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 		this._workspacePath = PathUtil.GetWorkspacePath();

@@ -17,7 +17,10 @@ export class HttpServer extends Disposable {
 	private readonly _extensionUri;
 	public port = 0;
 
-	constructor(extensionUri: vscode.Uri, private readonly _reporter: TelemetryReporter) {
+	constructor(
+		extensionUri: vscode.Uri,
+		private readonly _reporter: TelemetryReporter | undefined
+	) {
 		super();
 		this._contentLoader = this._register(new ContentLoader(_reporter));
 		this._extensionUri = extensionUri;
@@ -65,7 +68,10 @@ export class HttpServer extends Disposable {
 				this.port++;
 				this._server.listen(this.port, HOST);
 			} else {
-				this._reporter.sendTelemetryErrorEvent("error.http",{'err': err});
+				/* __GDPR__
+					"error.http" : { classification: 'CallstackOrException', purpose: 'PerformanceAndHealth'}
+				*/
+				this._reporter?.sendTelemetryErrorEvent('error.http', { err: err });
 				console.log(`Unknown error: ${err}`);
 			}
 		});

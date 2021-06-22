@@ -23,11 +23,14 @@ export interface IndexDirEntry {
 export class ContentLoader extends Disposable {
 	public scriptInjector: HTMLInjector | undefined;
 
-	constructor(private readonly _reporter: TelemetryReporter) {
+	constructor(private readonly _reporter: TelemetryReporter | undefined) {
 		super();
 	}
 	public createPageDoesNotExist(relativePath: string): Stream.Readable {
-		this._reporter.sendTelemetryEvent("server.pageDoesNotExist");
+		/* __GDPR__
+			"server.pageDoesNotExist" : {}
+		*/
+		this._reporter?.sendTelemetryEvent("server.pageDoesNotExist");
 		// TODO: make look better
 		const htmlString = `
 		<!DOCTYPE html>
@@ -51,7 +54,10 @@ export class ContentLoader extends Disposable {
 		relativePath: string,
 		titlePath = relativePath
 	): Stream.Readable {
-		this._reporter.sendTelemetryEvent("server.indexPage");
+		/* __GDPR__
+			"server.indexPage" : {}
+		*/
+		this._reporter?.sendTelemetryEvent("server.indexPage");
 		
 		const childFiles = fs.readdirSync(readPath);
 

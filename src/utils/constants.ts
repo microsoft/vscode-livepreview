@@ -17,4 +17,4 @@ export const OPEN_EXTERNALLY: vscode.MessageItem = {
 };
 export const HOST = '127.0.0.1';
 
-export const EXTENSION_ID = "ms-vscode.live-server";
+export const EXTENSION_ID = 'ms-vscode.live-server';

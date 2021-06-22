@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import * as os from 'os';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { URL } from 'url';
 import { BrowserPreview } from './editorPreview/browserPreview';
@@ -8,16 +7,26 @@ import { getWebviewOptions, Manager } from './manager';
 import { EXTENSION_ID, HOST } from './utils/constants';
 import { SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
 import { PathUtil } from './utils/pathUtil';
-import { GetActiveFile } from './utils/utils';
+import { GetActiveFile, GetPackageJSON } from './utils/utils';
+
+let reporter: TelemetryReporter | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
 
-	const extPackageJSON = vscode.extensions.getExtension(EXTENSION_ID)!.packageJSON;
-	const reporter = new TelemetryReporter(EXTENSION_ID, extPackageJSON.version, extPackageJSON.aiKey);
+	const extPackageJSON = GetPackageJSON();
+
+	if (vscode.workspace
+		.getConfiguration()
+		.get("telemetry.enableTelemetry")) {
+			reporter = new TelemetryReporter(EXTENSION_ID, extPackageJSON.version, extPackageJSON.aiKey);
+			context.subscriptions.push(reporter);
+		}
 
 	const manager = new Manager(context.extensionUri, reporter);
-	context.subscriptions.push(reporter);
-	reporter.sendTelemetryEvent("extension.startUp", { 'OS': os.type(), "version": extPackageJSON.version, }, { 'numWorkspaceFolders': vscode.workspace.workspaceFolders?.length ?? 0 });
+	/* __GDPR__
+		"extension.startUp" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", isMeasurement: true }
+	*/
+	reporter?.sendTelemetryEvent("extension.startUp",{}, { 'numWorkspaceFolders': vscode.workspace.workspaceFolders?.length ?? 0 });
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
@@ -91,7 +100,10 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalpreview.atIndex`,
 			() => {
-				reporter.sendTelemetryEvent("preview.external.atIndex");
+				/* __GDPR__
+					"preview.external.atIndex" : {}
+				*/
+				reporter?.sendTelemetryEvent("preview.external.atIndex");
 				manager.showPreviewInBrowser();
 			}
 		)
@@ -101,7 +113,10 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atIndex`,
 			() => {
-				reporter.sendTelemetryEvent("preview.internal.atIndex");
+				/* __GDPR__
+					"preview.internal.atIndex" : {}
+				*/
+				reporter?.sendTelemetryEvent("preview.internal.atIndex");
 				manager.createOrShowPreview();
 			}
 		)
@@ -111,7 +126,10 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalPreview.atFile`,
 			(file?: any) => {
-				reporter.sendTelemetryEvent("preview.external.atFile");
+				/* __GDPR__
+					"preview.external.atFile" : {}
+				*/
+				reporter?.sendTelemetryEvent("preview.external.atFile");
 				handleOpenFile(false, file);
 			}
 		)
@@ -121,7 +139,10 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
 			(file?: any) => {
-				reporter.sendTelemetryEvent("preview.internal.atFile");
+				/* __GDPR__
+					"preview.internal.atFile" : {}
+				*/
+				reporter?.sendTelemetryEvent("preview.internal.atFile");
 				handleOpenFile(true, file);
 			}
 		)
@@ -130,7 +151,10 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.end`, () => {
 			if (!manager.closeServer()) {
-				reporter.sendTelemetryEvent("server.forceClose");
+				/* __GDPR__
+					"server.forceClose" : {}
+				*/
+				reporter?.sendTelemetryEvent("server.forceClose");
 				vscode.window.showErrorMessage('Server already off.');
 			}
 		})
@@ -168,8 +192,10 @@ export function activate(context: vscode.ExtensionContext) {
 			return links;
 		},
 		handleTerminalLink: (link: any) => {
-			
-			reporter.sendTelemetryEvent("task.terminal.handleTerminalLink");
+			/* __GDPR__
+				"task.terminal.handleTerminalLink" : {}
+			*/
+			reporter?.sendTelemetryEvent("task.terminal.handleTerminalLink");
 			if (link.inEditor) {
 				openRelativeLinkInWorkspace(link.data, link.isDir);
 			} else {
@@ -209,6 +235,10 @@ export function findFullLinkRegex(
 			}
 		}
 	} while (fullURLMatches);
+}
+
+export function deactivate(): void {
+	reporter?.dispose();
 }
 
 export function findPathnameRegex(

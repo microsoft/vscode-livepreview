@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { EXTENSION_ID } from './constants';
 
 export function FormatDateTime(date: Date, delimeter = ', '): string {
 	const mm = date.getMonth() + 1;
@@ -36,4 +37,7 @@ export function isFileInjectable(file: string | undefined) {
 		return false;
 	}
 	return file.endsWith('.html');
+}
+export function GetPackageJSON(): any {
+	return vscode.extensions.getExtension(EXTENSION_ID)!.packageJSON;
 }
