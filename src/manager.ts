@@ -150,11 +150,20 @@ export class Manager extends Disposable {
 	}
 
 	public showPreviewInBrowser(file = '/', relative = true) {
-		if (!this._serverTaskProvider.isRunning) {
-			this._serverTaskProvider.extRunTask(
-				SettingUtil.GetConfig(this._extensionUri)
-					.browserPreviewLaunchServerLogging
-			);
+		if (PathUtil.GetWorkspace()) {
+			if (!this._serverTaskProvider.isRunning) {
+				this._serverTaskProvider.extRunTask(
+					SettingUtil.GetConfig(this._extensionUri)
+						.browserPreviewLaunchServerLogging
+				);
+			}
+		} else {
+			// global tasks are currently not supported, just turn on server in this case.
+			const serverOn = this.openServer();
+
+			if (!serverOn) {
+				return;
+			}
 		}
 		file = this.transformNonRelativeFile(relative, file);
 
