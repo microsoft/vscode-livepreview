@@ -55,9 +55,12 @@ export class WSServer extends Disposable {
 			this.startWSServer(basePath);
 		} else {
 			/* __GDPR__
-				"error.ws" : { classification: 'CallstackOrException', purpose: 'PerformanceAndHealth'}
+				"server.err" : { classification: 'CallstackOrException', purpose: 'PerformanceAndHealth'}
 			*/
-			this._reporter?.sendTelemetryErrorEvent('error.ws', { err: err });
+			this._reporter?.sendTelemetryErrorEvent('server.err', {
+				type: 'ws',
+				err: err,
+			});
 			console.log(`Unknown error: ${err}`);
 		}
 	}

@@ -101,9 +101,9 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.externalpreview.atIndex`,
 			() => {
 				/* __GDPR__
-					"preview.external.atIndex" : {}
+					"preview" : {"purpose": "FeatureInsight"}
 				*/
-				reporter?.sendTelemetryEvent("preview.external.atIndex");
+				reporter?.sendTelemetryEvent("preview", {type:'external', location:'atIndex'});
 				manager.showPreviewInBrowser();
 			}
 		)
@@ -114,9 +114,9 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atIndex`,
 			() => {
 				/* __GDPR__
-					"preview.internal.atIndex" : {}
+					"preview" : {"purpose": "FeatureInsight"}
 				*/
-				reporter?.sendTelemetryEvent("preview.internal.atIndex");
+				reporter?.sendTelemetryEvent("preview", {type:'internal', location:'atIndex'});
 				manager.createOrShowPreview();
 			}
 		)
@@ -127,9 +127,9 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.externalPreview.atFile`,
 			(file?: any) => {
 				/* __GDPR__
-					"preview.external.atFile" : {}
+					"preview" : {"purpose": "FeatureInsight"}
 				*/
-				reporter?.sendTelemetryEvent("preview.external.atFile");
+				reporter?.sendTelemetryEvent("preview", {type:'external', location:'atFile'});
 				handleOpenFile(false, file);
 			}
 		)
@@ -140,9 +140,9 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
 			(file?: any) => {
 				/* __GDPR__
-					"preview.internal.atFile" : {}
+					"preview" : {"purpose": "FeatureInsight"}
 				*/
-				reporter?.sendTelemetryEvent("preview.internal.atFile");
+				reporter?.sendTelemetryEvent("preview", {type:'internal', location:'atFile'});
 				handleOpenFile(true, file);
 			}
 		)
