@@ -51,6 +51,7 @@ No workspace? No problem! For a quick preview of your file, the server can also 
 
 Note that linked files for these pages may not be correct if they are relative to a specific root (e.g. a project root). 
 
+Note that tasks do not work outside of a workspace, so a server will just launch in the background upon external preview when outside of a workspace.
 ## Prerequisites
 To use this extension, you must have [Node JS v14+](https://nodejs.org/en/download/). 
 ## Running the extension
