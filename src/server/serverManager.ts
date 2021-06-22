@@ -22,7 +22,6 @@ export class Server extends Disposable {
 	private readonly _httpServer: HttpServer;
 	private readonly _wsServer: WSServer;
 	private readonly _statusBar: StatusBarNotifier;
-	// private readonly _extensionUri: vscode.Uri;
 	private _isServerOn = false;
 	private _workspacePath: string | undefined;
 
@@ -31,7 +30,6 @@ export class Server extends Disposable {
 		private readonly _reporter: TelemetryReporter | undefined
 	) {
 		super();
-		// this._extensionUri = extensionUri;
 		this._httpServer = this._register(new HttpServer(_extensionUri, _reporter));
 		this._wsServer = this._register(new WSServer(_reporter));
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));

@@ -9,12 +9,8 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 export class BrowserPreview extends Disposable {
 	public static readonly viewType = 'browserPreview';
 	private readonly _pageHistory: PageHistory;
-	// private readonly _panel: vscode.WebviewPanel;
-	// private readonly _extensionUri: vscode.Uri;
 
 	private currentAddress: string;
-	// private _port;
-	// private _wsPort;
 	private readonly _onDisposeEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
@@ -46,10 +42,6 @@ export class BrowserPreview extends Disposable {
 	) {
 		super();
 
-		// this._port = port;
-		// this._wsPort = wsPort;
-		// this._panel = panel;
-		// this._extensionUri = extensionUri;
 		this._panel.iconPath = {
 			light: vscode.Uri.joinPath(
 				this._extensionUri,
