@@ -230,7 +230,7 @@ export class Manager extends Disposable {
 
 	private notifyLooseFileOpen() {
 		/* __GDPR__
-			"preview.fileOutOfWorkspace" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+			"preview.fileOutOfWorkspace" : {}
 		*/
 		this._reporter?.sendTelemetryEvent('preview.fileOutOfWorkspace');
 		if (

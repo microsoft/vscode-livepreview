@@ -28,7 +28,7 @@ export class ContentLoader extends Disposable {
 	}
 	public createPageDoesNotExist(relativePath: string): Stream.Readable {
 		/* __GDPR__
-			"server.pageDoesNotExist" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+			"server.pageDoesNotExist" : {}
 		*/
 		this._reporter?.sendTelemetryEvent("server.pageDoesNotExist");
 		// TODO: make look better
@@ -55,7 +55,7 @@ export class ContentLoader extends Disposable {
 		titlePath = relativePath
 	): Stream.Readable {
 		/* __GDPR__
-			"server.indexPage" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+			"server.indexPage" : {}
 		*/
 		this._reporter?.sendTelemetryEvent("server.indexPage");
 		

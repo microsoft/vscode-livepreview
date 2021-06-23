@@ -55,7 +55,10 @@ export class WSServer extends Disposable {
 			this.startWSServer(basePath);
 		} else {
 			/* __GDPR__
-				"server.err" : { classification: 'CallstackOrException', purpose: 'PerformanceAndHealth'}
+				"server.err" : { 
+					"type": {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+					"err": {classification: 'CallstackOrException', purpose: 'PerformanceAndHealth'}
+				}
 			*/
 			this._reporter?.sendTelemetryErrorEvent('server.err', {
 				type: 'ws',
@@ -81,7 +84,7 @@ export class WSServer extends Disposable {
 					);
 					if (!results.injectable) {
 						/* __GDPR__
-							"server.ws.foundNonInjectable" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+							"server.ws.foundNonInjectable" : {}
 						*/
 						this._reporter?.sendTelemetryEvent('server.ws.foundNonInjectable');
 						const sendData = {

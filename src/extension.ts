@@ -25,7 +25,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const manager = new Manager(context.extensionUri, reporter);
 	/* __GDPR__
-		"extension.startUp" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", isMeasurement: true }
+		"extension.startUp" : { 
+			"numWorkspaceFolders" : { "classification": "SystemMetaData", "purpose": "FeatureInsight", isMeasurement: true }
+		}
 	*/
 	reporter?.sendTelemetryEvent(
 		'extension.startUp',
@@ -106,7 +108,10 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.externalpreview.atIndex`,
 			() => {
 				/* __GDPR__
-					"preview" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					"preview" :{
+						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					}
 				*/
 				reporter?.sendTelemetryEvent('preview', {
 					type: 'external',
@@ -122,7 +127,10 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atIndex`,
 			() => {
 				/* __GDPR__
-					"preview" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					"preview" :{
+						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					}
 				*/
 				reporter?.sendTelemetryEvent('preview', {
 					type: 'internal',
@@ -138,7 +146,10 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.externalPreview.atFile`,
 			(file?: any) => {
 				/* __GDPR__
-					"preview" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					"preview" :{
+						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					}
 				*/
 				reporter?.sendTelemetryEvent('preview', {
 					type: 'external',
@@ -154,7 +165,10 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
 			(file?: any) => {
 				/* __GDPR__
-					"preview" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					"preview" :{
+						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					}
 				*/
 				reporter?.sendTelemetryEvent('preview', {
 					type: 'internal',
@@ -169,7 +183,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.end`, () => {
 			if (!manager.closeServer()) {
 				/* __GDPR__
-					"server.forceClose" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					"server.forceClose" : {}
 				*/
 				reporter?.sendTelemetryEvent('server.forceClose');
 				vscode.window.showErrorMessage('Server already off.');
@@ -210,7 +224,7 @@ export function activate(context: vscode.ExtensionContext) {
 		},
 		handleTerminalLink: (link: any) => {
 			/* __GDPR__
-				"task.terminal.handleTerminalLink" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+				"task.terminal.handleTerminalLink" : {}
 			*/
 			reporter?.sendTelemetryEvent('task.terminal.handleTerminalLink');
 			if (link.inEditor) {

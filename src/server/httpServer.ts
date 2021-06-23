@@ -69,7 +69,10 @@ export class HttpServer extends Disposable {
 				this._server.listen(this.port, HOST);
 			} else {
 				/* __GDPR__
-					"server.err" : { classification: 'CallstackOrException', purpose: 'PerformanceAndHealth'}
+					"server.err" : { 
+						"type": {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+						"err": {classification: 'CallstackOrException', purpose: 'PerformanceAndHealth'}
+					}
 				*/
 				this._reporter?.sendTelemetryErrorEvent('server.err', {
 					type: 'http',
