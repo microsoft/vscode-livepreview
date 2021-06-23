@@ -38,7 +38,7 @@ export class BrowserPreview extends Disposable {
 		private _port: number,
 		private _wsPort: number,
 		initialFile: string,
-		private readonly _reporter: TelemetryReporter | undefined
+		private readonly _reporter: TelemetryReporter
 	) {
 		super();
 
@@ -146,7 +146,7 @@ export class BrowserPreview extends Disposable {
 		/* __GDPR__
 			"preview.openExternalBrowser" : {}
 		*/
-		this._reporter?.sendTelemetryEvent('preview.openExternalBrowser');
+		this._reporter.sendTelemetryEvent('preview.openExternalBrowser');
 		vscode.window
 			.showInformationMessage(
 				`Externally hosted links are not supported in the embedded preview. Do you want to open ${urlString} in an external browser?`,

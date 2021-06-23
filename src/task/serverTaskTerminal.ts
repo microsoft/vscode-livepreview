@@ -46,7 +46,7 @@ export class ServerTaskTerminal
 
 	constructor(
 		args: string[],
-		private readonly _reporter: TelemetryReporter | undefined,
+		private readonly _reporter: TelemetryReporter,
 		private readonly _executeServer = true
 	) {
 		super();
@@ -54,7 +54,7 @@ export class ServerTaskTerminal
 			/* __GDPR__
 				"tasks.terminal.start" : {}
 			*/
-			this._reporter?.sendTelemetryEvent('tasks.terminal.start');
+			this._reporter.sendTelemetryEvent('tasks.terminal.start');
 			this._verbose = args.some((x) => x == ServerArgs.verbose);
 		}
 	}

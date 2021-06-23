@@ -11,7 +11,7 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 export class WSServer extends Disposable {
 	private _wss: WebSocket.Server | undefined;
 	private _ws_port = 0;
-	constructor(private readonly _reporter: TelemetryReporter | undefined) {
+	constructor(private readonly _reporter: TelemetryReporter) {
 		super();
 	}
 
@@ -55,9 +55,15 @@ export class WSServer extends Disposable {
 			this.startWSServer(basePath);
 		} else {
 			/* __GDPR__
-				"error.ws" : { classification: 'CallstackOrException', purpose: 'PerformanceAndHealth'}
+				"server.err" : { 
+					"type": {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+					"err": {classification: 'CallstackOrException', purpose: 'PerformanceAndHealth'}
+				}
 			*/
-			this._reporter?.sendTelemetryErrorEvent('error.ws', { err: err });
+			this._reporter.sendTelemetryErrorEvent('server.err', {
+				type: 'ws',
+				err: err,
+			});
 			console.log(`Unknown error: ${err}`);
 		}
 	}
@@ -80,7 +86,7 @@ export class WSServer extends Disposable {
 						/* __GDPR__
 							"server.ws.foundNonInjectable" : {}
 						*/
-						this._reporter?.sendTelemetryEvent('server.ws.foundNonInjectable');
+						this._reporter.sendTelemetryEvent('server.ws.foundNonInjectable');
 						const sendData = {
 							command: 'foundNonInjectable',
 							path: results.pathname,

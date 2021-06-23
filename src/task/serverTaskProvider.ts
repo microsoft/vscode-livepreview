@@ -29,7 +29,7 @@ export class ServerTaskProvider
 		new vscode.EventEmitter<void>()
 	);
 
-	constructor(private readonly _reporter: TelemetryReporter | undefined) {
+	constructor(private readonly _reporter: TelemetryReporter) {
 		super();
 	}
 
@@ -79,7 +79,7 @@ export class ServerTaskProvider
 		/* __GDPR__
 			"tasks.terminal.startFromExtension" : {}
 		*/
-		this._reporter?.sendTelemetryEvent('tasks.terminal.startFromExtension');
+		this._reporter.sendTelemetryEvent('tasks.terminal.startFromExtension');
 		vscode.tasks
 			.fetchTasks({ type: ServerTaskProvider.CustomBuildScriptType })
 			.then((tasks) => {

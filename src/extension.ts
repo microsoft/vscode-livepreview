@@ -7,26 +7,31 @@ import { getWebviewOptions, Manager } from './manager';
 import { EXTENSION_ID, HOST } from './utils/constants';
 import { SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
 import { PathUtil } from './utils/pathUtil';
-import { GetActiveFile, GetPackageJSON } from './utils/utils';
+import { GetActiveFile } from './utils/utils';
 
-let reporter: TelemetryReporter | undefined;
+let reporter: TelemetryReporter;
 
 export function activate(context: vscode.ExtensionContext) {
+	const extPackageJSON = context.extension.packageJSON;
 
-	const extPackageJSON = GetPackageJSON();
-
-	if (vscode.workspace
-		.getConfiguration()
-		.get("telemetry.enableTelemetry")) {
-			reporter = new TelemetryReporter(EXTENSION_ID, extPackageJSON.version, extPackageJSON.aiKey);
-			context.subscriptions.push(reporter);
-		}
+	reporter = new TelemetryReporter(
+		EXTENSION_ID,
+		extPackageJSON.version,
+		extPackageJSON.aiKey
+	);
+	context.subscriptions.push(reporter);
 
 	const manager = new Manager(context.extensionUri, reporter);
 	/* __GDPR__
-		"extension.startUp" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", isMeasurement: true }
+		"extension.startUp" : { 
+			"numWorkspaceFolders" : { "classification": "SystemMetaData", "purpose": "FeatureInsight", isMeasurement: true }
+		}
 	*/
-	reporter?.sendTelemetryEvent("extension.startUp",{}, { 'numWorkspaceFolders': vscode.workspace.workspaceFolders?.length ?? 0 });
+	reporter.sendTelemetryEvent(
+		'extension.startUp',
+		{},
+		{ numWorkspaceFolders: vscode.workspace.workspaceFolders?.length ?? 0 }
+	);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
@@ -101,9 +106,15 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.externalpreview.atIndex`,
 			() => {
 				/* __GDPR__
-					"preview.external.atIndex" : {}
+					"preview" :{
+						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					}
 				*/
-				reporter?.sendTelemetryEvent("preview.external.atIndex");
+				reporter.sendTelemetryEvent('preview', {
+					type: 'external',
+					location: 'atIndex',
+				});
 				manager.showPreviewInBrowser();
 			}
 		)
@@ -114,9 +125,15 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atIndex`,
 			() => {
 				/* __GDPR__
-					"preview.internal.atIndex" : {}
+					"preview" :{
+						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					}
 				*/
-				reporter?.sendTelemetryEvent("preview.internal.atIndex");
+				reporter.sendTelemetryEvent('preview', {
+					type: 'internal',
+					location: 'atIndex',
+				});
 				manager.createOrShowPreview();
 			}
 		)
@@ -127,9 +144,15 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.externalPreview.atFile`,
 			(file?: any) => {
 				/* __GDPR__
-					"preview.external.atFile" : {}
+					"preview" :{
+						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					}
 				*/
-				reporter?.sendTelemetryEvent("preview.external.atFile");
+				reporter.sendTelemetryEvent('preview', {
+					type: 'external',
+					location: 'atFile',
+				});
 				handleOpenFile(false, file);
 			}
 		)
@@ -140,9 +163,15 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
 			(file?: any) => {
 				/* __GDPR__
-					"preview.internal.atFile" : {}
+					"preview" :{
+						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					}
 				*/
-				reporter?.sendTelemetryEvent("preview.internal.atFile");
+				reporter.sendTelemetryEvent('preview', {
+					type: 'internal',
+					location: 'atFile',
+				});
 				handleOpenFile(true, file);
 			}
 		)
@@ -154,7 +183,7 @@ export function activate(context: vscode.ExtensionContext) {
 				/* __GDPR__
 					"server.forceClose" : {}
 				*/
-				reporter?.sendTelemetryEvent("server.forceClose");
+				reporter.sendTelemetryEvent('server.forceClose');
 				vscode.window.showErrorMessage('Server already off.');
 			}
 		})
@@ -195,7 +224,7 @@ export function activate(context: vscode.ExtensionContext) {
 			/* __GDPR__
 				"task.terminal.handleTerminalLink" : {}
 			*/
-			reporter?.sendTelemetryEvent("task.terminal.handleTerminalLink");
+			reporter.sendTelemetryEvent('task.terminal.handleTerminalLink');
 			if (link.inEditor) {
 				openRelativeLinkInWorkspace(link.data, link.isDir);
 			} else {
@@ -238,7 +267,7 @@ export function findFullLinkRegex(
 }
 
 export function deactivate(): void {
-	reporter?.dispose();
+	reporter.dispose();
 }
 
 export function findPathnameRegex(

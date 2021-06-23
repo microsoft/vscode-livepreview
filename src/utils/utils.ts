@@ -38,6 +38,3 @@ export function isFileInjectable(file: string | undefined) {
 	}
 	return file.endsWith('.html');
 }
-export function GetPackageJSON(): any {
-	return vscode.extensions.getExtension(EXTENSION_ID)!.packageJSON;
-}
