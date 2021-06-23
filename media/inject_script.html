@@ -21,7 +21,8 @@
 	});
 
 	window.addEventListener('message', (event) => {
-		if (event.data.command == 'open-external-link') {
+		if (event.data.command != 'perform-url-check' && 
+			event.data.command != 'update-path') {
 			window.parent.postMessage(event.data, '*');
 		}
 	});
@@ -67,14 +68,15 @@
 
 		var l = document.getElementsByTagName('a');
 		for (var i = 0; i < l.length; i++) {
-			l[i].onclick = (e) => {
-				handleLink(e.target.href)
-			};
+			l[i].onclick = (e) => handleLinkClick(e.target.href);
+			l[i].onmouseenter = (e) => handleLinkHoverStart(e.target.href);
+			l[i].onmouseleave = (e) => handleLinkHoverEnd(e.target.href);
+
 		}
 	}
 
-	function handleLink(linkTarget) {
-		if (linkTarget != '') {
+	function handleLinkClick(linkTarget) {
+		if (linkTarget && linkTarget != '') {
 			if (!linkTarget.startsWith('http://127.0.0.1:')) {
 				window.parent.postMessage(
 					{ command: 'open-external-link', text: linkTarget },
@@ -88,5 +90,24 @@
 				);
 			}
 		}
+	}
+
+	function handleLinkHoverStart(linkTarget) {
+		window.parent.postMessage(
+			{
+				command: 'link-hover-start',
+				text: linkTarget,
+			},
+			'*'
+		);
+	}
+
+	function handleLinkHoverEnd(linkTarget) {
+		window.parent.postMessage(
+			{
+				command: 'link-hover-end'
+			},
+			'*'
+		);
 	}
 </script>

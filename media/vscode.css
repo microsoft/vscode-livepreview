@@ -136,3 +136,17 @@ input::placeholder,
 textarea::placeholder {
 	color: var(--vscode-input-placeholderForeground);
 }
+
+#link-preview {
+    position:fixed;
+    bottom:-4px;
+    left:0px; 
+    padding:3px 5px;
+    background-color:rgb(66, 66, 66);
+    color:#fff;
+    font-size:9px;
+    box-shadow: 1px -1px 5px rgb(129, 129, 129);
+    border-radius:1px;
+	opacity:0
+}
+
