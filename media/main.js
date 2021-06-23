@@ -5,6 +5,8 @@
 (function () {
 	const vscode = acquireVsCodeApi();
 	const connection = new WebSocket(WS_URL);
+	var fadeLinkID = null;
+
 	onLoad();
 
 	function onLoad() {
@@ -25,9 +27,7 @@
 
 		addNavButtonListeners();
 
-		document
-			.getElementById('url-input')
-			.addEventListener('keyup', handleKeyUp);
+		document.getElementById('url-input').addEventListener('keyup', handleKeyUp);
 
 		window.addEventListener('message', (event) => {
 			handleMessage(event.data); // The json data that the extension sent
@@ -100,12 +100,28 @@
 				updateState(msgJSON.pathname);
 				break;
 			}
+			// from child iframe
+			case 'link-hover-start': {
+				if (message.text.trim().length) {
+					document.getElementById('link-preview').innerHTML = message.text;
+					fadeLinkPreview(true);
+				}
+				break;
+			}
+			// from child iframe
+			case 'link-hover-end': {
+				if (!document.getElementById('link-preview').hidden) {
+					fadeLinkPreview(false);
+				}
+				break;
+			}
 			case 'set-url': {
 				msgJSON = JSON.parse(message.text);
 				setURLBar(msgJSON.fullPath);
 				updateState(msgJSON.pathname);
 				break;
 			}
+			// from child iframe
 			case 'open-external-link': {
 				vscode.postMessage({
 					command: 'open-browser',
@@ -114,6 +130,7 @@
 
 				break;
 			}
+			// from child iframe
 			case 'perform-url-check': {
 				sendData = {
 					command: 'urlCheck',
@@ -125,6 +142,30 @@
 		}
 	}
 
+	function fadeLinkPreview(appear) {
+		var elem = document.getElementById('link-preview');
+
+		var initOpacity = appear ? 0 : 1;
+		var finalOpacity = appear ? 1 : 0;
+
+		elem.style.opacity = initOpacity;
+		clearInterval(fadeLinkID);
+		if (appear) {
+			document.getElementById('link-preview').hidden = false;
+		}
+
+		fadeLinkID = setInterval(function () {
+			if (elem.style.opacity == finalOpacity) {
+				clearInterval(fadeLinkID);
+				if (!appear) {
+					document.getElementById('link-preview').hidden = true;
+				}
+			} else {
+				elem.style.opacity =
+					parseFloat(elem.style.opacity) + parseFloat(appear ? 0.1 : -0.1);
+			}
+		}, 25);
+	}
 	function addNavButtonListeners() {
 		document.getElementById('back').onclick = function () {
 			vscode.postMessage({

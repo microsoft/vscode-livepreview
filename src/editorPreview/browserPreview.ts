@@ -270,7 +270,9 @@ export class BrowserPreview extends Disposable {
 				<div class="content">
 					<iframe id="hostedContent" src="${url}"></iframe>
 				</div>
+				
 			</div>
+			<div id="link-preview">an example link</div>
 				<script nonce="${nonce}">
 					const WS_URL= "${wsURL}";
 				</script>

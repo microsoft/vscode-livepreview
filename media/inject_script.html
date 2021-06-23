@@ -10,18 +10,17 @@
 
 	connection.onmessage = (event) => handleSocketMessage(event.data);
 
-	window.addEventListener(
-		'message',
-		(event) => handleMessage(event),
-		false
-	);
+	window.addEventListener('message', (event) => handleMessage(event), false);
 
 	document.addEventListener('DOMContentLoaded', function (e) {
-		onLoad()
+		onLoad();
 	});
 
 	window.addEventListener('message', (event) => {
-		if (event.data.command == 'open-external-link') {
+		if (
+			event.data.command != 'perform-url-check' &&
+			event.data.command != 'update-path'
+		) {
 			window.parent.postMessage(event.data, '*');
 		}
 	});
@@ -37,23 +36,23 @@
 
 	function handleMessage(event) {
 		if (event.data == 'refresh') {
-				window.location.reload();
-			} else if (event.data == 'setup-parent-listener') {
-				commandPayload = {
-					pathname: window.location.pathname,
-					fullPath: window.location,
-					title: document.title,
-				};
-				window.parent.postMessage(
-					{
-						command: 'update-path',
-						text: JSON.stringify(commandPayload),
-					},
-					'*'
-				);
-			}
+			window.location.reload();
+		} else if (event.data == 'setup-parent-listener') {
+			commandPayload = {
+				pathname: window.location.pathname,
+				fullPath: window.location,
+				title: document.title,
+			};
+			window.parent.postMessage(
+				{
+					command: 'update-path',
+					text: JSON.stringify(commandPayload),
+				},
+				'*'
+			);
+		}
 	}
-	
+
 	function onLoad() {
 		commandPayload = {
 			pathname: window.location.pathname,
@@ -67,14 +66,14 @@
 
 		var l = document.getElementsByTagName('a');
 		for (var i = 0; i < l.length; i++) {
-			l[i].onclick = (e) => {
-				handleLink(e.target.href)
-			};
+			l[i].onclick = (e) => handleLinkClick(e.target.href);
+			l[i].onmouseenter = (e) => handleLinkHoverStart(e.target.href);
+			l[i].onmouseleave = (e) => handleLinkHoverEnd(e.target.href);
 		}
 	}
 
-	function handleLink(linkTarget) {
-		if (linkTarget != '') {
+	function handleLinkClick(linkTarget) {
+		if (linkTarget && linkTarget != '') {
 			if (!linkTarget.startsWith('http://127.0.0.1:')) {
 				window.parent.postMessage(
 					{ command: 'open-external-link', text: linkTarget },
@@ -88,5 +87,24 @@
 				);
 			}
 		}
+	}
+
+	function handleLinkHoverStart(linkTarget) {
+		window.parent.postMessage(
+			{
+				command: 'link-hover-start',
+				text: linkTarget,
+			},
+			'*'
+		);
+	}
+
+	function handleLinkHoverEnd(linkTarget) {
+		window.parent.postMessage(
+			{
+				command: 'link-hover-end',
+			},
+			'*'
+		);
 	}
 </script>
