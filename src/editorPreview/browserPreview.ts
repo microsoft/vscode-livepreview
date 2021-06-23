@@ -144,7 +144,7 @@ export class BrowserPreview extends Disposable {
 		const uri = vscode.Uri.parse(urlString);
 
 		/* __GDPR__
-			"preview.openExternalBrowser" : {}
+			"preview.openExternalBrowser" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
 		*/
 		this._reporter?.sendTelemetryEvent('preview.openExternalBrowser');
 		vscode.window

@@ -81,7 +81,7 @@ export class WSServer extends Disposable {
 					);
 					if (!results.injectable) {
 						/* __GDPR__
-							"server.ws.foundNonInjectable" : {}
+							"server.ws.foundNonInjectable" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
 						*/
 						this._reporter?.sendTelemetryEvent('server.ws.foundNonInjectable');
 						const sendData = {

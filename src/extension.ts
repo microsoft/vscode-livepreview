@@ -12,21 +12,26 @@ import { GetActiveFile, GetPackageJSON } from './utils/utils';
 let reporter: TelemetryReporter | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
-
 	const extPackageJSON = GetPackageJSON();
 
-	if (vscode.workspace
-		.getConfiguration()
-		.get("telemetry.enableTelemetry")) {
-			reporter = new TelemetryReporter(EXTENSION_ID, extPackageJSON.version, extPackageJSON.aiKey);
-			context.subscriptions.push(reporter);
-		}
+	if (vscode.workspace.getConfiguration().get('telemetry.enableTelemetry')) {
+		reporter = new TelemetryReporter(
+			EXTENSION_ID,
+			extPackageJSON.version,
+			extPackageJSON.aiKey
+		);
+		context.subscriptions.push(reporter);
+	}
 
 	const manager = new Manager(context.extensionUri, reporter);
 	/* __GDPR__
 		"extension.startUp" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", isMeasurement: true }
 	*/
-	reporter?.sendTelemetryEvent("extension.startUp",{}, { 'numWorkspaceFolders': vscode.workspace.workspaceFolders?.length ?? 0 });
+	reporter?.sendTelemetryEvent(
+		'extension.startUp',
+		{},
+		{ numWorkspaceFolders: vscode.workspace.workspaceFolders?.length ?? 0 }
+	);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
@@ -101,9 +106,12 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.externalpreview.atIndex`,
 			() => {
 				/* __GDPR__
-					"preview" : {"purpose": "FeatureInsight"}
+					"preview" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
 				*/
-				reporter?.sendTelemetryEvent("preview", {type:'external', location:'atIndex'});
+				reporter?.sendTelemetryEvent('preview', {
+					type: 'external',
+					location: 'atIndex',
+				});
 				manager.showPreviewInBrowser();
 			}
 		)
@@ -114,9 +122,12 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atIndex`,
 			() => {
 				/* __GDPR__
-					"preview" : {"purpose": "FeatureInsight"}
+					"preview" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
 				*/
-				reporter?.sendTelemetryEvent("preview", {type:'internal', location:'atIndex'});
+				reporter?.sendTelemetryEvent('preview', {
+					type: 'internal',
+					location: 'atIndex',
+				});
 				manager.createOrShowPreview();
 			}
 		)
@@ -127,9 +138,12 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.externalPreview.atFile`,
 			(file?: any) => {
 				/* __GDPR__
-					"preview" : {"purpose": "FeatureInsight"}
+					"preview" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
 				*/
-				reporter?.sendTelemetryEvent("preview", {type:'external', location:'atFile'});
+				reporter?.sendTelemetryEvent('preview', {
+					type: 'external',
+					location: 'atFile',
+				});
 				handleOpenFile(false, file);
 			}
 		)
@@ -140,9 +154,12 @@ export function activate(context: vscode.ExtensionContext) {
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
 			(file?: any) => {
 				/* __GDPR__
-					"preview" : {"purpose": "FeatureInsight"}
+					"preview" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
 				*/
-				reporter?.sendTelemetryEvent("preview", {type:'internal', location:'atFile'});
+				reporter?.sendTelemetryEvent('preview', {
+					type: 'internal',
+					location: 'atFile',
+				});
 				handleOpenFile(true, file);
 			}
 		)
@@ -152,9 +169,9 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.end`, () => {
 			if (!manager.closeServer()) {
 				/* __GDPR__
-					"server.forceClose" : {}
+					"server.forceClose" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
 				*/
-				reporter?.sendTelemetryEvent("server.forceClose");
+				reporter?.sendTelemetryEvent('server.forceClose');
 				vscode.window.showErrorMessage('Server already off.');
 			}
 		})
@@ -193,9 +210,9 @@ export function activate(context: vscode.ExtensionContext) {
 		},
 		handleTerminalLink: (link: any) => {
 			/* __GDPR__
-				"task.terminal.handleTerminalLink" : {}
+				"task.terminal.handleTerminalLink" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
 			*/
-			reporter?.sendTelemetryEvent("task.terminal.handleTerminalLink");
+			reporter?.sendTelemetryEvent('task.terminal.handleTerminalLink');
 			if (link.inEditor) {
 				openRelativeLinkInWorkspace(link.data, link.isDir);
 			} else {
