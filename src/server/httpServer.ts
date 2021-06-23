@@ -19,7 +19,7 @@ export class HttpServer extends Disposable {
 
 	constructor(
 		extensionUri: vscode.Uri,
-		private readonly _reporter: TelemetryReporter | undefined
+		private readonly _reporter: TelemetryReporter
 	) {
 		super();
 		this._contentLoader = this._register(new ContentLoader(_reporter));
@@ -74,7 +74,7 @@ export class HttpServer extends Disposable {
 						"err": {classification: 'CallstackOrException', purpose: 'PerformanceAndHealth'}
 					}
 				*/
-				this._reporter?.sendTelemetryErrorEvent('server.err', {
+				this._reporter.sendTelemetryErrorEvent('server.err', {
 					type: 'http',
 					err: err,
 				});

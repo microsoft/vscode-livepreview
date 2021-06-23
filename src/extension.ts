@@ -9,19 +9,17 @@ import { SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
 import { PathUtil } from './utils/pathUtil';
 import { GetActiveFile, GetPackageJSON } from './utils/utils';
 
-let reporter: TelemetryReporter | undefined;
+let reporter: TelemetryReporter;
 
 export function activate(context: vscode.ExtensionContext) {
 	const extPackageJSON = GetPackageJSON();
 
-	if (vscode.workspace.getConfiguration().get('telemetry.enableTelemetry')) {
-		reporter = new TelemetryReporter(
-			EXTENSION_ID,
-			extPackageJSON.version,
-			extPackageJSON.aiKey
-		);
-		context.subscriptions.push(reporter);
-	}
+	reporter = new TelemetryReporter(
+		EXTENSION_ID,
+		extPackageJSON.version,
+		extPackageJSON.aiKey
+	);
+	context.subscriptions.push(reporter);
 
 	const manager = new Manager(context.extensionUri, reporter);
 	/* __GDPR__
@@ -29,7 +27,7 @@ export function activate(context: vscode.ExtensionContext) {
 			"numWorkspaceFolders" : { "classification": "SystemMetaData", "purpose": "FeatureInsight", isMeasurement: true }
 		}
 	*/
-	reporter?.sendTelemetryEvent(
+	reporter.sendTelemetryEvent(
 		'extension.startUp',
 		{},
 		{ numWorkspaceFolders: vscode.workspace.workspaceFolders?.length ?? 0 }
@@ -113,7 +111,7 @@ export function activate(context: vscode.ExtensionContext) {
 						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
 					}
 				*/
-				reporter?.sendTelemetryEvent('preview', {
+				reporter.sendTelemetryEvent('preview', {
 					type: 'external',
 					location: 'atIndex',
 				});
@@ -132,7 +130,7 @@ export function activate(context: vscode.ExtensionContext) {
 						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
 					}
 				*/
-				reporter?.sendTelemetryEvent('preview', {
+				reporter.sendTelemetryEvent('preview', {
 					type: 'internal',
 					location: 'atIndex',
 				});
@@ -151,7 +149,7 @@ export function activate(context: vscode.ExtensionContext) {
 						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
 					}
 				*/
-				reporter?.sendTelemetryEvent('preview', {
+				reporter.sendTelemetryEvent('preview', {
 					type: 'external',
 					location: 'atFile',
 				});
@@ -170,7 +168,7 @@ export function activate(context: vscode.ExtensionContext) {
 						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
 					}
 				*/
-				reporter?.sendTelemetryEvent('preview', {
+				reporter.sendTelemetryEvent('preview', {
 					type: 'internal',
 					location: 'atFile',
 				});
@@ -185,7 +183,7 @@ export function activate(context: vscode.ExtensionContext) {
 				/* __GDPR__
 					"server.forceClose" : {}
 				*/
-				reporter?.sendTelemetryEvent('server.forceClose');
+				reporter.sendTelemetryEvent('server.forceClose');
 				vscode.window.showErrorMessage('Server already off.');
 			}
 		})
@@ -226,7 +224,7 @@ export function activate(context: vscode.ExtensionContext) {
 			/* __GDPR__
 				"task.terminal.handleTerminalLink" : {}
 			*/
-			reporter?.sendTelemetryEvent('task.terminal.handleTerminalLink');
+			reporter.sendTelemetryEvent('task.terminal.handleTerminalLink');
 			if (link.inEditor) {
 				openRelativeLinkInWorkspace(link.data, link.isDir);
 			} else {
@@ -269,7 +267,7 @@ export function findFullLinkRegex(
 }
 
 export function deactivate(): void {
-	reporter?.dispose();
+	reporter.dispose();
 }
 
 export function findPathnameRegex(
