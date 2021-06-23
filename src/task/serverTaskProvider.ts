@@ -77,7 +77,7 @@ export class ServerTaskProvider
 	// run task manually from extension.
 	public extRunTask(verbose: boolean) {
 		/* __GDPR__
-			"tasks.terminal.startFromExtension" : {}
+			"tasks.terminal.startFromExtension" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
 		*/
 		this._reporter?.sendTelemetryEvent('tasks.terminal.startFromExtension');
 		vscode.tasks

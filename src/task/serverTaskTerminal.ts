@@ -52,7 +52,7 @@ export class ServerTaskTerminal
 		super();
 		if (this._executeServer) {
 			/* __GDPR__
-				"tasks.terminal.start" : {}
+				"tasks.terminal.start" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
 			*/
 			this._reporter?.sendTelemetryEvent('tasks.terminal.start');
 			this._verbose = args.some((x) => x == ServerArgs.verbose);
