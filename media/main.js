@@ -4,17 +4,61 @@
 // It cannot access the main VS Code APIs directly.
 (function () {
 	const vscode = acquireVsCodeApi();
-
-	vscode.setState({ currentAddress: window.location.pathname });
 	const connection = new WebSocket(WS_URL);
+	onLoad();
 
-	connection.onerror = (error) => {
-		console.log('WebSocket error: ');
-		console.log(error);
-	};
+	function onLoad() {
+		updateState(window.location.pathname);
 
-	connection.onmessage = (e) => {
-		const parsedMessage = JSON.parse(e.data);
+		connection.onerror = (error) => {
+			console.log('WebSocket error: ');
+			console.log(error);
+		};
+
+		connection.onmessage = (event) => handleSocketMessage(event.data);
+
+		document.addEventListener('DOMContentLoaded', function (e) {
+			vscode.postMessage({
+				command: 'refresh-back-forward-buttons',
+			});
+		});
+
+		addNavButtonListeners();
+
+		document
+			.getElementById('url-input')
+			.addEventListener('keyup', handleKeyUp);
+
+		window.addEventListener('message', (event) => {
+			handleMessage(event.data); // The json data that the extension sent
+		});
+
+		document
+			.getElementById('hostedContent')
+			.contentWindow.postMessage('setup-parent-listener', '*');
+	}
+
+	function setURLBar(url) {
+		document.getElementById('url-input').value = url;
+	}
+
+	function updateState(pathname) {
+		vscode.setState({ currentAddress: pathname });
+	}
+
+	function handleKeyUp(event) {
+		if (event.keyCode === 13) {
+			event.preventDefault();
+			linkTarget = document.getElementById('url-input').value;
+			vscode.postMessage({
+				command: 'go-to-file',
+				text: linkTarget,
+			});
+		}
+	}
+
+	function handleSocketMessage(data) {
+		const parsedMessage = JSON.parse(data);
 		switch (parsedMessage.command) {
 			case 'foundNonInjectable':
 				// if the file we went to is not injectable, make sure to add it to history manually
@@ -24,55 +68,9 @@
 				});
 				return;
 		}
-	};
+	}
 
-	document.addEventListener('DOMContentLoaded', function (e) {
-		vscode.postMessage({
-			command: 'refresh-back-forward-buttons',
-		});
-	});
-
-	document.getElementById('back').onclick = function () {
-		vscode.postMessage({
-			command: 'go-back',
-		});
-	};
-
-	document.getElementById('forward').onclick = function () {
-		vscode.postMessage({
-			command: 'go-forward',
-		});
-	};
-
-	document.getElementById('reload').onclick = function () {
-		document
-			.getElementById('hostedContent')
-			.contentWindow.postMessage('refresh', '*');
-	};
-
-	document.getElementById('browserOpen').onclick = function () {
-		vscode.postMessage({
-			command: 'open-browser',
-			text: '',
-		});
-	};
-
-	document
-		.getElementById('url-input')
-		.addEventListener('keyup', function (event) {
-			// Number 13 is the "Enter" key on the keyboard
-			if (event.keyCode === 13) {
-				// Cancel the default action, if needed
-				event.preventDefault();
-				linkTarget = document.getElementById('url-input').value;
-				vscode.postMessage({
-					command: 'go-to-file',
-					text: linkTarget,
-				});
-			}
-		});
-	window.addEventListener('message', (event) => {
-		const message = event.data; // The json data that the extension sent
+	function handleMessage(message) {
 		switch (message.command) {
 			case 'refresh':
 				document
@@ -91,7 +89,6 @@
 			case 'disable-forward':
 				document.getElementById('forward').disabled = true;
 				break;
-
 			// from child iframe
 			case 'update-path': {
 				msgJSON = JSON.parse(message.text);
@@ -99,15 +96,14 @@
 					command: 'update-path',
 					text: message.text,
 				});
-				// console.log(msgJSON);
-				document.getElementById('url-input').value = msgJSON.fullPath.href;
-				vscode.setState({ currentAddress: msgJSON.pathname });
+				setURLBar(msgJSON.fullPath.href);
+				updateState(msgJSON.pathname);
 				break;
 			}
 			case 'set-url': {
 				msgJSON = JSON.parse(message.text);
-				document.getElementById('url-input').value = msgJSON.fullPath;
-				vscode.setState({ currentAddress: msgJSON.pathname });
+				setURLBar(msgJSON.fullPath);
+				updateState(msgJSON.pathname);
 				break;
 			}
 			case 'open-external-link': {
@@ -127,9 +123,32 @@
 				break;
 			}
 		}
-	});
+	}
 
-	document
-		.getElementById('hostedContent')
-		.contentWindow.postMessage('setup-parent-listener', '*');
+	function addNavButtonListeners() {
+		document.getElementById('back').onclick = function () {
+			vscode.postMessage({
+				command: 'go-back',
+			});
+		};
+
+		document.getElementById('forward').onclick = function () {
+			vscode.postMessage({
+				command: 'go-forward',
+			});
+		};
+
+		document.getElementById('reload').onclick = function () {
+			document
+				.getElementById('hostedContent')
+				.contentWindow.postMessage('refresh', '*');
+		};
+
+		document.getElementById('browserOpen').onclick = function () {
+			vscode.postMessage({
+				command: 'open-browser',
+				text: '',
+			});
+		};
+	}
 })();
