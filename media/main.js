@@ -27,9 +27,7 @@
 
 		addNavButtonListeners();
 
-		document
-			.getElementById('url-input')
-			.addEventListener('keyup', handleKeyUp);
+		document.getElementById('url-input').addEventListener('keyup', handleKeyUp);
 
 		window.addEventListener('message', (event) => {
 			handleMessage(event.data); // The json data that the extension sent
@@ -145,7 +143,7 @@
 	}
 
 	function fadeLinkPreview(appear) {
-		var elem = document.getElementById("link-preview");
+		var elem = document.getElementById('link-preview');
 
 		var initOpacity = appear ? 0 : 1;
 		var finalOpacity = appear ? 1 : 0;
@@ -163,7 +161,8 @@
 					document.getElementById('link-preview').hidden = true;
 				}
 			} else {
-					elem.style.opacity = parseFloat(elem.style.opacity) + parseFloat((appear) ? 0.1 : -0.1);
+				elem.style.opacity =
+					parseFloat(elem.style.opacity) + parseFloat(appear ? 0.1 : -0.1);
 			}
 		}, 25);
 	}

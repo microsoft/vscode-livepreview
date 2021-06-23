@@ -2,7 +2,7 @@
 	"name": "live-server",
 	"displayName": "Live Server - Insiders",
 	"description": "Hosts a local server in your workspace for you to preview your webpages.",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"preview": true,
 	"aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
 	"publisher": "ms-vscode",
@@ -15,7 +15,7 @@
 		"vscode": "^1.56.0"
 	},
 	"bugs": {
-		"url": "https://github.com/microsoft/vscode/issues?q=is%3Aopen+is%3Aissue+label%3Alive-server"
+		"url": "https://github.com/microsoft/vscode-liveserver/issues"
 	},
 	"categories": [
 		"Other"
