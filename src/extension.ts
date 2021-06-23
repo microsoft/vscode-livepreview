@@ -7,12 +7,12 @@ import { getWebviewOptions, Manager } from './manager';
 import { EXTENSION_ID, HOST } from './utils/constants';
 import { SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
 import { PathUtil } from './utils/pathUtil';
-import { GetActiveFile, GetPackageJSON } from './utils/utils';
+import { GetActiveFile } from './utils/utils';
 
 let reporter: TelemetryReporter;
 
 export function activate(context: vscode.ExtensionContext) {
-	const extPackageJSON = GetPackageJSON();
+	const extPackageJSON = context.extension.packageJSON;
 
 	reporter = new TelemetryReporter(
 		EXTENSION_ID,
