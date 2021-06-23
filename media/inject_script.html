@@ -8,20 +8,37 @@
 		console.log(error);
 	};
 
-	connection.onmessage = (e) => {
-		const parsedMessage = JSON.parse(e.data);
+	connection.onmessage = (event) => handleSocketMessage(event);
+
+	window.addEventListener(
+		'message',
+		(event) => handleMessage(event),
+		false
+	);
+
+	document.addEventListener('DOMContentLoaded', function (e) {
+		onLoad()
+	});
+
+	window.addEventListener('message', (event) => {
+		if (event.data.command == 'open-external-link') {
+			window.parent.postMessage(event.data, '*');
+		}
+	});
+
+	function handleSocketMessage(data) {
+		const parsedMessage = JSON.parse(data);
 		switch (parsedMessage.command) {
 			case 'reload': {
 				window.location.reload();
 			}
 		}
-	};
-	window.addEventListener(
-		'message',
-		function () {
-			if (this.event.data == 'refresh') {
+	}
+
+	function handleMessage(event) {
+		if (event.data == 'refresh') {
 				window.location.reload();
-			} else if (this.event.data == 'setup-parent-listener') {
+			} else if (event.data == 'setup-parent-listener') {
 				commandPayload = {
 					pathname: window.location.pathname,
 					fullPath: window.location,
@@ -35,11 +52,9 @@
 					'*'
 				);
 			}
-		},
-		false
-	);
-
-	document.addEventListener('DOMContentLoaded', function (e) {
+	}
+	
+	function onLoad() {
 		commandPayload = {
 			pathname: window.location.pathname,
 			fullPath: window.location,
@@ -49,33 +64,29 @@
 			{ command: 'update-path', text: JSON.stringify(commandPayload) },
 			'*'
 		);
-		// console.log(JSON.stringify(commandPayload))
 
 		var l = document.getElementsByTagName('a');
 		for (var i = 0; i < l.length; i++) {
 			l[i].onclick = (e) => {
-				const linkTarget = e.target.href;
-				if (linkTarget != '') {
-					if (!linkTarget.startsWith('http://127.0.0.1:')) {
-						window.parent.postMessage(
-							{ command: 'open-external-link', text: linkTarget },
-							'*'
-						);
-					} else {
-						// check all local URLs to make sure to catch pages that won't be injectable
-						window.parent.postMessage(
-							{ command: 'perform-url-check', text: linkTarget },
-							'*'
-						);
-					}
-				}
+				handleLink(e.target.href)
 			};
 		}
-	});
+	}
 
-	window.addEventListener('message', (event) => {
-		if (event.data.command == 'open-external-link') {
-			window.parent.postMessage(event.data, '*');
+	function handleLink(linkTarget) {
+		if (linkTarget != '') {
+			if (!linkTarget.startsWith('http://127.0.0.1:')) {
+				window.parent.postMessage(
+					{ command: 'open-external-link', text: linkTarget },
+					'*'
+				);
+			} else {
+				// check all local URLs to make sure to catch pages that won't be injectable
+				window.parent.postMessage(
+					{ command: 'perform-url-check', text: linkTarget },
+					'*'
+				);
+			}
 		}
-	});
+	}
 </script>
