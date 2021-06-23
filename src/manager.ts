@@ -42,7 +42,10 @@ export class Manager extends Disposable {
 	private set _serverWSPort(portNum: number) {
 		this._server.ws_port = portNum;
 	}
-	constructor(private readonly _extensionUri: vscode.Uri, private readonly _reporter: TelemetryReporter | undefined) {
+	constructor(
+		private readonly _extensionUri: vscode.Uri,
+		private readonly _reporter: TelemetryReporter
+	) {
 		super();
 		this._server = this._register(new Server(_extensionUri, _reporter));
 		this._serverPort = SettingUtil.GetConfig(_extensionUri).portNum;
@@ -229,7 +232,7 @@ export class Manager extends Disposable {
 		/* __GDPR__
 			"preview.fileOutOfWorkspace" : {}
 		*/
-		this._reporter?.sendTelemetryEvent("preview.fileOutOfWorkspace");
+		this._reporter.sendTelemetryEvent('preview.fileOutOfWorkspace');
 		if (
 			!this._notifiedAboutLooseFiles &&
 			SettingUtil.GetConfig(this._extensionUri).notifyOnOpenLooseFile

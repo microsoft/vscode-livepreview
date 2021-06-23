@@ -27,7 +27,7 @@ export class Server extends Disposable {
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
-		private readonly _reporter: TelemetryReporter | undefined
+		private readonly _reporter: TelemetryReporter
 	) {
 		super();
 		this._httpServer = this._register(new HttpServer(_extensionUri, _reporter));
