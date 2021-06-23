@@ -15,7 +15,7 @@
 			console.log(error);
 		};
 
-		connection.onmessage = (e) => handleSocketMessage(e);
+		connection.onmessage = (event) => handleSocketMessage(event.data);
 
 		document.addEventListener('DOMContentLoaded', function (e) {
 			vscode.postMessage({
@@ -58,7 +58,7 @@
 	}
 
 	function handleSocketMessage(data) {
-		const parsedMessage = JSON.parse(e.data);
+		const parsedMessage = JSON.parse(data);
 		switch (parsedMessage.command) {
 			case 'foundNonInjectable':
 				// if the file we went to is not injectable, make sure to add it to history manually

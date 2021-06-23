@@ -8,7 +8,7 @@
 		console.log(error);
 	};
 
-	connection.onmessage = (event) => handleSocketMessage(event);
+	connection.onmessage = (event) => handleSocketMessage(event.data);
 
 	window.addEventListener(
 		'message',
