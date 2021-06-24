@@ -50,11 +50,16 @@ export class Manager extends Disposable {
 	) {
 		super();
 		this._endpointManager = this._register(new EndpointManager());
-		this._server = this._register(new Server(_extensionUri, this._endpointManager, _reporter));
+		this._server = this._register(
+			new Server(_extensionUri, this._endpointManager, _reporter)
+		);
 		this._serverPort = SettingUtil.GetConfig(_extensionUri).portNum;
 		this._serverWSPort = SettingUtil.GetConfig(_extensionUri).portNum + 1;
 
-		this._serverTaskProvider = new ServerTaskProvider(this._reporter, this._endpointManager);
+		this._serverTaskProvider = new ServerTaskProvider(
+			this._reporter,
+			this._endpointManager
+		);
 		this._register(
 			vscode.tasks.registerTaskProvider(
 				ServerTaskProvider.CustomBuildScriptType,

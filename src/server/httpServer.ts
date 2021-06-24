@@ -87,10 +87,13 @@ export class HttpServer extends Disposable {
 		return true;
 	}
 
-	private serveStream(basePath:string, req: http.IncomingMessage, res: http.ServerResponse) {
-		
+	private serveStream(
+		basePath: string,
+		req: http.IncomingMessage,
+		res: http.ServerResponse
+	) {
 		if (!req || !req.url) {
-			this.reportAndReturn(500, req,res);
+			this.reportAndReturn(500, req, res);
 			return;
 		}
 
@@ -120,7 +123,7 @@ export class HttpServer extends Disposable {
 		if (fs.statSync(absoluteReadPath).isDirectory()) {
 			if (!URLPathName.endsWith('/')) {
 				const queries =
-				endOfPath == -1 ? '' : `${req.url.substring(endOfPath)}`;
+					endOfPath == -1 ? '' : `${req.url.substring(endOfPath)}`;
 				res.setHeader('Location', `${URLPathName}/${queries}`);
 				this.reportAndReturn(302, req, res); // redirect
 				return;
@@ -145,7 +148,7 @@ export class HttpServer extends Disposable {
 
 		if (stream) {
 			stream.on('error', () => {
-				this.reportAndReturn(500, req,res);
+				this.reportAndReturn(500, req, res);
 				return;
 			});
 
@@ -161,7 +164,7 @@ export class HttpServer extends Disposable {
 			res.writeHead(200, { 'Content-Type': contentType });
 			stream.pipe(res);
 		} else {
-			this.reportAndReturn(500, req,res);
+			this.reportAndReturn(500, req, res);
 			return;
 		}
 
@@ -170,10 +173,16 @@ export class HttpServer extends Disposable {
 	}
 
 	private createServer(basePath: string) {
-		return http.createServer((req, res) => this.serveStream(basePath,req,res));
+		return http.createServer((req, res) =>
+			this.serveStream(basePath, req, res)
+		);
 	}
-	
-	private reportAndReturn(status: number, req: http.IncomingMessage, res: http.ServerResponse) {
+
+	private reportAndReturn(
+		status: number,
+		req: http.IncomingMessage,
+		res: http.ServerResponse
+	) {
 		res.writeHead(status);
 		this.reportStatus(req, res);
 		res.end();

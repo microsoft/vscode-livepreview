@@ -32,9 +32,14 @@ export class ServerTaskProvider
 		new vscode.EventEmitter<void>()
 	);
 
-	constructor(private readonly _reporter: TelemetryReporter, endpointManager: EndpointManager) {
+	constructor(
+		private readonly _reporter: TelemetryReporter,
+		endpointManager: EndpointManager
+	) {
 		super();
-		this._terminalLinkProvider = this._register(new serverTaskLinkProvider('',_reporter, endpointManager));
+		this._terminalLinkProvider = this._register(
+			new serverTaskLinkProvider('', _reporter, endpointManager)
+		);
 	}
 
 	public get terminalName() {

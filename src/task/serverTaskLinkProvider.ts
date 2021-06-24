@@ -1,22 +1,28 @@
-import { Disposable } from "../utils/dispose";
+import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
-import TelemetryReporter from "vscode-extension-telemetry";
-import { PathUtil } from "../utils/pathUtil";
-import { EndpointManager } from "../server/serverUtils/endpointManager";
-import { HOST } from "../utils/constants";
-import { URL } from "url";
-export class serverTaskLinkProvider extends Disposable implements vscode.TerminalLinkProvider {
+import TelemetryReporter from 'vscode-extension-telemetry';
+import { PathUtil } from '../utils/pathUtil';
+import { EndpointManager } from '../server/serverUtils/endpointManager';
+import { HOST } from '../utils/constants';
+import { URL } from 'url';
+export class serverTaskLinkProvider
+	extends Disposable
+	implements vscode.TerminalLinkProvider
+{
 	public terminalName;
 
-	constructor(terminalName:string, private readonly _reporter: TelemetryReporter,
-		private readonly _endpointManager: EndpointManager) {
+	constructor(
+		terminalName: string,
+		private readonly _reporter: TelemetryReporter,
+		private readonly _endpointManager: EndpointManager
+	) {
 		super();
 		this.terminalName = terminalName;
 		vscode.window.registerTerminalLinkProvider(this);
 	}
 
 	private isPtyTerm(terminal: string) {
-		return this.terminalName = terminal;
+		return (this.terminalName = terminal);
 	}
 	async provideTerminalLinks(
 		context: vscode.TerminalLinkContext,
@@ -29,13 +35,13 @@ export class serverTaskLinkProvider extends Disposable implements vscode.Termina
 		) {
 			return links;
 		}
-	
+
 		this.findFullLinkRegex(context.line, links);
 		this.findPathnameRegex(context.line, links);
 		return links;
 	}
 
-	async handleTerminalLink (link: any) {
+	async handleTerminalLink(link: any) {
 		/* __GDPR__
 			"task.terminal.handleTerminalLink" : {}
 		*/
@@ -50,10 +56,7 @@ export class serverTaskLinkProvider extends Disposable implements vscode.Termina
 		}
 	}
 
-	private findPathnameRegex(
-		input: string,
-		links: Array<vscode.TerminalLink>
-	) {
+	private findPathnameRegex(input: string, links: Array<vscode.TerminalLink>) {
 		// match relative links
 		const partialLinkRegex = new RegExp(
 			`(?<=\\s)\\/([/(\\w%\\-.)]*)\\?*[\\w=]*`,
@@ -82,18 +85,15 @@ export class serverTaskLinkProvider extends Disposable implements vscode.Termina
 			}
 		} while (partialLinkMatches);
 	}
-	
-	private openRelativeLinkInWorkspace(
-		file: string,
-		isDir: boolean
-	) {
+
+	private openRelativeLinkInWorkspace(file: string, isDir: boolean) {
 		const isWorkspaceFile = PathUtil.PathExistsRelativeToWorkspace(file);
 		const fullPath = isWorkspaceFile
 			? PathUtil.GetWorkspace()?.uri + file
 			: 'file:///' + this._endpointManager.decodeLooseFileEndpoint(file);
-	
+
 		const uri = vscode.Uri.parse(fullPath);
-	
+
 		if (isDir) {
 			if (!isWorkspaceFile) {
 				vscode.window.showErrorMessage(
@@ -106,15 +106,12 @@ export class serverTaskLinkProvider extends Disposable implements vscode.Termina
 		}
 	}
 
-	private findFullLinkRegex(
-		input: string,
-		links: Array<vscode.TerminalLink>
-	) {
+	private findFullLinkRegex(input: string, links: Array<vscode.TerminalLink>) {
 		const fullLinkRegex = new RegExp(
 			`\\b\\w{2,20}:\\/\\/(?:localhost|${HOST}|:\\d{2,5})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
 			'g'
 		);
-	
+
 		let fullURLMatches;
 		do {
 			fullURLMatches = fullLinkRegex.exec(input);
@@ -135,5 +132,4 @@ export class serverTaskLinkProvider extends Disposable implements vscode.Termina
 			}
 		} while (fullURLMatches);
 	}
-
 }

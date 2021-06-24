@@ -35,9 +35,7 @@ export class Server extends Disposable {
 		this._httpServer = this._register(
 			new HttpServer(_extensionUri, reporter, _endpointManager)
 		);
-		this._wsServer = this._register(
-			new WSServer(reporter, _endpointManager)
-		);
+		this._wsServer = this._register(new WSServer(reporter, _endpointManager));
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 		this._workspacePath = PathUtil.GetWorkspacePath();
 
