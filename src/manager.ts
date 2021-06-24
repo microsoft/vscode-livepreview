@@ -177,6 +177,10 @@ export class Manager extends Disposable {
 		return this._serverTaskProvider.terminalName == terminalName;
 	}
 
+	public DecodeEndpointPath(file: string) {
+		return this._server.decodeEndpoint(file);
+	}
+
 	public openServer(fromTask = false): boolean {
 		if (!this._server.isRunning) {
 			return this._server.openServer(this._serverPort);
@@ -220,7 +224,7 @@ export class Manager extends Disposable {
 		if (!relative) {
 			if (!this._server.canGetPath(file)) {
 				this.notifyLooseFileOpen();
-				file = PathUtil.EncodeLooseFilePath(file);
+				file = this._server.encodeEndpoint(file);
 			} else {
 				file = this._server.getFileRelativeToWorkspace(file);
 			}

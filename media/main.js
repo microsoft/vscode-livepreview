@@ -10,7 +10,8 @@
 	onLoad();
 
 	function onLoad() {
-		updateState(window.location.pathname);
+		// console.log("from init");
+		// updateState(window.location.pathname);
 
 		connection.onerror = (error) => {
 			console.log('WebSocket error: ');
@@ -43,6 +44,7 @@
 	}
 
 	function updateState(pathname) {
+		console.log("updating state " + pathname);
 		vscode.setState({ currentAddress: pathname });
 	}
 
@@ -97,6 +99,7 @@
 					text: message.text,
 				});
 				setURLBar(msgJSON.fullPath.href);
+				console.log("update-path");
 				updateState(msgJSON.pathname);
 				break;
 			}
@@ -118,6 +121,7 @@
 			case 'set-url': {
 				msgJSON = JSON.parse(message.text);
 				setURLBar(msgJSON.fullPath);
+				console.log("set-url");
 				updateState(msgJSON.pathname);
 				break;
 			}

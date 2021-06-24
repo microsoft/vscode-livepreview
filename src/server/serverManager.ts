@@ -12,6 +12,7 @@ import { DONT_SHOW_AGAIN } from '../utils/constants';
 import { serverMsg } from '../manager';
 import { PathUtil } from '../utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
+import { EndpointManager } from './serverUtils/endpointManager';
 
 export interface PortInfo {
 	port?: number;
@@ -22,16 +23,30 @@ export class Server extends Disposable {
 	private readonly _httpServer: HttpServer;
 	private readonly _wsServer: WSServer;
 	private readonly _statusBar: StatusBarNotifier;
+	private readonly _endpointManager: EndpointManager;
 	private _isServerOn = false;
 	private _workspacePath: string | undefined;
 
+	public encodeEndpoint(location: string): string {
+		return this._endpointManager.encodeLooseFileEndpoint(location);
+	}
+
+	public decodeEndpoint(location: string): string | undefined {
+		return this._endpointManager.decodeLooseFileEndpoint(location);
+	}
+
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
-		private readonly _reporter: TelemetryReporter
+		reporter: TelemetryReporter
 	) {
 		super();
-		this._httpServer = this._register(new HttpServer(_extensionUri, _reporter));
-		this._wsServer = this._register(new WSServer(_reporter));
+		this._endpointManager = this._register(new EndpointManager());
+		this._httpServer = this._register(
+			new HttpServer(_extensionUri, reporter, this._endpointManager)
+		);
+		this._wsServer = this._register(
+			new WSServer(reporter, this._endpointManager)
+		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 		this._workspacePath = PathUtil.GetWorkspacePath();
 

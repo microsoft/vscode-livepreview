@@ -11,6 +11,13 @@
 		"type": "git",
 		"url": "https://github.com/microsoft/vscode-liveserver"
 	},
+	"capabilities": {
+	  "virtualWorkspaces": false,
+	  "untrustedWorkspaces": {
+		"supported": false,
+		"description": "Live Server runs a server to host workspace files."
+	  }
+	},
 	"engines": {
 		"vscode": "^1.56.0"
 	},
