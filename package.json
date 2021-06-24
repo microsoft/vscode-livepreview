@@ -1,8 +1,8 @@
 {
 	"name": "live-server",
-	"displayName": "Live Server - Insiders",
+	"displayName": "Live Preview - Insiders",
 	"description": "Hosts a local server in your workspace for you to preview your webpages.",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"preview": true,
 	"aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
 	"publisher": "ms-vscode",
@@ -15,7 +15,7 @@
 	  "virtualWorkspaces": false,
 	  "untrustedWorkspaces": {
 		"supported": false,
-		"description": "Live Server runs a server to host workspace files."
+		"description": "Live Preview runs a server to host workspace files."
 	  }
 	},
 	"engines": {
@@ -30,108 +30,108 @@
 	"activationEvents": [
 		"workspaceContains:**/*.html",
 		"onWebviewPanel:browserPreview",
-		"onCommand:LiveServer.start.preview.atIndex",
-		"onCommand:LiveServer.start.preview.atFile",
-		"onCommand:LiveServer.start.externalPreview.atIndex",
-		"onCommand:LiveServer.start.internalPreview.atIndex",
-		"onCommand:LiveServer.start.externalPreview.atFile",
-		"onCommand:LiveServer.start.internalPreview.atFile",
-		"onCommand:LiveServer.end"
+		"onCommand:LivePreview.start.preview.atIndex",
+		"onCommand:LivePreview.start.preview.atFile",
+		"onCommand:LivePreview.start.externalPreview.atIndex",
+		"onCommand:LivePreview.start.internalPreview.atIndex",
+		"onCommand:LivePreview.start.externalPreview.atFile",
+		"onCommand:LivePreview.start.internalPreview.atFile",
+		"onCommand:LivePreview.end"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "LiveServer.start.preview.atIndex",
-				"title": "Live Server: Show Preview at Index Page"
+				"command": "LivePreview.start.preview.atIndex",
+				"title": "Show Preview at Index Page"
 			},
 			{
-				"command": "LiveServer.start.preview.atFile",
-				"title": "Live Server: Show Preview",
+				"command": "LivePreview.start.preview.atFile",
+				"title": "Show Preview",
 				"icon": "$(open-preview)"
 			},
 			{
-				"command": "LiveServer.start.externalPreview.atIndex",
-				"title": "Live Server: Show Preview at Index (External Browser)"
+				"command": "LivePreview.start.externalPreview.atIndex",
+				"title": "Show Preview at Index (External Browser)"
 			},
 			{
-				"command": "LiveServer.start.internalPreview.atIndex",
-				"title": "Live Server: Show Preview at Index (Internal Browser)"
+				"command": "LivePreview.start.internalPreview.atIndex",
+				"title": "Show Preview at Index (Internal Browser)"
 			},
 			{
-				"command": "LiveServer.start.externalPreview.atFile",
-				"title": "Live Server: Show Preview (External Browser)"
+				"command": "LivePreview.start.externalPreview.atFile",
+				"title": "Show Preview (External Browser)"
 			},
 			{
-				"command": "LiveServer.start.internalPreview.atFile",
-				"title": "Live Server: Show Preview (Internal Browser)"
+				"command": "LivePreview.start.internalPreview.atFile",
+				"title": "Show Preview (Internal Browser)"
 			},
 			{
-				"command": "LiveServer.end",
-				"title": "Live Server: Force Stop Development Server"
+				"command": "LivePreview.end",
+				"title": "Force Stop Live Preview Server"
 			}
 		],
 		"menus": {
 			"editor/title": [
 				{
-					"command": "LiveServer.start.preview.atFile",
+					"command": "LivePreview.start.preview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "navigation"
 				}
 			],
 			"explorer/context": [
 				{
-					"command": "LiveServer.start.preview.atFile",
+					"command": "LivePreview.start.preview.atFile",
 					"when": "resourceLangId == html",
 					"group": "1_liveserver"
 				}
 			],
 			"commandPalette": [
 				{
-					"command": "LiveServer.start.preview.atFile",
+					"command": "LivePreview.start.preview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "navigation"
 				},
 				{
-					"command": "LiveServer.start.internalPreview.atFile",
+					"command": "LivePreview.start.internalPreview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "navigation"
 				},
 				{
-					"command": "LiveServer.start.externalPreview.atFile",
+					"command": "LivePreview.start.externalPreview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "navigation"
 				}
 			]
 		},
 		"configuration": {
-			"title": "Live Server",
+			"title": "Live Preview",
 			"properties": {
-				"LiveServer.portNum": {
+				"LivePreview.portNum": {
 					"type": "number",
 					"default": 3000,
 					"minimum": 0,
 					"maximum": 65535,
-					"description": "Which local port the live server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port."
+					"description": "Which local port the live preview's server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port."
 				},
-				"LiveServer.serverKeepAliveAfterEmbeddedPreviewClose": {
+				"LivePreview.serverKeepAliveAfterEmbeddedPreviewClose": {
 					"type": "number",
 					"default": 3,
 					"minimum": 0,
 					"maximum": 20,
 					"description": "How many minutes after closing the embedded preview you want the server to shut off. Set to 0 to have server stay on indefinetely."
 				},
-				"LiveServer.showStatusBarItem": {
+				"LivePreview.showStatusBarItem": {
 					"type": "boolean",
 					"default": true,
 					"description": "Whether to show the current hosting port when server is open on the status bar."
 				},
-				"LiveServer.showServerStatusPopUps": {
+				"LivePreview.showServerStatusPopUps": {
 					"type": "boolean",
 					"default": false,
 					"description": "Whether or not to show information messages on server on/off status change."
 				},
-				"LiveServer.autoRefreshPreview": {
+				"LivePreview.autoRefreshPreview": {
 					"enum": [
 						"On All Changes in Editor",
 						"On Changes to Saved Files",
@@ -140,7 +140,7 @@
 					"default": "On All Changes in Editor",
 					"description": "How often to automatically refresh the preview."
 				},
-				"LiveServer.openPreviewTarget": {
+				"LivePreview.openPreviewTarget": {
 					"enum": [
 						"Embedded Preview",
 						"External Browser"
@@ -148,12 +148,12 @@
 					"default": "Embedded Preview",
 					"description": "Preferred target for previews."
 				},
-				"LiveServer.browserPreviewLaunchServerLogging": {
+				"LivePreview.browserPreviewLaunchServerLogging": {
 					"type": "boolean",
 					"default": true,
-					"description": "Upon running `Live Server: Show Preview in External Browser`, whether the auto-general terminal has logging."
+					"description": "Upon running `Show Preview in External Browser`, whether the auto-general terminal has logging."
 				},
-				"LiveServer.notifyOnOpenLooseFile": {
+				"LivePreview.notifyOnOpenLooseFile": {
 					"type": "boolean",
 					"default": true,
 					"description": "Whether to notify the user when opening a preview for a file that is not part of the currently opened workspace (or the workspace where the server is hosted)."
@@ -162,7 +162,7 @@
 		},
 		"taskDefinitions": [
 			{
-				"type": "Live Server",
+				"type": "Live Preview",
 				"required": [
 					"args"
 				],

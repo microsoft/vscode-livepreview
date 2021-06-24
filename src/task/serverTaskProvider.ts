@@ -23,7 +23,7 @@ export class ServerTaskProvider
 	extends Disposable
 	implements vscode.TaskProvider
 {
-	static CustomBuildScriptType = 'Live Server';
+	static CustomBuildScriptType = 'Live Preview';
 	private tasks: vscode.Task[] | undefined;
 	private _terminal: ServerTaskTerminal | undefined;
 	private _termName = '';

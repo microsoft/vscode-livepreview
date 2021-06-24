@@ -3,7 +3,11 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { Disposable } from '../../utils/dispose';
-import { FormatFileSize, FormatDateTime, isFileInjectable } from '../../utils/utils';
+import {
+	FormatFileSize,
+	FormatDateTime,
+	isFileInjectable,
+} from '../../utils/utils';
 import { HTMLInjector } from './HTMLInjector';
 import TelemetryReporter from 'vscode-extension-telemetry';
 
@@ -30,7 +34,7 @@ export class ContentLoader extends Disposable {
 		/* __GDPR__
 			"server.pageDoesNotExist" : {}
 		*/
-		this._reporter.sendTelemetryEvent("server.pageDoesNotExist");
+		this._reporter.sendTelemetryEvent('server.pageDoesNotExist');
 		// TODO: make look better
 		const htmlString = `
 		<!DOCTYPE html>
@@ -57,8 +61,8 @@ export class ContentLoader extends Disposable {
 		/* __GDPR__
 			"server.indexPage" : {}
 		*/
-		this._reporter.sendTelemetryEvent("server.indexPage");
-		
+		this._reporter.sendTelemetryEvent('server.indexPage');
+
 		const childFiles = fs.readdirSync(readPath);
 
 		const fileEntries = new Array<IndexFileEntry>();
@@ -163,7 +167,7 @@ export class ContentLoader extends Disposable {
 
 		if (i == workspaceDocuments.length) {
 			if (isFileInjectable(readPath)) {
-				const buffer = fs.readFileSync(readPath, "utf8");
+				const buffer = fs.readFileSync(readPath, 'utf8');
 				const injectedFileContents =
 					this.scriptInjector?.script + buffer.toString();
 				stream = Stream.Readable.from(injectedFileContents);

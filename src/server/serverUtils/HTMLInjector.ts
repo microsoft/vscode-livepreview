@@ -17,7 +17,7 @@ export class HTMLInjector extends Disposable {
 			'inject_script.html'
 		);
 		this.ws_port = ws_port;
-		const fileString = fs.readFileSync(scriptPath, "utf8").toString();
+		const fileString = fs.readFileSync(scriptPath, 'utf8').toString();
 		const placeHolderIndex = fileString.indexOf(WS_PORTNUM_PLACEHOLDER);
 		this._pre_port_script = fileString.substr(0, placeHolderIndex);
 		this._post_port_script = fileString.substr(

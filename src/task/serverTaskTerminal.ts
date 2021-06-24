@@ -109,7 +109,7 @@ export class ServerTaskTerminal
 		);
 		this.writeEmitter.fire(
 			this.colorTerminalString(
-				`Run 'Live Server: Force Stop Development Server' in the command palette to force close the server and close any previews.\r\n\r\n`,
+				`Run 'Force Stop Live Preview Server' in the command palette to force close the server and close any previews.\r\n\r\n`,
 				TerminalColor.yellow
 			)
 		);
