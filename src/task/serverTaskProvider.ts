@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { serverMsg } from '../manager';
+import { EndpointManager } from '../server/serverUtils/endpointManager';
 import { Disposable } from '../utils/dispose';
 import { PathUtil } from '../utils/pathUtil';
+import { serverTaskLinkProvider } from './serverTaskLinkProvider';
 import { ServerTaskTerminal } from './serverTaskTerminal';
 
 interface ServerTaskDefinition extends vscode.TaskDefinition {
@@ -25,12 +27,14 @@ export class ServerTaskProvider
 	private tasks: vscode.Task[] | undefined;
 	private _terminal: ServerTaskTerminal | undefined;
 	private _termName = '';
+	private _terminalLinkProvider: serverTaskLinkProvider;
 	private readonly _onRequestToOpenServerEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
 
-	constructor(private readonly _reporter: TelemetryReporter) {
+	constructor(private readonly _reporter: TelemetryReporter, endpointManager: EndpointManager) {
 		super();
+		this._terminalLinkProvider = this._register(new serverTaskLinkProvider('',_reporter, endpointManager));
 	}
 
 	public get terminalName() {
@@ -158,6 +162,7 @@ export class ServerTaskProvider
 
 				this._terminal = new ServerTaskTerminal(args, this._reporter);
 				this._termName = termName;
+				this._terminalLinkProvider.terminalName = termName;
 				this._terminal.onRequestToOpenServer((e) => {
 					this._onRequestToOpenServerEmitter.fire(e);
 				});

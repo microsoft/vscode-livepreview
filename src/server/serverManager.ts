@@ -23,29 +23,20 @@ export class Server extends Disposable {
 	private readonly _httpServer: HttpServer;
 	private readonly _wsServer: WSServer;
 	private readonly _statusBar: StatusBarNotifier;
-	private readonly _endpointManager: EndpointManager;
 	private _isServerOn = false;
 	private _workspacePath: string | undefined;
 
-	public encodeEndpoint(location: string): string {
-		return this._endpointManager.encodeLooseFileEndpoint(location);
-	}
-
-	public decodeEndpoint(location: string): string | undefined {
-		return this._endpointManager.decodeLooseFileEndpoint(location);
-	}
-
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
+		private readonly _endpointManager: EndpointManager,
 		reporter: TelemetryReporter
 	) {
 		super();
-		this._endpointManager = this._register(new EndpointManager());
 		this._httpServer = this._register(
-			new HttpServer(_extensionUri, reporter, this._endpointManager)
+			new HttpServer(_extensionUri, reporter, _endpointManager)
 		);
 		this._wsServer = this._register(
-			new WSServer(reporter, this._endpointManager)
+			new WSServer(reporter, _endpointManager)
 		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 		this._workspacePath = PathUtil.GetWorkspacePath();

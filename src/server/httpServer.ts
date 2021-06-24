@@ -8,7 +8,6 @@ import { HTMLInjector } from './serverUtils/HTMLInjector';
 import { HOST } from '../utils/constants';
 import { serverMsg } from '../manager';
 import { isFileInjectable } from '../utils/utils';
-import { PathUtil } from '../utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from './serverUtils/endpointManager';
 

@@ -212,40 +212,8 @@ export function activate(context: vscode.ExtensionContext) {
 			},
 		});
 	}
-
-	vscode.window.registerTerminalLinkProvider({
-
-	});
 }
-export function findFullLinkRegex(
-	input: string,
-	links: Array<vscode.TerminalLink>
-) {
-	const fullLinkRegex = new RegExp(
-		`\\b\\w{2,20}:\\/\\/(?:localhost|${HOST}|:\\d{2,5})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
-		'g'
-	);
 
-	let fullURLMatches;
-	do {
-		fullURLMatches = fullLinkRegex.exec(input);
-		if (fullURLMatches) {
-			for (let i = 0; i < fullURLMatches.length; i++) {
-				if (fullURLMatches[i]) {
-					const url = new URL(fullURLMatches[i]);
-					const tl = {
-						startIndex: fullURLMatches.index,
-						length: fullURLMatches[i].length,
-						tooltip: `Open in Preview `,
-						data: url.pathname + url.search,
-						inEditor: false,
-					};
-					links.push(tl);
-				}
-			}
-		}
-	} while (fullURLMatches);
-}
 
 export function deactivate(): void {
 	reporter.dispose();
