@@ -167,7 +167,7 @@ export class Manager extends Disposable {
 				return;
 			}
 		}
-		file = this.transformNonRelativeFile(relative, file);
+		file = this.transformNonRelativeFile(relative, file).replace(/\\/g, '/');
 
 		const uri = vscode.Uri.parse(`http://${HOST}:${this._serverPort}${file}`);
 		vscode.env.openExternal(uri);

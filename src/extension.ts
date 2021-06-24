@@ -313,7 +313,11 @@ export function findPathnameRegex(
 	} while (partialLinkMatches);
 }
 
-export function openRelativeLinkInWorkspace(file: string, isDir: boolean, manager: Manager) {
+export function openRelativeLinkInWorkspace(
+	file: string,
+	isDir: boolean,
+	manager: Manager
+) {
 	const isWorkspaceFile = PathUtil.PathExistsRelativeToWorkspace(file);
 	const fullPath = isWorkspaceFile
 		? PathUtil.GetWorkspace()?.uri + file
