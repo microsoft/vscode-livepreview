@@ -39,8 +39,7 @@
 			window.location.reload();
 		} else if (event.data == 'setup-parent-listener') {
 			commandPayload = {
-				pathname: window.location.pathname,
-				fullPath: window.location,
+				path: window.location,
 				title: document.title,
 			};
 			window.parent.postMessage(
@@ -55,8 +54,7 @@
 
 	function onLoad() {
 		commandPayload = {
-			pathname: window.location.pathname,
-			fullPath: window.location,
+			path: window.location,
 			title: document.title,
 		};
 		window.parent.postMessage(
