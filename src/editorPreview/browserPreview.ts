@@ -81,7 +81,7 @@ export class BrowserPreview extends Disposable {
 						return;
 					case 'update-path': {
 						const msgJSON = JSON.parse(message.text);
-						this.handleNewPageLoad(msgJSON.pathname, msgJSON.title);
+						this.handleNewPageLoad(msgJSON.path.pathname, msgJSON.title);
 						return;
 					}
 					case 'go-back':

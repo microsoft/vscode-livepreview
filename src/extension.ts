@@ -65,7 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
 		isRelative: boolean
 	) => {
 		if (internal) {
-			manager.createOrShowPreview(undefined, file, isRelative);
+			manager.createOrShowEmbeddedPreview(undefined, file, isRelative);
 		} else {
 			manager.showPreviewInBrowser(file, false);
 		}
@@ -134,7 +134,7 @@ export function activate(context: vscode.ExtensionContext) {
 					type: 'internal',
 					location: 'atIndex',
 				});
-				manager.createOrShowPreview();
+				manager.createOrShowEmbeddedPreview();
 			}
 		)
 	);
@@ -208,131 +208,12 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 				// Reset the webview options so we use latest uri for `localResourceRoots`.
 				webviewPanel.webview.options = getWebviewOptions(context.extensionUri);
-				manager.createOrShowPreview(webviewPanel, file);
+				manager.createOrShowEmbeddedPreview(webviewPanel, file);
 			},
 		});
 	}
-
-	vscode.window.registerTerminalLinkProvider({
-		provideTerminalLinks: (
-			context: vscode.TerminalLinkContext,
-			token: vscode.CancellationToken
-		) => {
-			const links = new Array<vscode.TerminalLink>();
-			if (
-				!context.terminal.creationOptions.name ||
-				!manager.isPtyTerm(context.terminal.creationOptions.name)
-			) {
-				return links;
-			}
-
-			findFullLinkRegex(context.line, links);
-			findPathnameRegex(context.line, links);
-			return links;
-		},
-		handleTerminalLink: (link: any) => {
-			/* __GDPR__
-				"task.terminal.handleTerminalLink" : {}
-			*/
-			reporter.sendTelemetryEvent('task.terminal.handleTerminalLink');
-			if (link.inEditor) {
-				openRelativeLinkInWorkspace(link.data, link.isDir, manager);
-			} else {
-				vscode.commands.executeCommand(
-					'LiveServer.start.preview.atFile',
-					link.data
-				);
-			}
-		},
-	});
-}
-export function findFullLinkRegex(
-	input: string,
-	links: Array<vscode.TerminalLink>
-) {
-	const fullLinkRegex = new RegExp(
-		`\\b\\w{2,20}:\\/\\/(?:localhost|${HOST}|:\\d{2,5})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
-		'g'
-	);
-
-	let fullURLMatches;
-	do {
-		fullURLMatches = fullLinkRegex.exec(input);
-		if (fullURLMatches) {
-			for (let i = 0; i < fullURLMatches.length; i++) {
-				if (fullURLMatches[i]) {
-					const url = new URL(fullURLMatches[i]);
-					const tl = {
-						startIndex: fullURLMatches.index,
-						length: fullURLMatches[i].length,
-						tooltip: `Open in Preview `,
-						data: url.pathname + url.search,
-						inEditor: false,
-					};
-					links.push(tl);
-				}
-			}
-		}
-	} while (fullURLMatches);
 }
 
 export function deactivate(): void {
 	reporter.dispose();
-}
-
-export function findPathnameRegex(
-	input: string,
-	links: Array<vscode.TerminalLink>
-) {
-	// match relative links
-	const partialLinkRegex = new RegExp(
-		`(?<=\\s)\\/([/(\\w%\\-.)]*)\\?*[\\w=]*`,
-		'g'
-	);
-	let partialLinkMatches;
-	do {
-		partialLinkMatches = partialLinkRegex.exec(input);
-		if (partialLinkMatches) {
-			for (let i = 0; i < partialLinkMatches.length; i++) {
-				if (partialLinkMatches[i]) {
-					const link = partialLinkMatches[i];
-					const isDir = link.endsWith('/');
-					const tooltip = isDir ? 'Reveal Folder ' : 'Open File ';
-					const tl = {
-						startIndex: partialLinkMatches.index,
-						length: partialLinkMatches[i].length,
-						tooltip: tooltip,
-						data: link,
-						inEditor: true,
-						isDir: isDir,
-					};
-					links.push(tl);
-				}
-			}
-		}
-	} while (partialLinkMatches);
-}
-
-export function openRelativeLinkInWorkspace(
-	file: string,
-	isDir: boolean,
-	manager: Manager
-) {
-	const isWorkspaceFile = PathUtil.PathExistsRelativeToWorkspace(file);
-	const fullPath = isWorkspaceFile
-		? PathUtil.GetWorkspace()?.uri + file
-		: 'file:///' + manager.DecodeEndpointPath(file);
-
-	const uri = vscode.Uri.parse(fullPath);
-
-	if (isDir) {
-		if (!isWorkspaceFile) {
-			vscode.window.showErrorMessage(
-				'Cannot reveal folder. It is not in the open workspace.'
-			);
-		}
-		vscode.commands.executeCommand('revealInExplorer', uri);
-	} else {
-		vscode.commands.executeCommand('vscode.open', uri);
-	}
 }

@@ -14,6 +14,7 @@ import {
 	SettingUtil,
 } from './utils/settingsUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
+import { EndpointManager } from './server/serverUtils/endpointManager';
 
 export interface serverMsg {
 	method: string;
@@ -28,6 +29,7 @@ export class Manager extends Disposable {
 	private _previewActive = false;
 	private _currentTimeout: NodeJS.Timeout | undefined;
 	private _notifiedAboutLooseFiles = false;
+	private _endpointManager: any;
 	// always leave off at previous port numbers to avoid retrying on many busy ports
 
 	private get _serverPort() {
@@ -47,11 +49,17 @@ export class Manager extends Disposable {
 		private readonly _reporter: TelemetryReporter
 	) {
 		super();
-		this._server = this._register(new Server(_extensionUri, _reporter));
+		this._endpointManager = this._register(new EndpointManager());
+		this._server = this._register(
+			new Server(_extensionUri, this._endpointManager, _reporter)
+		);
 		this._serverPort = SettingUtil.GetConfig(_extensionUri).portNum;
 		this._serverWSPort = SettingUtil.GetConfig(_extensionUri).portNum + 1;
 
-		this._serverTaskProvider = new ServerTaskProvider(this._reporter);
+		this._serverTaskProvider = new ServerTaskProvider(
+			this._reporter,
+			this._endpointManager
+		);
 		this._register(
 			vscode.tasks.registerTaskProvider(
 				ServerTaskProvider.CustomBuildScriptType,
@@ -116,7 +124,7 @@ export class Manager extends Disposable {
 		});
 	}
 
-	public createOrShowPreview(
+	public createOrShowEmbeddedPreview(
 		panel: vscode.WebviewPanel | undefined = undefined,
 		file = '/',
 		relative = true
@@ -173,12 +181,12 @@ export class Manager extends Disposable {
 		vscode.env.openExternal(uri);
 	}
 
-	public isPtyTerm(terminalName: string) {
-		return this._serverTaskProvider.terminalName == terminalName;
+	public encodeEndpoint(location: string): string {
+		return this._endpointManager.encodeLooseFileEndpoint(location);
 	}
 
-	public DecodeEndpointPath(file: string) {
-		return this._server.decodeEndpoint(file);
+	public decodeEndpoint(location: string): string | undefined {
+		return this._endpointManager.decodeLooseFileEndpoint(location);
 	}
 
 	public openServer(fromTask = false): boolean {
@@ -224,7 +232,7 @@ export class Manager extends Disposable {
 		if (!relative) {
 			if (!this._server.canGetPath(file)) {
 				this.notifyLooseFileOpen();
-				file = this._server.encodeEndpoint(file);
+				file = this.encodeEndpoint(file);
 			} else {
 				file = this._server.getFileRelativeToWorkspace(file);
 			}

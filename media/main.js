@@ -10,8 +10,6 @@
 	onLoad();
 
 	function onLoad() {
-		// console.log("from init");
-		// updateState(window.location.pathname);
 
 		connection.onerror = (error) => {
 			console.log('WebSocket error: ');
@@ -44,7 +42,6 @@
 	}
 
 	function updateState(pathname) {
-		console.log("updating state " + pathname);
 		vscode.setState({ currentAddress: pathname });
 	}
 
@@ -98,9 +95,8 @@
 					command: 'update-path',
 					text: message.text,
 				});
-				setURLBar(msgJSON.fullPath.href);
-				console.log("update-path");
-				updateState(msgJSON.pathname);
+				setURLBar(msgJSON.path.href);
+				updateState(msgJSON.path.pathname);
 				break;
 			}
 			// from child iframe
