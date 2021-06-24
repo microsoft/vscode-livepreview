@@ -50,7 +50,7 @@ export class serverTaskLinkProvider
 			this.openRelativeLinkInWorkspace(link.data, link.isDir);
 		} else {
 			vscode.commands.executeCommand(
-				'LiveServer.start.preview.atFile',
+				'LivePreview.start.preview.atFile',
 				link.data
 			);
 		}
