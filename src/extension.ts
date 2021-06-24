@@ -195,7 +195,11 @@ export function activate(context: vscode.ExtensionContext) {
 				webviewPanel: vscode.WebviewPanel,
 				state: any
 			) {
-				const file = state.currentAddress ?? '/';
+				let file = state.currentAddress ?? '/';
+
+				if (!PathUtil.PathExistsRelativeToWorkspace(file)) {
+					file = '/';
+				}
 				// Reset the webview options so we use latest uri for `localResourceRoots`.
 				webviewPanel.webview.options = getWebviewOptions(context.extensionUri);
 				manager.createOrShowPreview(webviewPanel, file);
@@ -226,7 +230,7 @@ export function activate(context: vscode.ExtensionContext) {
 			*/
 			reporter.sendTelemetryEvent('task.terminal.handleTerminalLink');
 			if (link.inEditor) {
-				openRelativeLinkInWorkspace(link.data, link.isDir);
+				openRelativeLinkInWorkspace(link.data, link.isDir, manager);
 			} else {
 				vscode.commands.executeCommand(
 					'LiveServer.start.preview.atFile',
@@ -303,13 +307,11 @@ export function findPathnameRegex(
 	} while (partialLinkMatches);
 }
 
-export function openRelativeLinkInWorkspace(file: string, isDir: boolean) {
-	const isWorkspaceFile = fs.existsSync(
-		PathUtil.GetWorkspace()?.uri.fsPath + file
-	);
+export function openRelativeLinkInWorkspace(file: string, isDir: boolean, manager: Manager) {
+	const isWorkspaceFile = PathUtil.PathExistsRelativeToWorkspace(file);
 	const fullPath = isWorkspaceFile
 		? PathUtil.GetWorkspace()?.uri + file
-		: 'file:///' + PathUtil.DecodeLooseFilePath(file);
+		: 'file:///' + manager.DecodeEndpointPath(file);
 
 	const uri = vscode.Uri.parse(fullPath);
 

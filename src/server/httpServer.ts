@@ -10,6 +10,7 @@ import { serverMsg } from '../manager';
 import { isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
+import { EndpointManager } from './serverUtils/endpointManager';
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -19,7 +20,8 @@ export class HttpServer extends Disposable {
 
 	constructor(
 		extensionUri: vscode.Uri,
-		private readonly _reporter: TelemetryReporter
+		private readonly _reporter: TelemetryReporter,
+		private readonly _endpointManager: EndpointManager
 	) {
 		super();
 		this._contentLoader = this._register(new ContentLoader(_reporter));
@@ -101,16 +103,13 @@ export class HttpServer extends Disposable {
 			let stream;
 
 			if (!fs.existsSync(absoluteReadPath)) {
-				const decodedReadPath = path.normalize(
-					PathUtil.DecodeLooseFilePath(URLPathName)
-				);
+				const decodedReadPath =
+					this._endpointManager.decodeLooseFileEndpoint(URLPathName);
 				looseFile = true;
-				if (fs.existsSync(decodedReadPath)) {
+				if (decodedReadPath && fs.existsSync(decodedReadPath)) {
 					absoluteReadPath = decodedReadPath;
 				} else {
-					stream = this._contentLoader.createPageDoesNotExist(
-						unescape(absoluteReadPath)
-					);
+					stream = this._contentLoader.createPageDoesNotExist(absoluteReadPath);
 					res.writeHead(404);
 					this.reportStatus(req, res);
 					stream.pipe(res);
@@ -137,7 +136,9 @@ export class HttpServer extends Disposable {
 					stream = this._contentLoader.createIndexPage(
 						absoluteReadPath,
 						URLPathName,
-						looseFile ? absoluteReadPath : undefined
+						looseFile
+							? this._endpointManager.getEndpointParent(URLPathName)
+							: undefined
 					);
 				}
 			} else {

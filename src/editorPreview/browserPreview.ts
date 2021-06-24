@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { HOST, INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
@@ -176,6 +177,8 @@ export class BrowserPreview extends Disposable {
 		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);
 		}
+		URLExt = URLExt.replace('\\', '/');
+		URLExt = URLExt.startsWith('/') ? URLExt.substr(1) : URLExt;
 		return `${this._host}/${URLExt}`;
 	}
 
