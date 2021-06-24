@@ -88,90 +88,96 @@ export class HttpServer extends Disposable {
 		return true;
 	}
 
-	private createServer(basePath: string) {
-		return http.createServer((req, res) => {
-			if (!req || !req.url) {
-				res.writeHead(500);
-				res.end();
+	private serveStream(basePath:string, req: http.IncomingMessage, res: http.ServerResponse) {
+		
+		if (!req || !req.url) {
+			this.reportAndReturn(500, req,res);
+			return;
+		}
+
+		const endOfPath = req.url.lastIndexOf('?');
+		const URLPathName =
+			endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
+
+		let looseFile = false;
+		let absoluteReadPath = path.join(basePath, URLPathName);
+		let stream;
+
+		if (!fs.existsSync(absoluteReadPath)) {
+			const decodedReadPath =
+				this._endpointManager.decodeLooseFileEndpoint(URLPathName);
+			looseFile = true;
+			if (decodedReadPath && fs.existsSync(decodedReadPath)) {
+				absoluteReadPath = decodedReadPath;
+			} else {
+				stream = this._contentLoader.createPageDoesNotExist(absoluteReadPath);
+				res.writeHead(404);
+				this.reportStatus(req, res);
+				stream.pipe(res);
 				return;
 			}
-			const endOfPath = req.url.lastIndexOf('?');
-			const URLPathName =
-				endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
-			let looseFile = false;
-			let absoluteReadPath = path.join(basePath, URLPathName);
-			let stream;
+		}
 
-			if (!fs.existsSync(absoluteReadPath)) {
-				const decodedReadPath =
-					this._endpointManager.decodeLooseFileEndpoint(URLPathName);
-				looseFile = true;
-				if (decodedReadPath && fs.existsSync(decodedReadPath)) {
-					absoluteReadPath = decodedReadPath;
-				} else {
-					stream = this._contentLoader.createPageDoesNotExist(absoluteReadPath);
-					res.writeHead(404);
-					this.reportStatus(req, res);
-					stream.pipe(res);
-					return;
-				}
+		if (fs.statSync(absoluteReadPath).isDirectory()) {
+			if (!URLPathName.endsWith('/')) {
+				const queries =
+				endOfPath == -1 ? '' : `${req.url.substring(endOfPath)}`;
+				res.setHeader('Location', `${URLPathName}/${queries}`);
+				this.reportAndReturn(302, req, res); // redirect
+				return;
 			}
-
-			if (fs.statSync(absoluteReadPath).isDirectory()) {
-				if (!URLPathName.endsWith('/')) {
-					const queries =
-						endOfPath == -1 ? '' : `${req.url.substring(endOfPath)}`;
-					res.setHeader('Location', `${URLPathName}/${queries}`);
-					res.writeHead(302); // redirect to use slash
-
-					this.reportStatus(req, res);
-					return res.end();
-				}
-				// Redirect to index.html if the request URL is a directory
-				if (fs.existsSync(path.join(absoluteReadPath, 'index.html'))) {
-					absoluteReadPath = path.join(absoluteReadPath, 'index.html');
-					stream = this._contentLoader.getFileStream(absoluteReadPath);
-				} else {
-					// create a default index page
-					stream = this._contentLoader.createIndexPage(
-						absoluteReadPath,
-						URLPathName,
-						looseFile
-							? this._endpointManager.getEndpointParent(URLPathName)
-							: undefined
-					);
-				}
-			} else {
+			// Redirect to index.html if the request URL is a directory
+			if (fs.existsSync(path.join(absoluteReadPath, 'index.html'))) {
+				absoluteReadPath = path.join(absoluteReadPath, 'index.html');
 				stream = this._contentLoader.getFileStream(absoluteReadPath);
-			}
-
-			if (stream) {
-				stream.on('error', () => {
-					res.writeHead(404);
-					this.reportStatus(req, res);
-					res.end();
-					return;
-				});
-
-				// explicitly set text/html for html files to allow for special character rendering
-				let contentType = 'charset=UTF-8';
-
-				if (
-					isFileInjectable(absoluteReadPath) ||
-					absoluteReadPath.endsWith('svg')
-				) {
-					contentType = 'text/html; ' + contentType;
-				}
-				res.writeHead(200, { 'Content-Type': contentType });
-				stream.pipe(res);
 			} else {
-				res.writeHead(500);
-				res.end();
+				// create a default index page
+				stream = this._contentLoader.createIndexPage(
+					absoluteReadPath,
+					URLPathName,
+					looseFile
+						? this._endpointManager.getEndpointParent(URLPathName)
+						: undefined
+				);
 			}
+		} else {
+			stream = this._contentLoader.getFileStream(absoluteReadPath);
+		}
 
-			this.reportStatus(req, res);
+		if (stream) {
+			stream.on('error', () => {
+				this.reportAndReturn(500, req,res);
+				return;
+			});
+
+			// explicitly set text/html for html files to allow for special character rendering
+			let contentType = 'charset=UTF-8';
+
+			if (
+				isFileInjectable(absoluteReadPath) ||
+				absoluteReadPath.endsWith('svg')
+			) {
+				contentType = 'text/html; ' + contentType;
+			}
+			res.writeHead(200, { 'Content-Type': contentType });
+			stream.pipe(res);
+		} else {
+			this.reportAndReturn(500, req,res);
 			return;
-		});
+		}
+
+		this.reportStatus(req, res);
+		return;
+	}
+
+	private createServer(basePath: string) {
+		return http.createServer((req, res) => this.serveStream(basePath,req,res));
+	}
+	
+	private reportAndReturn(status: number, req: http.IncomingMessage, res: http.ServerResponse) {
+		res.writeHead(status);
+		this.reportStatus(req, res);
+		res.end();
 	}
 
 	private reportStatus(req: http.IncomingMessage, res: http.ServerResponse) {

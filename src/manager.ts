@@ -116,7 +116,7 @@ export class Manager extends Disposable {
 		});
 	}
 
-	public createOrShowPreview(
+	public createOrShowEmbeddedPreview(
 		panel: vscode.WebviewPanel | undefined = undefined,
 		file = '/',
 		relative = true
@@ -173,9 +173,6 @@ export class Manager extends Disposable {
 		vscode.env.openExternal(uri);
 	}
 
-	public isPtyTerm(terminalName: string) {
-		return this._serverTaskProvider.terminalName == terminalName;
-	}
 
 	public DecodeEndpointPath(file: string) {
 		return this._server.decodeEndpoint(file);
