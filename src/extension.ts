@@ -67,7 +67,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (internal) {
 			manager.createOrShowEmbeddedPreview(undefined, file, isRelative);
 		} else {
-			manager.showPreviewInBrowser(file, false);
+			manager.showPreviewInBrowser(file, isRelative);
 		}
 	};
 
