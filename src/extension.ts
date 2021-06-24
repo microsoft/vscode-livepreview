@@ -200,6 +200,12 @@ export function activate(context: vscode.ExtensionContext) {
 				if (!PathUtil.PathExistsRelativeToWorkspace(file)) {
 					file = '/';
 				}
+
+				if (file == '/' && !PathUtil.GetWorkspace()) {
+					// root will not show anything, so cannot revive content. Dispose.
+					webviewPanel.dispose();
+					return;
+				}
 				// Reset the webview options so we use latest uri for `localResourceRoots`.
 				webviewPanel.webview.options = getWebviewOptions(context.extensionUri);
 				manager.createOrShowPreview(webviewPanel, file);
