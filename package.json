@@ -107,7 +107,7 @@
 		"configuration": {
 			"title": "Live Preview",
 			"properties": {
-				"LivePreview.portNum": {
+				"LivePreview.portNumber": {
 					"type": "number",
 					"default": 3000,
 					"minimum": 0,

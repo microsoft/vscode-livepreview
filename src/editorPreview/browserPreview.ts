@@ -146,20 +146,19 @@ export class BrowserPreview extends Disposable {
 		} else {
 			const uri = vscode.Uri.parse(givenURL);
 			vscode.window
-			.showInformationMessage(
-				`Externally hosted links are not supported in the embedded preview. Do you want to open ${givenURL} in an external browser?`,
-				{ modal: true },
-				OPEN_EXTERNALLY
-			)
-			.then((selection: vscode.MessageItem | undefined) => {
-				if (selection) {
-					if (selection === OPEN_EXTERNALLY) {
-						vscode.env.openExternal(uri);
+				.showInformationMessage(
+					`Externally hosted links are not supported in the embedded preview. Do you want to open ${givenURL} in an external browser?`,
+					{ modal: true },
+					OPEN_EXTERNALLY
+				)
+				.then((selection: vscode.MessageItem | undefined) => {
+					if (selection) {
+						if (selection === OPEN_EXTERNALLY) {
+							vscode.env.openExternal(uri);
+						}
 					}
-				}
-			});
+				});
 		}
-		
 
 		/* __GDPR__
 			"preview.openExternalBrowser" : {}

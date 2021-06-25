@@ -53,8 +53,8 @@ export class Manager extends Disposable {
 		this._server = this._register(
 			new Server(_extensionUri, this._endpointManager, _reporter)
 		);
-		this._serverPort = SettingUtil.GetConfig(_extensionUri).portNum;
-		this._serverWSPort = SettingUtil.GetConfig(_extensionUri).portNum + 1;
+		this._serverPort = SettingUtil.GetConfig(_extensionUri).portNumber;
+		this._serverWSPort = SettingUtil.GetConfig(_extensionUri).portNumber + 1;
 
 		this._serverTaskProvider = new ServerTaskProvider(
 			this._reporter,
@@ -110,12 +110,12 @@ export class Manager extends Disposable {
 		vscode.workspace.onDidChangeConfiguration((e) => {
 			if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
 				this._server.updateConfigurations();
-				const newPortNum = SettingUtil.GetConfig(this._extensionUri).portNum;
+				const newPortNum = SettingUtil.GetConfig(this._extensionUri).portNumber;
 				if (newPortNum != this._serverPort) {
 					if (!this._server.isRunning) {
 						this._serverPort = SettingUtil.GetConfig(
 							this._extensionUri
-						).portNum;
+						).portNumber;
 					} else {
 						this._serverPortNeedsUpdate = true;
 					}
@@ -216,7 +216,7 @@ export class Manager extends Disposable {
 			}
 
 			if (this._serverPortNeedsUpdate) {
-				this._serverPort = SettingUtil.GetConfig(this._extensionUri).portNum;
+				this._serverPort = SettingUtil.GetConfig(this._extensionUri).portNumber;
 				this._serverPortNeedsUpdate = false;
 			}
 			return true;
