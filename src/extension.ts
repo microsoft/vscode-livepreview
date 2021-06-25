@@ -1,10 +1,8 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { URL } from 'url';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
-import { EXTENSION_ID, HOST } from './utils/constants';
+import { EXTENSION_ID } from './utils/constants';
 import { SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
 import { PathUtil } from './utils/pathUtil';
 import { GetActiveFile } from './utils/utils';
@@ -103,7 +101,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
-			`${SETTINGS_SECTION_ID}.start.externalpreview.atIndex`,
+			`${SETTINGS_SECTION_ID}.start.externalPreview.atIndex`,
 			() => {
 				/* __GDPR__
 					"preview" :{

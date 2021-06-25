@@ -5,7 +5,6 @@ import * as path from 'path';
 import { URL } from 'url';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
-import { PathUtil } from '../utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from './serverUtils/endpointManager';
 
