@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { GO_TO_SETTINGS } from './constants';
 
 export interface LiveServerConfigItem {
-	portNum: number;
+	portNumber: number;
 	showStatusBarItem: boolean;
 	showServerStatusPopUps: boolean;
 	autoRefreshPreview: AutoRefreshPreview;
@@ -26,7 +26,7 @@ export enum OpenPreviewTarget {
 export const SETTINGS_SECTION_ID = 'LivePreview';
 
 export const Settings: any = {
-	portNum: 'portNum',
+	portNumber: 'portNumber',
 	showStatusBarItem: 'showStatusBarItem',
 	showServerStatusPopUps: 'showServerStatusPopUps',
 	autoRefreshPreview: 'autoRefreshPreview',
@@ -47,8 +47,8 @@ export class SettingUtil {
 			resource
 		);
 		return {
-			portNum: config.get<number>('portNum', 3000),
-			showStatusBarItem: config.get<boolean>('showStatusBarItem', true),
+			portNumber: config.get<number>(Settings.portNumber, 3000),
+			showStatusBarItem: config.get<boolean>(Settings.showStatusBarItem, true),
 			showServerStatusPopUps: config.get<boolean>(
 				Settings.showServerStatusPopUps,
 				false

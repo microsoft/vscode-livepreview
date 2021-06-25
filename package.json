@@ -43,7 +43,7 @@
 		"commands": [
 			{
 				"command": "LivePreview.start.preview.atIndex",
-				"title": "Show Preview at Index Page"
+				"title": "Show Web Preview at Index Page"
 			},
 			{
 				"command": "LivePreview.start.preview.atFile",
@@ -52,19 +52,19 @@
 			},
 			{
 				"command": "LivePreview.start.externalPreview.atIndex",
-				"title": "Show Preview at Index (External Browser)"
+				"title": "Show Web Preview at Index (External Browser)"
 			},
 			{
 				"command": "LivePreview.start.internalPreview.atIndex",
-				"title": "Show Preview at Index (Internal Browser)"
+				"title": "Show Web Preview at Index (Internal Browser)"
 			},
 			{
 				"command": "LivePreview.start.externalPreview.atFile",
-				"title": "Show Preview (External Browser)"
+				"title": "Show Web Preview (External Browser)"
 			},
 			{
 				"command": "LivePreview.start.internalPreview.atFile",
-				"title": "Show Preview (Internal Browser)"
+				"title": "Show Web Preview (Internal Browser)"
 			},
 			{
 				"command": "LivePreview.end",
@@ -107,7 +107,7 @@
 		"configuration": {
 			"title": "Live Preview",
 			"properties": {
-				"LivePreview.portNum": {
+				"LivePreview.portNumber": {
 					"type": "number",
 					"default": 3000,
 					"minimum": 0,
