@@ -24,7 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const manager = new Manager(context.extensionUri, reporter);
 	/* __GDPR__
 		"extension.startUp" : { 
-			"numWorkspaceFolders" : { "classification": "SystemMetaData", "purpose": "FeatureInsight", isMeasurement: true }
+			"numWorkspaceFolders" : { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true }
 		}
 	*/
 	reporter.sendTelemetryEvent(
