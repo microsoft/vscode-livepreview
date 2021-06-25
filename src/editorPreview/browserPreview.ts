@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { HOST, INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
@@ -140,28 +139,31 @@ export class BrowserPreview extends Disposable {
 	}
 
 	private handleOpenBrowser(givenURL: string) {
-		const urlString =
-			givenURL == '' ? this.constructAddress(this.currentAddress) : givenURL;
-		const uri = vscode.Uri.parse(urlString);
+		if (givenURL == '') {
+			givenURL = this.constructAddress(this.currentAddress);
+			const uri = vscode.Uri.parse(givenURL);
+			vscode.env.openExternal(uri);
+		} else {
+			const uri = vscode.Uri.parse(givenURL);
+			vscode.window
+				.showInformationMessage(
+					`Externally hosted links are not supported in the embedded preview. Do you want to open ${givenURL} in an external browser?`,
+					{ modal: true },
+					OPEN_EXTERNALLY
+				)
+				.then((selection: vscode.MessageItem | undefined) => {
+					if (selection) {
+						if (selection === OPEN_EXTERNALLY) {
+							vscode.env.openExternal(uri);
+						}
+					}
+				});
+		}
 
 		/* __GDPR__
 			"preview.openExternalBrowser" : {}
 		*/
 		this._reporter.sendTelemetryEvent('preview.openExternalBrowser');
-		vscode.window
-			.showInformationMessage(
-				`Externally hosted links are not supported in the embedded preview. Do you want to open ${urlString} in an external browser?`,
-				{ modal: true },
-				OPEN_EXTERNALLY
-			)
-			.then((selection: vscode.MessageItem | undefined) => {
-				if (selection) {
-					if (selection === OPEN_EXTERNALLY) {
-						vscode.env.openExternal(uri);
-					}
-				}
-			});
-
 		this.goToFile(this.currentAddress);
 		this.updateForwardBackArrows();
 	}

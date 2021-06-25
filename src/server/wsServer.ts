@@ -5,7 +5,6 @@ import * as path from 'path';
 import { URL } from 'url';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
-import { PathUtil } from '../utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from './serverUtils/endpointManager';
 
@@ -61,7 +60,7 @@ export class WSServer extends Disposable {
 			/* __GDPR__
 				"server.err" : { 
 					"type": {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
-					"err": {classification: 'CallstackOrException', purpose: 'PerformanceAndHealth'}
+					"err": {"classification": "CallstackOrException", "purpose": "PerformanceAndHealth"}
 				}
 			*/
 			this._reporter.sendTelemetryErrorEvent('server.err', {

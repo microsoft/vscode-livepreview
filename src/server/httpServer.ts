@@ -72,7 +72,7 @@ export class HttpServer extends Disposable {
 				/* __GDPR__
 					"server.err" : { 
 						"type": {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
-						"err": {classification: 'CallstackOrException', purpose: 'PerformanceAndHealth'}
+						"err": {"classification": "CallstackOrException", "purpose": "PerformanceAndHealth"}
 					}
 				*/
 				this._reporter.sendTelemetryErrorEvent('server.err', {
