@@ -326,7 +326,7 @@ export class Manager extends Disposable {
 			: ``;
 		vscode.window
 			.showWarningMessage(
-				`Cannot use workspace at ${this._workspaceManager.settingsWorkspace} for server.${optMsg}`,
+				`Cannot use workspace at ${this._workspaceManager.settingsWorkspace} for server. ${optMsg}`,
 				CONFIG_MULTIROOT
 			)
 			.then((selection: vscode.MessageItem | undefined) => {
