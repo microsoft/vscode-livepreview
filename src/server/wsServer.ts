@@ -6,7 +6,7 @@ import { URL } from 'url';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { EndpointManager } from './serverUtils/endpointManager';
+import { EndpointManager } from '../multiRootManagers/endpointManager';
 
 export class WSServer extends Disposable {
 	private _wss: WebSocket.Server | undefined;

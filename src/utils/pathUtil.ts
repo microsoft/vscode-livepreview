@@ -1,17 +1,16 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import * as path from 'path';
 
 export class PathUtil {
 	public static pathSepRegex = /(?:\\|\/)+/;
 
-	public static GetWorkspace(): vscode.WorkspaceFolder | undefined {
-		return vscode.workspace.workspaceFolders?.[0];
-	}
+	// public static GetWorkspace(): vscode.WorkspaceFolder | undefined {
+	// 	return vscode.workspace.workspaceFolders?.[0];
+	// }
 
-	public static GetWorkspacePath(): string | undefined {
-		return PathUtil.GetWorkspace()?.uri.fsPath;
-	}
+	// public static GetWorkspacePath(): string | undefined {
+	// 	return PathUtil.GetWorkspace()?.uri.fsPath;
+	// }
 
 	public static GetActiveFolderPath() {
 		const path = vscode.window.activeTextEditor?.document.uri.fsPath ?? '';
@@ -32,10 +31,10 @@ export class PathUtil {
 		return result ?? '';
 	}
 
-	public static PathExistsRelativeToWorkspace(file: string) {
-		const fullPath = path.join(PathUtil.GetWorkspacePath() ?? '', file);
-		return fs.existsSync(fullPath);
-	}
+	// public static PathExistsRelativeToWorkspace(file: string) {
+	// 	const fullPath = path.join(PathUtil.GetWorkspacePath() ?? '', file);
+	// 	return fs.existsSync(fullPath);
+	// }
 
 	public static GetFirstNonEmptyElem(paths: string[]) {
 		for (const i in paths) {
@@ -49,8 +48,8 @@ export class PathUtil {
 		return path.basename(file);
 	}
 
-	public static IsLooseFilePath(file: string) {
-		const absPath = path.join(PathUtil.GetWorkspacePath() ?? '', file);
-		return !fs.existsSync(absPath);
-	}
+	// public static IsLooseFilePath(file: string) {
+	// 	const absPath = path.join(PathUtil.GetWorkspacePath() ?? '', file);
+	// 	return !fs.existsSync(absPath);
+	// }
 }

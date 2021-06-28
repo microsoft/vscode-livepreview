@@ -42,33 +42,37 @@
 	"contributes": {
 		"commands": [
 			{
+				"command": "LivePreview.config.selectWorkspace",
+				"title": "Live Preview: Select Default Workspace for Server"
+			},
+			{
 				"command": "LivePreview.start.preview.atIndex",
-				"title": "Show Web Preview at Index Page"
+				"title": "Live Preview: Show Preview at Index Page"
 			},
 			{
 				"command": "LivePreview.start.preview.atFile",
-				"title": "Show Preview",
+				"title": "Live Preview: Show Preview",
 				"icon": "$(open-preview)"
 			},
 			{
 				"command": "LivePreview.start.externalPreview.atIndex",
-				"title": "Show Web Preview at Index (External Browser)"
+				"title": "Live Preview: Show Preview at Index (External Browser)"
 			},
 			{
 				"command": "LivePreview.start.internalPreview.atIndex",
-				"title": "Show Web Preview at Index (Internal Browser)"
+				"title": "Live Preview: Show Preview at Index (Internal Browser)"
 			},
 			{
 				"command": "LivePreview.start.externalPreview.atFile",
-				"title": "Show Web Preview (External Browser)"
+				"title": "Live Preview: Show Preview (External Browser)"
 			},
 			{
 				"command": "LivePreview.start.internalPreview.atFile",
-				"title": "Show Web Preview (Internal Browser)"
+				"title": "Live Preview: Show Preview (Internal Browser)"
 			},
 			{
 				"command": "LivePreview.end",
-				"title": "Force Stop Live Preview Server"
+				"title": "Live Preview: Force Stop Server"
 			}
 		],
 		"menus": {
@@ -157,6 +161,17 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Whether to notify the user when opening a preview for a file that is not part of the currently opened workspace (or the workspace where the server is hosted)."
+				},
+				"LivePreview.serverWorkspace": {
+					"type": "string",
+					"scope": "resource",
+					"default": "",
+					"description": "For multi-root workspaces: which workspace path should be used as the server root. Leave blank to use first workspace. Reload window to use changed setting."
+				},
+				"LivePreview.showWarningOnMultiRootOpen": {
+					"type": "boolean",
+					"default": true,
+					"description": "Whether or not to warn the user upon opening a multi-root preview with an undefined default server workspace."
 				}
 			}
 		},

@@ -4,7 +4,6 @@ import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
 import { EXTENSION_ID } from './utils/constants';
 import { SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
-import { PathUtil } from './utils/pathUtil';
 import { GetActiveFile } from './utils/utils';
 
 let reporter: TelemetryReporter;
@@ -40,6 +39,15 @@ export function activate(context: vscode.ExtensionContext) {
 					`${SETTINGS_SECTION_ID}.start.${previewType}.atFile`,
 					file
 				);
+			}
+		)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.config.selectWorkspace`,
+			() => {
+				SettingUtil.UpdateWorkspacePath();
 			}
 		)
 	);
@@ -195,11 +203,11 @@ export function activate(context: vscode.ExtensionContext) {
 			) {
 				let file = state.currentAddress ?? '/';
 
-				if (!PathUtil.PathExistsRelativeToWorkspace(file)) {
+				if (!manager.pathExistsRelativeToWorkspace(file)) {
 					file = '/';
 				}
 
-				if (file == '/' && !PathUtil.GetWorkspace()) {
+				if (file == '/' && !manager.workspace) {
 					// root will not show anything, so cannot revive content. Dispose.
 					webviewPanel.dispose();
 					return;

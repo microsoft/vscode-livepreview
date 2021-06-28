@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { GO_TO_SETTINGS } from './constants';
+import { GO_TO_SETTINGS, RELOAD_WINDOW } from './constants';
 
 export interface LiveServerConfigItem {
 	portNumber: number;
@@ -10,6 +10,8 @@ export interface LiveServerConfigItem {
 	openPreviewTarget: OpenPreviewTarget;
 	serverKeepAliveAfterEmbeddedPreviewClose: number;
 	notifyOnOpenLooseFile: boolean;
+	serverWorkspace: string;
+	showWarningOnMultiRootOpen: boolean;
 }
 
 export enum AutoRefreshPreview {
@@ -35,6 +37,8 @@ export const Settings: any = {
 	serverKeepAliveAfterEmbeddedPreviewClose:
 		'serverKeepAliveAfterEmbeddedPreviewClose',
 	notifyOnOpenLooseFile: 'notifyOnOpenLooseFile',
+	serverWorkspace: 'serverWorkspace',
+	showWarningOnMultiRootOpen: 'showWarningOnMultiRootOpen',
 };
 export const PreviewType: any = {
 	internalPreview: 'internalPreview',
@@ -73,6 +77,11 @@ export class SettingUtil {
 				Settings.notifyOnOpenLooseFile,
 				true
 			),
+			serverWorkspace: config.get<string>(Settings.serverWorkspace, ''),
+			showWarningOnMultiRootOpen: config.get<boolean>(
+				Settings.showWarningOnMultiRootOpen,
+				true
+			),
 		};
 	}
 	public static GetPreviewType(extensionUri: vscode.Uri): string {
@@ -89,12 +98,15 @@ export class SettingUtil {
 	public static UpdateSettings<T>(
 		settingSuffix: string,
 		value: T,
-		isGlobal = true
+		isGlobal = true,
+		showGotoSettings = true
 	): void {
 		vscode.workspace
 			.getConfiguration(SETTINGS_SECTION_ID)
 			.update(settingSuffix, value, isGlobal);
-		SettingUtil.SettingsSavedMessage();
+		if (showGotoSettings) {
+			SettingUtil.SettingsSavedMessage();
+		}
 	}
 
 	public static SettingsSavedMessage(): void {
@@ -110,6 +122,52 @@ export class SettingUtil {
 						SETTINGS_SECTION_ID
 					);
 				}
+			});
+	}
+
+	public static UpdateWorkspacePath() {
+		// choose workspace path:
+		const workspacePaths = vscode.workspace.workspaceFolders?.map(
+			(e) => e.uri.fsPath
+		);
+		let workspacePath: string;
+
+		if (!workspacePaths) {
+			vscode.window.showErrorMessage('No workspaces open.');
+			return;
+		} else if (workspacePaths.length == 1) {
+			vscode.window.showErrorMessage(
+				'Only one workspace open, cannot select another one.'
+			);
+			return;
+		}
+
+		vscode.window
+			.showQuickPick(workspacePaths, {
+				placeHolder: 'Choose Default Workspace for the Server',
+			})
+			.then((workspacePath) => {
+				if (!workspacePath) {
+					return;
+				}
+
+				SettingUtil.UpdateSettings(
+					Settings.serverWorkspace,
+					workspacePath,
+					false,
+					false
+				);
+
+				vscode.window
+					.showInformationMessage(
+						`Reload window to use new workspace: ${workspacePath}`,
+						RELOAD_WINDOW
+					)
+					.then((selection: vscode.MessageItem | undefined) => {
+						if (selection === RELOAD_WINDOW) {
+							vscode.commands.executeCommand('workbench.action.reloadWindow');
+						}
+					});
 			});
 	}
 }

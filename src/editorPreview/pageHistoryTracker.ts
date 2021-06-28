@@ -80,6 +80,7 @@ export class PageHistory extends Disposable {
 	}
 
 	public addHistory(address: string): NavResponse | undefined {
+		address = address.replace(/\\/g, '/');
 		const action = new Array<NavEditCommands>();
 		if (
 			this._backstep < this._history.length &&

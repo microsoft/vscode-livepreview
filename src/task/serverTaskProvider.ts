@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { serverMsg } from '../manager';
-import { EndpointManager } from '../server/serverUtils/endpointManager';
+import { EndpointManager } from '../multiRootManagers/endpointManager';
+import { WorkspaceManager } from '../multiRootManagers/workspaceManager';
 import { Disposable } from '../utils/dispose';
 import { PathUtil } from '../utils/pathUtil';
 import { serverTaskLinkProvider } from './serverTaskLinkProvider';
@@ -34,11 +35,17 @@ export class ServerTaskProvider
 
 	constructor(
 		private readonly _reporter: TelemetryReporter,
-		endpointManager: EndpointManager
+		endpointManager: EndpointManager,
+		private readonly _workspaceManager: WorkspaceManager
 	) {
 		super();
 		this._terminalLinkProvider = this._register(
-			new serverTaskLinkProvider('', _reporter, endpointManager)
+			new serverTaskLinkProvider(
+				'',
+				_reporter,
+				endpointManager,
+				_workspaceManager
+			)
 		);
 	}
 
@@ -151,7 +158,7 @@ export class ServerTaskProvider
 		if (this._terminal && this._terminal.running) {
 			return new vscode.Task(
 				definition,
-				PathUtil.GetWorkspace() ?? vscode.TaskScope.Workspace,
+				this._workspaceManager.workspace ?? vscode.TaskScope.Workspace,
 				termName,
 				ServerTaskProvider.CustomBuildScriptType,
 				undefined
