@@ -97,6 +97,9 @@
 				});
 				setURLBar(msgJSON.path.href);
 				updateState(msgJSON.path.pathname);
+
+				// remove link preview box from last page.
+				document.getElementById('link-preview').hidden = true;
 				break;
 			}
 			// from child iframe

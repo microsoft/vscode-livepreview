@@ -2,8 +2,12 @@ import * as vscode from 'vscode';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { Disposable } from './utils/dispose';
 import { Server } from './server/serverManager';
-import { INIT_PANEL_TITLE, HOST, DONT_SHOW_AGAIN } from './utils/constants';
-import { PathUtil } from './utils/pathUtil';
+import {
+	INIT_PANEL_TITLE,
+	HOST,
+	DONT_SHOW_AGAIN,
+	CONFIG_MULTIROOT,
+} from './utils/constants';
 import {
 	ServerStartedStatus,
 	ServerTaskProvider,
@@ -14,7 +18,8 @@ import {
 	SettingUtil,
 } from './utils/settingsUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { EndpointManager } from './server/serverUtils/endpointManager';
+import { EndpointManager } from './multiRootManagers/endpointManager';
+import { WorkspaceManager } from './multiRootManagers/workspaceManager';
 
 export interface serverMsg {
 	method: string;
@@ -29,7 +34,9 @@ export class Manager extends Disposable {
 	private _previewActive = false;
 	private _currentTimeout: NodeJS.Timeout | undefined;
 	private _notifiedAboutLooseFiles = false;
-	private _endpointManager: any;
+	private _endpointManager: EndpointManager;
+	private _workspaceManager: WorkspaceManager;
+	private _notifiedAboutMultiRoot = false;
 	// always leave off at previous port numbers to avoid retrying on many busy ports
 
 	private get _serverPort() {
@@ -44,21 +51,34 @@ export class Manager extends Disposable {
 	private set _serverWSPort(portNum: number) {
 		this._server.ws_port = portNum;
 	}
+	public get workspace(): vscode.WorkspaceFolder | undefined {
+		return this._workspaceManager.workspace;
+	}
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter
 	) {
 		super();
 		this._endpointManager = this._register(new EndpointManager());
+		this._workspaceManager = this._register(
+			new WorkspaceManager(_extensionUri)
+		);
+
 		this._server = this._register(
-			new Server(_extensionUri, this._endpointManager, _reporter)
+			new Server(
+				_extensionUri,
+				this._endpointManager,
+				_reporter,
+				this._workspaceManager
+			)
 		);
 		this._serverPort = SettingUtil.GetConfig(_extensionUri).portNumber;
 		this._serverWSPort = SettingUtil.GetConfig(_extensionUri).portNumber + 1;
 
 		this._serverTaskProvider = new ServerTaskProvider(
 			this._reporter,
-			this._endpointManager
+			this._endpointManager,
+			this._workspaceManager
 		);
 		this._register(
 			vscode.tasks.registerTaskProvider(
@@ -160,7 +180,7 @@ export class Manager extends Disposable {
 	}
 
 	public showPreviewInBrowser(file = '/', relative = true) {
-		if (PathUtil.GetWorkspace()) {
+		if (this.workspace) {
 			if (!this._serverTaskProvider.isRunning) {
 				this._serverTaskProvider.extRunTask(
 					SettingUtil.GetConfig(this._extensionUri)
@@ -191,6 +211,14 @@ export class Manager extends Disposable {
 
 	public openServer(fromTask = false): boolean {
 		if (!this._server.isRunning) {
+			if (
+				this._workspaceManager.numPaths > 1 &&
+				this._workspaceManager.hasNullPathSetting()
+			) {
+				this.notifyMultiRootOpen();
+			} else if (this._workspaceManager.invalidPath) {
+				this.warnAboutBadPath();
+			}
 			return this._server.openServer(this._serverPort);
 		} else if (fromTask) {
 			this._serverTaskProvider.serverStarted(
@@ -228,6 +256,9 @@ export class Manager extends Disposable {
 		return this._server.canGetPath(file);
 	}
 
+	public pathExistsRelativeToWorkspace(file: string) {
+		return this._workspaceManager.pathExistsRelativeToWorkspace(file);
+	}
 	private transformNonRelativeFile(relative: boolean, file: string): string {
 		if (!relative) {
 			if (!this._server.canGetPath(file)) {
@@ -263,18 +294,61 @@ export class Manager extends Disposable {
 		this._notifiedAboutLooseFiles = true;
 	}
 
+	private notifyMultiRootOpen() {
+		if (
+			!this._notifiedAboutMultiRoot &&
+			SettingUtil.GetConfig(this._extensionUri).showWarningOnMultiRootOpen
+		) {
+			vscode.window
+				.showWarningMessage(
+					`There is no set default server workspace to use in your multi-root workspace, so the first workspace (${this._workspaceManager.workspacePathname}) will be used.`,
+					DONT_SHOW_AGAIN,
+					CONFIG_MULTIROOT
+				)
+				.then((selection: vscode.MessageItem | undefined) => {
+					if (selection == DONT_SHOW_AGAIN) {
+						SettingUtil.UpdateSettings(
+							Settings.showWarningOnMultiRootOpen,
+							false
+						);
+					} else if (selection == CONFIG_MULTIROOT) {
+						vscode.commands.executeCommand(
+							`${SETTINGS_SECTION_ID}.config.selectWorkspace`
+						);
+					}
+				});
+		}
+		this._notifiedAboutMultiRoot = true;
+	}
+	private warnAboutBadPath() {
+		const optMsg = this.workspace
+			? `Using ${this.workspace?.name} instead.`
+			: ``;
+		vscode.window
+			.showWarningMessage(
+				`Cannot use workspace at ${this._workspaceManager.settingsWorkspace} for server. ${optMsg}`,
+				CONFIG_MULTIROOT
+			)
+			.then((selection: vscode.MessageItem | undefined) => {
+				if (selection == CONFIG_MULTIROOT) {
+					vscode.commands.executeCommand(
+						`${SETTINGS_SECTION_ID}.config.selectWorkspace`
+					);
+				}
+			});
+	}
 	private startEmbeddedPreview(panel: vscode.WebviewPanel, file: string) {
 		if (this._currentTimeout) {
 			clearTimeout(this._currentTimeout);
 		}
-
 		this.currentPanel = new BrowserPreview(
 			panel,
 			this._extensionUri,
 			this._serverPort,
 			this._serverWSPort,
 			file,
-			this._reporter
+			this._reporter,
+			this._workspaceManager
 		);
 
 		this._previewActive = true;

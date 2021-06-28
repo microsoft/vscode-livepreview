@@ -47,7 +47,13 @@ No workspace? No problem! For a quick preview of your file, the server can also 
 
 Notes about workspace-less extension use:
 - Linked files for these pages may not be correct if they are relative to a specific root (e.g. a project root). 
-- Tasks do not work outside of a workspace, so a server will just launch in the background upon external preview when outside of a workspace. You can use the `Force Stop Live Preview Server` command to kill the server in this case.
+- Tasks do not work outside of a workspace, so a server will just launch in the background upon external preview when outside of a workspace. You can use the `Live Preview: Force Stop Server` command to kill the server in this case.
+
+### Multi-root Support
+When using a multi-root workspace, use `Live Preview: Select Default Workspace for Server` to select a default workspace for the server root. The selection will be saved in your workspace setting. Alternatively, you can also directly assign a path to the `LivePreview.serverWorkspace` setting.
+
+Files outside of the default server workspace will just be treated as non-workspace when previewing.
+
 ## Prerequisites
 To use this extension, you must have [Node JS v14+](https://nodejs.org/en/download/). 
 ## Running the extension
@@ -65,11 +71,11 @@ Q. What does the `"Previewing a file that is not a child of the server root. To 
 A. Either:
 - You have no workspace open and opened a preview.
 - You opened a preview for a file that is not normally part of your workspace.
-- You are in a multi-root workspace and opened a file that is not a child of your first workspace root.
+- You are in a multi-root workspace and opened a file that is not a child of your selected default server workspace (or have not reloaded the window after changing your setting).
 
 Why does this happen? 
 
-The server is hosted from the root of the workspace that the user opens (or in a multi-root case, the first workspace that the user opens). Files outside of this can be previewed, but some file paths (such as a link to the root) may not go to the right place. **If you are working on a web project, it is advised that you open a workspace at the root of the project.**
+The server is hosted from the root of the workspace that the user opens (or in a multi-root case, the selected default workspace). Files outside of this can be previewed, but some file paths (such as a link to the root) may not go to the right place. **If you are working on a web project, it is advised that you open a workspace at the root of the project.**
 
 ## Issue Tracking
 - [May Iteration](https://github.com/microsoft/vscode/issues/124607)

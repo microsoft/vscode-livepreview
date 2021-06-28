@@ -2,9 +2,10 @@ import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { PathUtil } from '../utils/pathUtil';
-import { EndpointManager } from '../server/serverUtils/endpointManager';
+import { EndpointManager } from '../multiRootManagers/endpointManager';
 import { HOST } from '../utils/constants';
 import { URL } from 'url';
+import { WorkspaceManager } from '../multiRootManagers/workspaceManager';
 export class serverTaskLinkProvider
 	extends Disposable
 	implements vscode.TerminalLinkProvider
@@ -14,7 +15,8 @@ export class serverTaskLinkProvider
 	constructor(
 		terminalName: string,
 		private readonly _reporter: TelemetryReporter,
-		private readonly _endpointManager: EndpointManager
+		private readonly _endpointManager: EndpointManager,
+		private readonly _workspaceManager: WorkspaceManager
 	) {
 		super();
 		this.terminalName = terminalName;
@@ -87,9 +89,10 @@ export class serverTaskLinkProvider
 	}
 
 	private openRelativeLinkInWorkspace(file: string, isDir: boolean) {
-		const isWorkspaceFile = PathUtil.PathExistsRelativeToWorkspace(file);
+		const isWorkspaceFile =
+			this._workspaceManager.pathExistsRelativeToWorkspace(file);
 		const fullPath = isWorkspaceFile
-			? PathUtil.GetWorkspace()?.uri + file
+			? this._workspaceManager.workspace?.uri + file
 			: 'file:///' + this._endpointManager.decodeLooseFileEndpoint(file);
 
 		const uri = vscode.Uri.parse(fullPath);

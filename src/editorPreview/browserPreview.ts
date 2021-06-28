@@ -5,6 +5,7 @@ import { isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
 import { PageHistory, NavEditCommands } from './pageHistoryTracker';
 import TelemetryReporter from 'vscode-extension-telemetry';
+import { WorkspaceManager } from '../multiRootManagers/workspaceManager';
 
 export class BrowserPreview extends Disposable {
 	public static readonly viewType = 'browserPreview';
@@ -38,7 +39,8 @@ export class BrowserPreview extends Disposable {
 		private _port: number,
 		private _wsPort: number,
 		initialFile: string,
-		private readonly _reporter: TelemetryReporter
+		private readonly _reporter: TelemetryReporter,
+		private readonly _workspaceManager: WorkspaceManager
 	) {
 		super();
 
@@ -277,7 +279,7 @@ export class BrowserPreview extends Disposable {
 				</div>
 				
 			</div>
-			<div id="link-preview">an example link</div>
+			<div id="link-preview"></div>
 				<script nonce="${nonce}">
 					const WS_URL= "${wsURL}";
 				</script>
@@ -362,7 +364,7 @@ export class BrowserPreview extends Disposable {
 	private setPanelTitle(title = '', pathname = 'Preview'): void {
 		if (title == '') {
 			if (pathname.length > 0 && pathname[0] == '/') {
-				if (PathUtil.IsLooseFilePath(pathname)) {
+				if (this._workspaceManager.isLooseFilePath(pathname)) {
 					this._panel.title = PathUtil.GetFileName(pathname);
 				} else {
 					this._panel.title = pathname.substr(1);

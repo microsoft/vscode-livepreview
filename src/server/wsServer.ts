@@ -6,7 +6,7 @@ import { URL } from 'url';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { EndpointManager } from './serverUtils/endpointManager';
+import { EndpointManager } from '../multiRootManagers/endpointManager';
 
 export class WSServer extends Disposable {
 	private _wss: WebSocket.Server | undefined;
@@ -106,13 +106,15 @@ export class WSServer extends Disposable {
 		urlString: string
 	): { injectable: boolean; pathname: string } {
 		const url = new URL(urlString);
-		const absolutePath = path.join(basePath, url.pathname);
+		let absolutePath = path.join(basePath, url.pathname);
 
 		if (!fs.existsSync(absolutePath)) {
 			const decodedLocation =
 				this._endpointManager.decodeLooseFileEndpoint(absolutePath);
 			if (!decodedLocation || !fs.existsSync(decodedLocation)) {
 				return { injectable: false, pathname: url.pathname };
+			} else {
+				absolutePath = decodedLocation;
 			}
 		}
 

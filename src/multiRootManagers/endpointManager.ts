@@ -1,6 +1,6 @@
-import { Disposable } from '../../utils/dispose';
+import { Disposable } from '../utils/dispose';
 import * as path from 'path';
-import { PathUtil } from '../../utils/pathUtil';
+import { PathUtil } from '../utils/pathUtil';
 
 export class EndpointManager extends Disposable {
 	// manages encoding and decoding endpoints

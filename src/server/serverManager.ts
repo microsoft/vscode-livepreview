@@ -12,7 +12,8 @@ import { DONT_SHOW_AGAIN } from '../utils/constants';
 import { serverMsg } from '../manager';
 import { PathUtil } from '../utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { EndpointManager } from './serverUtils/endpointManager';
+import { EndpointManager } from '../multiRootManagers/endpointManager';
+import { WorkspaceManager } from '../multiRootManagers/workspaceManager';
 
 export interface PortInfo {
 	port?: number;
@@ -28,16 +29,17 @@ export class Server extends Disposable {
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
-		private readonly _endpointManager: EndpointManager,
-		reporter: TelemetryReporter
+		endpointManager: EndpointManager,
+		reporter: TelemetryReporter,
+		workspaceManager: WorkspaceManager
 	) {
 		super();
 		this._httpServer = this._register(
-			new HttpServer(_extensionUri, reporter, _endpointManager)
+			new HttpServer(_extensionUri, reporter, endpointManager)
 		);
-		this._wsServer = this._register(new WSServer(reporter, _endpointManager));
+		this._wsServer = this._register(new WSServer(reporter, endpointManager));
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
-		this._workspacePath = PathUtil.GetWorkspacePath();
+		this._workspacePath = workspaceManager.workspacePath;
 
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
