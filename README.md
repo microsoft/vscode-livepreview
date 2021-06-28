@@ -52,6 +52,8 @@ Notes about workspace-less extension use:
 ### Multi-root Support
 When using a multi-root workspace, use `Live Preview: Select Default Workspace for Server` to select a default workspace for the server root. The selection will be saved in your workspace setting. Alternatively, you can also directly assign a path to the `LivePreview.serverWorkspace` setting.
 
+Files outside of the default server workspace will just be treated as non-workspace when previewing.
+
 ## Prerequisites
 To use this extension, you must have [Node JS v14+](https://nodejs.org/en/download/). 
 ## Running the extension
