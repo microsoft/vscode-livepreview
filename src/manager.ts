@@ -216,6 +216,8 @@ export class Manager extends Disposable {
 				this._workspaceManager.hasNullPathSetting()
 			) {
 				this.notifyMultiRootOpen();
+			} else if (this._workspaceManager.invalidPath) {
+				this.warnAboutBadPath();
 			}
 			return this._server.openServer(this._serverPort);
 		} else if (fromTask) {
@@ -299,7 +301,7 @@ export class Manager extends Disposable {
 		) {
 			vscode.window
 				.showWarningMessage(
-					`There is no set default workspace to use in your multi-root workspace, so the first listed workspace (${this._workspaceManager.workspacePathname}) will be used.`,
+					`There is no set default server workspace to use in your multi-root workspace, so the first workspace (${this._workspaceManager.workspacePathname}) will be used.`,
 					DONT_SHOW_AGAIN,
 					CONFIG_MULTIROOT
 				)
@@ -317,6 +319,21 @@ export class Manager extends Disposable {
 				});
 		}
 		this._notifiedAboutMultiRoot = true;
+	}
+	private warnAboutBadPath() {
+		const optMsg = this.workspace ? `Using ${this.workspace?.name} instead.` : ``;
+		vscode.window
+		.showWarningMessage(
+			`Cannot use workspace at ${this._workspaceManager.settingsWorkspace} for server.${optMsg}`,
+			CONFIG_MULTIROOT
+		)
+		.then((selection: vscode.MessageItem | undefined) => {
+			if (selection == CONFIG_MULTIROOT) {
+				vscode.commands.executeCommand(
+					`${SETTINGS_SECTION_ID}.config.selectWorkspace`
+				);
+			}
+		});
 	}
 	private startEmbeddedPreview(panel: vscode.WebviewPanel, file: string) {
 		if (this._currentTimeout) {

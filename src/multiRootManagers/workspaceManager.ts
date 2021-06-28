@@ -7,14 +7,15 @@ import { CONFIG_MULTIROOT } from '../utils/constants';
 
 export class WorkspaceManager extends Disposable {
 	private readonly _workspace: vscode.WorkspaceFolder | undefined;
-	private _settingsWorkspace = '';
+	public settingsWorkspace = '';
+	public invalidPath = false;
 	constructor(private readonly _extensionUri: vscode.Uri) {
 		super();
 		if (this.numPaths > 1) {
-			this._settingsWorkspace = SettingUtil.GetConfig(
+			this.settingsWorkspace = SettingUtil.GetConfig(
 				this._extensionUri
 			).serverWorkspace;
-			this._workspace = this.getWorkspaceFromPath(this._settingsWorkspace);
+			this._workspace = this.getWorkspaceFromPath(this.settingsWorkspace);
 		} else {
 			this._workspace = this.firstListedWorkspace;
 		}
@@ -47,7 +48,7 @@ export class WorkspaceManager extends Disposable {
 	}
 
 	public hasNullPathSetting() {
-		return this._settingsWorkspace == '';
+		return this.settingsWorkspace == '';
 	}
 	private get firstListedWorkspace() {
 		return vscode.workspace.workspaceFolders?.[0];
@@ -68,18 +69,7 @@ export class WorkspaceManager extends Disposable {
 				}
 			}
 		}
-		vscode.window
-			.showWarningMessage(
-				`Cannot use workspace at ${workspaceName} for server. Using ${this.firstListedWorkspace?.name} instead.`,
-				CONFIG_MULTIROOT
-			)
-			.then((selection: vscode.MessageItem | undefined) => {
-				if (selection == CONFIG_MULTIROOT) {
-					vscode.commands.executeCommand(
-						`${SETTINGS_SECTION_ID}.config.selectWorkspace`
-					);
-				}
-			});
+		this.invalidPath = true;
 		return this.firstListedWorkspace;
 	}
 }
