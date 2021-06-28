@@ -69,7 +69,7 @@ export class ContentLoader extends Disposable {
 		const dirEntries = new Array<IndexDirEntry>();
 
 		if (relativePath != '/') {
-			dirEntries.push({ LinkSrc: '/../', LinkName: '..', DateTime: '' });
+			dirEntries.push({ LinkSrc: '..', LinkName: '..', DateTime: '' });
 		}
 
 		for (const i in childFiles) {

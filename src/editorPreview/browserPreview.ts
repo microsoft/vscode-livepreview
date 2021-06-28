@@ -279,7 +279,7 @@ export class BrowserPreview extends Disposable {
 				</div>
 				
 			</div>
-			<div id="link-preview">an example link</div>
+			<div id="link-preview"></div>
 				<script nonce="${nonce}">
 					const WS_URL= "${wsURL}";
 				</script>

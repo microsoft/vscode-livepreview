@@ -106,13 +106,15 @@ export class WSServer extends Disposable {
 		urlString: string
 	): { injectable: boolean; pathname: string } {
 		const url = new URL(urlString);
-		const absolutePath = path.join(basePath, url.pathname);
+		let absolutePath = path.join(basePath, url.pathname);
 
 		if (!fs.existsSync(absolutePath)) {
 			const decodedLocation =
 				this._endpointManager.decodeLooseFileEndpoint(absolutePath);
 			if (!decodedLocation || !fs.existsSync(decodedLocation)) {
 				return { injectable: false, pathname: url.pathname };
+			} else {
+				absolutePath = decodedLocation;
 			}
 		}
 
