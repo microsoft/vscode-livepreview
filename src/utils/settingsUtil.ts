@@ -144,7 +144,7 @@ export class SettingUtil {
 
 		vscode.window
 			.showQuickPick(workspacePaths, {
-				placeHolder: 'Choose Default Workspace for the Server',
+				placeHolder: 'Choose Default Workspace for Live Server',
 			})
 			.then((workspacePath) => {
 				if (!workspacePath) {
