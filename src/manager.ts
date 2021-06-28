@@ -321,19 +321,21 @@ export class Manager extends Disposable {
 		this._notifiedAboutMultiRoot = true;
 	}
 	private warnAboutBadPath() {
-		const optMsg = this.workspace ? `Using ${this.workspace?.name} instead.` : ``;
+		const optMsg = this.workspace
+			? `Using ${this.workspace?.name} instead.`
+			: ``;
 		vscode.window
-		.showWarningMessage(
-			`Cannot use workspace at ${this._workspaceManager.settingsWorkspace} for server.${optMsg}`,
-			CONFIG_MULTIROOT
-		)
-		.then((selection: vscode.MessageItem | undefined) => {
-			if (selection == CONFIG_MULTIROOT) {
-				vscode.commands.executeCommand(
-					`${SETTINGS_SECTION_ID}.config.selectWorkspace`
-				);
-			}
-		});
+			.showWarningMessage(
+				`Cannot use workspace at ${this._workspaceManager.settingsWorkspace} for server.${optMsg}`,
+				CONFIG_MULTIROOT
+			)
+			.then((selection: vscode.MessageItem | undefined) => {
+				if (selection == CONFIG_MULTIROOT) {
+					vscode.commands.executeCommand(
+						`${SETTINGS_SECTION_ID}.config.selectWorkspace`
+					);
+				}
+			});
 	}
 	private startEmbeddedPreview(panel: vscode.WebviewPanel, file: string) {
 		if (this._currentTimeout) {
