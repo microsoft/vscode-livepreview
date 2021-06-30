@@ -142,8 +142,8 @@ textarea::placeholder {
     bottom:-4px;
     left:0px; 
     padding:3px 5px;
-    background-color:rgb(66, 66, 66);
-    color:#fff;
+    background-color:var(--vscode-input-background);
+    color:var(--vscode-input-foreground);
     font-size:9px;
     box-shadow: 1px -1px 5px rgb(129, 129, 129);
     border-radius:1px;
