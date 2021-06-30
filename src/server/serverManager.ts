@@ -143,40 +143,14 @@ export class Server extends Disposable {
 		return this._isServerOn;
 	}
 
-	// public canGetPath(path: string) {
-	// 	return this._workspaceManager.canGetPath(path);
-	// }
-
-	// public getFileRelativeToWorkspace(path: string): string {
-	// 	const workspaceFolder = this._workspacePath;
-
-	// 	if (workspaceFolder && path.startsWith(workspaceFolder)) {
-	// 		return path.substr(workspaceFolder.length).replace(/\\/gi, '/');
-	// 	} else {
-	// 		return '';
-	// 	}
-	// }
-
 	public updateConfigurations() {
 		this._statusBar.updateConfigurations();
 	}
-
-	// private readonly _onPortChangeEmitter = this._register(
-	// 	new vscode.EventEmitter<PortInfo>()
-	// );
-
-	// public readonly onPortChange = this._onPortChangeEmitter.event;
 
 	private readonly _onNewReqProcessed = this._register(
 		new vscode.EventEmitter<serverMsg>()
 	);
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
-
-	// private readonly _onFullyConnected = this._register(
-	// 	new vscode.EventEmitter<{ port: number }>()
-	// );
-
-	// public readonly onFullyConnected = this._onFullyConnected.event;
 
 	private get _reloadOnAnyChange() {
 		return (
