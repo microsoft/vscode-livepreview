@@ -9,15 +9,11 @@ import {
 	Settings,
 } from '../utils/settingsUtil';
 import { DONT_SHOW_AGAIN } from '../utils/constants';
-import { serverMsg } from '../manager';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { EndpointManager } from '../multiRootManagers/endpointManager';
-import { WorkspaceManager } from '../multiRootManagers/workspaceManager';
-
-export interface PortInfo {
-	port?: number;
-	ws_port?: number;
-}
+import { EndpointManager } from '../infoManagers/endpointManager';
+import { WorkspaceManager } from '../infoManagers/workspaceManager';
+import { ConnectionManager } from '../infoManagers/connectionManager';
+import { serverMsg } from '../manager';
 
 export class Server extends Disposable {
 	private readonly _httpServer: HttpServer;
@@ -25,27 +21,23 @@ export class Server extends Disposable {
 	private readonly _statusBar: StatusBarNotifier;
 	private _isServerOn = false;
 
-	private get _workspacePath() {
-		return this._workspaceManager.workspacePath;
-	}
+	// private get _workspacePath() {
+	// 	return this._workspaceManager.workspacePath;
+	// }
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		endpointManager: EndpointManager,
 		reporter: TelemetryReporter,
-		private readonly _workspaceManager: WorkspaceManager
+		workspaceManager: WorkspaceManager,
+		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
 		this._httpServer = this._register(
-			new HttpServer(
-				_extensionUri,
-				reporter,
-				endpointManager,
-				_workspaceManager
-			)
+			new HttpServer(_extensionUri, reporter, endpointManager, workspaceManager)
 		);
 		this._wsServer = this._register(
-			new WSServer(reporter, endpointManager, _workspaceManager)
+			new WSServer(reporter, endpointManager, workspaceManager)
 		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 
@@ -104,7 +96,7 @@ export class Server extends Disposable {
 		);
 
 		this._register(
-			this.onPortChange((e) => {
+			this._connectionManager.onConnected((e) => {
 				if (e.ws_port) {
 					this._httpServer.setInjectorWSPort(e.ws_port);
 				}
@@ -119,14 +111,12 @@ export class Server extends Disposable {
 
 		this._register(
 			this._wsServer.onConnected((e) => {
-				this._onPortChangeEmitter.fire({ ws_port: e });
 				this.wsServerConnected();
 			})
 		);
 
 		this._register(
 			this._httpServer.onConnected((e) => {
-				this._onPortChangeEmitter.fire({ port: e });
 				this.httpServerConnected();
 			})
 		);
@@ -170,22 +160,22 @@ export class Server extends Disposable {
 		this._statusBar.updateConfigurations();
 	}
 
-	private readonly _onPortChangeEmitter = this._register(
-		new vscode.EventEmitter<PortInfo>()
-	);
+	// private readonly _onPortChangeEmitter = this._register(
+	// 	new vscode.EventEmitter<PortInfo>()
+	// );
 
-	public readonly onPortChange = this._onPortChangeEmitter.event;
+	// public readonly onPortChange = this._onPortChangeEmitter.event;
 
 	private readonly _onNewReqProcessed = this._register(
 		new vscode.EventEmitter<serverMsg>()
 	);
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
-	private readonly _onFullyConnected = this._register(
-		new vscode.EventEmitter<{ port: number }>()
-	);
+	// private readonly _onFullyConnected = this._register(
+	// 	new vscode.EventEmitter<{ port: number }>()
+	// );
 
-	public readonly onFullyConnected = this._onFullyConnected.event;
+	// public readonly onFullyConnected = this._onFullyConnected.event;
 
 	private get _reloadOnAnyChange() {
 		return (
@@ -232,7 +222,7 @@ export class Server extends Disposable {
 		this.showServerStatusMessage(
 			`Server Opened on Port ${this._httpServer.port}`
 		);
-		this._onFullyConnected.fire({ port: this._httpServer.port });
+		this._connectionManager.connected({ port: this._httpServer.port });
 	}
 
 	private showServerStatusMessage(messsage: string) {

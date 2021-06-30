@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { serverMsg } from '../manager';
-import { EndpointManager } from '../multiRootManagers/endpointManager';
-import { WorkspaceManager } from '../multiRootManagers/workspaceManager';
+import { EndpointManager } from '../infoManagers/endpointManager';
+import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { Disposable } from '../utils/dispose';
 import { PathUtil } from '../utils/pathUtil';
 import { serverTaskLinkProvider } from './serverTaskLinkProvider';

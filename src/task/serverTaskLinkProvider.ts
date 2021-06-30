@@ -2,10 +2,10 @@ import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { PathUtil } from '../utils/pathUtil';
-import { EndpointManager } from '../multiRootManagers/endpointManager';
+import { EndpointManager } from '../infoManagers/endpointManager';
 import { HOST } from '../utils/constants';
 import { URL } from 'url';
-import { WorkspaceManager } from '../multiRootManagers/workspaceManager';
+import { WorkspaceManager } from '../infoManagers/workspaceManager';
 export class serverTaskLinkProvider
 	extends Disposable
 	implements vscode.TerminalLinkProvider

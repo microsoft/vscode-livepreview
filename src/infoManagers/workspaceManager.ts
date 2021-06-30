@@ -62,11 +62,13 @@ export class WorkspaceManager extends Disposable {
 		const optMsg = this.workspace
 			? `Using ${this.workspace?.name} instead.`
 			: ``;
+		const msg =
+			badPath == ''
+				? `Cannot use blank path for server root. ${optMsg}`
+				: `Cannot use workspace at "${badPath}" for server. ${optMsg}`;
+
 		vscode.window
-			.showWarningMessage(
-				`Cannot use workspace at ${badPath} for server. ${optMsg}`,
-				CONFIG_MULTIROOT
-			)
+			.showWarningMessage(msg, CONFIG_MULTIROOT)
 			.then((selection: vscode.MessageItem | undefined) => {
 				if (selection == CONFIG_MULTIROOT) {
 					vscode.commands.executeCommand(
