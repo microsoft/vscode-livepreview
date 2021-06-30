@@ -5,7 +5,7 @@ import { GO_TO_SETTINGS, RELOAD_WINDOW } from './constants';
 export interface LiveServerConfigItem {
 	portNumber: number;
 	showStatusBarItem: boolean;
-	showServerStatusPopUps: boolean;
+	showServerStatusNotifications: boolean;
 	autoRefreshPreview: AutoRefreshPreview;
 	browserPreviewLaunchServerLogging: boolean;
 	openPreviewTarget: OpenPreviewTarget;
@@ -31,7 +31,7 @@ export const SETTINGS_SECTION_ID = 'LivePreview';
 export const Settings: any = {
 	portNumber: 'portNumber',
 	showStatusBarItem: 'showStatusBarItem',
-	showServerStatusPopUps: 'showServerStatusPopUps',
+	showServerStatusNotifications: 'showServerStatusNotifications',
 	autoRefreshPreview: 'autoRefreshPreview',
 	browserPreviewLaunchServerLogging: 'browserPreviewLaunchServerLogging',
 	openPreviewTarget: 'openPreviewTarget',
@@ -54,8 +54,8 @@ export class SettingUtil {
 		return {
 			portNumber: config.get<number>(Settings.portNumber, 3000),
 			showStatusBarItem: config.get<boolean>(Settings.showStatusBarItem, true),
-			showServerStatusPopUps: config.get<boolean>(
-				Settings.showServerStatusPopUps,
+			showServerStatusNotifications: config.get<boolean>(
+				Settings.showServerStatusNotifications,
 				false
 			),
 			autoRefreshPreview: config.get<AutoRefreshPreview>(

@@ -72,7 +72,7 @@
 			},
 			{
 				"command": "LivePreview.end",
-				"title": "Live Preview: Force Stop Server"
+				"title": "Live Preview: Stop Server"
 			}
 		],
 		"menus": {
@@ -87,24 +87,52 @@
 				{
 					"command": "LivePreview.start.preview.atFile",
 					"when": "resourceLangId == html",
-					"group": "navigation"
+					"group": "1_livepreview"
+				}
+			],
+			"editor/context": [
+				{
+					"command": "LivePreview.start.preview.atFile",
+					"when": "resourceLangId == html",
+					"group": "1_livepreview"
 				}
 			],
 			"commandPalette": [
 				{
 					"command": "LivePreview.start.preview.atFile",
-					"when": "editorLangId == html && !notebookEditorFocused",
-					"group": "navigation"
+					"when": "false"
+				},
+				{
+					"command": "LivePreview.start.preview.atIndex",
+					"when": "false"
+				},
+				{
+					"command": "LivePreview.start.externalPreview.atIndex",
+					"when": "false"
+				},
+				{
+					"command": "LivePreview.start.internalPreview.atIndex",
+					"when": "false"
+				},
+				{
+					"command": "LivePreview.config.selectWorkspace",
+					"when": "workspaceFolderCount > 1",
+					"group": "1_livepreview"
 				},
 				{
 					"command": "LivePreview.start.internalPreview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
-					"group": "navigation"
+					"group": "1_livepreview"
 				},
 				{
 					"command": "LivePreview.start.externalPreview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
-					"group": "navigation"
+					"group":"1_livepreview"
+				},
+				{
+					"command": "LivePreview.end",
+					"when": "LivePreviewServerOn",
+					"group": "1_livepreview"
 				}
 			]
 		},
@@ -130,7 +158,7 @@
 					"default": true,
 					"description": "Whether to show the current hosting port when server is open on the status bar."
 				},
-				"LivePreview.showServerStatusPopUps": {
+				"LivePreview.showServerStatusNotifications": {
 					"type": "boolean",
 					"default": false,
 					"description": "Whether or not to show information messages on server on/off status change."
@@ -155,7 +183,7 @@
 				"LivePreview.browserPreviewLaunchServerLogging": {
 					"type": "boolean",
 					"default": true,
-					"description": "Upon running `Show Preview in External Browser`, whether the auto-general terminal has logging."
+					"description": "Whether the auto-generated task terminal has logging after running \"Show Preview in External Browser\"."
 				},
 				"LivePreview.notifyOnOpenLooseFile": {
 					"type": "boolean",
@@ -166,7 +194,7 @@
 					"type": "string",
 					"scope": "resource",
 					"default": "",
-					"description": "For multi-root workspaces: which workspace path should be used as the server root. Leave blank to use first workspace. Reload window to use changed setting."
+					"description": "For multi-root workspaces: which workspace path should be used as the server root. Leave blank to use first workspace."
 				},
 				"LivePreview.showWarningOnMultiRootOpen": {
 					"type": "boolean",

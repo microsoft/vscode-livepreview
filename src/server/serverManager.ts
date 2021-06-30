@@ -120,6 +120,7 @@ export class Server extends Disposable {
 				this.httpServerConnected();
 			})
 		);
+		vscode.commands.executeCommand('setContext', 'LivePreviewServerOn', false);
 	}
 
 	public get port() {
@@ -142,40 +143,14 @@ export class Server extends Disposable {
 		return this._isServerOn;
 	}
 
-	// public canGetPath(path: string) {
-	// 	return this._workspaceManager.canGetPath(path);
-	// }
-
-	// public getFileRelativeToWorkspace(path: string): string {
-	// 	const workspaceFolder = this._workspacePath;
-
-	// 	if (workspaceFolder && path.startsWith(workspaceFolder)) {
-	// 		return path.substr(workspaceFolder.length).replace(/\\/gi, '/');
-	// 	} else {
-	// 		return '';
-	// 	}
-	// }
-
 	public updateConfigurations() {
 		this._statusBar.updateConfigurations();
 	}
-
-	// private readonly _onPortChangeEmitter = this._register(
-	// 	new vscode.EventEmitter<PortInfo>()
-	// );
-
-	// public readonly onPortChange = this._onPortChangeEmitter.event;
 
 	private readonly _onNewReqProcessed = this._register(
 		new vscode.EventEmitter<serverMsg>()
 	);
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
-
-	// private readonly _onFullyConnected = this._register(
-	// 	new vscode.EventEmitter<{ port: number }>()
-	// );
-
-	// public readonly onFullyConnected = this._onFullyConnected.event;
 
 	private get _reloadOnAnyChange() {
 		return (
@@ -198,6 +173,7 @@ export class Server extends Disposable {
 		this._statusBar.ServerOff();
 
 		this.showServerStatusMessage('Server Closed');
+		vscode.commands.executeCommand('setContext', 'LivePreviewServerOn', false);
 	}
 
 	public openServer(port: number): boolean {
@@ -223,15 +199,21 @@ export class Server extends Disposable {
 			`Server Opened on Port ${this._httpServer.port}`
 		);
 		this._connectionManager.connected({ port: this._httpServer.port });
+		vscode.commands.executeCommand('setContext', 'LivePreviewServerOn', true);
 	}
 
 	private showServerStatusMessage(messsage: string) {
-		if (SettingUtil.GetConfig(this._extensionUri).showServerStatusPopUps) {
+		if (
+			SettingUtil.GetConfig(this._extensionUri).showServerStatusNotifications
+		) {
 			vscode.window
 				.showInformationMessage(messsage, DONT_SHOW_AGAIN)
 				.then((selection: vscode.MessageItem | undefined) => {
 					if (selection == DONT_SHOW_AGAIN) {
-						SettingUtil.UpdateSettings(Settings.showServerStatusPopUps, false);
+						SettingUtil.UpdateSettings(
+							Settings.showServerStatusNotifications,
+							false
+						);
 					}
 				});
 		}
