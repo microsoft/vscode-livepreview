@@ -4,7 +4,9 @@
 
 ⚠️ WARNING: this extension is still under initial development! Use at your own risk. ⚠️
 
-An extension that hosts a local server for you to preview your web projects on!
+An extension that hosts a local server for you to preview your web projects on! 
+
+Note: this extension is intended for projects where a server is not already created (e.g. not for apps using React, Angular, etc.). To work with these, feel free to run the `Simple Browser: Show` command that is already built-in with VS Code.
 
 ## Table of Contents
 - [Features](#features)
