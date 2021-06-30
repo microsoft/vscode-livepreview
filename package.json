@@ -194,7 +194,7 @@
 					"type": "string",
 					"scope": "resource",
 					"default": "",
-					"description": "For multi-root workspaces: which workspace path should be used as the server root. Leave blank to use first workspace. Reload window to use changed setting."
+					"description": "For multi-root workspaces: which workspace path should be used as the server root. Leave blank to use first workspace."
 				},
 				"LivePreview.showWarningOnMultiRootOpen": {
 					"type": "boolean",
