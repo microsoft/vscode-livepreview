@@ -1,5 +1,10 @@
 import * as vscode from 'vscode';
-import { CONFIG_MULTIROOT, HOST, INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
+import {
+	CONFIG_MULTIROOT,
+	HOST,
+	INIT_PANEL_TITLE,
+	OPEN_EXTERNALLY,
+} from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
@@ -44,7 +49,7 @@ export class BrowserPreview extends Disposable {
 		initialFile: string,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _workspaceManager: WorkspaceManager,
-		private readonly _endpointManager: EndpointManager,
+		private readonly _endpointManager: EndpointManager
 	) {
 		super();
 
@@ -388,11 +393,11 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-
-	
-	private refreshTarget(oldPath:string, newPath: string) {
+	private refreshTarget(oldPath: string, newPath: string) {
 		const prevAddr = this.currentAddress;
-		const newAddr = this._endpointManager.refreshPath(prevAddr,oldPath,newPath).replace(/\\/g, '/');
+		const newAddr = this._endpointManager
+			.refreshPath(prevAddr, oldPath, newPath)
+			.replace(/\\/g, '/');
 
 		if (prevAddr != newAddr) {
 			this.goToFile(newAddr);

@@ -35,11 +35,14 @@ export class EndpointManager extends Disposable {
 		return parentWithIndex.substr(parentWithIndex.indexOf('_') + 1);
 	}
 
-	public refreshPath(targetPath: string, oldWorkspacePath: string, newWorkspacePath: string) {
-		
+	public refreshPath(
+		targetPath: string,
+		oldWorkspacePath: string,
+		newWorkspacePath: string
+	) {
 		let decodedPath = this.decodeLooseFileEndpoint(targetPath);
 		if (!decodedPath) {
-			decodedPath = path.join(oldWorkspacePath,targetPath);
+			decodedPath = path.join(oldWorkspacePath, targetPath);
 		}
 		if (decodedPath.startsWith(newWorkspacePath)) {
 			return decodedPath.substr(newWorkspacePath.length);

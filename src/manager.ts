@@ -53,7 +53,7 @@ export class Manager extends Disposable {
 	public get workspace(): vscode.WorkspaceFolder | undefined {
 		return this._workspaceManager.workspace;
 	}
-	
+
 	public get workspacePath(): string | undefined {
 		return this._workspaceManager.workspacePath;
 	}
@@ -290,7 +290,6 @@ export class Manager extends Disposable {
 		this._notifiedAboutLooseFiles = true;
 	}
 
-	
 	private startEmbeddedPreview(panel: vscode.WebviewPanel, file: string) {
 		if (this._currentTimeout) {
 			clearTimeout(this._currentTimeout);

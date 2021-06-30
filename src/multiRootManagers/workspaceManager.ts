@@ -1,10 +1,13 @@
 import { Disposable } from '../utils/dispose';
-import { Settings, SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
+import {
+	Settings,
+	SETTINGS_SECTION_ID,
+	SettingUtil,
+} from '../utils/settingsUtil';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { CONFIG_MULTIROOT, DONT_SHOW_AGAIN } from '../utils/constants';
-
 
 export interface workspaceChangeMsg {
 	oldPath: string;
@@ -38,7 +41,10 @@ export class WorkspaceManager extends Disposable {
 			} else {
 				this._workspace = this.firstListedWorkspace;
 			}
-			this._onWorkspaceChange.fire({ oldPath: oldWorkspacePath ?? '', newPath: this.workspacePath ?? '' });
+			this._onWorkspaceChange.fire({
+				oldPath: oldWorkspacePath ?? '',
+				newPath: this.workspacePath ?? '',
+			});
 		} else {
 			this.warnAboutBadPath(newPath);
 			this._settingsWorkspace = newPath;

@@ -37,9 +37,16 @@ export class Server extends Disposable {
 	) {
 		super();
 		this._httpServer = this._register(
-			new HttpServer(_extensionUri, reporter, endpointManager, _workspaceManager)
+			new HttpServer(
+				_extensionUri,
+				reporter,
+				endpointManager,
+				_workspaceManager
+			)
 		);
-		this._wsServer = this._register(new WSServer(reporter, endpointManager, _workspaceManager));
+		this._wsServer = this._register(
+			new WSServer(reporter, endpointManager, _workspaceManager)
+		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 
 		this._register(

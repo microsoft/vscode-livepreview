@@ -196,7 +196,8 @@
 		"webpack-dev": "webpack --mode development --watch",
 		"build-preview": "npx webpack-cli --mode development",
 		"compile": "node codicon_copy.js && tsc -p ./",
-		"watch": "node codicon_copy.js && tsc -watch -p ./"
+		"watch": "node codicon_copy.js && tsc -watch -p ./",
+		"format": "prettier ./src/**/*.ts --write"
 	},
 	"devDependencies": {
 		"@types/node": "^12.12.0",
