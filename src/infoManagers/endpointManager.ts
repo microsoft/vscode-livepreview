@@ -1,7 +1,6 @@
 import { Disposable } from '../utils/dispose';
 import * as path from 'path';
 import { PathUtil } from '../utils/pathUtil';
-import * as vscode from 'vscode';
 
 export class EndpointManager extends Disposable {
 	// manages encoding and decoding endpoints

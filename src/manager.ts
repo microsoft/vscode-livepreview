@@ -20,6 +20,7 @@ import {
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from './infoManagers/endpointManager';
 import { WorkspaceManager } from './infoManagers/workspaceManager';
+import { ConnectionManager } from './infoManagers/connectionManager';
 
 export interface serverMsg {
 	method: string;
@@ -36,19 +37,25 @@ export class Manager extends Disposable {
 	private _notifiedAboutLooseFiles = false;
 	private _endpointManager: EndpointManager;
 	private _workspaceManager: WorkspaceManager;
+	private _connectionManager: ConnectionManager;
+	private _pendingExternalLaunchInfo = {
+		valid: false,
+		file: '',
+		relative: false,
+	};
 	// always leave off at previous port numbers to avoid retrying on many busy ports
 
 	private get _serverPort() {
-		return this._server.port;
+		return this._connectionManager.httpPort;
 	}
 	private set _serverPort(portNum: number) {
-		this._server.port = portNum;
+		this._connectionManager.httpPort = portNum;
 	}
 	private get _serverWSPort() {
-		return this._server.ws_port;
+		return this._connectionManager.wsPort;
 	}
 	private set _serverWSPort(portNum: number) {
-		this._server.ws_port = portNum;
+		this._connectionManager.wsPort = portNum;
 	}
 	public get workspace(): vscode.WorkspaceFolder | undefined {
 		return this._workspaceManager.workspace;
@@ -63,6 +70,11 @@ export class Manager extends Disposable {
 	) {
 		super();
 		this._endpointManager = this._register(new EndpointManager());
+		const serverPort = SettingUtil.GetConfig(_extensionUri).portNumber;
+		const serverWSPort = serverPort + 1;
+		this._connectionManager = this._register(
+			new ConnectionManager(serverPort, serverWSPort)
+		);
 		this._workspaceManager = this._register(
 			new WorkspaceManager(_extensionUri)
 		);
@@ -72,11 +84,10 @@ export class Manager extends Disposable {
 				_extensionUri,
 				this._endpointManager,
 				_reporter,
-				this._workspaceManager
+				this._workspaceManager,
+				this._connectionManager
 			)
 		);
-		this._serverPort = SettingUtil.GetConfig(_extensionUri).portNumber;
-		this._serverWSPort = SettingUtil.GetConfig(_extensionUri).portNumber + 1;
 
 		this._serverTaskProvider = new ServerTaskProvider(
 			this._reporter,
@@ -113,20 +124,25 @@ export class Manager extends Disposable {
 			})
 		);
 
-		this._server.onFullyConnected((e) => {
+		this._connectionManager.onConnected((e) => {
 			if (e.port) {
 				this._serverTaskProvider.serverStarted(
 					e.port,
 					ServerStartedStatus.JUST_STARTED
 				);
 			}
-		});
-
-		this._server.onPortChange((e) => {
 			if (this.currentPanel) {
 				this._serverPort = e.port ?? this._serverPort;
 				this._serverWSPort = e.ws_port ?? this._serverWSPort;
 				this.currentPanel.updatePortNums(this._serverPort, this._serverWSPort);
+			}
+
+			if (this._pendingExternalLaunchInfo.valid) {
+				this.launchFileInExternalBrowser(
+					this._pendingExternalLaunchInfo.file,
+					this._pendingExternalLaunchInfo.relative
+				);
+				this._pendingExternalLaunchInfo.valid = false;
 			}
 		});
 
@@ -184,25 +200,32 @@ export class Manager extends Disposable {
 	}
 
 	public showPreviewInBrowser(file = '/', relative = true) {
-		if (this.workspace) {
-			if (!this._serverTaskProvider.isRunning) {
+		if (!this._serverTaskProvider.isRunning) {
+			if (!this._server.isRunning) {
+				this._pendingExternalLaunchInfo = {
+					valid: true,
+					file: file,
+					relative: relative,
+				};
+			} else {
+				this.launchFileInExternalBrowser(file, relative);
+			}
+			if (this.workspace) {
 				this._serverTaskProvider.extRunTask(
 					SettingUtil.GetConfig(this._extensionUri)
 						.browserPreviewLaunchServerLogging
 				);
+			} else {
+				// global tasks are currently not supported, just turn on server in this case.
+				const serverOn = this.openServer();
+
+				if (!serverOn) {
+					return;
+				}
 			}
 		} else {
-			// global tasks are currently not supported, just turn on server in this case.
-			const serverOn = this.openServer();
-
-			if (!serverOn) {
-				return;
-			}
+			this.launchFileInExternalBrowser(file, relative);
 		}
-		file = this.transformNonRelativeFile(relative, file).replace(/\\/g, '/');
-
-		const uri = vscode.Uri.parse(`http://${HOST}:${this._serverPort}${file}`);
-		vscode.env.openExternal(uri);
 	}
 
 	public encodeEndpoint(location: string): string {
@@ -254,6 +277,17 @@ export class Manager extends Disposable {
 
 	public pathExistsRelativeToWorkspace(file: string) {
 		return this._workspaceManager.pathExistsRelativeToWorkspace(file);
+	}
+
+	private launchFileInExternalBrowser(file: string, relative: boolean) {
+		const relFile = this.transformNonRelativeFile(relative, file).replace(
+			/\\/g,
+			'/'
+		);
+		const uri = vscode.Uri.parse(
+			`http://${HOST}:${this._serverPort}${relFile}`
+		);
+		vscode.env.openExternal(uri);
 	}
 	private transformNonRelativeFile(relative: boolean, file: string): string {
 		if (!relative) {
