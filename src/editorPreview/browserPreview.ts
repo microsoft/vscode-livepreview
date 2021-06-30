@@ -10,8 +10,8 @@ import { isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
 import { PageHistory, NavEditCommands } from './pageHistoryTracker';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { WorkspaceManager } from '../multiRootManagers/workspaceManager';
-import { EndpointManager } from '../multiRootManagers/endpointManager';
+import { WorkspaceManager } from '../infoManagers/workspaceManager';
+import { EndpointManager } from '../infoManagers/endpointManager';
 import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
 
 export class BrowserPreview extends Disposable {

@@ -11,8 +11,8 @@ import {
 import { DONT_SHOW_AGAIN } from '../utils/constants';
 import { serverMsg } from '../manager';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { EndpointManager } from '../multiRootManagers/endpointManager';
-import { WorkspaceManager } from '../multiRootManagers/workspaceManager';
+import { EndpointManager } from '../infoManagers/endpointManager';
+import { WorkspaceManager } from '../infoManagers/workspaceManager';
 
 export interface PortInfo {
 	port?: number;

@@ -9,8 +9,8 @@ import { HOST } from '../utils/constants';
 import { serverMsg } from '../manager';
 import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { EndpointManager } from '../multiRootManagers/endpointManager';
-import { WorkspaceManager } from '../multiRootManagers/workspaceManager';
+import { EndpointManager } from '../infoManagers/endpointManager';
+import { WorkspaceManager } from '../infoManagers/workspaceManager';
 
 export class HttpServer extends Disposable {
 	private _server: any;

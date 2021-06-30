@@ -18,8 +18,8 @@ import {
 	SettingUtil,
 } from './utils/settingsUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { EndpointManager } from './multiRootManagers/endpointManager';
-import { WorkspaceManager } from './multiRootManagers/workspaceManager';
+import { EndpointManager } from './infoManagers/endpointManager';
+import { WorkspaceManager } from './infoManagers/workspaceManager';
 
 export interface serverMsg {
 	method: string;
