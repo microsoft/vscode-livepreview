@@ -99,15 +99,11 @@ export class SettingUtil {
 	public static UpdateSettings<T>(
 		settingSuffix: string,
 		value: T,
-		isGlobal = true,
-		showGotoSettings = true
+		isGlobal = true
 	): void {
 		vscode.workspace
 			.getConfiguration(SETTINGS_SECTION_ID)
 			.update(settingSuffix, value, isGlobal);
-		if (showGotoSettings) {
-			SettingUtil.SettingsSavedMessage();
-		}
 	}
 
 	public static SettingsSavedMessage(): void {

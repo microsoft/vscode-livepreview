@@ -27,10 +27,16 @@ export class WorkspaceManager extends Disposable {
 
 	constructor(private readonly _extensionUri: vscode.Uri) {
 		super();
+		this.updateConfigurations();
 	}
 
 	public updateConfigurations() {
 		const newPath = SettingUtil.GetConfig(this._extensionUri).serverWorkspace;
+		if (this.numPaths <= 1) {
+			this._settingsWorkspace = newPath;
+			this._workspace = this.firstListedWorkspace;
+			return;
+		}
 		if (this.isAWorkspacePath(newPath)) {
 			const oldWorkspacePath = this.workspacePath;
 			if (this.numPaths > 1) {
