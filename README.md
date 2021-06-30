@@ -47,7 +47,7 @@ No workspace? No problem! For a quick preview of your file, the server can also 
 
 Notes about workspace-less extension use:
 - Linked files for these pages may not be correct if they are relative to a specific root (e.g. a project root). 
-- Tasks do not work outside of a workspace, so a server will just launch in the background upon external preview when outside of a workspace. You can use the `Live Preview: Force Stop Server` command to kill the server in this case.
+- Tasks do not work outside of a workspace, so a server will just launch in the background upon external preview when outside of a workspace. You can use the `Live Preview: Stop Server` command to kill the server in this case.
 
 ### Multi-root Support
 When using a multi-root workspace, use `Live Preview: Select Default Workspace for Server` to select a default workspace for the server root. The selection will be saved in your workspace setting. Alternatively, you can also directly assign a path to the `LivePreview.serverWorkspace` setting.

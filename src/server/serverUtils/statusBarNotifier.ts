@@ -26,7 +26,12 @@ export class StatusBarNotifier extends Disposable {
 		}
 
 		this._statusBar.text = `$(radio-tower) Port: ${port}`;
-		this._statusBar.tooltip = `Live Sever running on port ${port}`;
+		this._statusBar.tooltip = `Live Preview running on port ${port}`;
+		this._statusBar.command = {
+			title: 'Open Command Palette',
+			command: 'workbench.action.quickOpen',
+			arguments: ['>Live Preview: '],
+		};
 	}
 
 	public ServerOff() {
