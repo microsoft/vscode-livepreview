@@ -36,7 +36,6 @@ export class Manager extends Disposable {
 	private _notifiedAboutLooseFiles = false;
 	private _endpointManager: EndpointManager;
 	private _workspaceManager: WorkspaceManager;
-	private _notifiedAboutMultiRoot = false;
 	// always leave off at previous port numbers to avoid retrying on many busy ports
 
 	private get _serverPort() {
@@ -53,6 +52,10 @@ export class Manager extends Disposable {
 	}
 	public get workspace(): vscode.WorkspaceFolder | undefined {
 		return this._workspaceManager.workspace;
+	}
+	
+	public get workspacePath(): string | undefined {
+		return this._workspaceManager.workspacePath;
 	}
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
@@ -130,6 +133,7 @@ export class Manager extends Disposable {
 		vscode.workspace.onDidChangeConfiguration((e) => {
 			if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
 				this._server.updateConfigurations();
+				this._workspaceManager.updateConfigurations();
 				const newPortNum = SettingUtil.GetConfig(this._extensionUri).portNumber;
 				if (newPortNum != this._serverPort) {
 					if (!this._server.isRunning) {
@@ -211,14 +215,6 @@ export class Manager extends Disposable {
 
 	public openServer(fromTask = false): boolean {
 		if (!this._server.isRunning) {
-			if (
-				this._workspaceManager.numPaths > 1 &&
-				this._workspaceManager.hasNullPathSetting()
-			) {
-				this.notifyMultiRootOpen();
-			} else if (this._workspaceManager.invalidPath) {
-				this.warnAboutBadPath();
-			}
 			return this._server.openServer(this._serverPort);
 		} else if (fromTask) {
 			this._serverTaskProvider.serverStarted(
@@ -253,7 +249,7 @@ export class Manager extends Disposable {
 	}
 
 	public inServerWorkspace(file: string) {
-		return this._server.canGetPath(file);
+		return this._workspaceManager.canGetPath(file);
 	}
 
 	public pathExistsRelativeToWorkspace(file: string) {
@@ -261,11 +257,11 @@ export class Manager extends Disposable {
 	}
 	private transformNonRelativeFile(relative: boolean, file: string): string {
 		if (!relative) {
-			if (!this._server.canGetPath(file)) {
+			if (!this._workspaceManager.canGetPath(file)) {
 				this.notifyLooseFileOpen();
 				file = this.encodeEndpoint(file);
 			} else {
-				file = this._server.getFileRelativeToWorkspace(file);
+				file = this._workspaceManager.getFileRelativeToWorkspace(file);
 			}
 		}
 		return file;
@@ -294,49 +290,7 @@ export class Manager extends Disposable {
 		this._notifiedAboutLooseFiles = true;
 	}
 
-	private notifyMultiRootOpen() {
-		if (
-			!this._notifiedAboutMultiRoot &&
-			SettingUtil.GetConfig(this._extensionUri).showWarningOnMultiRootOpen
-		) {
-			vscode.window
-				.showWarningMessage(
-					`There is no set default server workspace to use in your multi-root workspace, so the first workspace (${this._workspaceManager.workspacePathname}) will be used.`,
-					DONT_SHOW_AGAIN,
-					CONFIG_MULTIROOT
-				)
-				.then((selection: vscode.MessageItem | undefined) => {
-					if (selection == DONT_SHOW_AGAIN) {
-						SettingUtil.UpdateSettings(
-							Settings.showWarningOnMultiRootOpen,
-							false
-						);
-					} else if (selection == CONFIG_MULTIROOT) {
-						vscode.commands.executeCommand(
-							`${SETTINGS_SECTION_ID}.config.selectWorkspace`
-						);
-					}
-				});
-		}
-		this._notifiedAboutMultiRoot = true;
-	}
-	private warnAboutBadPath() {
-		const optMsg = this.workspace
-			? `Using ${this.workspace?.name} instead.`
-			: ``;
-		vscode.window
-			.showWarningMessage(
-				`Cannot use workspace at ${this._workspaceManager.settingsWorkspace} for server. ${optMsg}`,
-				CONFIG_MULTIROOT
-			)
-			.then((selection: vscode.MessageItem | undefined) => {
-				if (selection == CONFIG_MULTIROOT) {
-					vscode.commands.executeCommand(
-						`${SETTINGS_SECTION_ID}.config.selectWorkspace`
-					);
-				}
-			});
-	}
+	
 	private startEmbeddedPreview(panel: vscode.WebviewPanel, file: string) {
 		if (this._currentTimeout) {
 			clearTimeout(this._currentTimeout);
@@ -348,7 +302,8 @@ export class Manager extends Disposable {
 			this._serverWSPort,
 			file,
 			this._reporter,
-			this._workspaceManager
+			this._workspaceManager,
+			this._endpointManager
 		);
 
 		this._previewActive = true;

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { Manager } from '../manager';
 import { GO_TO_SETTINGS, RELOAD_WINDOW } from './constants';
 
 export interface LiveServerConfigItem {
@@ -125,12 +126,12 @@ export class SettingUtil {
 			});
 	}
 
-	public static UpdateWorkspacePath() {
+	public static UpdateWorkspacePath(manager: Manager) {
 		// choose workspace path:
 		const workspacePaths = vscode.workspace.workspaceFolders?.map(
 			(e) => e.uri.fsPath
 		);
-		let workspacePath: string;
+		// let workspacePath: string;
 
 		if (!workspacePaths) {
 			vscode.window.showErrorMessage('No workspaces open.');
@@ -154,20 +155,10 @@ export class SettingUtil {
 				SettingUtil.UpdateSettings(
 					Settings.serverWorkspace,
 					workspacePath,
-					false,
 					false
 				);
-
-				vscode.window
-					.showInformationMessage(
-						`Reload window to use new workspace: ${workspacePath}`,
-						RELOAD_WINDOW
-					)
-					.then((selection: vscode.MessageItem | undefined) => {
-						if (selection === RELOAD_WINDOW) {
-							vscode.commands.executeCommand('workbench.action.reloadWindow');
-						}
-					});
+				// manager.refreshEmbeddedTarget(workspacePath);
+				// manager.encodeEndpoint(workspacePath);
 			});
 	}
 }
