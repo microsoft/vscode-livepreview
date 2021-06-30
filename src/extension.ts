@@ -47,7 +47,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.config.selectWorkspace`,
 			() => {
-				SettingUtil.UpdateWorkspacePath();
+				SettingUtil.UpdateWorkspacePath(manager);
 			}
 		)
 	);

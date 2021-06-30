@@ -10,7 +10,6 @@ import {
 } from '../utils/settingsUtil';
 import { DONT_SHOW_AGAIN } from '../utils/constants';
 import { serverMsg } from '../manager';
-import { PathUtil } from '../utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../multiRootManagers/endpointManager';
 import { WorkspaceManager } from '../multiRootManagers/workspaceManager';
@@ -25,21 +24,30 @@ export class Server extends Disposable {
 	private readonly _wsServer: WSServer;
 	private readonly _statusBar: StatusBarNotifier;
 	private _isServerOn = false;
-	private _workspacePath: string | undefined;
+
+	private get _workspacePath() {
+		return this._workspaceManager.workspacePath;
+	}
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		endpointManager: EndpointManager,
 		reporter: TelemetryReporter,
-		workspaceManager: WorkspaceManager
+		private readonly _workspaceManager: WorkspaceManager
 	) {
 		super();
 		this._httpServer = this._register(
-			new HttpServer(_extensionUri, reporter, endpointManager)
+			new HttpServer(
+				_extensionUri,
+				reporter,
+				endpointManager,
+				_workspaceManager
+			)
 		);
-		this._wsServer = this._register(new WSServer(reporter, endpointManager));
+		this._wsServer = this._register(
+			new WSServer(reporter, endpointManager, _workspaceManager)
+		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
-		this._workspacePath = workspaceManager.workspacePath;
 
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
@@ -144,19 +152,19 @@ export class Server extends Disposable {
 		return this._isServerOn;
 	}
 
-	public canGetPath(path: string) {
-		return this._workspacePath ? path.startsWith(this._workspacePath) : false;
-	}
+	// public canGetPath(path: string) {
+	// 	return this._workspaceManager.canGetPath(path);
+	// }
 
-	public getFileRelativeToWorkspace(path: string): string {
-		const workspaceFolder = this._workspacePath;
+	// public getFileRelativeToWorkspace(path: string): string {
+	// 	const workspaceFolder = this._workspacePath;
 
-		if (workspaceFolder && path.startsWith(workspaceFolder)) {
-			return path.substr(workspaceFolder.length).replace(/\\/gi, '/');
-		} else {
-			return '';
-		}
-	}
+	// 	if (workspaceFolder && path.startsWith(workspaceFolder)) {
+	// 		return path.substr(workspaceFolder.length).replace(/\\/gi, '/');
+	// 	} else {
+	// 		return '';
+	// 	}
+	// }
 
 	public updateConfigurations() {
 		this._statusBar.updateConfigurations();
@@ -207,14 +215,14 @@ export class Server extends Disposable {
 			// initialize websockets to use port after http server port
 			this._httpServer.setInjectorWSPort(port + 1);
 
-			this._httpServer.start(port, this._workspacePath ?? '');
+			this._httpServer.start(port);
 			return true;
 		}
 		return false;
 	}
 
 	private httpServerConnected() {
-		this._wsServer.start(this._httpServer.port + 1, this._workspacePath ?? '');
+		this._wsServer.start(this._httpServer.port + 1);
 	}
 
 	private wsServerConnected() {

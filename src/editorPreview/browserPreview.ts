@@ -1,17 +1,25 @@
 import * as vscode from 'vscode';
-import { HOST, INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
+import {
+	CONFIG_MULTIROOT,
+	HOST,
+	INIT_PANEL_TITLE,
+	OPEN_EXTERNALLY,
+} from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
 import { PageHistory, NavEditCommands } from './pageHistoryTracker';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { WorkspaceManager } from '../multiRootManagers/workspaceManager';
+import { EndpointManager } from '../multiRootManagers/endpointManager';
+import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
 
 export class BrowserPreview extends Disposable {
 	public static readonly viewType = 'browserPreview';
 	private readonly _pageHistory: PageHistory;
 
 	private currentAddress: string;
+	// private _currentWorkspacePath: string; // used for resolving old addresses
 	private readonly _onDisposeEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
@@ -40,7 +48,8 @@ export class BrowserPreview extends Disposable {
 		private _wsPort: number,
 		initialFile: string,
 		private readonly _reporter: TelemetryReporter,
-		private readonly _workspaceManager: WorkspaceManager
+		private readonly _workspaceManager: WorkspaceManager,
+		private readonly _endpointManager: EndpointManager
 	) {
 		super();
 
@@ -56,7 +65,14 @@ export class BrowserPreview extends Disposable {
 				'preview-dark.svg'
 			),
 		};
+		// this._currentWorkspacePath = _workspaceManager.workspacePath;
 		this._pageHistory = this._register(new PageHistory());
+
+		this._register(
+			this._workspaceManager.onWorkspaceChange((e) => {
+				this.refreshTarget(e.oldPath, e.newPath);
+			})
+		);
 
 		this.updateForwardBackArrows();
 
@@ -374,6 +390,18 @@ export class BrowserPreview extends Disposable {
 			}
 		} else {
 			this._panel.title = title;
+		}
+	}
+
+	private refreshTarget(oldPath: string, newPath: string) {
+		const prevAddr = this.currentAddress;
+		const newAddr = this._endpointManager
+			.refreshPath(prevAddr, oldPath, newPath)
+			.replace(/\\/g, '/');
+
+		if (prevAddr != newAddr) {
+			this.goToFile(newAddr);
+			this.handleNewPageLoad(newAddr);
 		}
 	}
 }

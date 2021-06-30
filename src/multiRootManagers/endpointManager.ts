@@ -1,6 +1,7 @@
 import { Disposable } from '../utils/dispose';
 import * as path from 'path';
 import { PathUtil } from '../utils/pathUtil';
+import * as vscode from 'vscode';
 
 export class EndpointManager extends Disposable {
 	// manages encoding and decoding endpoints
@@ -32,6 +33,22 @@ export class EndpointManager extends Disposable {
 		const endpoint = PathUtil.GetFurthestParentDir(urlPath);
 		const parentWithIndex = endpoint.substr(0, endpoint.lastIndexOf('_'));
 		return parentWithIndex.substr(parentWithIndex.indexOf('_') + 1);
+	}
+
+	public refreshPath(
+		targetPath: string,
+		oldWorkspacePath: string,
+		newWorkspacePath: string
+	) {
+		let decodedPath = this.decodeLooseFileEndpoint(targetPath);
+		if (!decodedPath) {
+			decodedPath = path.join(oldWorkspacePath, targetPath);
+		}
+		if (decodedPath.startsWith(newWorkspacePath)) {
+			return decodedPath.substr(newWorkspacePath.length);
+		} else {
+			return this.encodeLooseFileEndpoint(decodedPath);
+		}
 	}
 
 	public decodeLooseFileEndpoint(urlPath: string): string | undefined {

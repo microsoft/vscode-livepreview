@@ -7,15 +7,21 @@ import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../multiRootManagers/endpointManager';
+import { WorkspaceManager } from '../multiRootManagers/workspaceManager';
 
 export class WSServer extends Disposable {
 	private _wss: WebSocket.Server | undefined;
 	private _ws_port = 0;
 	constructor(
 		private readonly _reporter: TelemetryReporter,
-		private readonly _endpointManager: EndpointManager
+		private readonly _endpointManager: EndpointManager,
+		private readonly _workspaceManager: WorkspaceManager
 	) {
 		super();
+	}
+
+	private get _basePath() {
+		return this._workspaceManager.workspacePath;
 	}
 
 	public get ws_port() {
@@ -31,9 +37,9 @@ export class WSServer extends Disposable {
 	);
 	public readonly onConnected = this._onConnected.event;
 
-	public start(ws_port: number, basePath: string) {
+	public start(ws_port: number) {
 		this._ws_port = ws_port;
-		this.startWSServer(basePath);
+		this.startWSServer(this._basePath ?? '');
 	}
 
 	public close() {

@@ -10,21 +10,28 @@ import { serverMsg } from '../manager';
 import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../multiRootManagers/endpointManager';
+import { WorkspaceManager } from '../multiRootManagers/workspaceManager';
 
 export class HttpServer extends Disposable {
 	private _server: any;
 	private _contentLoader: ContentLoader;
 	private readonly _extensionUri;
 	public port = 0;
+	// public basePath = '';
 
 	constructor(
 		extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
-		private readonly _endpointManager: EndpointManager
+		private readonly _endpointManager: EndpointManager,
+		private readonly _workspaceManager: WorkspaceManager
 	) {
 		super();
 		this._contentLoader = this._register(new ContentLoader(_reporter));
 		this._extensionUri = extensionUri;
+	}
+
+	private get _basePath() {
+		return this._workspaceManager.workspacePath;
 	}
 
 	private readonly _onConnected = this._register(
@@ -37,9 +44,9 @@ export class HttpServer extends Disposable {
 	);
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
-	public start(port: number, basePath: string) {
+	public start(port: number) {
 		this.port = port;
-		this.startHttpServer(basePath);
+		this.startHttpServer();
 	}
 
 	public close() {
@@ -56,8 +63,8 @@ export class HttpServer extends Disposable {
 			this._contentLoader.scriptInjector.ws_port = ws_port;
 		}
 	}
-	private startHttpServer(basePath: string): boolean {
-		this._server = this.createServer(basePath);
+	private startHttpServer(): boolean {
+		this._server = this.createServer();
 
 		this._server.on('listening', () => {
 			console.log(`Server is running on port ${this.port}`);
@@ -172,9 +179,9 @@ export class HttpServer extends Disposable {
 		return;
 	}
 
-	private createServer(basePath: string) {
+	private createServer() {
 		return http.createServer((req, res) =>
-			this.serveStream(basePath, req, res)
+			this.serveStream(this._basePath ?? '', req, res)
 		);
 	}
 
