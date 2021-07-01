@@ -6,9 +6,7 @@
 	const vscode = acquireVsCodeApi();
 	const connection = new WebSocket(WS_URL);
 	var fadeLinkID = null;
-
-	// var nav = ;
-
+	
 	leftMostNavGroup = [
 		document.getElementById('back'),
 		document.getElementById('forward'),
