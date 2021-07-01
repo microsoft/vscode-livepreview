@@ -37,27 +37,19 @@ export class WorkspaceManager extends Disposable {
 		const oldWorkspacePath = this.workspacePath;
 		const newPath = SettingUtil.GetConfig(this._extensionUri).serverWorkspace;
 		if (this.numPaths <= 1) {
-			this._settingsWorkspace = newPath;
 			this._workspace = this.firstListedWorkspace;
-		} else if (
-			workspaceChange &&
-			!this.isAWorkspacePath(this._settingsWorkspace)
-		) {
+		} else if (workspaceChange && !this.isAWorkspacePath(newPath)) {
 			this.warnAboutBadPath(newPath);
-			this._settingsWorkspace = newPath;
 			this._workspace = this.firstListedWorkspace;
 		} else if (this._settingsWorkspace != newPath) {
 			if (this.isAWorkspacePath(newPath)) {
-				this._settingsWorkspace = SettingUtil.GetConfig(
-					this._extensionUri
-				).serverWorkspace;
-				this._workspace = this.getWorkspaceFromPath(this._settingsWorkspace);
+				this._workspace = this.getWorkspaceFromPath(newPath);
 			} else {
 				this.warnAboutBadPath(newPath);
-				this._settingsWorkspace = newPath;
 				this._workspace = this.firstListedWorkspace;
 			}
 		}
+		this._settingsWorkspace = newPath;
 		if (oldWorkspacePath != this.workspacePath) {
 			this._onWorkspaceChange.fire({
 				oldPath: oldWorkspacePath ?? '',
