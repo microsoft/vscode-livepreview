@@ -11,6 +11,12 @@ export class serverTaskLinkProvider
 {
 	public terminalName;
 
+	private readonly _onRequestOpenEditorToSide = this._register(
+		new vscode.EventEmitter<vscode.Uri>()
+	);
+	public readonly onRequestOpenEditorToSide =
+		this._onRequestOpenEditorToSide.event;
+
 	constructor(
 		terminalName: string,
 		private readonly _reporter: TelemetryReporter,
@@ -105,7 +111,7 @@ export class serverTaskLinkProvider
 			}
 			vscode.commands.executeCommand('revealInExplorer', uri);
 		} else {
-			vscode.commands.executeCommand('vscode.open', uri);
+			this._onRequestOpenEditorToSide.fire(uri);
 		}
 	}
 

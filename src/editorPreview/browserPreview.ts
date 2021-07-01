@@ -1,9 +1,5 @@
 import * as vscode from 'vscode';
-import {
-	HOST,
-	INIT_PANEL_TITLE,
-	OPEN_EXTERNALLY,
-} from '../utils/constants';
+import { HOST, INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
@@ -136,6 +132,9 @@ export class BrowserPreview extends Disposable {
 		super.dispose();
 	}
 
+	public get panel() {
+		return this._panel;
+	}
 	private get _host() {
 		return `http://${HOST}:${this._port}`;
 	}

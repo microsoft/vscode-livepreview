@@ -33,6 +33,26 @@ export class ServerTaskProvider
 		new vscode.EventEmitter<void>()
 	);
 
+	private readonly _onRequestOpenEditorToSide = this._register(
+		new vscode.EventEmitter<vscode.Uri>()
+	);
+	public readonly onRequestOpenEditorToSide =
+		this._onRequestOpenEditorToSide.event;
+
+	public get terminalName() {
+		return this._termName;
+	}
+
+	public readonly onRequestToOpenServer =
+		this._onRequestToOpenServerEmitter.event;
+
+	private readonly _onRequestToCloseServerEmitter = this._register(
+		new vscode.EventEmitter<void>()
+	);
+
+	public readonly onRequestToCloseServer =
+		this._onRequestToCloseServerEmitter.event;
+
 	constructor(
 		private readonly _reporter: TelemetryReporter,
 		endpointManager: EndpointManager,
@@ -47,20 +67,10 @@ export class ServerTaskProvider
 				_workspaceManager
 			)
 		);
+		this._terminalLinkProvider.onRequestOpenEditorToSide((e) => {
+			this._onRequestOpenEditorToSide.fire(e);
+		});
 	}
-
-	public get terminalName() {
-		return this._termName;
-	}
-
-	public readonly onRequestToOpenServer =
-		this._onRequestToOpenServerEmitter.event;
-
-	private readonly _onRequestToCloseServerEmitter = this._register(
-		new vscode.EventEmitter<void>()
-	);
-	public readonly onRequestToCloseServer =
-		this._onRequestToCloseServerEmitter.event;
 
 	public get isRunning() {
 		if (this._terminal) {

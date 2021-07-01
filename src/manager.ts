@@ -2,11 +2,7 @@ import * as vscode from 'vscode';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { Disposable } from './utils/dispose';
 import { Server } from './server/serverManager';
-import {
-	INIT_PANEL_TITLE,
-	HOST,
-	DONT_SHOW_AGAIN,
-} from './utils/constants';
+import { INIT_PANEL_TITLE, HOST, DONT_SHOW_AGAIN } from './utils/constants';
 import {
 	ServerStartedStatus,
 	ServerTaskProvider,
@@ -159,6 +155,20 @@ export class Manager extends Disposable {
 						this._serverPortNeedsUpdate = true;
 					}
 				}
+			}
+		});
+
+		this._serverTaskProvider.onRequestOpenEditorToSide((uri) => {
+			if (this._previewActive && this.currentPanel) {
+				const avoidColumn =
+					this.currentPanel.panel.viewColumn ?? vscode.ViewColumn.One;
+				const column: vscode.ViewColumn =
+					avoidColumn == vscode.ViewColumn.One
+						? avoidColumn + 1
+						: avoidColumn - 1;
+				vscode.commands.executeCommand('vscode.open', uri, {
+					viewColumn: column,
+				});
 			}
 		});
 	}
@@ -357,7 +367,7 @@ export class Manager extends Disposable {
 
 	dispose() {
 		this._server.closeServer();
-		console.log("dispose!");
+		console.log('dispose!');
 		this.currentPanel?.dispose();
 		super.dispose();
 	}

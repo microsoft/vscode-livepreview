@@ -39,7 +39,10 @@ export class WorkspaceManager extends Disposable {
 		if (this.numPaths <= 1) {
 			this._settingsWorkspace = newPath;
 			this._workspace = this.firstListedWorkspace;
-		} else if ((workspaceChange && !this.isAWorkspacePath(this._settingsWorkspace))) {
+		} else if (
+			workspaceChange &&
+			!this.isAWorkspacePath(this._settingsWorkspace)
+		) {
 			this.warnAboutBadPath(newPath);
 			this._settingsWorkspace = newPath;
 			this._workspace = this.firstListedWorkspace;
@@ -49,7 +52,6 @@ export class WorkspaceManager extends Disposable {
 					this._extensionUri
 				).serverWorkspace;
 				this._workspace = this.getWorkspaceFromPath(this._settingsWorkspace);
-
 			} else {
 				this.warnAboutBadPath(newPath);
 				this._settingsWorkspace = newPath;
@@ -72,7 +74,7 @@ export class WorkspaceManager extends Disposable {
 			badPath == ''
 				? `Cannot use blank path for server root. ${optMsg}`
 				: `Cannot use workspace at "${badPath}" for server. ${optMsg}`;
-				
+
 		vscode.window
 			.showWarningMessage(msg, CONFIG_MULTIROOT)
 			.then((selection: vscode.MessageItem | undefined) => {
