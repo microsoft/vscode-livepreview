@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import {
-	CONFIG_MULTIROOT,
 	HOST,
 	INIT_PANEL_TITLE,
 	OPEN_EXTERNALLY,
@@ -12,7 +11,6 @@ import { PageHistory, NavEditCommands } from './pageHistoryTracker';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
 
 export class BrowserPreview extends Disposable {
 	public static readonly viewType = 'browserPreview';

@@ -127,7 +127,6 @@ export class SettingUtil {
 		const workspacePaths = vscode.workspace.workspaceFolders?.map(
 			(e) => e.uri.fsPath
 		);
-		// let workspacePath: string;
 
 		if (!workspacePaths) {
 			vscode.window.showErrorMessage('No workspaces open.');
@@ -153,8 +152,6 @@ export class SettingUtil {
 					workspacePath,
 					false
 				);
-				// manager.refreshEmbeddedTarget(workspacePath);
-				// manager.encodeEndpoint(workspacePath);
 			});
 	}
 }

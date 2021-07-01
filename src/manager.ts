@@ -6,7 +6,6 @@ import {
 	INIT_PANEL_TITLE,
 	HOST,
 	DONT_SHOW_AGAIN,
-	CONFIG_MULTIROOT,
 } from './utils/constants';
 import {
 	ServerStartedStatus,
@@ -358,6 +357,8 @@ export class Manager extends Disposable {
 
 	dispose() {
 		this._server.closeServer();
+		console.log("dispose!");
+		this.currentPanel?.dispose();
 		super.dispose();
 	}
 }

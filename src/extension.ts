@@ -7,6 +7,7 @@ import { SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
 import { GetActiveFile } from './utils/utils';
 
 let reporter: TelemetryReporter;
+let manager: Manager;
 
 export function activate(context: vscode.ExtensionContext) {
 	const extPackageJSON = context.extension.packageJSON;
@@ -18,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 	context.subscriptions.push(reporter);
 
-	const manager = new Manager(context.extensionUri, reporter);
+	manager = new Manager(context.extensionUri, reporter);
 	/* __GDPR__
 		"extension.startUp" : { 
 			"numWorkspaceFolders" : { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true }
@@ -201,7 +202,7 @@ export function activate(context: vscode.ExtensionContext) {
 				webviewPanel: vscode.WebviewPanel,
 				state: any
 			) {
-				let file = state.currentAddress ?? '/';
+				let file = unescape(state.currentAddress) ?? '/';
 
 				if (!manager.pathExistsRelativeToWorkspace(file)) {
 					file = '/';
@@ -222,4 +223,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate(): void {
 	reporter.dispose();
+	console.log("deactivate!");
+	manager.dispose();
 }

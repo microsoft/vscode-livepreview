@@ -27,34 +27,40 @@ export class WorkspaceManager extends Disposable {
 
 	constructor(private readonly _extensionUri: vscode.Uri) {
 		super();
-		this.updateConfigurations();
+		this.updateConfigurations(true);
+		vscode.workspace.onDidChangeWorkspaceFolders(() => {
+			this.updateConfigurations(true);
+		});
 	}
 
-	public updateConfigurations() {
+	public updateConfigurations(workspaceChange = false) {
+		const oldWorkspacePath = this.workspacePath;
 		const newPath = SettingUtil.GetConfig(this._extensionUri).serverWorkspace;
 		if (this.numPaths <= 1) {
 			this._settingsWorkspace = newPath;
 			this._workspace = this.firstListedWorkspace;
-			return;
-		}
-		if (this.isAWorkspacePath(newPath)) {
-			const oldWorkspacePath = this.workspacePath;
-			if (this.numPaths > 1) {
+		} else if ((workspaceChange && !this.isAWorkspacePath(this._settingsWorkspace))) {
+			this.warnAboutBadPath(newPath);
+			this._settingsWorkspace = newPath;
+			this._workspace = this.firstListedWorkspace;
+		} else if (this._settingsWorkspace != newPath) {
+			if (this.isAWorkspacePath(newPath)) {
 				this._settingsWorkspace = SettingUtil.GetConfig(
 					this._extensionUri
 				).serverWorkspace;
 				this._workspace = this.getWorkspaceFromPath(this._settingsWorkspace);
+
 			} else {
+				this.warnAboutBadPath(newPath);
+				this._settingsWorkspace = newPath;
 				this._workspace = this.firstListedWorkspace;
 			}
+		}
+		if (oldWorkspacePath != this.workspacePath) {
 			this._onWorkspaceChange.fire({
 				oldPath: oldWorkspacePath ?? '',
 				newPath: this.workspacePath ?? '',
 			});
-		} else {
-			this.warnAboutBadPath(newPath);
-			this._settingsWorkspace = newPath;
-			this._workspace = this.firstListedWorkspace;
 		}
 	}
 
@@ -66,7 +72,7 @@ export class WorkspaceManager extends Disposable {
 			badPath == ''
 				? `Cannot use blank path for server root. ${optMsg}`
 				: `Cannot use workspace at "${badPath}" for server. ${optMsg}`;
-
+				
 		vscode.window
 			.showWarningMessage(msg, CONFIG_MULTIROOT)
 			.then((selection: vscode.MessageItem | undefined) => {
