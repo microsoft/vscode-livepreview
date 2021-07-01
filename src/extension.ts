@@ -223,6 +223,5 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate(): void {
 	reporter.dispose();
-	console.log('deactivate!');
 	manager.dispose();
 }

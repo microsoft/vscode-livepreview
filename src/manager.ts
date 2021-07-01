@@ -367,7 +367,6 @@ export class Manager extends Disposable {
 
 	dispose() {
 		this._server.closeServer();
-		console.log('dispose!');
 		this.currentPanel?.dispose();
 		super.dispose();
 	}
