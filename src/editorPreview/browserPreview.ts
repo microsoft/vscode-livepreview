@@ -280,9 +280,10 @@ export class BrowserPreview extends Disposable {
 								id="reload"
 								title="Reload"
 								class="reload-button icon"><i class="codicon codicon-refresh"></i></button>
-
-								
-							<input id="url-input" class="url-input" type="text">
+							<input 
+								id="url-input"
+								class="url-input" 
+								type="text">
 							<button
 								id="browserOpen"
 								title="Open in browser"
@@ -331,20 +332,26 @@ export class BrowserPreview extends Disposable {
 	}
 
 	private handleNavAction(command: NavEditCommands): void {
+		let text = {};
 		switch (command) {
 			case NavEditCommands.DISABLE_BACK:
-				this._panel.webview.postMessage({ command: 'disable-back' });
+				text = { element: 'back', disabled: true };
 				break;
 			case NavEditCommands.ENABLE_BACK:
-				this._panel.webview.postMessage({ command: 'enable-back' });
+				text = { element: 'back', disabled: false };
 				break;
 			case NavEditCommands.DISABLE_FORWARD:
-				this._panel.webview.postMessage({ command: 'disable-forward' });
+				text = { element: 'forward', disabled: true };
 				break;
 			case NavEditCommands.ENABLE_FORWARD:
-				this._panel.webview.postMessage({ command: 'enable-forward' });
+				text = { element: 'forward', disabled: false };
 				break;
 		}
+
+		this._panel.webview.postMessage({
+			command: 'changed-history',
+			text: JSON.stringify(text),
+		});
 	}
 
 	private handleNewPageLoad(pathname: string, panelTitle = ''): void {
