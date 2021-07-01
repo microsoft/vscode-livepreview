@@ -385,12 +385,12 @@ export class BrowserPreview extends Disposable {
 		if (title == '') {
 			if (pathname.length > 0 && pathname[0] == '/') {
 				if (this._workspaceManager.isLooseFilePath(pathname)) {
-					this._panel.title = PathUtil.GetFileName(pathname);
+					this._panel.title = unescape(PathUtil.GetFileName(pathname));
 				} else {
-					this._panel.title = pathname.substr(1);
+					this._panel.title = unescape(pathname.substr(1));
 				}
 			} else {
-				this._panel.title = pathname;
+				this._panel.title = unescape(pathname);
 			}
 		} else {
 			this._panel.title = title;
