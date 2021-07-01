@@ -11,6 +11,7 @@ import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
+import { url } from 'inspector';
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -105,9 +106,10 @@ export class HttpServer extends Disposable {
 		}
 
 		const endOfPath = req.url.lastIndexOf('?');
-		const URLPathName =
+		let URLPathName =
 			endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
 
+		URLPathName = unescape(URLPathName);
 		let looseFile = false;
 		let absoluteReadPath = path.join(basePath, URLPathName);
 		let stream;

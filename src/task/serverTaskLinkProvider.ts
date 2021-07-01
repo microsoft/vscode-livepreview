@@ -1,7 +1,6 @@
 import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { PathUtil } from '../utils/pathUtil';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { HOST } from '../utils/constants';
 import { URL } from 'url';
@@ -11,6 +10,12 @@ export class serverTaskLinkProvider
 	implements vscode.TerminalLinkProvider
 {
 	public terminalName;
+
+	private readonly _onRequestOpenEditorToSide = this._register(
+		new vscode.EventEmitter<vscode.Uri>()
+	);
+	public readonly onRequestOpenEditorToSide =
+		this._onRequestOpenEditorToSide.event;
 
 	constructor(
 		terminalName: string,
@@ -61,7 +66,7 @@ export class serverTaskLinkProvider
 	private findPathnameRegex(input: string, links: Array<vscode.TerminalLink>) {
 		// match relative links
 		const partialLinkRegex = new RegExp(
-			`(?<=\\s)\\/([/(\\w%\\-.)]*)\\?*[\\w=]*`,
+			`(?<=\\s)\\/([/(\\w%\\-.@)]*)\\?*[\\w=]*`,
 			'g'
 		);
 		let partialLinkMatches;
@@ -89,6 +94,7 @@ export class serverTaskLinkProvider
 	}
 
 	private openRelativeLinkInWorkspace(file: string, isDir: boolean) {
+		file = unescape(file);
 		const isWorkspaceFile =
 			this._workspaceManager.pathExistsRelativeToWorkspace(file);
 		const fullPath = isWorkspaceFile
@@ -105,7 +111,7 @@ export class serverTaskLinkProvider
 			}
 			vscode.commands.executeCommand('revealInExplorer', uri);
 		} else {
-			vscode.commands.executeCommand('vscode.open', uri);
+			this._onRequestOpenEditorToSide.fire(uri);
 		}
 	}
 

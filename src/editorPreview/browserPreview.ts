@@ -1,10 +1,5 @@
 import * as vscode from 'vscode';
-import {
-	CONFIG_MULTIROOT,
-	HOST,
-	INIT_PANEL_TITLE,
-	OPEN_EXTERNALLY,
-} from '../utils/constants';
+import { HOST, INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
@@ -12,7 +7,6 @@ import { PageHistory, NavEditCommands } from './pageHistoryTracker';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
 
 export class BrowserPreview extends Disposable {
 	public static readonly viewType = 'browserPreview';
@@ -138,6 +132,9 @@ export class BrowserPreview extends Disposable {
 		super.dispose();
 	}
 
+	public get panel() {
+		return this._panel;
+	}
 	private get _host() {
 		return `http://${HOST}:${this._port}`;
 	}
@@ -280,9 +277,10 @@ export class BrowserPreview extends Disposable {
 								id="reload"
 								title="Reload"
 								class="reload-button icon"><i class="codicon codicon-refresh"></i></button>
-
-								
-							<input id="url-input" class="url-input" type="text">
+							<input 
+								id="url-input"
+								class="url-input" 
+								type="text">
 							<button
 								id="browserOpen"
 								title="Open in browser"
@@ -331,20 +329,26 @@ export class BrowserPreview extends Disposable {
 	}
 
 	private handleNavAction(command: NavEditCommands): void {
+		let text = {};
 		switch (command) {
 			case NavEditCommands.DISABLE_BACK:
-				this._panel.webview.postMessage({ command: 'disable-back' });
+				text = { element: 'back', disabled: true };
 				break;
 			case NavEditCommands.ENABLE_BACK:
-				this._panel.webview.postMessage({ command: 'enable-back' });
+				text = { element: 'back', disabled: false };
 				break;
 			case NavEditCommands.DISABLE_FORWARD:
-				this._panel.webview.postMessage({ command: 'disable-forward' });
+				text = { element: 'forward', disabled: true };
 				break;
 			case NavEditCommands.ENABLE_FORWARD:
-				this._panel.webview.postMessage({ command: 'enable-forward' });
+				text = { element: 'forward', disabled: false };
 				break;
 		}
+
+		this._panel.webview.postMessage({
+			command: 'changed-history',
+			text: JSON.stringify(text),
+		});
 	}
 
 	private handleNewPageLoad(pathname: string, panelTitle = ''): void {

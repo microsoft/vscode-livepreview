@@ -85,7 +85,7 @@ iframe {
 
 .header nav button {
 	border: none;
-	padding: var(--input-padding-vertical) 0em var(--input-padding-vertical) var(--input-padding-horizontal);
+	padding: 5px 0em 5px 4px;
 	display: flex;
 	text-align:right;
 	float: right;
@@ -95,6 +95,12 @@ iframe {
 	background: none;
 	margin: 0 0.3em;
 	border-radius: 5px;
+}
+
+/* back and forward buttons are a bit off with vertical alignment */
+.header nav button.back-button,
+.header nav button.forward-button {
+	padding: 4px 0em 6px 4px;
 }
 
 .header nav button:hover:not(:disabled) {

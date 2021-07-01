@@ -6,10 +6,18 @@
 	const vscode = acquireVsCodeApi();
 	const connection = new WebSocket(WS_URL);
 	var fadeLinkID = null;
+	
+	leftMostNavGroup = [
+		document.getElementById('back'),
+		document.getElementById('forward'),
+		document.getElementById('reload')
+	];
 
 	onLoad();
 
+
 	function onLoad() {
+		handleNavGroup(leftMostNavGroup);
 
 		connection.onerror = (error) => {
 			console.log('WebSocket error: ');
@@ -56,6 +64,47 @@
 		}
 	}
 
+	function handleNavKeyDown(event, nav, startIndex) {
+		if (event.keyCode === 37) {
+			// left
+			moveFocusNav(false, nav, startIndex);
+			event.preventDefault();
+		} else if (event.keyCode === 39) {
+			// right
+			moveFocusNav(true, nav, startIndex);
+			event.preventDefault();
+		}
+	}
+
+	function handleNavGroup(nav) {
+		for (var i = 0; i < nav.length; i++) {
+			const currIndex = i;
+			nav[i].addEventListener('keydown', (event) => handleNavKeyDown(event, nav, currIndex));
+
+		}
+	}
+
+	function moveFocusNav(right, nav, startIndex) {
+
+		var numDisabled = 0;
+		var modifier = right ? 1 : -1;
+		index = startIndex;
+		do {
+			newIndex = index + modifier;
+			if (newIndex >= nav.length) {
+				newIndex = 0;
+			} else if (newIndex < 0) {
+				newIndex = nav.length - 1;
+			}
+			index = newIndex;
+			numDisabled++;
+		} while (nav[newIndex].disabled && numDisabled < nav.length);
+
+		if (numDisabled < nav.length) {
+			nav[index].focus();
+		}
+	}
+
 	function handleSocketMessage(data) {
 		const parsedMessage = JSON.parse(data);
 		switch (parsedMessage.command) {
@@ -69,6 +118,19 @@
 		}
 	}
 
+	function adjustTabIndex() {
+		var reachedElem = false;
+		for (var i = 0; i < leftMostNavGroup.length; i++) {
+			if (!leftMostNavGroup[i].disabled) {
+				if (reachedElem) {
+					leftMostNavGroup[i].tabIndex = -1;
+				} else {
+					leftMostNavGroup[i].tabIndex = 0;
+					reachedElem = true;
+				}
+			}
+		}
+	}
 	function handleMessage(message) {
 		switch (message.command) {
 			case 'refresh':
@@ -76,17 +138,10 @@
 					.getElementById('hostedContent')
 					.contentWindow.postMessage('refresh', '*');
 				break;
-			case 'enable-back':
-				document.getElementById('back').disabled = false;
-				break;
-			case 'disable-back':
-				document.getElementById('back').disabled = true;
-				break;
-			case 'enable-forward':
-				document.getElementById('forward').disabled = false;
-				break;
-			case 'disable-forward':
-				document.getElementById('forward').disabled = true;
+			case 'changed-history':
+				msgJSON = JSON.parse(message.text);
+				document.getElementById(msgJSON.element).disabled = msgJSON.disabled;
+				adjustTabIndex();
 				break;
 			// from child iframe
 			case 'update-path': {
@@ -120,7 +175,6 @@
 			case 'set-url': {
 				msgJSON = JSON.parse(message.text);
 				setURLBar(msgJSON.fullPath);
-				console.log("set-url");
 				updateState(msgJSON.pathname);
 				break;
 			}
@@ -186,6 +240,7 @@
 			document
 				.getElementById('hostedContent')
 				.contentWindow.postMessage('refresh', '*');
+			document.getElementById('reload').blur();
 		};
 
 		document.getElementById('browserOpen').onclick = function () {
