@@ -11,7 +11,6 @@ import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
-import { url } from 'inspector';
 
 export class HttpServer extends Disposable {
 	private _server: any;
