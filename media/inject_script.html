@@ -26,7 +26,6 @@
 	});
 
 	function handleSocketMessage(data) {
-		console.log(data);
 		const parsedMessage = JSON.parse(data);
 		switch (parsedMessage.command) {
 			case 'reload': {
