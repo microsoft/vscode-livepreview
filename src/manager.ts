@@ -169,6 +169,8 @@ export class Manager extends Disposable {
 				vscode.commands.executeCommand('vscode.open', uri, {
 					viewColumn: column,
 				});
+			} else {
+				vscode.commands.executeCommand('vscode.open', uri);
 			}
 		});
 	}
