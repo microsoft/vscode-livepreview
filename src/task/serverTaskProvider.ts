@@ -4,7 +4,6 @@ import { serverMsg } from '../manager';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { Disposable } from '../utils/dispose';
-import { PathUtil } from '../utils/pathUtil';
 import { serverTaskLinkProvider } from './serverTaskLinkProvider';
 import { ServerTaskTerminal } from './serverTaskTerminal';
 
@@ -84,6 +83,7 @@ export class ServerTaskProvider
 			this._terminal.sendServerMsg(msg);
 		}
 	}
+
 	public serverStarted(port: number, status: ServerStartedStatus) {
 		if (this._terminal && this._terminal.running) {
 			this._terminal.serverStarted(port, status);

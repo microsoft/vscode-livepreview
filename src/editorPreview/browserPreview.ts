@@ -14,7 +14,6 @@ export class BrowserPreview extends Disposable {
 	private readonly _pageHistory: PageHistory;
 
 	private currentAddress: string;
-	// private _currentWorkspacePath: string; // used for resolving old addresses
 	private readonly _onDisposeEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
@@ -90,7 +89,6 @@ export class BrowserPreview extends Disposable {
 				this.reloadWebview();
 			})
 		);
-
 		// Handle messages from the webview
 		this._register(
 			this._panel.webview.onDidReceiveMessage((message) => {

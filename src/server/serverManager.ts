@@ -189,8 +189,8 @@ export class Server extends Disposable {
 		this._isServerOn = true;
 		this._statusBar.ServerOn(this._httpServer.port);
 
-		this._httpServer.setInjectorWSPort(this._wsServer.ws_port);
-
+		this._httpServer.injectorWSPort = this._wsServer.ws_port;
+		this._wsServer.hostName = `http://${HOST}:${this._httpServer.port}`;
 		this.showServerStatusMessage(
 			`Server Opened on Port ${this._httpServer.port}`
 		);

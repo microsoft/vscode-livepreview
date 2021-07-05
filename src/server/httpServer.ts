@@ -57,7 +57,7 @@ export class HttpServer extends Disposable {
 		this._server.close();
 	}
 
-	public setInjectorWSPort(ws_port: number) {
+	public set injectorWSPort(ws_port: number) {
 		if (!this._contentLoader.scriptInjector) {
 			this._contentLoader.scriptInjector = new HTMLInjector(
 				this._extensionUri,
