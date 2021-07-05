@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as net from 'net';
 import { Disposable } from '../utils/dispose';
 import { WSServer } from './wsServer';
 import { HttpServer } from './httpServer';
@@ -8,7 +9,7 @@ import {
 	SettingUtil,
 	Settings,
 } from '../utils/settingsUtil';
-import { DONT_SHOW_AGAIN } from '../utils/constants';
+import { DONT_SHOW_AGAIN, HOST } from '../utils/constants';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
@@ -20,10 +21,8 @@ export class Server extends Disposable {
 	private readonly _wsServer: WSServer;
 	private readonly _statusBar: StatusBarNotifier;
 	private _isServerOn = false;
-
-	// private get _workspacePath() {
-	// 	return this._workspaceManager.workspacePath;
-	// }
+	private _wsConnected = false;
+	private _httpConnected = false;
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
@@ -46,7 +45,8 @@ export class Server extends Disposable {
 				if (
 					e.contentChanges &&
 					e.contentChanges.length > 0 &&
-					this._reloadOnAnyChange
+					this._reloadOnAnyChange &&
+					this._httpServer.hasServedFile(e.document.uri.fsPath)
 				) {
 					this._wsServer.refreshBrowsers();
 				}
@@ -54,20 +54,11 @@ export class Server extends Disposable {
 		);
 
 		this._register(
-			vscode.workspace.onDidChangeTextDocument((e) => {
+			vscode.workspace.onDidSaveTextDocument((e) => {
 				if (
-					e.contentChanges &&
-					e.contentChanges.length > 0 &&
-					this._reloadOnAnyChange
+					this._reloadOnSave &&
+					this._httpServer.hasServedFile(e.uri.fsPath)
 				) {
-					this._wsServer.refreshBrowsers();
-				}
-			})
-		);
-
-		this._register(
-			vscode.workspace.onDidSaveTextDocument(() => {
-				if (this._reloadOnSave) {
 					this._wsServer.refreshBrowsers();
 				}
 			})
@@ -96,47 +87,30 @@ export class Server extends Disposable {
 		);
 
 		this._register(
-			this._connectionManager.onConnected((e) => {
-				if (e.ws_port) {
-					this._httpServer.setInjectorWSPort(e.ws_port);
-				}
-			})
-		);
-
-		this._register(
 			this._httpServer.onNewReqProcessed((e) => {
 				this._onNewReqProcessed.fire(e);
 			})
 		);
 
 		this._register(
-			this._wsServer.onConnected((e) => {
-				this.wsServerConnected();
+			this._wsServer.onConnected(() => {
+				this._wsConnected = true;
+				if (this._wsConnected && this._httpConnected) {
+					this.connected();
+				}
 			})
 		);
 
 		this._register(
 			this._httpServer.onConnected((e) => {
-				this.httpServerConnected();
+				this._httpConnected = true;
+				if (this._wsConnected && this._httpConnected) {
+					this.connected();
+				}
 			})
 		);
+
 		vscode.commands.executeCommand('setContext', 'LivePreviewServerOn', false);
-	}
-
-	public get port() {
-		return this._httpServer.port;
-	}
-
-	public set port(portNum: number) {
-		this._httpServer.port = portNum;
-	}
-
-	public get ws_port() {
-		return this._wsServer.ws_port;
-	}
-
-	public set ws_port(portNum: number) {
-		this._wsServer.ws_port = portNum;
 	}
 
 	public get isRunning(): boolean {
@@ -178,27 +152,50 @@ export class Server extends Disposable {
 
 	public openServer(port: number): boolean {
 		if (this._extensionUri) {
-			// initialize websockets to use port after http server port
-			this._httpServer.setInjectorWSPort(port + 1);
-
-			this._httpServer.start(port);
+			this.findFreePort(port, (freePort: number) => {
+				this._httpServer.start(freePort);
+				this._wsServer.start(freePort);
+			});
 			return true;
 		}
 		return false;
 	}
 
-	private httpServerConnected() {
-		this._wsServer.start(this._httpServer.port + 1);
+	private findFreePort(
+		startPort: number,
+		callback: (port: number) => void
+	): void {
+		let port = startPort;
+		const sock = new net.Socket();
+
+		sock.setTimeout(500);
+		sock.on('connect', function () {
+			sock.destroy();
+			port++;
+			sock.connect(port, HOST);
+		});
+		sock.on('error', function (e) {
+			callback(port);
+		});
+		sock.on('timeout', function () {
+			callback(port);
+		});
+		sock.connect(port, HOST);
 	}
 
-	private wsServerConnected() {
+	private connected() {
 		this._isServerOn = true;
 		this._statusBar.ServerOn(this._httpServer.port);
+
+		this._httpServer.setInjectorWSPort(this._wsServer.ws_port);
 
 		this.showServerStatusMessage(
 			`Server Opened on Port ${this._httpServer.port}`
 		);
-		this._connectionManager.connected({ port: this._httpServer.port });
+		this._connectionManager.connected({
+			port: this._httpServer.port,
+			ws_port: this._wsServer.ws_port,
+		});
 		vscode.commands.executeCommand('setContext', 'LivePreviewServerOn', true);
 	}
 

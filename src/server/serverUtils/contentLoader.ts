@@ -26,10 +26,21 @@ export interface IndexDirEntry {
 
 export class ContentLoader extends Disposable {
 	public scriptInjector: HTMLInjector | undefined;
+	private _servedFiles: string[];
 
 	constructor(private readonly _reporter: TelemetryReporter) {
 		super();
+		this._servedFiles = [];
 	}
+
+	public resetServedFiles() {
+		this._servedFiles = [];
+	}
+
+	public get servedFiles() {
+		return this._servedFiles;
+	}
+
 	public createPageDoesNotExist(relativePath: string): Stream.Readable {
 		/* __GDPR__
 			"server.pageDoesNotExist" : {}
@@ -148,6 +159,7 @@ export class ContentLoader extends Disposable {
 	public getFileStream(
 		readPath: string
 	): Stream.Readable | fs.ReadStream | undefined {
+		this._servedFiles.push(readPath);
 		const workspaceDocuments = vscode.workspace.textDocuments;
 		let i = 0;
 		let stream;
