@@ -151,6 +151,8 @@ export class Server extends Disposable {
 	}
 
 	public openServer(port: number): boolean {
+		this._httpConnected = false;
+		this._wsConnected = false;
 		if (this._extensionUri) {
 			this.findFreePort(port, (freePort: number) => {
 				this._httpServer.start(freePort);

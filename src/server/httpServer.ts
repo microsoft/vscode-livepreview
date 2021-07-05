@@ -117,6 +117,7 @@ export class HttpServer extends Disposable {
 		let looseFile = false;
 		let absoluteReadPath = path.join(basePath, URLPathName);
 		let stream;
+		let contentType = 'application/octet-stream';
 
 		if (!fs.existsSync(absoluteReadPath)) {
 			const decodedReadPath =
@@ -125,10 +126,12 @@ export class HttpServer extends Disposable {
 			if (decodedReadPath && fs.existsSync(decodedReadPath)) {
 				absoluteReadPath = decodedReadPath;
 			} else {
-				stream = this._contentLoader.createPageDoesNotExist(absoluteReadPath);
+				const respInfo =
+					this._contentLoader.createPageDoesNotExist(absoluteReadPath);
 				res.writeHead(404);
 				this.reportStatus(req, res);
-				stream.pipe(res);
+				stream = respInfo.Stream;
+				stream?.pipe(res);
 				return;
 			}
 		}
@@ -144,19 +147,25 @@ export class HttpServer extends Disposable {
 			// Redirect to index.html if the request URL is a directory
 			if (fs.existsSync(path.join(absoluteReadPath, 'index.html'))) {
 				absoluteReadPath = path.join(absoluteReadPath, 'index.html');
-				stream = this._contentLoader.getFileStream(absoluteReadPath);
+				const respInfo = this._contentLoader.getFileStream(absoluteReadPath);
+				stream = respInfo.Stream;
+				contentType = respInfo.ContentType ?? '';
 			} else {
 				// create a default index page
-				stream = this._contentLoader.createIndexPage(
+				const respInfo = this._contentLoader.createIndexPage(
 					absoluteReadPath,
 					URLPathName,
 					looseFile
 						? this._endpointManager.getEndpointParent(URLPathName)
 						: undefined
 				);
+				stream = respInfo.Stream;
+				contentType = respInfo.ContentType ?? '';
 			}
 		} else {
-			stream = this._contentLoader.getFileStream(absoluteReadPath);
+			const respInfo = this._contentLoader.getFileStream(absoluteReadPath);
+			stream = respInfo.Stream;
+			contentType = respInfo.ContentType ?? '';
 		}
 
 		if (stream) {
@@ -164,17 +173,7 @@ export class HttpServer extends Disposable {
 				this.reportAndReturn(500, req, res);
 				return;
 			});
-
-			// explicitly set text/html for html files to allow for special character rendering
-			let contentType = 'charset=UTF-8';
-
-			if (
-				isFileInjectable(absoluteReadPath) ||
-				absoluteReadPath.endsWith('svg')
-			) {
-				contentType = 'text/html; ' + contentType;
-			}
-			res.writeHead(200, { 'Content-Type': contentType });
+			res.writeHead(200, { 'Content-Type': `${contentType}; charset=UTF-8` });
 			stream.pipe(res);
 		} else {
 			this.reportAndReturn(500, req, res);
