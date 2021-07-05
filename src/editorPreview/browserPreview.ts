@@ -7,6 +7,7 @@ import { PageHistory, NavEditCommands } from './pageHistoryTracker';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { EndpointManager } from '../infoManagers/endpointManager';
+import { ConnectionManager } from '../infoManagers/connectionManager';
 
 export class BrowserPreview extends Disposable {
 	public static readonly viewType = 'browserPreview';
@@ -29,21 +30,22 @@ export class BrowserPreview extends Disposable {
 		this._panel.reveal(column);
 	}
 
-	public updatePortNums(port: number, wsPort: number): void {
-		this._port = port;
-		this._wsPort = wsPort;
-		this.reloadWebview();
+	private get _port() {
+		return this._connectionManager.httpPort;
+	}
+
+	private get _wsPort() {
+		return this._connectionManager.wsPort;
 	}
 
 	constructor(
 		private readonly _panel: vscode.WebviewPanel,
 		private readonly _extensionUri: vscode.Uri,
-		private _port: number,
-		private _wsPort: number,
 		initialFile: string,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _workspaceManager: WorkspaceManager,
-		private readonly _endpointManager: EndpointManager
+		private readonly _endpointManager: EndpointManager,
+		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
 
@@ -80,6 +82,12 @@ export class BrowserPreview extends Disposable {
 		this._register(
 			this._panel.onDidDispose(() => {
 				this.dispose();
+			})
+		);
+
+		this._register(
+			this._connectionManager.onConnected((e) => {
+				this.reloadWebview();
 			})
 		);
 

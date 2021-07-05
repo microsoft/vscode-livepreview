@@ -17,7 +17,6 @@ export class HttpServer extends Disposable {
 	private _contentLoader: ContentLoader;
 	private readonly _extensionUri;
 	public port = 0;
-	// public basePath = '';
 
 	constructor(
 		extensionUri: vscode.Uri,
@@ -44,8 +43,13 @@ export class HttpServer extends Disposable {
 	);
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
+	public hasServedFile(file: string) {
+		return this._contentLoader.servedFiles.indexOf(file) > -1;
+	}
+
 	public start(port: number) {
 		this.port = port;
+		this._contentLoader.resetServedFiles();
 		this.startHttpServer();
 	}
 
@@ -63,6 +67,7 @@ export class HttpServer extends Disposable {
 			this._contentLoader.scriptInjector.ws_port = ws_port;
 		}
 	}
+
 	private startHttpServer(): boolean {
 		this._server = this.createServer();
 

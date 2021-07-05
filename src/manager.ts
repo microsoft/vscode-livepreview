@@ -26,7 +26,6 @@ export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
 	private readonly _server: Server;
 	private _serverTaskProvider: ServerTaskProvider;
-	private _serverPortNeedsUpdate = false;
 	private _previewActive = false;
 	private _currentTimeout: NodeJS.Timeout | undefined;
 	private _notifiedAboutLooseFiles = false;
@@ -43,15 +42,7 @@ export class Manager extends Disposable {
 	private get _serverPort() {
 		return this._connectionManager.httpPort;
 	}
-	private set _serverPort(portNum: number) {
-		this._connectionManager.httpPort = portNum;
-	}
-	private get _serverWSPort() {
-		return this._connectionManager.wsPort;
-	}
-	private set _serverWSPort(portNum: number) {
-		this._connectionManager.wsPort = portNum;
-	}
+
 	public get workspace(): vscode.WorkspaceFolder | undefined {
 		return this._workspaceManager.workspace;
 	}
@@ -66,7 +57,7 @@ export class Manager extends Disposable {
 		super();
 		this._endpointManager = this._register(new EndpointManager());
 		const serverPort = SettingUtil.GetConfig(_extensionUri).portNumber;
-		const serverWSPort = serverPort + 1;
+		const serverWSPort = serverPort;
 		this._connectionManager = this._register(
 			new ConnectionManager(serverPort, serverWSPort)
 		);
@@ -89,6 +80,7 @@ export class Manager extends Disposable {
 			this._endpointManager,
 			this._workspaceManager
 		);
+
 		this._register(
 			vscode.tasks.registerTaskProvider(
 				ServerTaskProvider.CustomBuildScriptType,
@@ -120,17 +112,10 @@ export class Manager extends Disposable {
 		);
 
 		this._connectionManager.onConnected((e) => {
-			if (e.port) {
-				this._serverTaskProvider.serverStarted(
-					e.port,
-					ServerStartedStatus.JUST_STARTED
-				);
-			}
-			if (this.currentPanel) {
-				this._serverPort = e.port ?? this._serverPort;
-				this._serverWSPort = e.ws_port ?? this._serverWSPort;
-				this.currentPanel.updatePortNums(this._serverPort, this._serverWSPort);
-			}
+			this._serverTaskProvider.serverStarted(
+				e.port,
+				ServerStartedStatus.JUST_STARTED
+			);
 
 			if (this._pendingExternalLaunchInfo.valid) {
 				this.launchFileInExternalBrowser(
@@ -145,16 +130,9 @@ export class Manager extends Disposable {
 			if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
 				this._server.updateConfigurations();
 				this._workspaceManager.updateConfigurations();
-				const newPortNum = SettingUtil.GetConfig(this._extensionUri).portNumber;
-				if (newPortNum != this._serverPort) {
-					if (!this._server.isRunning) {
-						this._serverPort = SettingUtil.GetConfig(
-							this._extensionUri
-						).portNumber;
-					} else {
-						this._serverPortNeedsUpdate = true;
-					}
-				}
+				this._connectionManager.pendingPort = SettingUtil.GetConfig(
+					this._extensionUri
+				).portNumber;
 			}
 		});
 
@@ -273,10 +251,7 @@ export class Manager extends Disposable {
 				this._serverTaskProvider.serverStop(true);
 			}
 
-			if (this._serverPortNeedsUpdate) {
-				this._serverPort = SettingUtil.GetConfig(this._extensionUri).portNumber;
-				this._serverPortNeedsUpdate = false;
-			}
+			this._connectionManager.disconnected();
 			return true;
 		}
 		return false;
@@ -342,12 +317,11 @@ export class Manager extends Disposable {
 		this.currentPanel = new BrowserPreview(
 			panel,
 			this._extensionUri,
-			this._serverPort,
-			this._serverWSPort,
 			file,
 			this._reporter,
 			this._workspaceManager,
-			this._endpointManager
+			this._endpointManager,
+			this._connectionManager
 		);
 
 		this._previewActive = true;

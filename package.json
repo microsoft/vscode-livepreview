@@ -2,7 +2,7 @@
 	"name": "live-server",
 	"displayName": "Live Preview - Insiders",
 	"description": "Hosts a local server in your workspace for you to preview your webpages.",
-	"version": "0.1.7",
+	"version": "0.1.8",
 	"preview": true,
 	"aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
 	"publisher": "ms-vscode",
@@ -12,11 +12,11 @@
 		"url": "https://github.com/microsoft/vscode-liveserver"
 	},
 	"capabilities": {
-	  "virtualWorkspaces": false,
-	  "untrustedWorkspaces": {
-		"supported": false,
-		"description": "Live Preview runs a server to host workspace files."
-	  }
+		"virtualWorkspaces": false,
+		"untrustedWorkspaces": {
+			"supported": false,
+			"description": "Live Preview runs a server to host workspace files."
+		}
 	},
 	"engines": {
 		"vscode": "^1.56.0"
@@ -127,7 +127,7 @@
 				{
 					"command": "LivePreview.start.externalPreview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
-					"group":"1_livepreview"
+					"group": "1_livepreview"
 				},
 				{
 					"command": "LivePreview.end",
