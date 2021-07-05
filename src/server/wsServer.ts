@@ -16,16 +16,11 @@ export class WSServerWithOriginCheck extends WebSocket.Server {
 
 	shouldHandle(req: http.IncomingMessage): boolean {
 		const origin = req.headers['origin'];
-		if (
-			origin &&
-			(origin.startsWith(VSCODE_WEBVIEW) ||
-				(this.hostName && origin == this.hostName))
-		) {
-			return true;
-		} else {
-			return false;
-		}
-		// return true;
+		return <boolean>(
+			(origin &&
+				(origin.startsWith(VSCODE_WEBVIEW) ||
+					(this.hostName && origin == this.hostName)))
+		);
 	}
 }
 
