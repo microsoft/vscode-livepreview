@@ -2,6 +2,7 @@ import * as Stream from 'stream';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as mime from 'mime';
 import { Disposable } from '../../utils/dispose';
 import {
 	FormatFileSize,
@@ -11,6 +12,10 @@ import {
 import { HTMLInjector } from './HTMLInjector';
 import TelemetryReporter from 'vscode-extension-telemetry';
 
+export interface RespInfo {
+	ContentType: string | undefined;
+	Stream: Stream.Readable | fs.ReadStream | undefined;
+}
 export interface IndexFileEntry {
 	LinkSrc: string;
 	LinkName: string;
@@ -41,7 +46,7 @@ export class ContentLoader extends Disposable {
 		return this._servedFiles;
 	}
 
-	public createPageDoesNotExist(relativePath: string): Stream.Readable {
+	public createPageDoesNotExist(relativePath: string): RespInfo {
 		/* __GDPR__
 			"server.pageDoesNotExist" : {}
 		*/
@@ -61,14 +66,17 @@ export class ContentLoader extends Disposable {
 		</html>
 		`;
 
-		return Stream.Readable.from(htmlString);
+		return {
+			Stream: Stream.Readable.from(htmlString),
+			ContentType: 'text/html',
+		};
 	}
 
 	public createIndexPage(
 		readPath: string,
 		relativePath: string,
 		titlePath = relativePath
-	): Stream.Readable {
+	): RespInfo {
 		/* __GDPR__
 			"server.indexPage" : {}
 		*/
@@ -153,12 +161,13 @@ export class ContentLoader extends Disposable {
 		</html>
 		`;
 
-		return Stream.Readable.from(htmlString);
+		return {
+			Stream: Stream.Readable.from(htmlString),
+			ContentType: 'text/html',
+		};
 	}
 
-	public getFileStream(
-		readPath: string
-	): Stream.Readable | fs.ReadStream | undefined {
+	public getFileStream(readPath: string): RespInfo {
 		this._servedFiles.push(readPath);
 		const workspaceDocuments = vscode.workspace.textDocuments;
 		let i = 0;
@@ -168,7 +177,10 @@ export class ContentLoader extends Disposable {
 				let fileContents = workspaceDocuments[i].getText();
 
 				if (isFileInjectable(readPath)) {
-					fileContents = this.scriptInjector?.script + fileContents;
+					fileContents = this.injectIntoFile(
+						fileContents,
+						this.scriptInjector?.script ?? ''
+					);
 				}
 
 				stream = Stream.Readable.from(fileContents);
@@ -180,14 +192,37 @@ export class ContentLoader extends Disposable {
 		if (i == workspaceDocuments.length) {
 			if (isFileInjectable(readPath)) {
 				const buffer = fs.readFileSync(readPath, 'utf8');
-				const injectedFileContents =
-					this.scriptInjector?.script + buffer.toString();
+				const injectedFileContents = this.injectIntoFile(
+					buffer.toString(),
+					this.scriptInjector?.script ?? ''
+				);
 				stream = Stream.Readable.from(injectedFileContents);
 			} else {
 				stream = fs.createReadStream(readPath);
 			}
 		}
 
-		return stream;
+		return {
+			Stream: stream,
+			ContentType: mime.getType(readPath) ?? 'charset=UTF-8',
+		};
+	}
+
+	private injectIntoFile(contents: string, scriptInjection: string): string {
+		const re = new RegExp('<!DOCTYPE[\\s|\\w]*>', 'g');
+
+		re.test(contents);
+
+		let docTypeEnd = re.lastIndex;
+		if (docTypeEnd == -1) {
+			docTypeEnd = 0;
+		}
+
+		const newContents =
+			contents.substr(0, docTypeEnd) +
+			'\n' +
+			scriptInjection +
+			contents.substr(docTypeEnd);
+		return newContents;
 	}
 }

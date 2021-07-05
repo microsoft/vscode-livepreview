@@ -14,11 +14,16 @@ export class BrowserPreview extends Disposable {
 	private readonly _pageHistory: PageHistory;
 
 	private currentAddress: string;
-	// private _currentWorkspacePath: string; // used for resolving old addresses
 	private readonly _onDisposeEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
 	public readonly onDispose = this._onDisposeEmitter.event;
+
+	private readonly _onShiftToExternalBrowser = this._register(
+		new vscode.EventEmitter<void>()
+	);
+	public readonly onShiftToExternalBrowser =
+		this._onShiftToExternalBrowser.event;
 
 	public close(): void {
 		this._panel.dispose();
@@ -90,7 +95,6 @@ export class BrowserPreview extends Disposable {
 				this.reloadWebview();
 			})
 		);
-
 		// Handle messages from the webview
 		this._register(
 			this._panel.webview.onDidReceiveMessage((message) => {
@@ -163,8 +167,12 @@ export class BrowserPreview extends Disposable {
 
 	private handleOpenBrowser(givenURL: string) {
 		if (givenURL == '') {
+			// open at current address, needs task start
 			givenURL = this.constructAddress(this.currentAddress);
 			const uri = vscode.Uri.parse(givenURL);
+			// tells manager that it can launch browser immediately
+			// task will run in case browser preview is closed.
+			this._onShiftToExternalBrowser.fire();
 			vscode.env.openExternal(uri);
 		} else {
 			const uri = vscode.Uri.parse(givenURL);

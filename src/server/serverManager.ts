@@ -151,6 +151,8 @@ export class Server extends Disposable {
 	}
 
 	public openServer(port: number): boolean {
+		this._httpConnected = false;
+		this._wsConnected = false;
 		if (this._extensionUri) {
 			this.findFreePort(port, (freePort: number) => {
 				this._httpServer.start(freePort);
@@ -187,8 +189,8 @@ export class Server extends Disposable {
 		this._isServerOn = true;
 		this._statusBar.ServerOn(this._httpServer.port);
 
-		this._httpServer.setInjectorWSPort(this._wsServer.ws_port);
-
+		this._httpServer.injectorWSPort = this._wsServer.ws_port;
+		this._wsServer.hostName = `http://${HOST}:${this._httpServer.port}`;
 		this.showServerStatusMessage(
 			`Server Opened on Port ${this._httpServer.port}`
 		);

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as WebSocket from 'ws';
+import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import { URL } from 'url';
@@ -8,10 +9,31 @@ import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
+import { VSCODE_WEBVIEW } from '../utils/constants';
+
+export class WSServerWithOriginCheck extends WebSocket.Server {
+	public hostName: string | undefined;
+
+	shouldHandle(req: http.IncomingMessage): boolean {
+		const origin = req.headers['origin'];
+		return <boolean>(
+			(origin &&
+				(origin.startsWith(VSCODE_WEBVIEW) ||
+					(this.hostName && origin == this.hostName)))
+		);
+	}
+}
 
 export class WSServer extends Disposable {
-	private _wss: WebSocket.Server | undefined;
+	private _wss: WSServerWithOriginCheck | undefined;
 	private _ws_port = 0;
+
+	public set hostName(hostName: string) {
+		if (this._wss) {
+			this._wss.hostName = hostName;
+		}
+	}
+
 	constructor(
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
@@ -49,11 +71,11 @@ export class WSServer extends Disposable {
 	}
 
 	private startWSServer(basePath: string): boolean {
-		this._wss = new WebSocket.Server({ port: this._ws_port });
-		this._wss.on('connection', (ws: any) =>
+		this._wss = new WSServerWithOriginCheck({ port: this._ws_port });
+		this._wss.on('connection', (ws: WebSocket) =>
 			this.handleWSConnection(basePath, ws)
 		);
-		this._wss.on('error', (err: any) => this.handleWSError(basePath, err));
+		this._wss.on('error', (err: Error) => this.handleWSError(basePath, err));
 		this._wss.on('listening', () => this.handleWSListen());
 		return true;
 	}
@@ -82,7 +104,7 @@ export class WSServer extends Disposable {
 		this._onConnected.fire(this._ws_port);
 	}
 
-	private handleWSConnection(basePath: string, ws: any) {
+	private handleWSConnection(basePath: string, ws: WebSocket) {
 		ws.on('message', (message: string) => {
 			const parsedMessage = JSON.parse(message);
 			switch (parsedMessage.command) {

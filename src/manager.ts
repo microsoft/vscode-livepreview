@@ -326,19 +326,27 @@ export class Manager extends Disposable {
 
 		this._previewActive = true;
 
-		this.currentPanel.onDispose(() => {
-			this.currentPanel = undefined;
-			const closeServerDelay = SettingUtil.GetConfig(
-				this._extensionUri
-			).serverKeepAliveAfterEmbeddedPreviewClose;
-			this._currentTimeout = setTimeout(() => {
-				// set a delay to server shutdown to avoid bad performance from re-opening/closing server.
-				if (this._server.isRunning && !this._serverTaskProvider.isRunning) {
-					this.closeServer();
-				}
-				this._previewActive = false;
-			}, Math.floor(closeServerDelay * 1000 * 60));
-		});
+		this._register(
+			this.currentPanel.onShiftToExternalBrowser((e) => {
+				this._serverTaskProvider.extRunTask(true);
+			})
+		);
+
+		this._register(
+			this.currentPanel.onDispose(() => {
+				this.currentPanel = undefined;
+				const closeServerDelay = SettingUtil.GetConfig(
+					this._extensionUri
+				).serverKeepAliveAfterEmbeddedPreviewClose;
+				this._currentTimeout = setTimeout(() => {
+					// set a delay to server shutdown to avoid bad performance from re-opening/closing server.
+					if (this._server.isRunning && !this._serverTaskProvider.isRunning) {
+						this.closeServer();
+					}
+					this._previewActive = false;
+				}, Math.floor(closeServerDelay * 1000 * 60));
+			})
+		);
 	}
 
 	dispose() {
