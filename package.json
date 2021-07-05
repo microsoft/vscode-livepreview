@@ -1,6 +1,6 @@
 {
 	"name": "live-server",
-	"displayName": "Live Preview - Insiders",
+	"displayName": "Live Preview",
 	"description": "Hosts a local server in your workspace for you to preview your webpages.",
 	"version": "0.1.8",
 	"preview": true,
@@ -9,7 +9,7 @@
 	"icon": "icon.png",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/microsoft/vscode-liveserver"
+		"url": "https://github.com/microsoft/vscode-livepreview"
 	},
 	"capabilities": {
 		"virtualWorkspaces": false,
