@@ -7,7 +7,6 @@ import { ContentLoader } from './serverUtils/contentLoader';
 import { HTMLInjector } from './serverUtils/HTMLInjector';
 import { HOST } from '../utils/constants';
 import { serverMsg } from '../manager';
-import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
@@ -57,14 +56,14 @@ export class HttpServer extends Disposable {
 		this._server.close();
 	}
 
-	public set injectorWSPort(ws_port: number) {
+	public set injectorWSUri(wsURI: vscode.Uri) {
 		if (!this._contentLoader.scriptInjector) {
 			this._contentLoader.scriptInjector = new HTMLInjector(
 				this._extensionUri,
-				ws_port
+				wsURI
 			);
 		} else if (this._contentLoader.scriptInjector) {
-			this._contentLoader.scriptInjector.ws_port = ws_port;
+			this._contentLoader.scriptInjector.wsURI = wsURI;
 		}
 	}
 

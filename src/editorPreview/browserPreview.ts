@@ -147,13 +147,19 @@ export class BrowserPreview extends Disposable {
 	public get panel() {
 		return this._panel;
 	}
-	private get _host() {
-		return `http://${HOST}:${this._port}`;
+
+	private async resolveHost() {
+		return await this._connectionManager.resolveExternalHTTPUri();
 	}
 
-	private goToFullAddress(address: string) {
-		if (address.startsWith(this._host)) {
-			const file = address.substr(this._host.length);
+	private async resolveWsHost() {
+		return await this._connectionManager.resolveExternalWSUri();
+	}
+
+	private async goToFullAddress(address: string) {
+		const host = await this.resolveHost();
+		if (address.startsWith(host.toString())) {
+			const file = address.substr(host.toString().length);
 			this.goToFile(file);
 			this.handleNewPageLoad(file);
 		} else {
@@ -165,11 +171,11 @@ export class BrowserPreview extends Disposable {
 		this.goToFile(this.currentAddress);
 	}
 
-	private handleOpenBrowser(givenURL: string) {
+	private async handleOpenBrowser(givenURL: string) {
 		if (givenURL == '') {
 			// open at current address, needs task start
-			givenURL = this.constructAddress(this.currentAddress);
-			const uri = vscode.Uri.parse(givenURL);
+			const givenURI = await this.constructAddress(this.currentAddress);
+			const uri = vscode.Uri.parse(givenURI.toString());
 			// tells manager that it can launch browser immediately
 			// task will run in case browser preview is closed.
 			this._onShiftToExternalBrowser.fire();
@@ -206,20 +212,26 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	private constructAddress(URLExt: string): string {
+	private async constructAddress(URLExt: string): Promise<string> {
+		this._connectionManager.resolveExternalHTTPUri().then((uri)=> {
+
+		})
 		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);
 		}
 		URLExt = URLExt.replace('\\', '/');
 		URLExt = URLExt.startsWith('/') ? URLExt.substr(1) : URLExt;
-		return `${this._host}/${URLExt}`;
+		
+		const hostUri = await this.resolveHost();
+		return `${hostUri.toString()}/${URLExt}`;
 	}
 
-	private setHtml(webview: vscode.Webview, url: string): void {
-		this._panel.webview.html = this.getHtmlForWebview(webview, url);
+	private async setHtml(webview: vscode.Webview, url: string) {
+		const wsURI = await this.resolveWsHost();
+		this._panel.webview.html = this.getHtmlForWebview(webview, url, `ws://${wsURI.authority}`);
 	}
 
-	private getHtmlForWebview(webview: vscode.Webview, url: string): string {
+	private getHtmlForWebview(webview: vscode.Webview, httpURL: string, wsURL: string): string {
 		// Local path to main script run in the webview
 		const scriptPathOnDisk = vscode.Uri.joinPath(
 			this._extensionUri,
@@ -249,7 +261,7 @@ export class BrowserPreview extends Disposable {
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = new Date().getTime() + '' + new Date().getMilliseconds();
 
-		const wsURL = `ws://${HOST}:${this._wsPort}`;
+
 		return `<!DOCTYPE html>
 		<html lang="en">
 			<head>
@@ -265,7 +277,7 @@ export class BrowserPreview extends Disposable {
 				font-src ${this._panel.webview.cspSource};
 				style-src ${this._panel.webview.cspSource};
 				script-src 'nonce-${nonce}';
-				frame-src ${this._host};
+				frame-src ${httpURL};
 				">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -305,7 +317,7 @@ export class BrowserPreview extends Disposable {
 					</div>
 				</div>
 				<div class="content">
-					<iframe id="hostedContent" src="${url}"></iframe>
+					<iframe id="hostedContent" src="${httpURL}"></iframe>
 				</div>
 				
 			</div>
@@ -382,8 +394,8 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	private goToFile(URLExt: string): void {
-		const fullAddr = this.constructAddress(URLExt);
+	private async goToFile(URLExt: string) {
+		const fullAddr = await this.constructAddress(URLExt);
 		this.setHtml(this._panel.webview, fullAddr);
 		// If we can't rely on inline script to update panel title,
 		// then set panel title manually

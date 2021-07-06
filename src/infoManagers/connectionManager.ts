@@ -5,7 +5,15 @@ export interface PortInfo {
 	port: number;
 	ws_port: number;
 }
+
+export interface ConnectionInfo {
+	httpURI: vscode.Uri;
+	wsURI: vscode.Uri;
+}
+
 export class ConnectionManager extends Disposable {
+	public httpServerBase: string | undefined;
+	public wsServerBase: string | undefined;
 	public _wsPort: number;
 	public _httpPort: number;
 	private _initHttpPort;
@@ -28,13 +36,25 @@ export class ConnectionManager extends Disposable {
 		this._wsPort = this._initWSPort;
 	}
 
+	private constructLocalUri(port: number) {
+		return vscode.Uri.parse(`http://${HOST}:${port}`)
+	}
+
 	public connected(ports: PortInfo) {
 		this._httpPort = ports.port;
 		this._wsPort = ports.ws_port;
-		this._onConnected.fire(ports);
-		vscode.env.asExternalUri(vscode.Uri.parse(`http://${HOST}/${this._httpPort}`)).then((value) => console.log(value));
-		vscode.env.asExternalUri(vscode.Uri.parse(`http://${HOST}/${this._wsPort}`)).then((value) => console.log(value));
+		
+		const httpPortUri = this.constructLocalUri(this._httpPort);
+		const wsPortUri = this.constructLocalUri(this._wsPort);
+
+		vscode.env.asExternalUri(httpPortUri).then((externalHTTPUri) => {
+			vscode.env.asExternalUri(wsPortUri).then((externalWSUri) => {
+				this._onConnected.fire({httpURI: externalHTTPUri, wsURI: externalWSUri});
+			});
+		});
 	}
+
+
 
 	public disconnected() {
 		this._httpPort = this._initHttpPort;
@@ -47,7 +67,17 @@ export class ConnectionManager extends Disposable {
 	}
 
 	private readonly _onConnected = this._register(
-		new vscode.EventEmitter<PortInfo>()
+		new vscode.EventEmitter<ConnectionInfo>()
 	);
 	public readonly onConnected = this._onConnected.event;
+
+	public async resolveExternalHTTPUri(): Promise<vscode.Uri> {
+		const httpPortUri = this.constructLocalUri(this._httpPort);
+		return await vscode.env.asExternalUri(httpPortUri)
+	}
+
+	public async resolveExternalWSUri(): Promise<vscode.Uri> {
+		const wsPortUri = this.constructLocalUri(this._wsPort);
+		return await vscode.env.asExternalUri(wsPortUri)
+	}
 }

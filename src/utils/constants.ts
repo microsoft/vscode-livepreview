@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-export const WS_PORTNUM_PLACEHOLDER = '${WS_PORTNUM}';
+export const WS_PORTNUM_PLACEHOLDER = '${WS_URL}';
 
 export const INIT_PANEL_TITLE = '/';
 

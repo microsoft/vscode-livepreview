@@ -113,7 +113,7 @@ export class Manager extends Disposable {
 
 		this._connectionManager.onConnected((e) => {
 			this._serverTaskProvider.serverStarted(
-				e.port,
+				e.httpURI,
 				ServerStartedStatus.JUST_STARTED
 			);
 
@@ -229,10 +229,12 @@ export class Manager extends Disposable {
 		if (!this._server.isRunning) {
 			return this._server.openServer(this._serverPort);
 		} else if (fromTask) {
-			this._serverTaskProvider.serverStarted(
-				this._serverPort,
-				ServerStartedStatus.STARTED_BY_EMBEDDED_PREV
-			);
+			this._connectionManager.resolveExternalHTTPUri().then((uri) => {
+				this._serverTaskProvider.serverStarted(
+					uri,
+					ServerStartedStatus.STARTED_BY_EMBEDDED_PREV
+				);
+			})
 		}
 
 		return true;
@@ -273,6 +275,7 @@ export class Manager extends Disposable {
 		const uri = vscode.Uri.parse(
 			`http://${HOST}:${this._serverPort}${relFile}`
 		);
+		// will already resolve to local address
 		vscode.env.openExternal(uri);
 	}
 	private transformNonRelativeFile(relative: boolean, file: string): string {

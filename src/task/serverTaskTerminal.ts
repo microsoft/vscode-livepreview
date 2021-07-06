@@ -59,32 +59,34 @@ export class ServerTaskTerminal
 		}
 	}
 
-	private formatAddr(port: number) {
+	private formatAddr(addr: string) {
+		const indexOfColon = addr.lastIndexOf(":");
 		return (
 			this.colorTerminalString(
-				`http://${HOST}`,
+				addr.substr(indexOfColon),
 				TerminalColor.blue,
 				TerminalDeco.bold
 			) +
 			this.colorTerminalString(
-				`:${port}`,
+				addr.substr(indexOfColon,addr.length),
 				TerminalColor.purple,
 				TerminalDeco.bold
 			)
 		);
 	}
 
-	public serverStarted(port: number, status: ServerStartedStatus) {
+	public serverStarted(externalUri: vscode.Uri, status: ServerStartedStatus) {
+		const formattedAddress = this.formatAddr(externalUri.toString());
 		switch (status) {
 			case ServerStartedStatus.JUST_STARTED: {
 				this.writeEmitter.fire(
-					`Started Server on ${this.formatAddr(port)}\r\n`
+					`Started Server on ${formattedAddress}\r\n`
 				);
 				break;
 			}
 			case ServerStartedStatus.STARTED_BY_EMBEDDED_PREV: {
 				this.writeEmitter.fire(
-					`Server already on at ${this.formatAddr(port)}\r\n> `
+					`Server already on at ${formattedAddress}\r\n> `
 				);
 				break;
 			}
