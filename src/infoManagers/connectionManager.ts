@@ -1,5 +1,6 @@
 import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
+import { HOST } from '../utils/constants';
 export interface PortInfo {
 	port: number;
 	ws_port: number;
@@ -31,6 +32,8 @@ export class ConnectionManager extends Disposable {
 		this._httpPort = ports.port;
 		this._wsPort = ports.ws_port;
 		this._onConnected.fire(ports);
+		vscode.env.asExternalUri(vscode.Uri.parse(`http://${HOST}/${this._httpPort}`)).then((value) => console.log(value));
+		vscode.env.asExternalUri(vscode.Uri.parse(`http://${HOST}/${this._wsPort}`)).then((value) => console.log(value));
 	}
 
 	public disconnected() {
