@@ -1,6 +1,6 @@
 <!-- Script injected by VS Live Preview -->
 <script type="text/javascript" defer>
-	const url = 'ws://localhost:${WS_PORTNUM}';
+	const url = 'ws://127.0.0.1:${WS_PORTNUM}';
 	const connection = new WebSocket(url);
 
 	connection.onerror = (error) => {
@@ -8,6 +8,13 @@
 		console.log(error);
 	};
 
+	connection.onclose = (event) => {
+		console.log("Error occurred.");
+		
+		// Inform the user about the error.
+		console.log(event)
+
+	};
 	connection.onmessage = (event) => handleSocketMessage(event.data);
 
 	window.addEventListener('message', (event) => handleMessage(event), false);
