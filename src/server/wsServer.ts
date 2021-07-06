@@ -9,7 +9,7 @@ import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
-import { VSCODE_WEBVIEW } from '../utils/constants';
+import { HOST, VSCODE_WEBVIEW } from '../utils/constants';
 
 export class WSServerWithOriginCheck extends WebSocket.Server {
 	public hostName: string | undefined;
@@ -71,7 +71,7 @@ export class WSServer extends Disposable {
 	}
 
 	private startWSServer(basePath: string): boolean {
-		this._wss = new WSServerWithOriginCheck({ port: this._ws_port });
+		this._wss = new WSServerWithOriginCheck({ port: this._ws_port, host: HOST });
 		this._wss.on('connection', (ws: WebSocket) =>
 			this.handleWSConnection(basePath, ws)
 		);

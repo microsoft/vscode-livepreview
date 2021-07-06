@@ -249,7 +249,7 @@ export class BrowserPreview extends Disposable {
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = new Date().getTime() + '' + new Date().getMilliseconds();
 
-		const wsURL = `ws://localhost:${this._wsPort}`;
+		const wsURL = `ws://${HOST}:${this._wsPort}`;
 		return `<!DOCTYPE html>
 		<html lang="en">
 			<head>
