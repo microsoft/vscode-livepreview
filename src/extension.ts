@@ -10,6 +10,7 @@ let reporter: TelemetryReporter;
 let manager: Manager;
 
 export function activate(context: vscode.ExtensionContext) {
+	console.log("ACTIVATE");
 	const extPackageJSON = context.extension.packageJSON;
 
 	reporter = new TelemetryReporter(
@@ -224,4 +225,5 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate(): void {
 	reporter.dispose();
 	manager.dispose();
+	console.log("DEACTIVATE");
 }
