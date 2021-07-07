@@ -212,30 +212,34 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	private async constructAddress(URLExt: string): Promise<string> {
+	private async constructAddress(URLExt: string, hostURI?: vscode.Uri): Promise<string> {
 		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);
 		}
 		URLExt = URLExt.replace('\\', '/');
 		URLExt = URLExt.startsWith('/') ? URLExt.substr(1) : URLExt;
 
-		const hostUri = await this.resolveHost();
-		return `${hostUri.toString()}${URLExt}`;
+		if (!hostURI) {
+			hostURI = await this.resolveHost();
+		}
+		return `${hostURI.toString()}${URLExt}`;
 	}
 
-	private async setHtml(webview: vscode.Webview, url: string) {
+	private async setHtml(webview: vscode.Webview, url: string, httpHost: vscode.Uri) {
 		const wsURI = await this.resolveWsHost();
 		this._panel.webview.html = this.getHtmlForWebview(
 			webview,
 			url,
-			`ws://${wsURI.authority}`
+			`ws://${wsURI.authority}`,
+			`${httpHost.scheme}://${httpHost.authority}`,
 		);
 	}
 
 	private getHtmlForWebview(
 		webview: vscode.Webview,
 		httpURL: string,
-		wsURL: string
+		wsURL: string,
+		httpHost: string
 	): string {
 		// Local path to main script run in the webview
 		const scriptPathOnDisk = vscode.Uri.joinPath(
@@ -281,7 +285,7 @@ export class BrowserPreview extends Disposable {
 				font-src ${this._panel.webview.cspSource};
 				style-src ${this._panel.webview.cspSource};
 				script-src 'nonce-${nonce}';
-				frame-src ${httpURL};
+				frame-src ${httpHost};
 				">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -399,8 +403,9 @@ export class BrowserPreview extends Disposable {
 	}
 
 	private async goToFile(URLExt: string) {
-		const fullAddr = await this.constructAddress(URLExt);
-		this.setHtml(this._panel.webview, fullAddr);
+		const httpHost = await this.resolveHost();
+		const fullAddr = await this.constructAddress(URLExt, httpHost);
+		this.setHtml(this._panel.webview, fullAddr, httpHost);
 		// If we can't rely on inline script to update panel title,
 		// then set panel title manually
 		if (!isFileInjectable(URLExt)) {
