@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { HOST, INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
+import { INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
@@ -162,7 +162,11 @@ export class BrowserPreview extends Disposable {
 
 	private async goToFullAddress(address: string) {
 		const host = await this.resolveHost();
-		if (address.startsWith(host.toString())) {
+		let hostString = host.toString();
+		if (hostString.endsWith('/')) {
+			hostString = hostString.substr(0, hostString.length - 1);
+		}
+		if (address.startsWith(hostString)) {
 			const file = address.substr(host.toString().length);
 			this.goToFile(file);
 			this.handleNewPageLoad(file);

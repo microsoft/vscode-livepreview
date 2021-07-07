@@ -200,6 +200,11 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Whether or not to warn the user upon opening a multi-root preview with an undefined default server workspace."
+				},
+				"LivePreview.runTaskWithExternalPreview": {
+					"type": "boolean",
+					"default": true,
+					"description": "Whether or not to pair external preview instances with the Live Preview task. When disabled, the embedded preview closing will not cause the server to close to prevent suddent server disconnection."
 				}
 			}
 		},

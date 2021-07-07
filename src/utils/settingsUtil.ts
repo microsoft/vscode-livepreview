@@ -13,6 +13,7 @@ export interface LiveServerConfigItem {
 	notifyOnOpenLooseFile: boolean;
 	serverWorkspace: string;
 	showWarningOnMultiRootOpen: boolean;
+	runTaskWithExternalPreview: boolean;
 }
 
 export enum AutoRefreshPreview {
@@ -40,6 +41,7 @@ export const Settings: any = {
 	notifyOnOpenLooseFile: 'notifyOnOpenLooseFile',
 	serverWorkspace: 'serverWorkspace',
 	showWarningOnMultiRootOpen: 'showWarningOnMultiRootOpen',
+	runTaskWithExternalPreview: 'runTaskWithExternalPreview',
 };
 export const PreviewType: any = {
 	internalPreview: 'internalPreview',
@@ -81,6 +83,10 @@ export class SettingUtil {
 			serverWorkspace: config.get<string>(Settings.serverWorkspace, ''),
 			showWarningOnMultiRootOpen: config.get<boolean>(
 				Settings.showWarningOnMultiRootOpen,
+				true
+			),
+			runTaskWithExternalPreview: config.get<boolean>(
+				Settings.runTaskWithExternalPreview,
 				true
 			),
 		};

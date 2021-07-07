@@ -40,6 +40,7 @@ export class Manager extends Disposable {
 	private _workspaceManager: WorkspaceManager;
 	private _connectionManager: ConnectionManager;
 	private _pendingLaunchInfo: launchInfo | undefined;
+	private _runTaskWithExternalPreview: boolean;
 	// always leave off at previous port numbers to avoid retrying on many busy ports
 
 	private get _serverPort() {
@@ -83,6 +84,9 @@ export class Manager extends Disposable {
 			this._endpointManager,
 			this._workspaceManager
 		);
+
+		this._runTaskWithExternalPreview =
+			SettingUtil.GetConfig(_extensionUri).runTaskWithExternalPreview;
 
 		this._register(
 			vscode.tasks.registerTaskProvider(
@@ -144,6 +148,9 @@ export class Manager extends Disposable {
 				this._connectionManager.pendingPort = SettingUtil.GetConfig(
 					this._extensionUri
 				).portNumber;
+				this._runTaskWithExternalPreview = SettingUtil.GetConfig(
+					this._extensionUri
+				).runTaskWithExternalPreview;
 			}
 		});
 
@@ -193,7 +200,7 @@ export class Manager extends Disposable {
 			} else {
 				this.launchFileInExternalBrowser(file, relative);
 			}
-			if (this.workspace) {
+			if (this.workspace && this._runTaskWithExternalPreview) {
 				this._serverTaskProvider.extRunTask(
 					SettingUtil.GetConfig(this._extensionUri)
 						.browserPreviewLaunchServerLogging
@@ -353,8 +360,13 @@ export class Manager extends Disposable {
 		this._previewActive = true;
 
 		this._register(
-			this.currentPanel.onShiftToExternalBrowser((e) => {
-				this._serverTaskProvider.extRunTask(true);
+			this.currentPanel.onShiftToExternalBrowser(() => {
+				if (
+					!this._serverTaskProvider.isRunning &&
+					this._runTaskWithExternalPreview
+				) {
+					this._serverTaskProvider.extRunTask(true);
+				}
 			})
 		);
 
@@ -366,7 +378,12 @@ export class Manager extends Disposable {
 				).serverKeepAliveAfterEmbeddedPreviewClose;
 				this._currentTimeout = setTimeout(() => {
 					// set a delay to server shutdown to avoid bad performance from re-opening/closing server.
-					if (this._server.isRunning && !this._serverTaskProvider.isRunning) {
+					if (
+						this._server.isRunning &&
+						!this._serverTaskProvider.isRunning &&
+						!this.workspace &&
+						this._runTaskWithExternalPreview
+					) {
 						this.closeServer();
 					}
 					this._previewActive = false;

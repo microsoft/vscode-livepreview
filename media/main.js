@@ -186,7 +186,6 @@
 					command: 'open-browser',
 					text: message.text,
 				});
-
 				break;
 			}
 			// from child iframe
