@@ -167,20 +167,25 @@ export class ContentLoader extends Disposable {
 		};
 	}
 
-	public getFileStream(readPath: string): RespInfo {
+	public getFileStream(readPath: string, inFilesystem = true): RespInfo {
 		this._servedFiles.push(readPath);
 		const workspaceDocuments = vscode.workspace.textDocuments;
 		let i = 0;
 		let stream;
+		let contentType = mime.getType(readPath) ?? 'text/plain';
 		while (i < workspaceDocuments.length) {
 			if (readPath == workspaceDocuments[i].fileName) {
+				if (inFilesystem && workspaceDocuments[i].isUntitled) {
+					continue;
+				}
 				let fileContents = workspaceDocuments[i].getText();
 
-				if (isFileInjectable(readPath)) {
+				if (workspaceDocuments[i].languageId == 'html') {
 					fileContents = this.injectIntoFile(
 						fileContents,
 						this.scriptInjector?.script ?? ''
 					);
+					contentType = 'text/html';
 				}
 
 				stream = Stream.Readable.from(fileContents);
@@ -189,7 +194,7 @@ export class ContentLoader extends Disposable {
 			i++;
 		}
 
-		if (i == workspaceDocuments.length) {
+		if (inFilesystem && i == workspaceDocuments.length) {
 			if (isFileInjectable(readPath)) {
 				const buffer = fs.readFileSync(readPath, 'utf8');
 				const injectedFileContents = this.injectIntoFile(
@@ -204,7 +209,7 @@ export class ContentLoader extends Disposable {
 
 		return {
 			Stream: stream,
-			ContentType: mime.getType(readPath) ?? 'charset=UTF-8',
+			ContentType: contentType,
 		};
 	}
 
