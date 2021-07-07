@@ -30,6 +30,7 @@ export class BrowserPreview extends Disposable {
 	}
 
 	public reveal(column: number, file = '/'): void {
+		console.log(`reveal ${file}`);
 		this.goToFile(file);
 		this.handleNewPageLoad(file);
 		this._panel.reveal(column);
@@ -212,7 +213,10 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	private async constructAddress(URLExt: string, hostURI?: vscode.Uri): Promise<string> {
+	private async constructAddress(
+		URLExt: string,
+		hostURI?: vscode.Uri
+	): Promise<string> {
 		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);
 		}
@@ -225,13 +229,17 @@ export class BrowserPreview extends Disposable {
 		return `${hostURI.toString()}${URLExt}`;
 	}
 
-	private async setHtml(webview: vscode.Webview, url: string, httpHost: vscode.Uri) {
+	private async setHtml(
+		webview: vscode.Webview,
+		url: string,
+		httpHost: vscode.Uri
+	) {
 		const wsURI = await this.resolveWsHost();
 		this._panel.webview.html = this.getHtmlForWebview(
 			webview,
 			url,
 			`ws://${wsURI.authority}`,
-			`${httpHost.scheme}://${httpHost.authority}`,
+			`${httpHost.scheme}://${httpHost.authority}`
 		);
 	}
 

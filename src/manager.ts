@@ -22,6 +22,13 @@ export interface serverMsg {
 	url: string;
 	status: number;
 }
+
+export interface launchInfo {
+	external: boolean;
+	file: string;
+	relative: boolean;
+	panel?: vscode.WebviewPanel;
+}
 export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
 	private readonly _server: Server;
@@ -32,11 +39,7 @@ export class Manager extends Disposable {
 	private _endpointManager: EndpointManager;
 	private _workspaceManager: WorkspaceManager;
 	private _connectionManager: ConnectionManager;
-	private _pendingExternalLaunchInfo = {
-		valid: false,
-		file: '',
-		relative: false,
-	};
+	private _pendingLaunchInfo: launchInfo | undefined;
 	// always leave off at previous port numbers to avoid retrying on many busy ports
 
 	private get _serverPort() {
@@ -117,12 +120,20 @@ export class Manager extends Disposable {
 				ServerStartedStatus.JUST_STARTED
 			);
 
-			if (this._pendingExternalLaunchInfo.valid) {
-				this.launchFileInExternalBrowser(
-					this._pendingExternalLaunchInfo.file,
-					this._pendingExternalLaunchInfo.relative
-				);
-				this._pendingExternalLaunchInfo.valid = false;
+			if (this._pendingLaunchInfo) {
+				if (this._pendingLaunchInfo.external) {
+					this.launchFileInExternalBrowser(
+						this._pendingLaunchInfo.file,
+						this._pendingLaunchInfo.relative
+					);
+				} else {
+					this.launchFileInEmbeddedPreview(
+						this._pendingLaunchInfo.file,
+						this._pendingLaunchInfo.relative,
+						this._pendingLaunchInfo.panel
+					)
+				}
+				this._pendingLaunchInfo = undefined;
 			}
 		});
 
@@ -158,41 +169,25 @@ export class Manager extends Disposable {
 		file = '/',
 		relative = true
 	): void {
-		file = this.transformNonRelativeFile(relative, file);
-
-		const column = vscode.ViewColumn.Beside;
-
-		// If we already have a panel, show it.
-		if (this.currentPanel) {
-			this.currentPanel.reveal(column, file);
-			return;
+		if (!this._server.isRunning) {
+			this._pendingLaunchInfo = {
+				external:false,
+				panel: panel,
+				file: file,
+				relative: relative,
+			}
+			this.openServer();
+		} else {
+			this.launchFileInEmbeddedPreview(file,relative,panel);
 		}
 
-		if (!panel) {
-			// Otherwise, create a new panel.
-			panel = vscode.window.createWebviewPanel(
-				BrowserPreview.viewType,
-				INIT_PANEL_TITLE,
-				column,
-				{
-					...getWebviewOptions(this._extensionUri),
-					...getWebviewPanelOptions(),
-				}
-			);
-		}
-		const serverOn = this.openServer();
-
-		if (!serverOn) {
-			return;
-		}
-		this.startEmbeddedPreview(panel, file);
 	}
 
 	public showPreviewInBrowser(file = '/', relative = true) {
 		if (!this._serverTaskProvider.isRunning) {
 			if (!this._server.isRunning) {
-				this._pendingExternalLaunchInfo = {
-					valid: true,
+				this._pendingLaunchInfo = {
+					external:true,
 					file: file,
 					relative: relative,
 				};
@@ -278,6 +273,36 @@ export class Manager extends Disposable {
 		// will already resolve to local address
 		vscode.env.openExternal(uri);
 	}
+
+	private launchFileInEmbeddedPreview(
+		file: string,
+		relative: boolean,
+		panel: vscode.WebviewPanel | undefined,
+		) {
+
+		file = this.transformNonRelativeFile(relative, file);
+		// If we already have a panel, show it.
+		if (this.currentPanel) {
+			this.currentPanel.reveal(vscode.ViewColumn.Beside, file);
+			return;
+		}
+		
+		if (!panel) {
+			// Otherwise, create a new panel.
+			panel = vscode.window.createWebviewPanel(
+				BrowserPreview.viewType,
+				INIT_PANEL_TITLE,
+				vscode.ViewColumn.Beside,
+				{
+					...getWebviewOptions(this._extensionUri),
+					...getWebviewPanelOptions(),
+				}
+			);
+		}
+
+		this.startEmbeddedPreview(panel, file);
+	}
+	
 	private transformNonRelativeFile(relative: boolean, file: string): string {
 		if (!relative) {
 			if (!this._workspaceManager.canGetPath(file)) {
