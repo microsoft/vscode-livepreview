@@ -40,14 +40,18 @@ export function activate(context: vscode.ExtensionContext) {
 			context.extensionUri
 		).defaultPreviewPath;
 		if (filePath == '') {
-			vscode.commands.executeCommand(
-				`${SETTINGS_SECTION_ID}.start.preview.atIndex`
-			);
+			if (manager.workspace) {
+				vscode.commands.executeCommand(
+					`${SETTINGS_SECTION_ID}.start.preview.atIndex`
+				);
+			} else {
+				manager.openServer();
+			}
 		} else {
-			const file = vscode.Uri.parse(filePath);
 			vscode.commands.executeCommand(
 				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-				file
+				filePath,
+				false
 			);
 		}
 	});
@@ -55,11 +59,12 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-			(file?: any) => {
+			(file?: any, relativeFileString = true) => {
 				const previewType = SettingUtil.GetPreviewType(context.extensionUri);
 				vscode.commands.executeCommand(
 					`${SETTINGS_SECTION_ID}.start.${previewType}.atFile`,
-					file
+					file,
+					relativeFileString
 				);
 			}
 		)
@@ -90,7 +95,11 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.setDefaultOpenFile`,
 			(file: vscode.Uri) => {
-				SettingUtil.UpdateSettings(Settings.defaultPreviewPath, file.fsPath);
+				SettingUtil.UpdateSettings(
+					Settings.defaultPreviewPath,
+					file.fsPath,
+					false
+				);
 			}
 		)
 	);
@@ -107,9 +116,13 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	};
 
-	const handleOpenFile = (internal: boolean, file: any) => {
+	const handleOpenFile = (
+		internal: boolean,
+		file: any,
+		fileStringRelative = true
+	) => {
 		if (typeof file == 'string') {
-			openPreview(internal, file, true);
+			openPreview(internal, file, fileStringRelative);
 			return;
 		} else if (file instanceof vscode.Uri) {
 			const filePath = file?.fsPath;
@@ -178,7 +191,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalPreview.atFile`,
-			(file?: any) => {
+			(file?: any, relativeFileString = true) => {
 				/* __GDPR__
 					"preview" :{
 						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
@@ -189,7 +202,7 @@ export function activate(context: vscode.ExtensionContext) {
 					type: 'external',
 					location: 'atFile',
 				});
-				handleOpenFile(false, file);
+				handleOpenFile(false, file, relativeFileString);
 			}
 		)
 	);
@@ -197,7 +210,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
-			(file?: any) => {
+			(file?: any, relativeFileString = true) => {
 				/* __GDPR__
 					"preview" :{
 						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
@@ -208,7 +221,7 @@ export function activate(context: vscode.ExtensionContext) {
 					type: 'internal',
 					location: 'atFile',
 				});
-				handleOpenFile(true, file);
+				handleOpenFile(true, file, relativeFileString);
 			}
 		)
 	);

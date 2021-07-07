@@ -381,7 +381,7 @@ export class Manager extends Disposable {
 					if (
 						this._server.isRunning &&
 						!this._serverTaskProvider.isRunning &&
-						!this.workspace &&
+						this.workspace &&
 						this._runTaskWithExternalPreview
 					) {
 						this.closeServer();

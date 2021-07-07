@@ -35,14 +35,14 @@ export const Settings: any = {
 	showStatusBarItem: 'showStatusBarItem',
 	showServerStatusNotifications: 'showServerStatusNotifications',
 	autoRefreshPreview: 'autoRefreshPreview',
-	browserPreviewLaunchServerLogging: 'browserPreviewLaunchServerLogging',
+	browserPreviewLaunchServerLogging: 'tasks.browserPreviewLaunchServerLogging',
 	openPreviewTarget: 'openPreviewTarget',
 	serverKeepAliveAfterEmbeddedPreviewClose:
 		'serverKeepAliveAfterEmbeddedPreviewClose',
 	notifyOnOpenLooseFile: 'notifyOnOpenLooseFile',
-	serverWorkspace: 'serverWorkspace',
-	showWarningOnMultiRootOpen: 'showWarningOnMultiRootOpen',
-	runTaskWithExternalPreview: 'runTaskWithExternalPreview',
+	serverWorkspace: 'multiroot.serverWorkspace',
+	showWarningOnMultiRootOpen: 'multiroot.showWarningOnMultiRootOpen',
+	runTaskWithExternalPreview: 'tasks.runTaskWithExternalPreview',
 	defaultPreviewPath: 'defaultPreviewPath',
 };
 export const PreviewType: any = {

@@ -96,24 +96,24 @@
 				{
 					"command": "LivePreview.start.preview.atFile",
 					"when": "resourceLangId == html",
-					"group": "1_livepreview"
+					"group": "1_livepreview@1"
 				},
 				{
 					"command": "LivePreview.setDefaultOpenFile",
 					"when": "resourceLangId == html",
-					"group": "1_livepreview"
+					"group": "1_livepreview@2"
 				}
 			],
 			"editor/context": [
 				{
 					"command": "LivePreview.start.preview.atFile",
 					"when": "resourceLangId == html",
-					"group": "1_livepreview"
+					"group": "1_livepreview@1"
 				},
 				{
 					"command": "LivePreview.setDefaultOpenFile",
 					"when": "resourceLangId == html",
-					"group": "1_livepreview"
+					"group": "1_livepreview@2"
 				}
 			],
 			"commandPalette": [
@@ -205,33 +205,33 @@
 						"External Browser"
 					],
 					"default": "Embedded Preview",
-					"description": "Preferred target for previews."
+					"description": "The preferred target for previews."
 				},
-				"LivePreview.browserPreviewLaunchServerLogging": {
+				"LivePreview.tasks.browserPreviewLaunchServerLogging": {
 					"type": "boolean",
 					"default": true,
-					"description": "Whether the auto-generated task terminal has logging after running \"Show Preview in External Browser\"."
+					"description": "Whether the auto-generated task terminal has logging."
 				},
 				"LivePreview.notifyOnOpenLooseFile": {
 					"type": "boolean",
 					"default": true,
 					"description": "Whether to notify the user when opening a preview for a file that is not part of the currently opened workspace (or the workspace where the server is hosted)."
 				},
-				"LivePreview.serverWorkspace": {
+				"LivePreview.multiroot.serverWorkspace": {
 					"type": "string",
 					"scope": "resource",
 					"default": "",
 					"description": "For multi-root workspaces: which workspace path should be used as the server root. Leave blank to use first workspace."
 				},
-				"LivePreview.showWarningOnMultiRootOpen": {
+				"LivePreview.multiroot.showWarningOnMultiRootOpen": {
 					"type": "boolean",
 					"default": true,
 					"description": "Whether or not to warn the user upon opening a multi-root preview with an undefined default server workspace."
 				},
-				"LivePreview.runTaskWithExternalPreview": {
+				"LivePreview.tasks.runTaskWithExternalPreview": {
 					"type": "boolean",
 					"default": true,
-					"description": "Whether or not to pair external preview instances with the Live Preview task. When disabled, the embedded preview closing will not cause the server to close to prevent suddent server disconnection."
+					"description": "Whether or not to pair external preview instances with the auto-generated server task. When disabled, the server will also not automatically close (until the window is closed)."
 				},
 				"LivePreview.defaultPreviewPath": {
 					"type": "string",
