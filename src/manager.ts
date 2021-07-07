@@ -22,6 +22,13 @@ export interface serverMsg {
 	url: string;
 	status: number;
 }
+
+export interface launchInfo {
+	external: boolean;
+	file: string;
+	relative: boolean;
+	panel?: vscode.WebviewPanel;
+}
 export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
 	private readonly _server: Server;
@@ -32,11 +39,8 @@ export class Manager extends Disposable {
 	private _endpointManager: EndpointManager;
 	private _workspaceManager: WorkspaceManager;
 	private _connectionManager: ConnectionManager;
-	private _pendingExternalLaunchInfo = {
-		valid: false,
-		file: '',
-		relative: false,
-	};
+	private _pendingLaunchInfo: launchInfo | undefined;
+	private _runTaskWithExternalPreview: boolean;
 	// always leave off at previous port numbers to avoid retrying on many busy ports
 
 	private get _serverPort() {
@@ -81,6 +85,9 @@ export class Manager extends Disposable {
 			this._workspaceManager
 		);
 
+		this._runTaskWithExternalPreview =
+			SettingUtil.GetConfig(_extensionUri).runTaskWithExternalPreview;
+
 		this._register(
 			vscode.tasks.registerTaskProvider(
 				ServerTaskProvider.CustomBuildScriptType,
@@ -113,16 +120,24 @@ export class Manager extends Disposable {
 
 		this._connectionManager.onConnected((e) => {
 			this._serverTaskProvider.serverStarted(
-				e.port,
+				e.httpURI,
 				ServerStartedStatus.JUST_STARTED
 			);
 
-			if (this._pendingExternalLaunchInfo.valid) {
-				this.launchFileInExternalBrowser(
-					this._pendingExternalLaunchInfo.file,
-					this._pendingExternalLaunchInfo.relative
-				);
-				this._pendingExternalLaunchInfo.valid = false;
+			if (this._pendingLaunchInfo) {
+				if (this._pendingLaunchInfo.external) {
+					this.launchFileInExternalBrowser(
+						this._pendingLaunchInfo.file,
+						this._pendingLaunchInfo.relative
+					);
+				} else {
+					this.launchFileInEmbeddedPreview(
+						this._pendingLaunchInfo.file,
+						this._pendingLaunchInfo.relative,
+						this._pendingLaunchInfo.panel
+					);
+				}
+				this._pendingLaunchInfo = undefined;
 			}
 		});
 
@@ -133,6 +148,9 @@ export class Manager extends Disposable {
 				this._connectionManager.pendingPort = SettingUtil.GetConfig(
 					this._extensionUri
 				).portNumber;
+				this._runTaskWithExternalPreview = SettingUtil.GetConfig(
+					this._extensionUri
+				).runTaskWithExternalPreview;
 			}
 		});
 
@@ -158,48 +176,31 @@ export class Manager extends Disposable {
 		file = '/',
 		relative = true
 	): void {
-		file = this.transformNonRelativeFile(relative, file);
-
-		const column = vscode.ViewColumn.Beside;
-
-		// If we already have a panel, show it.
-		if (this.currentPanel) {
-			this.currentPanel.reveal(column, file);
-			return;
+		if (!this._server.isRunning) {
+			this._pendingLaunchInfo = {
+				external: false,
+				panel: panel,
+				file: file,
+				relative: relative,
+			};
+			this.openServer();
+		} else {
+			this.launchFileInEmbeddedPreview(file, relative, panel);
 		}
-
-		if (!panel) {
-			// Otherwise, create a new panel.
-			panel = vscode.window.createWebviewPanel(
-				BrowserPreview.viewType,
-				INIT_PANEL_TITLE,
-				column,
-				{
-					...getWebviewOptions(this._extensionUri),
-					...getWebviewPanelOptions(),
-				}
-			);
-		}
-		const serverOn = this.openServer();
-
-		if (!serverOn) {
-			return;
-		}
-		this.startEmbeddedPreview(panel, file);
 	}
 
 	public showPreviewInBrowser(file = '/', relative = true) {
 		if (!this._serverTaskProvider.isRunning) {
 			if (!this._server.isRunning) {
-				this._pendingExternalLaunchInfo = {
-					valid: true,
+				this._pendingLaunchInfo = {
+					external: true,
 					file: file,
 					relative: relative,
 				};
 			} else {
 				this.launchFileInExternalBrowser(file, relative);
 			}
-			if (this.workspace) {
+			if (this.workspace && this._runTaskWithExternalPreview) {
 				this._serverTaskProvider.extRunTask(
 					SettingUtil.GetConfig(this._extensionUri)
 						.browserPreviewLaunchServerLogging
@@ -229,10 +230,12 @@ export class Manager extends Disposable {
 		if (!this._server.isRunning) {
 			return this._server.openServer(this._serverPort);
 		} else if (fromTask) {
-			this._serverTaskProvider.serverStarted(
-				this._serverPort,
-				ServerStartedStatus.STARTED_BY_EMBEDDED_PREV
-			);
+			this._connectionManager.resolveExternalHTTPUri().then((uri) => {
+				this._serverTaskProvider.serverStarted(
+					uri,
+					ServerStartedStatus.STARTED_BY_EMBEDDED_PREV
+				);
+			});
 		}
 
 		return true;
@@ -273,8 +276,38 @@ export class Manager extends Disposable {
 		const uri = vscode.Uri.parse(
 			`http://${HOST}:${this._serverPort}${relFile}`
 		);
+		// will already resolve to local address
 		vscode.env.openExternal(uri);
 	}
+
+	private launchFileInEmbeddedPreview(
+		file: string,
+		relative: boolean,
+		panel: vscode.WebviewPanel | undefined
+	) {
+		file = this.transformNonRelativeFile(relative, file);
+		// If we already have a panel, show it.
+		if (this.currentPanel) {
+			this.currentPanel.reveal(vscode.ViewColumn.Beside, file);
+			return;
+		}
+
+		if (!panel) {
+			// Otherwise, create a new panel.
+			panel = vscode.window.createWebviewPanel(
+				BrowserPreview.viewType,
+				INIT_PANEL_TITLE,
+				vscode.ViewColumn.Beside,
+				{
+					...getWebviewOptions(this._extensionUri),
+					...getWebviewPanelOptions(),
+				}
+			);
+		}
+
+		this.startEmbeddedPreview(panel, file);
+	}
+
 	private transformNonRelativeFile(relative: boolean, file: string): string {
 		if (!relative) {
 			if (!this._workspaceManager.canGetPath(file)) {
@@ -327,8 +360,13 @@ export class Manager extends Disposable {
 		this._previewActive = true;
 
 		this._register(
-			this.currentPanel.onShiftToExternalBrowser((e) => {
-				this._serverTaskProvider.extRunTask(true);
+			this.currentPanel.onShiftToExternalBrowser(() => {
+				if (
+					!this._serverTaskProvider.isRunning &&
+					this._runTaskWithExternalPreview
+				) {
+					this._serverTaskProvider.extRunTask(true);
+				}
 			})
 		);
 
@@ -340,7 +378,12 @@ export class Manager extends Disposable {
 				).serverKeepAliveAfterEmbeddedPreviewClose;
 				this._currentTimeout = setTimeout(() => {
 					// set a delay to server shutdown to avoid bad performance from re-opening/closing server.
-					if (this._server.isRunning && !this._serverTaskProvider.isRunning) {
+					if (
+						this._server.isRunning &&
+						!this._serverTaskProvider.isRunning &&
+						!this.workspace &&
+						this._runTaskWithExternalPreview
+					) {
 						this.closeServer();
 					}
 					this._previewActive = false;

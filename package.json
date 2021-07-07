@@ -2,7 +2,7 @@
 	"name": "live-server",
 	"displayName": "Live Preview",
 	"description": "Hosts a local server in your workspace for you to preview your webpages.",
-	"version": "0.1.8",
+	"version": "0.1.9",
 	"preview": true,
 	"aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
 	"publisher": "ms-vscode",
@@ -200,6 +200,11 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Whether or not to warn the user upon opening a multi-root preview with an undefined default server workspace."
+				},
+				"LivePreview.runTaskWithExternalPreview": {
+					"type": "boolean",
+					"default": true,
+					"description": "Whether or not to pair external preview instances with the Live Preview task. When disabled, the embedded preview closing will not cause the server to close to prevent suddent server disconnection."
 				}
 			}
 		},
@@ -248,7 +253,7 @@
 		"prettier-eslint": "^12.0.0",
 		"prettier-eslint-cli": "^5.0.1",
 		"url": "^0.11.0",
-		"vsce": "^1.91.0",
+		"vsce": "^1.95.0",
 		"vscode-codicons": "0.0.17",
 		"vscode-extension-telemetry": "^0.1.7",
 		"ws": "^7.4.6"

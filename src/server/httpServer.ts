@@ -7,10 +7,10 @@ import { ContentLoader } from './serverUtils/contentLoader';
 import { HTMLInjector } from './serverUtils/HTMLInjector';
 import { HOST } from '../utils/constants';
 import { serverMsg } from '../manager';
-import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
+import { ConnectionManager } from '../infoManagers/connectionManager';
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -22,7 +22,8 @@ export class HttpServer extends Disposable {
 		extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
-		private readonly _workspaceManager: WorkspaceManager
+		private readonly _workspaceManager: WorkspaceManager,
+		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
 		this._contentLoader = this._register(new ContentLoader(_reporter));
@@ -57,14 +58,14 @@ export class HttpServer extends Disposable {
 		this._server.close();
 	}
 
-	public set injectorWSPort(ws_port: number) {
+	public refreshInjector() {
 		if (!this._contentLoader.scriptInjector) {
 			this._contentLoader.scriptInjector = new HTMLInjector(
 				this._extensionUri,
-				ws_port
+				this._connectionManager
 			);
-		} else if (this._contentLoader.scriptInjector) {
-			this._contentLoader.scriptInjector.ws_port = ws_port;
+		} else {
+			this._contentLoader.scriptInjector.refresh();
 		}
 	}
 

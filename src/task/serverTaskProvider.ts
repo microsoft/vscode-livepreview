@@ -84,9 +84,9 @@ export class ServerTaskProvider
 		}
 	}
 
-	public serverStarted(port: number, status: ServerStartedStatus) {
+	public serverStarted(externalUri: vscode.Uri, status: ServerStartedStatus) {
 		if (this._terminal && this._terminal.running) {
-			this._terminal.serverStarted(port, status);
+			this._terminal.serverStarted(externalUri, status);
 		}
 	}
 

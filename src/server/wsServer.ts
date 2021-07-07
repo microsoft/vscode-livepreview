@@ -9,18 +9,19 @@ import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
-import { VSCODE_WEBVIEW } from '../utils/constants';
+import { HOST, VSCODE_WEBVIEW } from '../utils/constants';
 
 export class WSServerWithOriginCheck extends WebSocket.Server {
-	public hostName: string | undefined;
+	public externalHostName: string | undefined;
 
 	shouldHandle(req: http.IncomingMessage): boolean {
 		const origin = req.headers['origin'];
 		return <boolean>(
 			(origin &&
 				(origin.startsWith(VSCODE_WEBVIEW) ||
-					(this.hostName && origin == this.hostName)))
+					(this.externalHostName && origin == this.externalHostName)))
 		);
+		return true;
 	}
 }
 
@@ -28,9 +29,9 @@ export class WSServer extends Disposable {
 	private _wss: WSServerWithOriginCheck | undefined;
 	private _ws_port = 0;
 
-	public set hostName(hostName: string) {
+	public set externalHostName(hostName: string) {
 		if (this._wss) {
-			this._wss.hostName = hostName;
+			this._wss.externalHostName = hostName;
 		}
 	}
 
@@ -71,7 +72,10 @@ export class WSServer extends Disposable {
 	}
 
 	private startWSServer(basePath: string): boolean {
-		this._wss = new WSServerWithOriginCheck({ port: this._ws_port });
+		this._wss = new WSServerWithOriginCheck({
+			port: this._ws_port,
+			host: HOST,
+		});
 		this._wss.on('connection', (ws: WebSocket) =>
 			this.handleWSConnection(basePath, ws)
 		);

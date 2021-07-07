@@ -1,6 +1,7 @@
 <!-- Script injected by VS Live Preview -->
 <script type="text/javascript" defer>
-	const url = 'ws://localhost:${WS_PORTNUM}';
+	const url = '${WS_URL}';
+	const host = '${HTTP_URL}';
 	const connection = new WebSocket(url);
 
 	connection.onerror = (error) => {
@@ -8,6 +9,13 @@
 		console.log(error);
 	};
 
+	connection.onclose = (event) => {
+		console.log("Error occurred.");
+		
+		// Inform the user about the error.
+		console.log(event)
+
+	};
 	connection.onmessage = (event) => handleSocketMessage(event.data);
 
 	window.addEventListener('message', (event) => handleMessage(event), false);
@@ -61,18 +69,19 @@
 			{ command: 'update-path', text: JSON.stringify(commandPayload) },
 			'*'
 		);
+		handleLinkHoverEnd();
 
 		var l = document.getElementsByTagName('a');
 		for (var i = 0; i < l.length; i++) {
 			l[i].onclick = (e) => handleLinkClick(e.target.href);
 			l[i].onmouseenter = (e) => handleLinkHoverStart(e.target.href);
-			l[i].onmouseleave = (e) => handleLinkHoverEnd(e.target.href);
+			l[i].onmouseleave = (e) => handleLinkHoverEnd();
 		}
 	}
 
 	function handleLinkClick(linkTarget) {
 		if (linkTarget && linkTarget != '') {
-			if (!linkTarget.startsWith('http://127.0.0.1:')) {
+			if (!linkTarget.startsWith(host)) {
 				window.parent.postMessage(
 					{ command: 'open-external-link', text: linkTarget },
 					'*'
@@ -97,7 +106,7 @@
 		);
 	}
 
-	function handleLinkHoverEnd(linkTarget) {
+	function handleLinkHoverEnd() {
 		window.parent.postMessage(
 			{
 				command: 'link-hover-end',

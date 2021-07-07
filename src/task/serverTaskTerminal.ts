@@ -59,32 +59,44 @@ export class ServerTaskTerminal
 		}
 	}
 
-	private formatAddr(port: number) {
+	private getSecondColonPos(str: string) {
+		const indexColon = str.indexOf(':');
+		if (indexColon == -1) {
+			return str.length;
+		}
+
+		const indexSecondColon = str.indexOf(':', indexColon + 1);
+		return indexSecondColon == -1 ? str.length : indexSecondColon;
+	}
+
+	private formatAddr(addr: string) {
+		const indexSecondColon = this.getSecondColonPos(addr);
+		const firstHalfOfString = addr.substr(0, indexSecondColon);
+		const lastHalfOfString = addr.substr(indexSecondColon);
 		return (
 			this.colorTerminalString(
-				`http://${HOST}`,
+				firstHalfOfString,
 				TerminalColor.blue,
 				TerminalDeco.bold
 			) +
 			this.colorTerminalString(
-				`:${port}`,
+				lastHalfOfString,
 				TerminalColor.purple,
 				TerminalDeco.bold
 			)
 		);
 	}
 
-	public serverStarted(port: number, status: ServerStartedStatus) {
+	public serverStarted(externalUri: vscode.Uri, status: ServerStartedStatus) {
+		const formattedAddress = this.formatAddr(externalUri.toString());
 		switch (status) {
 			case ServerStartedStatus.JUST_STARTED: {
-				this.writeEmitter.fire(
-					`Started Server on ${this.formatAddr(port)}\r\n`
-				);
+				this.writeEmitter.fire(`Started Server on ${formattedAddress}\r\n`);
 				break;
 			}
 			case ServerStartedStatus.STARTED_BY_EMBEDDED_PREV: {
 				this.writeEmitter.fire(
-					`Server already on at ${this.formatAddr(port)}\r\n> `
+					`Server already on at ${formattedAddress}\r\n> `
 				);
 				break;
 			}

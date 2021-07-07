@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { HOST, INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
+import { INIT_PANEL_TITLE, OPEN_EXTERNALLY } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
@@ -117,15 +117,7 @@ export class BrowserPreview extends Disposable {
 						this.handleOpenBrowser(message.text);
 						return;
 					case 'add-history': {
-						this._panel.webview.postMessage({
-							command: 'set-url',
-							text: JSON.stringify({
-								fullPath: this.constructAddress(message.text),
-								pathname: message.text,
-							}),
-						});
-						// called from main.js in the case where the target is non-injectable
-						this.handleNewPageLoad(message.text);
+						this.setUrlBar(message.text);
 						return;
 					}
 					case 'refresh-back-forward-buttons':
@@ -144,16 +136,38 @@ export class BrowserPreview extends Disposable {
 		super.dispose();
 	}
 
+	private async setUrlBar(pathname: string) {
+		this._panel.webview.postMessage({
+			command: 'set-url',
+			text: JSON.stringify({
+				fullPath: await this.constructAddress(pathname),
+				pathname: pathname,
+			}),
+		});
+		// called from main.js in the case where the target is non-injectable
+		this.handleNewPageLoad(pathname);
+	}
+
 	public get panel() {
 		return this._panel;
 	}
-	private get _host() {
-		return `http://${HOST}:${this._port}`;
+
+	private async resolveHost() {
+		return await this._connectionManager.resolveExternalHTTPUri();
 	}
 
-	private goToFullAddress(address: string) {
-		if (address.startsWith(this._host)) {
-			const file = address.substr(this._host.length);
+	private async resolveWsHost() {
+		return await this._connectionManager.resolveExternalWSUri();
+	}
+
+	private async goToFullAddress(address: string) {
+		const host = await this.resolveHost();
+		let hostString = host.toString();
+		if (hostString.endsWith('/')) {
+			hostString = hostString.substr(0, hostString.length - 1);
+		}
+		if (address.startsWith(hostString)) {
+			const file = address.substr(host.toString().length);
 			this.goToFile(file);
 			this.handleNewPageLoad(file);
 		} else {
@@ -165,11 +179,11 @@ export class BrowserPreview extends Disposable {
 		this.goToFile(this.currentAddress);
 	}
 
-	private handleOpenBrowser(givenURL: string) {
+	private async handleOpenBrowser(givenURL: string) {
 		if (givenURL == '') {
 			// open at current address, needs task start
-			givenURL = this.constructAddress(this.currentAddress);
-			const uri = vscode.Uri.parse(givenURL);
+			const givenURI = await this.constructAddress(this.currentAddress);
+			const uri = vscode.Uri.parse(givenURI.toString());
 			// tells manager that it can launch browser immediately
 			// task will run in case browser preview is closed.
 			this._onShiftToExternalBrowser.fire();
@@ -206,20 +220,42 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	private constructAddress(URLExt: string): string {
+	private async constructAddress(
+		URLExt: string,
+		hostURI?: vscode.Uri
+	): Promise<string> {
 		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);
 		}
 		URLExt = URLExt.replace('\\', '/');
 		URLExt = URLExt.startsWith('/') ? URLExt.substr(1) : URLExt;
-		return `${this._host}/${URLExt}`;
+
+		if (!hostURI) {
+			hostURI = await this.resolveHost();
+		}
+		return `${hostURI.toString()}${URLExt}`;
 	}
 
-	private setHtml(webview: vscode.Webview, url: string): void {
-		this._panel.webview.html = this.getHtmlForWebview(webview, url);
+	private async setHtml(
+		webview: vscode.Webview,
+		url: string,
+		httpHost: vscode.Uri
+	) {
+		const wsURI = await this.resolveWsHost();
+		this._panel.webview.html = this.getHtmlForWebview(
+			webview,
+			url,
+			`ws://${wsURI.authority}`,
+			`${httpHost.scheme}://${httpHost.authority}`
+		);
 	}
 
-	private getHtmlForWebview(webview: vscode.Webview, url: string): string {
+	private getHtmlForWebview(
+		webview: vscode.Webview,
+		httpURL: string,
+		wsURL: string,
+		httpHost: string
+	): string {
 		// Local path to main script run in the webview
 		const scriptPathOnDisk = vscode.Uri.joinPath(
 			this._extensionUri,
@@ -249,7 +285,6 @@ export class BrowserPreview extends Disposable {
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = new Date().getTime() + '' + new Date().getMilliseconds();
 
-		const wsURL = `ws://localhost:${this._wsPort}`;
 		return `<!DOCTYPE html>
 		<html lang="en">
 			<head>
@@ -265,7 +300,7 @@ export class BrowserPreview extends Disposable {
 				font-src ${this._panel.webview.cspSource};
 				style-src ${this._panel.webview.cspSource};
 				script-src 'nonce-${nonce}';
-				frame-src ${this._host};
+				frame-src ${httpHost};
 				">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -305,7 +340,7 @@ export class BrowserPreview extends Disposable {
 					</div>
 				</div>
 				<div class="content">
-					<iframe id="hostedContent" src="${url}"></iframe>
+					<iframe id="hostedContent" src="${httpURL}"></iframe>
 				</div>
 				
 			</div>
@@ -382,9 +417,10 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	private goToFile(URLExt: string): void {
-		const fullAddr = this.constructAddress(URLExt);
-		this.setHtml(this._panel.webview, fullAddr);
+	private async goToFile(URLExt: string) {
+		const httpHost = await this.resolveHost();
+		const fullAddr = await this.constructAddress(URLExt, httpHost);
+		this.setHtml(this._panel.webview, fullAddr, httpHost);
 		// If we can't rely on inline script to update panel title,
 		// then set panel title manually
 		if (!isFileInjectable(URLExt)) {

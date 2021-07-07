@@ -33,7 +33,13 @@ export class Server extends Disposable {
 	) {
 		super();
 		this._httpServer = this._register(
-			new HttpServer(_extensionUri, reporter, endpointManager, workspaceManager)
+			new HttpServer(
+				_extensionUri,
+				reporter,
+				endpointManager,
+				workspaceManager,
+				_connectionManager
+			)
 		);
 		this._wsServer = this._register(
 			new WSServer(reporter, endpointManager, workspaceManager)
@@ -110,6 +116,13 @@ export class Server extends Disposable {
 			})
 		);
 
+		this._register(
+			this._connectionManager.onConnected((e) => {
+				this._httpServer.refreshInjector();
+				this._wsServer.externalHostName = `${e.httpURI.scheme}://${e.httpURI.authority}`;
+			})
+		);
+
 		vscode.commands.executeCommand('setContext', 'LivePreviewServerOn', false);
 	}
 
@@ -156,7 +169,7 @@ export class Server extends Disposable {
 		if (this._extensionUri) {
 			this.findFreePort(port, (freePort: number) => {
 				this._httpServer.start(freePort);
-				this._wsServer.start(freePort);
+				this._wsServer.start(freePort + 1);
 			});
 			return true;
 		}
@@ -189,8 +202,6 @@ export class Server extends Disposable {
 		this._isServerOn = true;
 		this._statusBar.ServerOn(this._httpServer.port);
 
-		this._httpServer.injectorWSPort = this._wsServer.ws_port;
-		this._wsServer.hostName = `http://${HOST}:${this._httpServer.port}`;
 		this.showServerStatusMessage(
 			`Server Opened on Port ${this._httpServer.port}`
 		);
