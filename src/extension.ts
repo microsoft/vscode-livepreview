@@ -3,7 +3,11 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
 import { EXTENSION_ID } from './utils/constants';
-import { SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
+import {
+	Settings,
+	SETTINGS_SECTION_ID,
+	SettingUtil,
+} from './utils/settingsUtil';
 import { GetActiveFile } from './utils/utils';
 
 let reporter: TelemetryReporter;
@@ -30,6 +34,23 @@ export function activate(context: vscode.ExtensionContext) {
 		{},
 		{ numWorkspaceFolders: vscode.workspace.workspaceFolders?.length ?? 0 }
 	);
+
+	vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start`, () => {
+		const filePath = SettingUtil.GetConfig(
+			context.extensionUri
+		).defaultPreviewPath;
+		if (filePath == '') {
+			vscode.commands.executeCommand(
+				`${SETTINGS_SECTION_ID}.start.preview.atIndex`
+			);
+		} else {
+			const file = vscode.Uri.parse(filePath);
+			vscode.commands.executeCommand(
+				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
+				file
+			);
+		}
+	});
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
@@ -62,6 +83,14 @@ export function activate(context: vscode.ExtensionContext) {
 					`${SETTINGS_SECTION_ID}.start.${previewType}.atIndex`,
 					file
 				);
+			}
+		)
+	);
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.setDefaultOpenFile`,
+			(file: vscode.Uri) => {
+				SettingUtil.UpdateSettings(Settings.defaultPreviewPath, file.fsPath);
 			}
 		)
 	);

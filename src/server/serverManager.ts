@@ -85,7 +85,7 @@ export class Server extends Disposable {
 			})
 		);
 		this._register(
-			vscode.workspace.onDidCreateFiles(() => {
+			vscode.workspace.onDidCreateFiles((e) => {
 				if (this._reloadOnAnyChange || this._reloadOnSave) {
 					this._wsServer.refreshBrowsers();
 				}

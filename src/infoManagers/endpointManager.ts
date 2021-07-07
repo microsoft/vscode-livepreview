@@ -15,9 +15,14 @@ export class EndpointManager extends Disposable {
 		const fullParent = PathUtil.GetParentDir(location);
 		const child = PathUtil.GetFileName(location);
 		let result;
+
+		let endpoint_prefix = `/endpoint_${parent}`;
+		if (parent == '.') {
+			endpoint_prefix = `/endpoint_unsaved`;
+		}
 		let endpoint;
 		do {
-			endpoint = `/endpoint_${parent}_${i}`;
+			endpoint = `${endpoint_prefix}_${i}`;
 			result = this._looseFiles.get(endpoint);
 			if (result === fullParent) {
 				return path.join(endpoint, child);

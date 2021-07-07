@@ -115,10 +115,27 @@ export class HttpServer extends Disposable {
 			endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
 
 		URLPathName = unescape(URLPathName);
+		let stream;
 		let looseFile = false;
 		let absoluteReadPath = path.join(basePath, URLPathName);
-		let stream;
 		let contentType = 'application/octet-stream';
+
+		if (URLPathName.startsWith('/endpoint_unsaved')) {
+			const untitledFileName = URLPathName.substr(
+				URLPathName.lastIndexOf('/') + 1
+			);
+			const content = this._contentLoader.getFileStream(
+				untitledFileName,
+				false
+			);
+			if (content.Stream) {
+				stream = content.Stream;
+				contentType = content.ContentType ?? '';
+				res.writeHead(200, { 'Content-Type': `${contentType}; charset=UTF-8` });
+				stream.pipe(res);
+				return;
+			}
+		}
 
 		if (!fs.existsSync(absoluteReadPath)) {
 			const decodedReadPath =

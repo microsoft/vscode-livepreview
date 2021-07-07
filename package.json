@@ -30,6 +30,7 @@
 	"activationEvents": [
 		"workspaceContains:**/*.html",
 		"onWebviewPanel:browserPreview",
+		"onCommand:LivePreview.start",
 		"onCommand:LivePreview.start.preview.atIndex",
 		"onCommand:LivePreview.start.preview.atFile",
 		"onCommand:LivePreview.start.externalPreview.atIndex",
@@ -41,6 +42,10 @@
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
+			{
+				"command": "LivePreview.start",
+				"title": "Live Preview: Start Server"
+			},
 			{
 				"command": "LivePreview.config.selectWorkspace",
 				"title": "Live Preview: Select Default Workspace for Server"
@@ -71,6 +76,10 @@
 				"title": "Live Preview: Show Preview (Internal Browser)"
 			},
 			{
+				"command": "LivePreview.setDefaultOpenFile",
+				"title": "Live Preview: Open Automatically on Server Start"
+			},
+			{
 				"command": "LivePreview.end",
 				"title": "Live Preview: Stop Server"
 			}
@@ -88,6 +97,11 @@
 					"command": "LivePreview.start.preview.atFile",
 					"when": "resourceLangId == html",
 					"group": "1_livepreview"
+				},
+				{
+					"command": "LivePreview.setDefaultOpenFile",
+					"when": "resourceLangId == html",
+					"group": "1_livepreview"
 				}
 			],
 			"editor/context": [
@@ -95,9 +109,18 @@
 					"command": "LivePreview.start.preview.atFile",
 					"when": "resourceLangId == html",
 					"group": "1_livepreview"
+				},
+				{
+					"command": "LivePreview.setDefaultOpenFile",
+					"when": "resourceLangId == html",
+					"group": "1_livepreview"
 				}
 			],
 			"commandPalette": [
+				{
+					"command": "LivePreview.start",
+					"when": "!LivePreviewServerOn"
+				},
 				{
 					"command": "LivePreview.start.preview.atFile",
 					"when": "false"
@@ -133,6 +156,10 @@
 					"command": "LivePreview.end",
 					"when": "LivePreviewServerOn",
 					"group": "1_livepreview"
+				},
+				{
+					"command": "LivePreview.setDefaultOpenFile",
+					"when": "false"
 				}
 			]
 		},
@@ -205,6 +232,11 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Whether or not to pair external preview instances with the Live Preview task. When disabled, the embedded preview closing will not cause the server to close to prevent suddent server disconnection."
+				},
+				"LivePreview.defaultPreviewPath": {
+					"type": "string",
+					"default": "",
+					"description": "The file to automatically show upon starting the server. Leave blank to open at the index."
 				}
 			}
 		},

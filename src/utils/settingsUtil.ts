@@ -14,6 +14,7 @@ export interface LiveServerConfigItem {
 	serverWorkspace: string;
 	showWarningOnMultiRootOpen: boolean;
 	runTaskWithExternalPreview: boolean;
+	defaultPreviewPath: string;
 }
 
 export enum AutoRefreshPreview {
@@ -42,6 +43,7 @@ export const Settings: any = {
 	serverWorkspace: 'serverWorkspace',
 	showWarningOnMultiRootOpen: 'showWarningOnMultiRootOpen',
 	runTaskWithExternalPreview: 'runTaskWithExternalPreview',
+	defaultPreviewPath: 'defaultPreviewPath',
 };
 export const PreviewType: any = {
 	internalPreview: 'internalPreview',
@@ -89,6 +91,7 @@ export class SettingUtil {
 				Settings.runTaskWithExternalPreview,
 				true
 			),
+			defaultPreviewPath: config.get<string>(Settings.defaultPreviewPath, ''),
 		};
 	}
 	public static GetPreviewType(extensionUri: vscode.Uri): string {
