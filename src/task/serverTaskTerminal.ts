@@ -65,8 +65,8 @@ export class ServerTaskTerminal
 			return str.length;
 		}
 
-		const indexSecondColon = str.indexOf(':',indexColon+1);
-		return (indexSecondColon == -1) ? str.length : indexSecondColon;
+		const indexSecondColon = str.indexOf(':', indexColon + 1);
+		return indexSecondColon == -1 ? str.length : indexSecondColon;
 	}
 
 	private formatAddr(addr: string) {
