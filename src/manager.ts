@@ -234,7 +234,7 @@ export class Manager extends Disposable {
 					uri,
 					ServerStartedStatus.STARTED_BY_EMBEDDED_PREV
 				);
-			})
+			});
 		}
 
 		return true;

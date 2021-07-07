@@ -213,25 +213,30 @@ export class BrowserPreview extends Disposable {
 	}
 
 	private async constructAddress(URLExt: string): Promise<string> {
-		this._connectionManager.resolveExternalHTTPUri().then((uri)=> {
-
-		})
 		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);
 		}
 		URLExt = URLExt.replace('\\', '/');
 		URLExt = URLExt.startsWith('/') ? URLExt.substr(1) : URLExt;
-		
+
 		const hostUri = await this.resolveHost();
-		return `${hostUri.toString()}/${URLExt}`;
+		return `${hostUri.toString()}${URLExt}`;
 	}
 
 	private async setHtml(webview: vscode.Webview, url: string) {
 		const wsURI = await this.resolveWsHost();
-		this._panel.webview.html = this.getHtmlForWebview(webview, url, `ws://${wsURI.authority}`);
+		this._panel.webview.html = this.getHtmlForWebview(
+			webview,
+			url,
+			`ws://${wsURI.authority}`
+		);
 	}
 
-	private getHtmlForWebview(webview: vscode.Webview, httpURL: string, wsURL: string): string {
+	private getHtmlForWebview(
+		webview: vscode.Webview,
+		httpURL: string,
+		wsURL: string
+	): string {
 		// Local path to main script run in the webview
 		const scriptPathOnDisk = vscode.Uri.joinPath(
 			this._extensionUri,
@@ -260,7 +265,6 @@ export class BrowserPreview extends Disposable {
 
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = new Date().getTime() + '' + new Date().getMilliseconds();
-
 
 		return `<!DOCTYPE html>
 		<html lang="en">

@@ -60,15 +60,17 @@ export class ServerTaskTerminal
 	}
 
 	private formatAddr(addr: string) {
-		const indexOfColon = addr.lastIndexOf(":");
+		const indexOfColon = addr.lastIndexOf(':');
+		const firstHalfOfString = addr.substr(0, indexOfColon);
+		const lastHalfOfString = addr.substr(indexOfColon);
 		return (
 			this.colorTerminalString(
-				addr.substr(indexOfColon),
+				firstHalfOfString,
 				TerminalColor.blue,
 				TerminalDeco.bold
 			) +
 			this.colorTerminalString(
-				addr.substr(indexOfColon,addr.length),
+				lastHalfOfString,
 				TerminalColor.purple,
 				TerminalDeco.bold
 			)
@@ -79,9 +81,7 @@ export class ServerTaskTerminal
 		const formattedAddress = this.formatAddr(externalUri.toString());
 		switch (status) {
 			case ServerStartedStatus.JUST_STARTED: {
-				this.writeEmitter.fire(
-					`Started Server on ${formattedAddress}\r\n`
-				);
+				this.writeEmitter.fire(`Started Server on ${formattedAddress}\r\n`);
 				break;
 			}
 			case ServerStartedStatus.STARTED_BY_EMBEDDED_PREV: {

@@ -10,6 +10,7 @@ import { serverMsg } from '../manager';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
+import { ConnectionManager } from '../infoManagers/connectionManager';
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -21,7 +22,8 @@ export class HttpServer extends Disposable {
 		extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
-		private readonly _workspaceManager: WorkspaceManager
+		private readonly _workspaceManager: WorkspaceManager,
+		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
 		this._contentLoader = this._register(new ContentLoader(_reporter));
@@ -56,14 +58,14 @@ export class HttpServer extends Disposable {
 		this._server.close();
 	}
 
-	public set injectorWSUri(wsURI: vscode.Uri) {
+	public refreshInjector() {
 		if (!this._contentLoader.scriptInjector) {
 			this._contentLoader.scriptInjector = new HTMLInjector(
 				this._extensionUri,
-				wsURI
+				this._connectionManager
 			);
-		} else if (this._contentLoader.scriptInjector) {
-			this._contentLoader.scriptInjector.wsURI = wsURI;
+		} else {
+			this._contentLoader.scriptInjector.refresh();
 		}
 	}
 

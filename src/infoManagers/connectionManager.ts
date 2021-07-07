@@ -37,24 +37,25 @@ export class ConnectionManager extends Disposable {
 	}
 
 	private constructLocalUri(port: number) {
-		return vscode.Uri.parse(`http://${HOST}:${port}`)
+		return vscode.Uri.parse(`http://${HOST}:${port}`);
 	}
 
 	public connected(ports: PortInfo) {
 		this._httpPort = ports.port;
 		this._wsPort = ports.ws_port;
-		
+
 		const httpPortUri = this.constructLocalUri(this._httpPort);
 		const wsPortUri = this.constructLocalUri(this._wsPort);
 
 		vscode.env.asExternalUri(httpPortUri).then((externalHTTPUri) => {
 			vscode.env.asExternalUri(wsPortUri).then((externalWSUri) => {
-				this._onConnected.fire({httpURI: externalHTTPUri, wsURI: externalWSUri});
+				this._onConnected.fire({
+					httpURI: externalHTTPUri,
+					wsURI: externalWSUri,
+				});
 			});
 		});
 	}
-
-
 
 	public disconnected() {
 		this._httpPort = this._initHttpPort;
@@ -73,11 +74,11 @@ export class ConnectionManager extends Disposable {
 
 	public async resolveExternalHTTPUri(): Promise<vscode.Uri> {
 		const httpPortUri = this.constructLocalUri(this._httpPort);
-		return await vscode.env.asExternalUri(httpPortUri)
+		return await vscode.env.asExternalUri(httpPortUri);
 	}
 
 	public async resolveExternalWSUri(): Promise<vscode.Uri> {
 		const wsPortUri = this.constructLocalUri(this._wsPort);
-		return await vscode.env.asExternalUri(wsPortUri)
+		return await vscode.env.asExternalUri(wsPortUri);
 	}
 }

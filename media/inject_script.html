@@ -79,7 +79,7 @@
 
 	function handleLinkClick(linkTarget) {
 		if (linkTarget && linkTarget != '') {
-			if (!linkTarget.startsWith('http://127.0.0.1:')) {
+			if (!linkTarget.startsWith('${HTTP_URL}')) {
 				window.parent.postMessage(
 					{ command: 'open-external-link', text: linkTarget },
 					'*'

@@ -71,7 +71,10 @@ export class WSServer extends Disposable {
 	}
 
 	private startWSServer(basePath: string): boolean {
-		this._wss = new WSServerWithOriginCheck({ port: this._ws_port, host: HOST });
+		this._wss = new WSServerWithOriginCheck({
+			port: this._ws_port,
+			host: HOST,
+		});
 		this._wss.on('connection', (ws: WebSocket) =>
 			this.handleWSConnection(basePath, ws)
 		);
