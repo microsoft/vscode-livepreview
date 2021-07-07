@@ -59,10 +59,20 @@ export class ServerTaskTerminal
 		}
 	}
 
+	private getSecondColonPos(str: string) {
+		const indexColon = str.indexOf(':');
+		if (indexColon == -1) {
+			return str.length;
+		}
+
+		const indexSecondColon = str.indexOf(':',indexColon+1);
+		return (indexSecondColon == -1) ? str.length : indexSecondColon;
+	}
+
 	private formatAddr(addr: string) {
-		const indexOfColon = addr.lastIndexOf(':');
-		const firstHalfOfString = addr.substr(0, indexOfColon);
-		const lastHalfOfString = addr.substr(indexOfColon);
+		const indexSecondColon = this.getSecondColonPos(addr);
+		const firstHalfOfString = addr.substr(0, indexSecondColon);
+		const lastHalfOfString = addr.substr(indexSecondColon);
 		return (
 			this.colorTerminalString(
 				firstHalfOfString,
