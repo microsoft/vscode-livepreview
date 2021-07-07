@@ -173,7 +173,9 @@
 				break;
 			}
 			case 'set-url': {
+				console.log("set-url");
 				msgJSON = JSON.parse(message.text);
+				console.log(msgJSON);
 				setURLBar(msgJSON.fullPath);
 				updateState(msgJSON.pathname);
 				break;

@@ -30,7 +30,6 @@ export class BrowserPreview extends Disposable {
 	}
 
 	public reveal(column: number, file = '/'): void {
-		console.log(`reveal ${file}`);
 		this.goToFile(file);
 		this.handleNewPageLoad(file);
 		this._panel.reveal(column);
@@ -118,15 +117,7 @@ export class BrowserPreview extends Disposable {
 						this.handleOpenBrowser(message.text);
 						return;
 					case 'add-history': {
-						this._panel.webview.postMessage({
-							command: 'set-url',
-							text: JSON.stringify({
-								fullPath: this.constructAddress(message.text),
-								pathname: message.text,
-							}),
-						});
-						// called from main.js in the case where the target is non-injectable
-						this.handleNewPageLoad(message.text);
+						this.setUrlBar(message.text);
 						return;
 					}
 					case 'refresh-back-forward-buttons':
@@ -143,6 +134,18 @@ export class BrowserPreview extends Disposable {
 	dispose() {
 		this._onDisposeEmitter.fire();
 		super.dispose();
+	}
+
+	private async setUrlBar(pathname: string) {
+		this._panel.webview.postMessage({
+			command: 'set-url',
+			text: JSON.stringify({
+				fullPath: await this.constructAddress(pathname),
+				pathname: pathname,
+			}),
+		});
+		// called from main.js in the case where the target is non-injectable
+		this.handleNewPageLoad(pathname);
 	}
 
 	public get panel() {

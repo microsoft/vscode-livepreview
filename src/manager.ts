@@ -131,7 +131,7 @@ export class Manager extends Disposable {
 						this._pendingLaunchInfo.file,
 						this._pendingLaunchInfo.relative,
 						this._pendingLaunchInfo.panel
-					)
+					);
 				}
 				this._pendingLaunchInfo = undefined;
 			}
@@ -171,23 +171,22 @@ export class Manager extends Disposable {
 	): void {
 		if (!this._server.isRunning) {
 			this._pendingLaunchInfo = {
-				external:false,
+				external: false,
 				panel: panel,
 				file: file,
 				relative: relative,
-			}
+			};
 			this.openServer();
 		} else {
-			this.launchFileInEmbeddedPreview(file,relative,panel);
+			this.launchFileInEmbeddedPreview(file, relative, panel);
 		}
-
 	}
 
 	public showPreviewInBrowser(file = '/', relative = true) {
 		if (!this._serverTaskProvider.isRunning) {
 			if (!this._server.isRunning) {
 				this._pendingLaunchInfo = {
-					external:true,
+					external: true,
 					file: file,
 					relative: relative,
 				};
@@ -277,16 +276,15 @@ export class Manager extends Disposable {
 	private launchFileInEmbeddedPreview(
 		file: string,
 		relative: boolean,
-		panel: vscode.WebviewPanel | undefined,
-		) {
-
+		panel: vscode.WebviewPanel | undefined
+	) {
 		file = this.transformNonRelativeFile(relative, file);
 		// If we already have a panel, show it.
 		if (this.currentPanel) {
 			this.currentPanel.reveal(vscode.ViewColumn.Beside, file);
 			return;
 		}
-		
+
 		if (!panel) {
 			// Otherwise, create a new panel.
 			panel = vscode.window.createWebviewPanel(
@@ -302,7 +300,7 @@ export class Manager extends Disposable {
 
 		this.startEmbeddedPreview(panel, file);
 	}
-	
+
 	private transformNonRelativeFile(relative: boolean, file: string): string {
 		if (!relative) {
 			if (!this._workspaceManager.canGetPath(file)) {
