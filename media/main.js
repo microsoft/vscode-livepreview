@@ -6,15 +6,14 @@
 	const vscode = acquireVsCodeApi();
 	const connection = new WebSocket(WS_URL);
 	var fadeLinkID = null;
-	
+
 	leftMostNavGroup = [
 		document.getElementById('back'),
 		document.getElementById('forward'),
-		document.getElementById('reload')
+		document.getElementById('reload'),
 	];
 
 	onLoad();
-
 
 	function onLoad() {
 		handleNavGroup(leftMostNavGroup);
@@ -79,13 +78,13 @@
 	function handleNavGroup(nav) {
 		for (var i = 0; i < nav.length; i++) {
 			const currIndex = i;
-			nav[i].addEventListener('keydown', (event) => handleNavKeyDown(event, nav, currIndex));
-
+			nav[i].addEventListener('keydown', (event) =>
+				handleNavKeyDown(event, nav, currIndex)
+			);
 		}
 	}
 
 	function moveFocusNav(right, nav, startIndex) {
-
 		var numDisabled = 0;
 		var modifier = right ? 1 : -1;
 		index = startIndex;
@@ -173,9 +172,7 @@
 				break;
 			}
 			case 'set-url': {
-				console.log("set-url");
 				msgJSON = JSON.parse(message.text);
-				console.log(msgJSON);
 				setURLBar(msgJSON.fullPath);
 				updateState(msgJSON.pathname);
 				break;

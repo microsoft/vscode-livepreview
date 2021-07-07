@@ -10,11 +10,8 @@
 	};
 
 	connection.onclose = (event) => {
-		console.log("Error occurred.");
-		
-		// Inform the user about the error.
-		console.log(event)
-
+		console.log('Error occurred.');
+		console.log(event);
 	};
 	connection.onmessage = (event) => handleSocketMessage(event.data);
 
