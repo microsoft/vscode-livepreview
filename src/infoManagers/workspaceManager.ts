@@ -97,10 +97,18 @@ export class WorkspaceManager extends Disposable {
 		return this.workspacePath ? path.startsWith(this.workspacePath) : false;
 	}
 
-	public pathExistsRelativeToAnyWorkspace(file: string): boolean{
-		if (file.startsWith("/")) {
-			file = file.substr(1);
+	public pathExistsRelativeToAnyWorkspace(file: string): boolean {
+		if (this.workspaces) {
+			for (const i in this.workspaces) {
+				if (fs.existsSync(path.join(this.workspaces[i].uri.fsPath, file))) {
+					return true;
+				}
+			}
 		}
+		return false;
+	}
+
+	public pathIsInAnyWorkspace(file: string): boolean {
 		if (this.workspaces) {
 			for (const i in this.workspaces) {
 				if (PathUtil.PathBeginsWith(file, this.workspaces[i].uri.fsPath)) {

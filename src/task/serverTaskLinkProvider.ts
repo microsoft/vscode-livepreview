@@ -53,6 +53,7 @@ export class serverTaskLinkProvider
 			"task.terminal.handleTerminalLink" : {}
 		*/
 		this._reporter.sendTelemetryEvent('task.terminal.handleTerminalLink');
+
 		if (link.inEditor) {
 			this.openRelativeLinkInWorkspace(link.data, link.isDir);
 		} else {
@@ -75,7 +76,11 @@ export class serverTaskLinkProvider
 			if (partialLinkMatches) {
 				for (let i = 0; i < partialLinkMatches.length; i++) {
 					if (partialLinkMatches[i]) {
-						const link = partialLinkMatches[i];
+						const queryIndex = partialLinkMatches[i].lastIndexOf('?');
+						const link =
+							queryIndex == -1
+								? partialLinkMatches[i]
+								: partialLinkMatches[i].substr(0, queryIndex);
 						const isDir = link.endsWith('/');
 						const tooltip = isDir ? 'Reveal Folder ' : 'Open File ';
 						const tl = {
@@ -97,6 +102,7 @@ export class serverTaskLinkProvider
 		file = unescape(file);
 		const isWorkspaceFile =
 			this._workspaceManager.pathExistsRelativeToAnyWorkspace(file);
+
 		const fullPath = isWorkspaceFile
 			? this._workspaceManager.workspace?.uri + file
 			: 'file:///' + this._endpointManager.decodeLooseFileEndpoint(file);
@@ -104,12 +110,13 @@ export class serverTaskLinkProvider
 		const uri = vscode.Uri.parse(fullPath);
 
 		if (isDir) {
-			if (!isWorkspaceFile) {
+			if (!this._workspaceManager.pathIsInAnyWorkspace(uri.fsPath)) {
 				vscode.window.showErrorMessage(
 					'Cannot reveal folder. It is not in the open workspace.'
 				);
+			} else {
+				vscode.commands.executeCommand('revealInExplorer', uri);
 			}
-			vscode.commands.executeCommand('revealInExplorer', uri);
 		} else {
 			this._onRequestOpenEditorToSide.fire(uri);
 		}

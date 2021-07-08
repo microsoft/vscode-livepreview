@@ -49,13 +49,13 @@ export class HttpServer extends Disposable {
 
 	public hasServedFile(file: string) {
 		if (this._contentLoader.servedFiles) {
-			for (const item in this._contentLoader.servedFiles.values()) {
+			for (const item of this._contentLoader.servedFiles.values()) {
 				if (PathUtil.PathEquals(file, item)) {
 					return true;
 				}
 			}
 		}
-		return this._contentLoader.servedFiles.has(file);
+		return false;
 	}
 
 	public start(port: number) {
@@ -125,7 +125,6 @@ export class HttpServer extends Disposable {
 		let URLPathName =
 			endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
 
-
 		if (!basePath && (URLPathName == '/' || URLPathName == '')) {
 			const respInfo = this._contentLoader.createNoRootServer();
 			res.writeHead(404);
@@ -136,7 +135,7 @@ export class HttpServer extends Disposable {
 		}
 
 		let looseFile = false;
-		let absoluteReadPath = path.join(basePath ?? '', URLPathName);
+		let absoluteReadPath = path.join(basePath ?? '', unescape(URLPathName));
 		let contentType = 'application/octet-stream';
 
 		if (URLPathName.startsWith('/endpoint_unsaved')) {
@@ -182,7 +181,7 @@ export class HttpServer extends Disposable {
 				this.reportAndReturn(302, req, res); // redirect
 				return;
 			}
-			
+
 			// Redirect to index.html if the request URL is a directory
 			if (fs.existsSync(path.join(absoluteReadPath, 'index.html'))) {
 				absoluteReadPath = path.join(absoluteReadPath, 'index.html');
