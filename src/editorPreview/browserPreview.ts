@@ -31,7 +31,6 @@ export class BrowserPreview extends Disposable {
 
 	public reveal(column: number, file = '/'): void {
 		this.goToFile(file);
-		this.handleNewPageLoad(file);
 		this._panel.reveal(column);
 	}
 
@@ -78,7 +77,7 @@ export class BrowserPreview extends Disposable {
 		this.updateForwardBackArrows();
 
 		// Set the webview's html content
-		this.goToFile(initialFile);
+		this.goToFile(initialFile, false);
 		this._pageHistory?.addHistory(initialFile);
 		this.currentAddress = initialFile;
 
@@ -169,14 +168,13 @@ export class BrowserPreview extends Disposable {
 		if (address.startsWith(hostString)) {
 			const file = address.substr(host.toString().length);
 			this.goToFile(file);
-			this.handleNewPageLoad(file);
 		} else {
 			this.handleOpenBrowser(address);
 		}
 	}
 
 	private reloadWebview() {
-		this.goToFile(this.currentAddress);
+		this.goToFile(this.currentAddress, false);
 	}
 
 	private async handleOpenBrowser(givenURL: string) {
@@ -209,7 +207,7 @@ export class BrowserPreview extends Disposable {
 			"preview.openExternalBrowser" : {}
 		*/
 		this._reporter.sendTelemetryEvent('preview.openExternalBrowser');
-		this.goToFile(this.currentAddress);
+		this.goToFile(this.currentAddress, false);
 		this.updateForwardBackArrows();
 	}
 
@@ -239,7 +237,8 @@ export class BrowserPreview extends Disposable {
 	private async setHtml(
 		webview: vscode.Webview,
 		URLExt: string,
-		httpHost: vscode.Uri
+		httpHost: vscode.Uri,
+		updateHistory: boolean
 	) {
 		const url = await this.constructAddress(URLExt, httpHost);
 		const wsURI = await this.resolveWsHost();
@@ -258,6 +257,9 @@ export class BrowserPreview extends Disposable {
 				command: 'set-url',
 				text: JSON.stringify({ fullPath: url, pathname: URLExt }),
 			});
+		}
+		if (updateHistory) {
+			this.handleNewPageLoad(URLExt);
 		}
 	}
 
@@ -369,7 +371,7 @@ export class BrowserPreview extends Disposable {
 
 		const pagename = response.address;
 		if (pagename != undefined) {
-			this.goToFile(pagename);
+			this.goToFile(pagename, false);
 		}
 
 		for (const i in response.actions) {
@@ -382,7 +384,7 @@ export class BrowserPreview extends Disposable {
 
 		const pagename = response.address;
 		if (pagename != undefined) {
-			this.goToFile(pagename);
+			this.goToFile(pagename, false);
 		}
 
 		for (const i in response.actions) {
@@ -416,7 +418,7 @@ export class BrowserPreview extends Disposable {
 	private handleNewPageLoad(pathname: string, panelTitle = ''): void {
 		// only load relative addresses
 		if (pathname.length > 0 && pathname[0] != '/') {
-			return;
+			pathname = '/' + pathname;
 		}
 		this.setPanelTitle(panelTitle, pathname);
 		this.currentAddress = pathname;
@@ -428,9 +430,9 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	private async goToFile(URLExt: string) {
+	private async goToFile(URLExt: string, updateHistory = true) {
 		const httpHost = await this.resolveHost();
-		this.setHtml(this._panel.webview, URLExt, httpHost);
+		this.setHtml(this._panel.webview, URLExt, httpHost, updateHistory);
 		this.currentAddress = URLExt;
 	}
 
@@ -459,7 +461,6 @@ export class BrowserPreview extends Disposable {
 
 		if (prevAddr != newAddr) {
 			this.goToFile(newAddr);
-			this.handleNewPageLoad(newAddr);
 		}
 	}
 }
