@@ -94,7 +94,7 @@ export class ContentLoader extends Disposable {
 						workspaces[i].uri.fsPath
 					);
 					customMsg += `
-					<li><a href="${workspacePath}">${workspaces[i].name}</a></li>`;
+					<li><a href="${workspacePath}/">${workspaces[i].name}</a></li>`;
 				}
 			}
 			customMsg += `</ul>`;
