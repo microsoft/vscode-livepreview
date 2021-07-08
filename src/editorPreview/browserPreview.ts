@@ -238,9 +238,10 @@ export class BrowserPreview extends Disposable {
 
 	private async setHtml(
 		webview: vscode.Webview,
-		url: string,
+		URLExt: string,
 		httpHost: vscode.Uri
 	) {
+		const url = await this.constructAddress(URLExt, httpHost);
 		const wsURI = await this.resolveWsHost();
 		this._panel.webview.html = this.getHtmlForWebview(
 			webview,
@@ -248,6 +249,16 @@ export class BrowserPreview extends Disposable {
 			`ws://${wsURI.authority}`,
 			`${httpHost.scheme}://${httpHost.authority}`
 		);
+
+		// If we can't rely on inline script to update panel title,
+		// then set panel title manually
+		if (!isFileInjectable(URLExt)) {
+			this.setPanelTitle('', URLExt);
+			this._panel.webview.postMessage({
+				command: 'set-url',
+				text: JSON.stringify({ fullPath: url, pathname: URLExt }),
+			});
+		}
 	}
 
 	private getHtmlForWebview(
@@ -419,17 +430,7 @@ export class BrowserPreview extends Disposable {
 
 	private async goToFile(URLExt: string) {
 		const httpHost = await this.resolveHost();
-		const fullAddr = await this.constructAddress(URLExt, httpHost);
-		this.setHtml(this._panel.webview, fullAddr, httpHost);
-		// If we can't rely on inline script to update panel title,
-		// then set panel title manually
-		if (!isFileInjectable(URLExt)) {
-			this.setPanelTitle('', URLExt);
-			this._panel.webview.postMessage({
-				command: 'set-url',
-				text: JSON.stringify({ fullPath: fullAddr, pathname: URLExt }),
-			});
-		}
+		this.setHtml(this._panel.webview, URLExt, httpHost);
 		this.currentAddress = URLExt;
 	}
 
