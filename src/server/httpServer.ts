@@ -26,7 +26,9 @@ export class HttpServer extends Disposable {
 		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
-		this._contentLoader = this._register(new ContentLoader(_reporter));
+		this._contentLoader = this._register(
+			new ContentLoader(_reporter, _workspaceManager, _endpointManager)
+		);
 		this._extensionUri = extensionUri;
 	}
 
@@ -45,7 +47,8 @@ export class HttpServer extends Disposable {
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
 	public hasServedFile(file: string) {
-		return this._contentLoader.servedFiles.indexOf(file) > -1;
+		file = file.replace(/\\/g, '/');
+		return this._contentLoader.servedFiles.has(file);
 	}
 
 	public start(port: number) {
@@ -101,7 +104,7 @@ export class HttpServer extends Disposable {
 	}
 
 	private serveStream(
-		basePath: string,
+		basePath: string | undefined,
 		req: http.IncomingMessage,
 		res: http.ServerResponse
 	) {
@@ -111,13 +114,23 @@ export class HttpServer extends Disposable {
 		}
 
 		const endOfPath = req.url.lastIndexOf('?');
+		let stream;
 		let URLPathName =
 			endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
 
 		URLPathName = unescape(URLPathName);
-		let stream;
+
+		if (!basePath && (URLPathName == '/' || URLPathName == '')) {
+			const respInfo = this._contentLoader.createNoRootServer();
+			res.writeHead(404);
+			this.reportStatus(req, res);
+			stream = respInfo.Stream;
+			stream?.pipe(res);
+			return;
+		}
+
 		let looseFile = false;
-		let absoluteReadPath = path.join(basePath, URLPathName);
+		let absoluteReadPath = path.join(basePath ?? '', URLPathName);
 		let contentType = 'application/octet-stream';
 
 		if (URLPathName.startsWith('/endpoint_unsaved')) {
@@ -204,7 +217,7 @@ export class HttpServer extends Disposable {
 
 	private createServer() {
 		return http.createServer((req, res) =>
-			this.serveStream(this._basePath ?? '', req, res)
+			this.serveStream(this._basePath, req, res)
 		);
 	}
 

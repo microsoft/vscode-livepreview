@@ -59,14 +59,15 @@ export class Manager extends Disposable {
 		private readonly _reporter: TelemetryReporter
 	) {
 		super();
-		this._endpointManager = this._register(new EndpointManager());
+
+		this._workspaceManager = this._register(new WorkspaceManager());
+		this._endpointManager = this._register(
+			new EndpointManager(this._workspaceManager)
+		);
 		const serverPort = SettingUtil.GetConfig(_extensionUri).portNumber;
 		const serverWSPort = serverPort;
 		this._connectionManager = this._register(
 			new ConnectionManager(serverPort, serverWSPort)
-		);
-		this._workspaceManager = this._register(
-			new WorkspaceManager(_extensionUri)
 		);
 
 		this._server = this._register(
@@ -144,7 +145,6 @@ export class Manager extends Disposable {
 		vscode.workspace.onDidChangeConfiguration((e) => {
 			if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
 				this._server.updateConfigurations();
-				this._workspaceManager.updateConfigurations();
 				this._connectionManager.pendingPort = SettingUtil.GetConfig(
 					this._extensionUri
 				).portNumber;

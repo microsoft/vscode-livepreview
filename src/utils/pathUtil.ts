@@ -4,6 +4,29 @@ import * as path from 'path';
 export class PathUtil {
 	public static pathSepRegex = /(?:\\|\/)+/;
 
+	public static EscapePathParts(file: string) {
+		file = unescape(file);
+		const parts = file.split('/');
+
+		const newParts = [];
+		for (const i in parts) {
+			if (parts[i].length > 0) {
+				newParts.push(escape(parts[i]));
+			}
+		}
+		return newParts.join('/');
+	}
+
+	public static UnescapePathParts(file: string) {
+		const parts = file.split('/');
+		const newParts = [];
+		for (const i in parts) {
+			if (parts[i].length > 0) {
+				newParts.push(unescape(parts[i]));
+			}
+		}
+		return newParts.join('/');
+	}
 	public static GetActiveFolderPath() {
 		const path = vscode.window.activeTextEditor?.document.uri.fsPath ?? '';
 		return PathUtil.GetParentDir(path);
@@ -33,5 +56,8 @@ export class PathUtil {
 	}
 	public static GetFileName(file: string) {
 		return path.basename(file);
+	}
+	public static PathEquals(file1: string, file2: string) {
+		return path.normalize(file1) == path.normalize(file2);
 	}
 }

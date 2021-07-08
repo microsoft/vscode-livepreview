@@ -11,8 +11,6 @@ export interface LiveServerConfigItem {
 	openPreviewTarget: OpenPreviewTarget;
 	serverKeepAliveAfterEmbeddedPreviewClose: number;
 	notifyOnOpenLooseFile: boolean;
-	serverWorkspace: string;
-	showWarningOnMultiRootOpen: boolean;
 	runTaskWithExternalPreview: boolean;
 	defaultPreviewPath: string;
 }
@@ -40,8 +38,6 @@ export const Settings: any = {
 	serverKeepAliveAfterEmbeddedPreviewClose:
 		'serverKeepAliveAfterEmbeddedPreviewClose',
 	notifyOnOpenLooseFile: 'notifyOnOpenLooseFile',
-	serverWorkspace: 'multiroot.serverWorkspace',
-	showWarningOnMultiRootOpen: 'multiroot.showWarningOnMultiRootOpen',
 	runTaskWithExternalPreview: 'tasks.runTaskWithExternalPreview',
 	defaultPreviewPath: 'defaultPreviewPath',
 };
@@ -80,11 +76,6 @@ export class SettingUtil {
 			),
 			notifyOnOpenLooseFile: config.get<boolean>(
 				Settings.notifyOnOpenLooseFile,
-				true
-			),
-			serverWorkspace: config.get<string>(Settings.serverWorkspace, ''),
-			showWarningOnMultiRootOpen: config.get<boolean>(
-				Settings.showWarningOnMultiRootOpen,
 				true
 			),
 			runTaskWithExternalPreview: config.get<boolean>(

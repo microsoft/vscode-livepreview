@@ -68,11 +68,11 @@ export class BrowserPreview extends Disposable {
 		// this._currentWorkspacePath = _workspaceManager.workspacePath;
 		this._pageHistory = this._register(new PageHistory());
 
-		this._register(
-			this._workspaceManager.onWorkspaceChange((e) => {
-				this.refreshTarget(e.oldPath, e.newPath);
-			})
-		);
+		// this._register(
+		// 	this._workspaceManager.onWorkspaceChange((e) => {
+		// 		this.refreshTarget(e.oldPath, e.newPath);
+		// 	})
+		// );
 
 		this.updateForwardBackArrows();
 
@@ -453,14 +453,14 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	private refreshTarget(oldPath: string, newPath: string) {
-		const prevAddr = this.currentAddress;
-		const newAddr = this._endpointManager
-			.refreshPath(prevAddr, oldPath, newPath)
-			.replace(/\\/g, '/');
+	// private refreshTarget(oldPath: string, newPath: string) {
+	// 	const prevAddr = this.currentAddress;
+	// 	const newAddr = this._endpointManager
+	// 		.refreshPath(prevAddr, oldPath, newPath)
+	// 		.replace(/\\/g, '/');
 
-		if (prevAddr != newAddr) {
-			this.goToFile(newAddr);
-		}
-	}
+	// 	if (prevAddr != newAddr) {
+	// 		this.goToFile(newAddr);
+	// 	}
+	// }
 }
