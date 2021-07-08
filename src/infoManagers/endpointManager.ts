@@ -37,16 +37,6 @@ export class EndpointManager extends Disposable {
 		if (parent != '.') {
 			endpoint_prefix = `/${fullParent}`;
 		}
-		// let endpoint;
-		// do {
-		// 	endpoint = `${endpoint_prefix}_${i}`;
-		// 	result = this._looseFiles.get(endpoint);
-		// 	if (result === fullParent) {
-		// 		return path.join(endpoint, child);
-		// 	}
-		// 	i++;
-		// } while (result);
-		// this._looseFiles.set(endpoint, fullParent);
 		return path.join(endpoint_prefix, child);
 	}
 
@@ -61,22 +51,6 @@ export class EndpointManager extends Disposable {
 		}
 		return unescape(endpoint);
 	}
-
-	// public refreshPath(
-	// 	targetPath: string,
-	// 	oldWorkspacePath: string,
-	// 	newWorkspacePath: string
-	// ) {
-	// 	let decodedPath = this.decodeLooseFileEndpoint(targetPath);
-	// 	if (!decodedPath) {
-	// 		decodedPath = path.join(oldWorkspacePath, targetPath);
-	// 	}
-	// 	if (decodedPath.startsWith(newWorkspacePath)) {
-	// 		return decodedPath.substr(newWorkspacePath.length);
-	// 	} else {
-	// 		return this.encodeLooseFileEndpoint(decodedPath);
-	// 	}
-	// }
 
 	private validPath(file: string) {
 		for (const item of this.validEndpointRoots.values()) {
