@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { CONFIG_MULTIROOT, DONT_SHOW_AGAIN } from '../utils/constants';
+import { PathUtil } from '../utils/pathUtil';
 
 export interface workspaceChangeMsg {
 	oldPath: string;
@@ -94,6 +95,20 @@ export class WorkspaceManager extends Disposable {
 	}
 	public canGetPath(path: string) {
 		return this.workspacePath ? path.startsWith(this.workspacePath) : false;
+	}
+
+	public pathExistsRelativeToAnyWorkspace(file: string): boolean{
+		if (file.startsWith("/")) {
+			file = file.substr(1);
+		}
+		if (this.workspaces) {
+			for (const i in this.workspaces) {
+				if (PathUtil.PathBeginsWith(file, this.workspaces[i].uri.fsPath)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 	public pathExistsRelativeToWorkspace(file: string) {
 		const fullPath = path.join(this.workspacePath ?? '', file);

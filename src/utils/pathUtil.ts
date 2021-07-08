@@ -60,4 +60,7 @@ export class PathUtil {
 	public static PathEquals(file1: string, file2: string) {
 		return path.normalize(file1) == path.normalize(file2);
 	}
+	public static PathBeginsWith(file1: string, file2: string) {
+		return path.normalize(file1).startsWith(path.normalize(file2));
+	}
 }

@@ -47,10 +47,6 @@
 				"title": "Live Preview: Start Server"
 			},
 			{
-				"command": "LivePreview.config.selectWorkspace",
-				"title": "Live Preview: Select Default Workspace for Server"
-			},
-			{
 				"command": "LivePreview.start.preview.atIndex",
 				"title": "Live Preview: Show Preview at Index Page"
 			},
@@ -136,11 +132,6 @@
 				{
 					"command": "LivePreview.start.internalPreview.atIndex",
 					"when": "false"
-				},
-				{
-					"command": "LivePreview.config.selectWorkspace",
-					"when": "workspaceFolderCount > 1",
-					"group": "1_livepreview"
 				},
 				{
 					"command": "LivePreview.start.internalPreview.atFile",

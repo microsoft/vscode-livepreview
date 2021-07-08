@@ -11,6 +11,7 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
+import { PathUtil } from '../utils/pathUtil';
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -47,7 +48,13 @@ export class HttpServer extends Disposable {
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
 	public hasServedFile(file: string) {
-		file = file.replace(/\\/g, '/');
+		if (this._contentLoader.servedFiles) {
+			for (const item in this._contentLoader.servedFiles.values()) {
+				if (PathUtil.PathEquals(file, item)) {
+					return true;
+				}
+			}
+		}
 		return this._contentLoader.servedFiles.has(file);
 	}
 
@@ -118,7 +125,6 @@ export class HttpServer extends Disposable {
 		let URLPathName =
 			endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
 
-		URLPathName = unescape(URLPathName);
 
 		if (!basePath && (URLPathName == '/' || URLPathName == '')) {
 			const respInfo = this._contentLoader.createNoRootServer();
@@ -171,10 +177,12 @@ export class HttpServer extends Disposable {
 			if (!URLPathName.endsWith('/')) {
 				const queries =
 					endOfPath == -1 ? '' : `${req.url.substring(endOfPath)}`;
+
 				res.setHeader('Location', `${URLPathName}/${queries}`);
 				this.reportAndReturn(302, req, res); // redirect
 				return;
 			}
+			
 			// Redirect to index.html if the request URL is a directory
 			if (fs.existsSync(path.join(absoluteReadPath, 'index.html'))) {
 				absoluteReadPath = path.join(absoluteReadPath, 'index.html');
@@ -183,6 +191,7 @@ export class HttpServer extends Disposable {
 				contentType = respInfo.ContentType ?? '';
 			} else {
 				// create a default index page
+				URLPathName = unescape(URLPathName);
 				const respInfo = this._contentLoader.createIndexPage(
 					absoluteReadPath,
 					URLPathName,

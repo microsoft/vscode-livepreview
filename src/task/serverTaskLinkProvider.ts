@@ -66,7 +66,7 @@ export class serverTaskLinkProvider
 	private findPathnameRegex(input: string, links: Array<vscode.TerminalLink>) {
 		// match relative links
 		const partialLinkRegex = new RegExp(
-			`(?<=\\s)\\/([/(\\w%\\-.@)]*)\\?*[\\w=]*`,
+			`(?<=\\s)\\/([/(\\w%\\-.:@)]*)\\?*[\\w=]*`,
 			'g'
 		);
 		let partialLinkMatches;
@@ -96,7 +96,7 @@ export class serverTaskLinkProvider
 	private openRelativeLinkInWorkspace(file: string, isDir: boolean) {
 		file = unescape(file);
 		const isWorkspaceFile =
-			this._workspaceManager.pathExistsRelativeToWorkspace(file);
+			this._workspaceManager.pathExistsRelativeToAnyWorkspace(file);
 		const fullPath = isWorkspaceFile
 			? this._workspaceManager.workspace?.uri + file
 			: 'file:///' + this._endpointManager.decodeLooseFileEndpoint(file);
