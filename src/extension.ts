@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { getWebviewOptions, Manager } from './manager';
 import { EXTENSION_ID } from './utils/constants';
+import { PathUtil } from './utils/pathUtil';
 import {
 	Settings,
 	SETTINGS_SECTION_ID,
@@ -244,10 +246,13 @@ export function activate(context: vscode.ExtensionContext) {
 				webviewPanel: vscode.WebviewPanel,
 				state: any
 			) {
+				let relative = true;
 				let file = unescape(state.currentAddress) ?? '/';
 
 				if (!manager.pathExistsRelativeToWorkspace(file)) {
-					file = '/';
+					const absFile = manager.decodeEndpoint(file);
+					file = absFile ?? '/';
+					relative = false;
 				}
 
 				if (file == '/' && !manager.workspace) {
@@ -257,7 +262,7 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 				// Reset the webview options so we use latest uri for `localResourceRoots`.
 				webviewPanel.webview.options = getWebviewOptions(context.extensionUri);
-				manager.createOrShowEmbeddedPreview(webviewPanel, file);
+				manager.createOrShowEmbeddedPreview(webviewPanel, file, relative);
 			},
 		});
 	}

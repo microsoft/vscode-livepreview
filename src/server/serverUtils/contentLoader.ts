@@ -11,6 +11,9 @@ import {
 } from '../../utils/utils';
 import { HTMLInjector } from './HTMLInjector';
 import TelemetryReporter from 'vscode-extension-telemetry';
+import { WorkspaceManager } from '../../infoManagers/workspaceManager';
+import { EndpointManager } from '../../infoManagers/endpointManager';
+import { PathUtil } from '../../utils/pathUtil';
 
 export interface RespInfo {
 	ContentType: string | undefined;
@@ -31,15 +34,18 @@ export interface IndexDirEntry {
 
 export class ContentLoader extends Disposable {
 	public scriptInjector: HTMLInjector | undefined;
-	private _servedFiles: string[];
+	private _servedFiles = new Set<string>();
 
-	constructor(private readonly _reporter: TelemetryReporter) {
+	constructor(
+		private readonly _reporter: TelemetryReporter,
+		private readonly _workspaceManager: WorkspaceManager,
+		private readonly _endpointManager: EndpointManager
+	) {
 		super();
-		this._servedFiles = [];
 	}
 
 	public resetServedFiles() {
-		this._servedFiles = [];
+		this._servedFiles = new Set<string>();
 	}
 
 	public get servedFiles() {
@@ -72,6 +78,46 @@ export class ContentLoader extends Disposable {
 		};
 	}
 
+	public createNoRootServer() {
+		let customMsg;
+		if (this._workspaceManager.numPaths == 0) {
+			customMsg = `<p>You have no workspace open, so the index does not direct to anything.</p>`;
+		} else {
+			customMsg = `<p>You are in a multi-root workspace, so the index does not lead to one specific workspace. Access your workspaces using the links below:</p>
+			<ul>
+			`;
+
+			const workspaces = this._workspaceManager.workspaces;
+			if (workspaces) {
+				for (const i in workspaces) {
+					const workspacePath = this._endpointManager.encodeLooseFileEndpoint(
+						workspaces[i].uri.fsPath
+					);
+					customMsg += `
+					<li><a href="${workspacePath}/">${workspaces[i].name}</a></li>`;
+				}
+			}
+			customMsg += `</ul>`;
+		}
+		const htmlString = `
+		<!DOCTYPE html>
+		<html>
+			<head>
+				<title>No Server Root</title>
+			</head>
+			<body>
+				<h1>No Server Root</h1>
+				${customMsg}
+			</body>
+			${this.scriptInjector?.script}
+		</html>
+		`;
+
+		return {
+			Stream: Stream.Readable.from(htmlString),
+			ContentType: 'text/html',
+		};
+	}
 	public createIndexPage(
 		readPath: string,
 		relativePath: string,
@@ -168,13 +214,13 @@ export class ContentLoader extends Disposable {
 	}
 
 	public getFileStream(readPath: string, inFilesystem = true): RespInfo {
-		this._servedFiles.push(readPath);
+		this._servedFiles.add(readPath);
 		const workspaceDocuments = vscode.workspace.textDocuments;
 		let i = 0;
 		let stream;
 		let contentType = mime.getType(readPath) ?? 'text/plain';
 		while (i < workspaceDocuments.length) {
-			if (readPath == workspaceDocuments[i].fileName) {
+			if (PathUtil.PathEquals(readPath, workspaceDocuments[i].fileName)) {
 				if (inFilesystem && workspaceDocuments[i].isUntitled) {
 					continue;
 				}

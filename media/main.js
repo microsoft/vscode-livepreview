@@ -173,6 +173,8 @@
 			}
 			case 'set-url': {
 				msgJSON = JSON.parse(message.text);
+				// setting a new address, ensure that previous link preview is gone
+				document.getElementById('link-preview').hidden = true;
 				setURLBar(msgJSON.fullPath);
 				updateState(msgJSON.pathname);
 				break;

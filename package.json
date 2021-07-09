@@ -47,10 +47,6 @@
 				"title": "Live Preview: Start Server"
 			},
 			{
-				"command": "LivePreview.config.selectWorkspace",
-				"title": "Live Preview: Select Default Workspace for Server"
-			},
-			{
 				"command": "LivePreview.start.preview.atIndex",
 				"title": "Live Preview: Show Preview at Index Page"
 			},
@@ -138,11 +134,6 @@
 					"when": "false"
 				},
 				{
-					"command": "LivePreview.config.selectWorkspace",
-					"when": "workspaceFolderCount > 1",
-					"group": "1_livepreview"
-				},
-				{
 					"command": "LivePreview.start.internalPreview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "1_livepreview"
@@ -216,17 +207,6 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Whether to notify the user when opening a preview for a file that is not part of the currently opened workspace (or the workspace where the server is hosted)."
-				},
-				"LivePreview.multiroot.serverWorkspace": {
-					"type": "string",
-					"scope": "resource",
-					"default": "",
-					"description": "For multi-root workspaces: which workspace path should be used as the server root. Leave blank to use first workspace."
-				},
-				"LivePreview.multiroot.showWarningOnMultiRootOpen": {
-					"type": "boolean",
-					"default": true,
-					"description": "Whether or not to warn the user upon opening a multi-root preview with an undefined default server workspace."
 				},
 				"LivePreview.tasks.runTaskWithExternalPreview": {
 					"type": "boolean",
