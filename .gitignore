@@ -5,4 +5,4 @@ node_modules
 ignore/
 media/codicon*
 media/extension*
-.vscode/
+*/.vscode/*
