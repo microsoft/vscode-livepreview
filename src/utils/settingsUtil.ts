@@ -26,7 +26,7 @@ export enum OpenPreviewTarget {
 	externalBrowser = 'External Browser',
 }
 
-export const SETTINGS_SECTION_ID = 'LivePreview';
+export const SETTINGS_SECTION_ID = 'livePreview';
 
 export const Settings: any = {
 	portNumber: 'portNumber',
