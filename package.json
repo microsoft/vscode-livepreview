@@ -115,7 +115,7 @@
 			"commandPalette": [
 				{
 					"command": "livePreview.start",
-					"when": "!livePreviewServerOn"
+					"when": "!LivePreviewServerOn"
 				},
 				{
 					"command": "livePreview.start.preview.atFile",
@@ -145,7 +145,7 @@
 				},
 				{
 					"command": "livePreview.end",
-					"when": "livePreviewServerOn",
+					"when": "LivePreviewServerOn",
 					"group": "1_livepreview"
 				},
 				{
