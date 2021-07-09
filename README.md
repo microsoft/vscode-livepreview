@@ -52,7 +52,7 @@ Notes about workspace-less extension use:
 - Tasks do not work outside of a workspace, so a server will just launch in the background upon external preview when outside of a workspace. You can use the `Live Preview: Stop Server` command to kill the server in this case.
 
 ### Multi-root Support
-The different workspaces will be assigned specific endpoints for easy previewing of all of your workspaces.
+The different workspaces will be assigned specific server endpoints, allowing you to easily preview files in all of your workspaces.
 
 ## Prerequisites
 To use this extension, you must have [Node JS v14+](https://nodejs.org/en/download/). 
@@ -77,7 +77,4 @@ Why does this happen?
 The server is hosted from the root of the workspace that the user opens. Files outside of this can be previewed, but some file paths (such as a link to the root) may not go to the right place. **If you are working on a web project, it is advised that you open a workspace at the root of the project.**
 
 ## Issue Tracking
-- [May Iteration](https://github.com/microsoft/vscode/issues/124607)
-- [June Iteration](https://github.com/microsoft/vscode/issues/124608)
-- [Backlog](https://github.com/microsoft/vscode/issues/125343)
-- [Misc Issues](https://github.com/microsoft/vscode/issues?q=is%3Aopen+is%3Aissue+label%3Alive-server)
+Please file issues against the [VS Code Live Preview repository](https://github.com/microsoft/vscode-livepreview/issues).
