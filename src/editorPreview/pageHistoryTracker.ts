@@ -1,4 +1,5 @@
 import { Disposable } from '../utils/dispose';
+import { PathUtil } from '../utils/pathUtil';
 
 export enum NavEditCommands {
 	DISABLE_BACK,
@@ -81,14 +82,11 @@ export class PageHistory extends Disposable {
 
 	public addHistory(address: string): NavResponse | undefined {
 		address = address.replace(/\\/g, '/');
-
+		address = PathUtil.EscapePathParts(address);
 		const action = new Array<NavEditCommands>();
 		if (
 			this._backstep < this._history.length &&
-			(address == this._history[this._backstep] ||
-				(address.endsWith('/') &&
-					address.substr(0, address.length - 1) ==
-						this._history[this._backstep]))
+			address == this._history[this._backstep]
 		) {
 			// if this is the same as the last entry or is a
 			// redirect of the previous, don't add to history

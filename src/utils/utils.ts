@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { EXTENSION_ID } from './constants';
 
 export function FormatDateTime(date: Date, delimeter = ', '): string {
 	const mm = date.getMonth() + 1;
@@ -36,5 +35,7 @@ export function isFileInjectable(file: string | undefined) {
 	if (!file) {
 		return false;
 	}
-	return file.endsWith('.html');
+	const fileEndingRegex = /\.([^/.]+)$/; // regex for seeing if there is a file ending
+	const hasFileEnding = fileEndingRegex.test(file);
+	return !hasFileEnding || file.endsWith('.html');
 }

@@ -11,6 +11,7 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
+import { PathUtil } from '../utils/pathUtil';
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -26,7 +27,9 @@ export class HttpServer extends Disposable {
 		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
-		this._contentLoader = this._register(new ContentLoader(_reporter));
+		this._contentLoader = this._register(
+			new ContentLoader(_reporter, _workspaceManager, _endpointManager)
+		);
 		this._extensionUri = extensionUri;
 	}
 
@@ -45,7 +48,14 @@ export class HttpServer extends Disposable {
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
 	public hasServedFile(file: string) {
-		return this._contentLoader.servedFiles.indexOf(file) > -1;
+		if (this._contentLoader.servedFiles) {
+			for (const item of this._contentLoader.servedFiles.values()) {
+				if (PathUtil.PathEquals(file, item)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public start(port: number) {
@@ -101,7 +111,7 @@ export class HttpServer extends Disposable {
 	}
 
 	private serveStream(
-		basePath: string,
+		basePath: string | undefined,
 		req: http.IncomingMessage,
 		res: http.ServerResponse
 	) {
@@ -111,13 +121,21 @@ export class HttpServer extends Disposable {
 		}
 
 		const endOfPath = req.url.lastIndexOf('?');
+		let stream;
 		let URLPathName =
 			endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
 
-		URLPathName = unescape(URLPathName);
-		let stream;
+		if (!basePath && (URLPathName == '/' || URLPathName == '')) {
+			const respInfo = this._contentLoader.createNoRootServer();
+			res.writeHead(404);
+			this.reportStatus(req, res);
+			stream = respInfo.Stream;
+			stream?.pipe(res);
+			return;
+		}
+
 		let looseFile = false;
-		let absoluteReadPath = path.join(basePath, URLPathName);
+		let absoluteReadPath = path.join(basePath ?? '', unescape(URLPathName));
 		let contentType = 'application/octet-stream';
 
 		if (URLPathName.startsWith('/endpoint_unsaved')) {
@@ -158,10 +176,12 @@ export class HttpServer extends Disposable {
 			if (!URLPathName.endsWith('/')) {
 				const queries =
 					endOfPath == -1 ? '' : `${req.url.substring(endOfPath)}`;
+
 				res.setHeader('Location', `${URLPathName}/${queries}`);
 				this.reportAndReturn(302, req, res); // redirect
 				return;
 			}
+
 			// Redirect to index.html if the request URL is a directory
 			if (fs.existsSync(path.join(absoluteReadPath, 'index.html'))) {
 				absoluteReadPath = path.join(absoluteReadPath, 'index.html');
@@ -170,6 +190,7 @@ export class HttpServer extends Disposable {
 				contentType = respInfo.ContentType ?? '';
 			} else {
 				// create a default index page
+				URLPathName = unescape(URLPathName);
 				const respInfo = this._contentLoader.createIndexPage(
 					absoluteReadPath,
 					URLPathName,
@@ -204,7 +225,7 @@ export class HttpServer extends Disposable {
 
 	private createServer() {
 		return http.createServer((req, res) =>
-			this.serveStream(this._basePath ?? '', req, res)
+			this.serveStream(this._basePath, req, res)
 		);
 	}
 
