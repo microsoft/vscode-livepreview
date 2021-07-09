@@ -110,7 +110,7 @@ export class serverTaskLinkProvider
 		const uri = vscode.Uri.parse(fullPath);
 
 		if (isDir) {
-			if (!this._workspaceManager.pathIsInAnyWorkspace(uri.fsPath)) {
+			if (!this._workspaceManager.absPathInAnyWorkspace(uri.fsPath)) {
 				vscode.window.showErrorMessage(
 					'Cannot reveal folder. It is not in the open workspace.'
 				);

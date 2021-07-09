@@ -1,13 +1,7 @@
 import { Disposable } from '../utils/dispose';
-import {
-	Settings,
-	SETTINGS_SECTION_ID,
-	SettingUtil,
-} from '../utils/settingsUtil';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { CONFIG_MULTIROOT, DONT_SHOW_AGAIN } from '../utils/constants';
 import { PathUtil } from '../utils/pathUtil';
 
 export interface workspaceChangeMsg {
@@ -40,8 +34,35 @@ export class WorkspaceManager extends Disposable {
 	public get numPaths(): number {
 		return vscode.workspace.workspaceFolders?.length ?? 0;
 	}
-	public canGetPath(path: string) {
-		return this.workspacePath ? path.startsWith(this.workspacePath) : false;
+
+	public get firstListedWorkspace() {
+		return vscode.workspace.workspaceFolders?.[0];
+	}
+
+	public get workspaces() {
+		return vscode.workspace.workspaceFolders;
+	}
+
+	public absPathInDefaultWorkspace(path: string) {
+		return this.workspacePath
+			? PathUtil.PathBeginsWith(path, this.workspacePath)
+			: false;
+	}
+
+	public absPathInAnyWorkspace(file: string): boolean {
+		if (this.workspaces) {
+			for (const i in this.workspaces) {
+				if (PathUtil.PathBeginsWith(file, this.workspaces[i].uri.fsPath)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public pathExistsRelativeToDefaultWorkspace(file: string) {
+		const fullPath = path.join(this.workspacePath ?? '', file);
+		return fs.existsSync(fullPath);
 	}
 
 	public pathExistsRelativeToAnyWorkspace(file: string): boolean {
@@ -55,41 +76,7 @@ export class WorkspaceManager extends Disposable {
 		return false;
 	}
 
-	public pathIsInAnyWorkspace(file: string): boolean {
-		if (this.workspaces) {
-			for (const i in this.workspaces) {
-				if (PathUtil.PathBeginsWith(file, this.workspaces[i].uri.fsPath)) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-	public pathExistsRelativeToWorkspace(file: string) {
-		const fullPath = path.join(this.workspacePath ?? '', file);
-		return fs.existsSync(fullPath);
-	}
-
-	public isLooseFilePath(file: string) {
-		const absPath = path.join(this.workspacePath ?? '', file);
-		return !fs.existsSync(absPath);
-	}
-
-	public isAWorkspacePath(path: string) {
-		const workspacePaths = vscode.workspace.workspaceFolders?.map(
-			(e) => e.uri.fsPath
-		);
-
-		return workspacePaths?.includes(path);
-	}
-	public get firstListedWorkspace() {
-		return vscode.workspace.workspaceFolders?.[0];
-	}
-	public get workspaces() {
-		return vscode.workspace.workspaceFolders;
-	}
-
-	public getFileRelativeToWorkspace(path: string): string {
+	public getFileRelativeToDefaultWorkspace(path: string): string {
 		const workspaceFolder = this.workspacePath;
 
 		if (workspaceFolder && path.startsWith(workspaceFolder)) {

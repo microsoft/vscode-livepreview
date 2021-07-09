@@ -18,7 +18,9 @@ export class EndpointManager extends Disposable {
 		while (i < workspaceDocuments.length) {
 			if (
 				!workspaceDocuments[i].isUntitled &&
-				!this._workspaceManager.canGetPath(workspaceDocuments[i].fileName)
+				!this._workspaceManager.absPathInDefaultWorkspace(
+					workspaceDocuments[i].fileName
+				)
 			) {
 				this.encodeLooseFileEndpoint(workspaceDocuments[i].fileName);
 			}

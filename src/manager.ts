@@ -41,7 +41,6 @@ export class Manager extends Disposable {
 	private _connectionManager: ConnectionManager;
 	private _pendingLaunchInfo: launchInfo | undefined;
 	private _runTaskWithExternalPreview: boolean;
-	// always leave off at previous port numbers to avoid retrying on many busy ports
 
 	private get _serverPort() {
 		return this._connectionManager.httpPort;
@@ -54,6 +53,7 @@ export class Manager extends Disposable {
 	public get workspacePath(): string | undefined {
 		return this._workspaceManager.workspacePath;
 	}
+
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter
@@ -171,6 +171,10 @@ export class Manager extends Disposable {
 		});
 	}
 
+	dispose() {
+		this._server.closeServer();
+	}
+
 	public createOrShowEmbeddedPreview(
 		panel: vscode.WebviewPanel | undefined = undefined,
 		file = '/',
@@ -218,14 +222,6 @@ export class Manager extends Disposable {
 		}
 	}
 
-	public encodeEndpoint(location: string): string {
-		return this._endpointManager.encodeLooseFileEndpoint(location);
-	}
-
-	public decodeEndpoint(location: string): string | undefined {
-		return this._endpointManager.decodeLooseFileEndpoint(location);
-	}
-
 	public openServer(fromTask = false): boolean {
 		if (!this._server.isRunning) {
 			return this._server.openServer(this._serverPort);
@@ -258,14 +254,6 @@ export class Manager extends Disposable {
 			return true;
 		}
 		return false;
-	}
-
-	public inServerWorkspace(file: string) {
-		return this._workspaceManager.canGetPath(file);
-	}
-
-	public pathExistsRelativeToWorkspace(file: string) {
-		return this._workspaceManager.pathExistsRelativeToWorkspace(file);
 	}
 
 	private launchFileInExternalBrowser(file: string, relative: boolean) {
@@ -308,53 +296,19 @@ export class Manager extends Disposable {
 		this.startEmbeddedPreview(panel, file);
 	}
 
-	private transformNonRelativeFile(relative: boolean, file: string): string {
-		if (!relative) {
-			if (!this._workspaceManager.canGetPath(file)) {
-				this.notifyLooseFileOpen();
-				file = this.encodeEndpoint(file);
-			} else {
-				file = this._workspaceManager.getFileRelativeToWorkspace(file);
-			}
-		}
-		return file;
-	}
-
-	private notifyLooseFileOpen() {
-		/* __GDPR__
-			"preview.fileOutOfWorkspace" : {}
-		*/
-		this._reporter.sendTelemetryEvent('preview.fileOutOfWorkspace');
-		if (
-			!this._notifiedAboutLooseFiles &&
-			SettingUtil.GetConfig(this._extensionUri).notifyOnOpenLooseFile
-		) {
-			vscode.window
-				.showWarningMessage(
-					'Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root.',
-					DONT_SHOW_AGAIN
-				)
-				.then((selection: vscode.MessageItem | undefined) => {
-					if (selection == DONT_SHOW_AGAIN) {
-						SettingUtil.UpdateSettings(Settings.notifyOnOpenLooseFile, false);
-					}
-				});
-		}
-		this._notifiedAboutLooseFiles = true;
-	}
-
 	private startEmbeddedPreview(panel: vscode.WebviewPanel, file: string) {
 		if (this._currentTimeout) {
 			clearTimeout(this._currentTimeout);
 		}
-		this.currentPanel = new BrowserPreview(
-			panel,
-			this._extensionUri,
-			file,
-			this._reporter,
-			this._workspaceManager,
-			this._endpointManager,
-			this._connectionManager
+		this.currentPanel = this._register(
+			new BrowserPreview(
+				file,
+				panel,
+				this._extensionUri,
+				this._reporter,
+				this._workspaceManager,
+				this._connectionManager
+			)
 		);
 
 		this._previewActive = true;
@@ -392,10 +346,55 @@ export class Manager extends Disposable {
 		);
 	}
 
-	dispose() {
-		this._server.closeServer();
-		this.currentPanel?.dispose();
-		super.dispose();
+	public encodeEndpoint(location: string): string {
+		return this._endpointManager.encodeLooseFileEndpoint(location);
+	}
+
+	public decodeEndpoint(location: string): string | undefined {
+		return this._endpointManager.decodeLooseFileEndpoint(location);
+	}
+
+	public inServerWorkspace(file: string) {
+		return this._workspaceManager.absPathInDefaultWorkspace(file);
+	}
+
+	public pathExistsRelativeToWorkspace(file: string) {
+		return this._workspaceManager.pathExistsRelativeToDefaultWorkspace(file);
+	}
+
+	private transformNonRelativeFile(relative: boolean, file: string): string {
+		if (!relative) {
+			if (!this._workspaceManager.absPathInDefaultWorkspace(file)) {
+				this.notifyLooseFileOpen();
+				file = this.encodeEndpoint(file);
+			} else {
+				file = this._workspaceManager.getFileRelativeToDefaultWorkspace(file);
+			}
+		}
+		return file;
+	}
+
+	private notifyLooseFileOpen() {
+		/* __GDPR__
+			"preview.fileOutOfWorkspace" : {}
+		*/
+		this._reporter.sendTelemetryEvent('preview.fileOutOfWorkspace');
+		if (
+			!this._notifiedAboutLooseFiles &&
+			SettingUtil.GetConfig(this._extensionUri).notifyOnOpenLooseFile
+		) {
+			vscode.window
+				.showWarningMessage(
+					'Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root.',
+					DONT_SHOW_AGAIN
+				)
+				.then((selection: vscode.MessageItem | undefined) => {
+					if (selection == DONT_SHOW_AGAIN) {
+						SettingUtil.UpdateSettings(Settings.notifyOnOpenLooseFile, false);
+					}
+				});
+		}
+		this._notifiedAboutLooseFiles = true;
 	}
 }
 
