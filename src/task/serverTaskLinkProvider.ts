@@ -29,7 +29,7 @@ export class serverTaskLinkProvider
 	}
 
 	private isPtyTerm(terminal: string) {
-		return (this.terminalName = terminal);
+		return (this.terminalName == terminal);
 	}
 	async provideTerminalLinks(
 		context: vscode.TerminalLinkContext,

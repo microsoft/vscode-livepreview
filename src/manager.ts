@@ -365,7 +365,9 @@ export class Manager extends Disposable {
 	private transformNonRelativeFile(relative: boolean, file: string): string {
 		if (!relative) {
 			if (!this._workspaceManager.absPathInDefaultWorkspace(file)) {
-				this.notifyLooseFileOpen();
+				if (!this._workspaceManager.absPathInAnyWorkspace(file)) {
+					this.notifyLooseFileOpen();
+				}
 				file = this.encodeEndpoint(file);
 			} else {
 				file = this._workspaceManager.getFileRelativeToDefaultWorkspace(file);
