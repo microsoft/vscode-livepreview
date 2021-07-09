@@ -29,7 +29,7 @@ export class serverTaskLinkProvider
 	}
 
 	private isPtyTerm(terminal: string) {
-		return (this.terminalName == terminal);
+		return this.terminalName != "" && terminal.indexOf(this.terminalName) != -1; // there may be additional terminal text in a multi-root workspace
 	}
 	async provideTerminalLinks(
 		context: vscode.TerminalLinkContext,
@@ -67,7 +67,7 @@ export class serverTaskLinkProvider
 	private findPathnameRegex(input: string, links: Array<vscode.TerminalLink>) {
 		// match relative links
 		const partialLinkRegex = new RegExp(
-			`(?<=\\s)\\/([/(\\w%\\-.:@)]*)\\?*[\\w=]*`,
+			`(?<=\\s)\\/([:/(\\w%\\-.:@)]*)\\?*[\\w=]*`,
 			'g'
 		);
 		let partialLinkMatches;
