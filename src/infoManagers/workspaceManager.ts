@@ -61,7 +61,10 @@ export class WorkspaceManager extends Disposable {
 	}
 
 	public pathExistsRelativeToDefaultWorkspace(file: string) {
-		const fullPath = path.join(this.workspacePath ?? '', file);
+		if (!this.workspacePath) {
+			return false;
+		}
+		const fullPath = path.join(this.workspacePath, file);
 		return fs.existsSync(fullPath);
 	}
 

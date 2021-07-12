@@ -54,6 +54,9 @@ export class Manager extends Disposable {
 		return this._workspaceManager.workspacePath;
 	}
 
+	public get workspaceManager() {
+		return this._workspaceManager;
+	}
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter
