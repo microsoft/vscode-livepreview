@@ -13,9 +13,12 @@ interface replaceObj {
 	replacement: string;
 }
 export class HTMLInjector extends Disposable {
-	public script: string | undefined;
+	private _script: string | undefined;
 	public rawScript: string;
 
+	public get script() {
+		return this._script;
+	}
 	constructor(
 		extensionUri: vscode.Uri,
 		private readonly _connectionManager: ConnectionManager
@@ -43,7 +46,7 @@ export class HTMLInjector extends Disposable {
 			{ original: WS_URL_PLACEHOLDER, replacement: wsURL },
 			{ original: HTTP_URL_PLACEHOLDER, replacement: httpURL },
 		];
-		this.script = this.replace(fileString, replacements);
+		this._script = this.replace(fileString, replacements);
 	}
 
 	private replace(script: string, replaces: replaceObj[]): string {

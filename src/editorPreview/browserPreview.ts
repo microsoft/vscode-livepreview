@@ -40,22 +40,12 @@ export class BrowserPreview extends Disposable {
 	) {
 		super();
 
-		this._panel.iconPath = {
-			light: vscode.Uri.joinPath(
-				this._extensionUri,
-				'media',
-				'preview-light.svg'
-			),
-			dark: vscode.Uri.joinPath(
-				this._extensionUri,
-				'media',
-				'preview-dark.svg'
-			),
-		};
 
 		this._webviewComm = this._register(
-			new WebviewComm(initialFile, _panel, _extensionUri, _connectionManager)
+			new WebviewComm(initialFile, _panel, _extensionUri, _connectionManager, _workspaceManager)
 		);
+
+		this._webviewComm.setIcon();
 
 		// Listen for when the panel is disposed
 		// This happens when the user closes the panel or when the panel is closed programmatically
@@ -90,6 +80,9 @@ export class BrowserPreview extends Disposable {
 							msgJSON.path.pathname,
 							msgJSON.title
 						);
+						if (msgJSON.favicon) {
+							this._webviewComm.setIcon(msgJSON.favicon);
+						}
 						return;
 					}
 					case 'go-back':

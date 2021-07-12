@@ -27,6 +27,11 @@ export class WorkspaceManager extends Disposable {
 		return this.workspace?.uri.fsPath;
 	}
 
+	public get workspaceURI() {
+		const uri = this._workspace?.uri;
+		return uri;
+	}
+
 	public get workspacePathname(): string {
 		return this.workspace?.name ?? '';
 	}

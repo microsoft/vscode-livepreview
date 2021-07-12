@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
+// import * as etag from 'etag';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { HTMLInjector } from './serverUtils/HTMLInjector';
@@ -149,7 +150,10 @@ export class HttpServer extends Disposable {
 			if (content.Stream) {
 				stream = content.Stream;
 				contentType = content.ContentType ?? '';
-				res.writeHead(200, { 'Content-Type': `${contentType}; charset=UTF-8` });
+				res.writeHead(200, { 
+				"Accept-Ranges": "bytes",
+				'Content-Type': `${contentType}; charset=UTF-8`
+			});
 				stream.pipe(res);
 				return;
 			}
@@ -212,7 +216,10 @@ export class HttpServer extends Disposable {
 				this.reportAndReturn(500, req, res);
 				return;
 			});
-			res.writeHead(200, { 'Content-Type': `${contentType}; charset=UTF-8` });
+			res.writeHead(200, { 
+				"Accept-Ranges": "bytes",
+				'Content-Type': `${contentType}; charset=UTF-8`
+			});
 			stream.pipe(res);
 		} else {
 			this.reportAndReturn(500, req, res);
