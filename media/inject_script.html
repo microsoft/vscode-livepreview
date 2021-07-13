@@ -58,24 +58,10 @@
 	}
 
 	function onLoad() {
-		
-		var linkTags = document.querySelectorAll('link[rel*="icon"][href]')
-
-		var faviconPath = '';
-		for (var i = 0; i < linkTags.length; i++) {
-			var faviconURL = parseUrl(linkTags[i].href);
-			if (faviconURL.host == window.location.host) {
-				faviconPath = faviconURL.pathname;
-			}
-		}
-
-		console.log(faviconPath);
 		commandPayload = {
 			path: window.location,
 			title: document.title,
-			favicon: faviconPath
 		};
-
 		window.parent.postMessage(
 			{ command: 'update-path', text: JSON.stringify(commandPayload) },
 			'*'
@@ -88,12 +74,6 @@
 			l[i].onmouseenter = (e) => handleLinkHoverStart(e.target.href);
 			l[i].onmouseleave = (e) => handleLinkHoverEnd();
 		}
-	}
-
-	function parseUrl(url) {
-		var a = document.createElement('a');
-		a.href = url;
-		return a;
 	}
 
 	function handleLinkClick(linkTarget) {

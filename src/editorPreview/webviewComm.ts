@@ -1,11 +1,9 @@
 import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { INIT_PANEL_TITLE } from '../utils/constants';
 import { NavEditCommands, PageHistory } from './pageHistoryTracker';
 import { isFileInjectable } from '../utils/utils';
-import { WorkspaceManager } from '../infoManagers/workspaceManager';
 
 export class WebviewComm extends Disposable {
 	private readonly _pageHistory: PageHistory;
@@ -20,8 +18,7 @@ export class WebviewComm extends Disposable {
 		initialFile: string,
 		private readonly _panel: vscode.WebviewPanel,
 		private readonly _extensionUri: vscode.Uri,
-		private readonly _connectionManager: ConnectionManager,
-		private readonly _workspaceManager: WorkspaceManager
+		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
 
@@ -279,28 +276,4 @@ export class WebviewComm extends Disposable {
 		}
 	}
 
-	public setIcon(file = "") {
-		if (file == "" || !this._workspaceManager.workspaceURI) {
-			const dark_icon = vscode.Uri.joinPath(
-				this._extensionUri,
-				'media',
-				'preview-dark.svg'
-			);
-			this._panel.iconPath = {
-				light: vscode.Uri.joinPath(
-					this._extensionUri,
-					'media',
-					'preview-light.svg'
-				),
-				dark: dark_icon,
-			};
-		} else {
-			const uri = vscode.Uri.joinPath(this._workspaceManager.workspaceURI,file);
-			// uri.scheme === 'file';
-			this._panel.iconPath = {
-				light: uri,
-				dark: uri,
-			};
-		}
-	}
 }
