@@ -16,6 +16,7 @@ import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { serverMsg } from '../manager';
 import { PathUtil } from '../utils/pathUtil';
+import minimatch = require('minimatch');
 
 export class Server extends Disposable {
 	private readonly _httpServer: HttpServer;
@@ -30,7 +31,7 @@ export class Server extends Disposable {
 		private readonly _extensionUri: vscode.Uri,
 		endpointManager: EndpointManager,
 		reporter: TelemetryReporter,
-		workspaceManager: WorkspaceManager,
+		private readonly _workspaceManager: WorkspaceManager,
 		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
@@ -39,12 +40,12 @@ export class Server extends Disposable {
 				_extensionUri,
 				reporter,
 				endpointManager,
-				workspaceManager,
+				_workspaceManager,
 				_connectionManager
 			)
 		);
 		this._wsServer = this._register(
-			new WSServer(reporter, endpointManager, workspaceManager)
+			new WSServer(reporter, endpointManager, _workspaceManager)
 		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 
@@ -59,7 +60,8 @@ export class Server extends Disposable {
 					this._reloadOnAnyChange &&
 					((this._watchGlob == '' &&
 						this._httpServer.hasServedFile(changedPath)) ||
-						(this._watchGlob != '' && PathUtil.PathMatchesGlob(changedPath, this._watchGlob)))
+						(this._watchGlob != '' &&
+							this.pathMatchesGlob(changedPath, this._watchGlob)))
 				) {
 					this._wsServer.refreshBrowsers();
 				}
@@ -160,6 +162,21 @@ export class Server extends Disposable {
 			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
 			AutoRefreshPreview.onSave
 		);
+	}
+
+	private pathMatchesGlob(file: string, glob: string) {
+		if (this._workspaceManager.absPathInDefaultWorkspace(file)) {
+			file = this._workspaceManager.getFileRelativeToDefaultWorkspace(file);
+		}
+
+		file = file.replace(/\\/g, '/');
+
+		if (file.startsWith('/')) {
+			file = file.substr(1);
+		}
+
+		const match = minimatch(file, glob, { matchBase: true });
+		return match;
 	}
 
 	public closeServer(): void {

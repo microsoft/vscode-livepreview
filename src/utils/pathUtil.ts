@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import minimatch = require('minimatch');
 
 export class PathUtil {
 	public static pathSepRegex = /(?:\\|\/)+/;
@@ -63,11 +62,5 @@ export class PathUtil {
 	}
 	public static PathBeginsWith(file1: string, file2: string) {
 		return path.normalize(file1).startsWith(path.normalize(file2));
-	}
-
-	public static PathMatchesGlob(file: string, glob: string) {
-		file = file.replace(/\\/g, '/');
-		const match = minimatch(file, glob);
-		return match;
 	}
 }
