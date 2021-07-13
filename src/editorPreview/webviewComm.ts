@@ -275,5 +275,4 @@ export class WebviewComm extends Disposable {
 			this.handleNavAction(response.actions[i]);
 		}
 	}
-
 }
