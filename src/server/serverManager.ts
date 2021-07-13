@@ -15,6 +15,8 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { serverMsg } from '../manager';
+import { PathUtil } from '../utils/pathUtil';
+import minimatch = require('minimatch');
 
 export class Server extends Disposable {
 	private readonly _httpServer: HttpServer;
@@ -23,12 +25,13 @@ export class Server extends Disposable {
 	private _isServerOn = false;
 	private _wsConnected = false;
 	private _httpConnected = false;
+	private _watchGlob = '';
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		endpointManager: EndpointManager,
 		reporter: TelemetryReporter,
-		workspaceManager: WorkspaceManager,
+		private readonly _workspaceManager: WorkspaceManager,
 		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
@@ -37,22 +40,28 @@ export class Server extends Disposable {
 				_extensionUri,
 				reporter,
 				endpointManager,
-				workspaceManager,
+				_workspaceManager,
 				_connectionManager
 			)
 		);
 		this._wsServer = this._register(
-			new WSServer(reporter, endpointManager, workspaceManager)
+			new WSServer(reporter, endpointManager, _workspaceManager)
 		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 
+		this._watchGlob = SettingUtil.GetConfig(_extensionUri).watchFiles;
+
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
+				const changedPath = e.document.uri.fsPath;
 				if (
 					e.contentChanges &&
 					e.contentChanges.length > 0 &&
 					this._reloadOnAnyChange &&
-					this._httpServer.hasServedFile(e.document.uri.fsPath)
+					((this._watchGlob == '' &&
+						this._httpServer.hasServedFile(changedPath)) ||
+						(this._watchGlob != '' &&
+							this.pathMatchesGlob(changedPath, this._watchGlob)))
 				) {
 					this._wsServer.refreshBrowsers();
 				}
@@ -132,6 +141,8 @@ export class Server extends Disposable {
 
 	public updateConfigurations() {
 		this._statusBar.updateConfigurations();
+
+		this._watchGlob = SettingUtil.GetConfig(this._extensionUri).watchFiles;
 	}
 
 	private readonly _onNewReqProcessed = this._register(
@@ -151,6 +162,21 @@ export class Server extends Disposable {
 			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
 			AutoRefreshPreview.onSave
 		);
+	}
+
+	private pathMatchesGlob(file: string, glob: string) {
+		if (this._workspaceManager.absPathInDefaultWorkspace(file)) {
+			file = this._workspaceManager.getFileRelativeToDefaultWorkspace(file);
+		}
+
+		file = file.replace(/\\/g, '/');
+
+		if (file.startsWith('/')) {
+			file = file.substr(1);
+		}
+
+		const match = minimatch(file, glob, { matchBase: true });
+		return match;
 	}
 
 	public closeServer(): void {

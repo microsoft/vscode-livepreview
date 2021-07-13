@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
-import { Manager } from '../manager';
-import { GO_TO_SETTINGS, RELOAD_WINDOW } from './constants';
+import { GO_TO_SETTINGS } from './constants';
 
 export interface LiveServerConfigItem {
 	portNumber: number;
@@ -13,6 +12,7 @@ export interface LiveServerConfigItem {
 	notifyOnOpenLooseFile: boolean;
 	runTaskWithExternalPreview: boolean;
 	defaultPreviewPath: string;
+	watchFiles: string;
 }
 
 export enum AutoRefreshPreview {
@@ -40,6 +40,7 @@ export const Settings: any = {
 	notifyOnOpenLooseFile: 'notifyOnOpenLooseFile',
 	runTaskWithExternalPreview: 'tasks.runTaskWithExternalPreview',
 	defaultPreviewPath: 'defaultPreviewPath',
+	watchFiles: 'watchFiles',
 };
 export const PreviewType: any = {
 	internalPreview: 'internalPreview',
@@ -83,6 +84,7 @@ export class SettingUtil {
 				true
 			),
 			defaultPreviewPath: config.get<string>(Settings.defaultPreviewPath, ''),
+			watchFiles: config.get<string>(Settings.watchFiles, ''),
 		};
 	}
 	public static GetPreviewType(extensionUri: vscode.Uri): string {
@@ -122,7 +124,7 @@ export class SettingUtil {
 			});
 	}
 
-	public static UpdateWorkspacePath(manager: Manager) {
+	public static UpdateWorkspacePath() {
 		// choose workspace path:
 		const workspacePaths = vscode.workspace.workspaceFolders?.map(
 			(e) => e.uri.fsPath

@@ -51,7 +51,7 @@ export function activate(context: vscode.ExtensionContext) {
 			vscode.commands.executeCommand(
 				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 				filePath,
-				false
+				manager.workspaceManager.pathExistsRelativeToDefaultWorkspace(filePath)
 			);
 		}
 	});
@@ -74,7 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.config.selectWorkspace`,
 			() => {
-				SettingUtil.UpdateWorkspacePath(manager);
+				SettingUtil.UpdateWorkspacePath();
 			}
 		)
 	);
@@ -95,11 +95,23 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.setDefaultOpenFile`,
 			(file: vscode.Uri) => {
-				SettingUtil.UpdateSettings(
-					Settings.defaultPreviewPath,
-					file.fsPath,
-					false
-				);
+				if (manager.workspaceManager.absPathInDefaultWorkspace(file.fsPath)) {
+					const fileRelativeToWorkspace =
+						manager.workspaceManager.getFileRelativeToDefaultWorkspace(
+							file.fsPath
+						);
+					SettingUtil.UpdateSettings(
+						Settings.defaultPreviewPath,
+						fileRelativeToWorkspace,
+						false
+					);
+				} else {
+					SettingUtil.UpdateSettings(
+						Settings.defaultPreviewPath,
+						file.fsPath,
+						false
+					);
+				}
 			}
 		)
 	);

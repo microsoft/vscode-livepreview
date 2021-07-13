@@ -46,7 +46,7 @@ export class WebviewComm extends Disposable {
 		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);
 		}
-		URLExt = URLExt.replace('\\', '/');
+		URLExt = URLExt.replace(/\\/g, '/');
 		URLExt = URLExt.startsWith('/') ? URLExt.substr(1) : URLExt;
 
 		if (!hostURI) {

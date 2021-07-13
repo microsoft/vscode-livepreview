@@ -4,7 +4,6 @@ import { PathUtil } from '../utils/pathUtil';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { WorkspaceManager } from './workspaceManager';
-import { endianness } from 'os';
 
 export class EndpointManager extends Disposable {
 	// manages encoding and decoding endpoints
