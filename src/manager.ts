@@ -399,13 +399,11 @@ export class Manager extends Disposable {
 		this._notifiedAboutLooseFiles = true;
 	}
 
-	public getWebviewOptions(
-	): vscode.WebviewOptions {
-
-		const options ={
+	public getWebviewOptions(): vscode.WebviewOptions {
+		const options = {
 			// Enable javascript in the webview
 			enableScripts: true,
-	
+
 			localResourceRoots: [
 				vscode.Uri.joinPath(this._extensionUri, 'media'),
 				vscode.Uri.joinPath(
@@ -413,8 +411,7 @@ export class Manager extends Disposable {
 					'node_modules',
 					'vscode-codicons',
 					'dist'
-				)
-				
+				),
 			],
 		};
 
@@ -424,12 +421,10 @@ export class Manager extends Disposable {
 		// }
 		return options;
 	}
-	
+
 	public getWebviewPanelOptions(): vscode.WebviewPanelOptions {
 		return {
 			retainContextWhenHidden: true,
 		};
 	}
 }
-
-

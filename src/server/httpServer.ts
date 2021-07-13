@@ -150,10 +150,10 @@ export class HttpServer extends Disposable {
 			if (content.Stream) {
 				stream = content.Stream;
 				contentType = content.ContentType ?? '';
-				res.writeHead(200, { 
-				"Accept-Ranges": "bytes",
-				'Content-Type': `${contentType}; charset=UTF-8`
-			});
+				res.writeHead(200, {
+					'Accept-Ranges': 'bytes',
+					'Content-Type': `${contentType}; charset=UTF-8`,
+				});
 				stream.pipe(res);
 				return;
 			}
@@ -216,9 +216,9 @@ export class HttpServer extends Disposable {
 				this.reportAndReturn(500, req, res);
 				return;
 			});
-			res.writeHead(200, { 
-				"Accept-Ranges": "bytes",
-				'Content-Type': `${contentType}; charset=UTF-8`
+			res.writeHead(200, {
+				'Accept-Ranges': 'bytes',
+				'Content-Type': `${contentType}; charset=UTF-8`,
 			});
 			stream.pipe(res);
 		} else {
