@@ -39,3 +39,12 @@ export function isFileInjectable(file: string | undefined) {
 	const hasFileEnding = fileEndingRegex.test(file);
 	return !hasFileEnding || file.endsWith('.html');
 }
+
+export function getNonce() {
+	let text = '';
+	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	for (let i = 0; i < 64; i++) {
+		text += possible.charAt(Math.floor(Math.random() * possible.length));
+	}
+	return text;
+}

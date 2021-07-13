@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { INIT_PANEL_TITLE } from '../utils/constants';
 import { NavEditCommands, PageHistory } from './pageHistoryTracker';
-import { isFileInjectable } from '../utils/utils';
+import { getNonce, isFileInjectable } from '../utils/utils';
 
 export class WebviewComm extends Disposable {
 	private readonly _pageHistory: PageHistory;
@@ -122,7 +122,7 @@ export class WebviewComm extends Disposable {
 		const codiconsUri = webview.asWebviewUri(codiconsPathMainPath);
 
 		// Use a nonce to only allow specific scripts to be run
-		const nonce = new Date().getTime() + '' + new Date().getMilliseconds();
+		const nonce = getNonce();
 
 		return `<!DOCTYPE html>
 		<html lang="en">
