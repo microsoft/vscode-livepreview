@@ -23,6 +23,7 @@
 
 	window.addEventListener('message', (event) => {
 		if (
+			window.parent !== window && 
 			event.data.command != 'perform-url-check' &&
 			event.data.command != 'update-path'
 		) {
