@@ -15,6 +15,7 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { serverMsg } from '../manager';
+import { PathUtil } from '../utils/pathUtil';
 
 export class Server extends Disposable {
 	private readonly _httpServer: HttpServer;
@@ -23,6 +24,7 @@ export class Server extends Disposable {
 	private _isServerOn = false;
 	private _wsConnected = false;
 	private _httpConnected = false;
+	private _watchGlob = '';
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
@@ -46,13 +48,18 @@ export class Server extends Disposable {
 		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 
+		this._watchGlob = SettingUtil.GetConfig(_extensionUri).watchFiles;
+
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
+				const changedPath = e.document.uri.fsPath;
 				if (
 					e.contentChanges &&
 					e.contentChanges.length > 0 &&
 					this._reloadOnAnyChange &&
-					this._httpServer.hasServedFile(e.document.uri.fsPath)
+					((this._watchGlob == '' &&
+						this._httpServer.hasServedFile(changedPath)) ||
+						(this._watchGlob != '' && PathUtil.PathMatchesGlob(changedPath, this._watchGlob)))
 				) {
 					this._wsServer.refreshBrowsers();
 				}
@@ -132,6 +139,8 @@ export class Server extends Disposable {
 
 	public updateConfigurations() {
 		this._statusBar.updateConfigurations();
+
+		this._watchGlob = SettingUtil.GetConfig(this._extensionUri).watchFiles;
 	}
 
 	private readonly _onNewReqProcessed = this._register(
