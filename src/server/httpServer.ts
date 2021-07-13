@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
-// import * as etag from 'etag';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { HTMLInjector } from './serverUtils/HTMLInjector';

@@ -210,9 +210,4 @@ export class ServerTaskProvider
 		task.presentationOptions.panel = vscode.TaskPanelKind.New;
 		return task;
 	}
-
-	private readonly _onDisposeEmitter = this._register(
-		new vscode.EventEmitter<void>()
-	);
-	public readonly onDispose = this._onDisposeEmitter.event;
 }

@@ -15,7 +15,6 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { serverMsg } from '../manager';
-import { PathUtil } from '../utils/pathUtil';
 import minimatch = require('minimatch');
 
 export class Server extends Disposable {
@@ -57,24 +56,18 @@ export class Server extends Disposable {
 				if (
 					e.contentChanges &&
 					e.contentChanges.length > 0 &&
-					this._reloadOnAnyChange &&
-					((this._watchGlob == '' &&
-						this._httpServer.hasServedFile(changedPath)) ||
-						(this._watchGlob != '' &&
-							this.pathMatchesGlob(changedPath, this._watchGlob)))
+					this._reloadOnAnyChange
 				) {
-					this._wsServer.refreshBrowsers();
+					this.refreshBrowsers(changedPath);
 				}
 			})
 		);
 
 		this._register(
 			vscode.workspace.onDidSaveTextDocument((e) => {
-				if (
-					this._reloadOnSave &&
-					this._httpServer.hasServedFile(e.uri.fsPath)
-				) {
-					this._wsServer.refreshBrowsers();
+				const changedPath = e.uri.fsPath;
+				if (this._reloadOnSave) {
+					this.refreshBrowsers(changedPath);
 				}
 			})
 		);
@@ -164,6 +157,16 @@ export class Server extends Disposable {
 		);
 	}
 
+	private refreshBrowsers(changedPath = '') {
+		if (
+			changedPath.length == 0 ||
+			(this._watchGlob == '' && this._httpServer.hasServedFile(changedPath)) ||
+			(this._watchGlob != '' &&
+				this.pathMatchesGlob(changedPath, this._watchGlob))
+		) {
+			this._wsServer.refreshBrowsers();
+		}
+	}
 	private pathMatchesGlob(file: string, glob: string) {
 		if (this._workspaceManager.absPathInDefaultWorkspace(file)) {
 			file = this._workspaceManager.getFileRelativeToDefaultWorkspace(file);

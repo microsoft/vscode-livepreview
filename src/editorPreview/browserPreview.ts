@@ -118,6 +118,7 @@ export class BrowserPreview extends Disposable {
 
 	dispose() {
 		this._onDisposeEmitter.fire();
+		this._panel.dispose();
 		super.dispose();
 	}
 

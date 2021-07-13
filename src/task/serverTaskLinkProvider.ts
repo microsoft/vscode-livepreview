@@ -5,6 +5,7 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { HOST } from '../utils/constants';
 import { URL } from 'url';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
+import { SETTINGS_SECTION_ID } from '../utils/settingsUtil';
 export class serverTaskLinkProvider
 	extends Disposable
 	implements vscode.TerminalLinkProvider
@@ -58,7 +59,7 @@ export class serverTaskLinkProvider
 			this.openRelativeLinkInWorkspace(link.data, link.isDir);
 		} else {
 			vscode.commands.executeCommand(
-				'LivePreview.start.preview.atFile',
+				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 				link.data
 			);
 		}
