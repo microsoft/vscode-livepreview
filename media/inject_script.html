@@ -23,11 +23,10 @@
 
 	window.addEventListener('message', (event) => {
 		if (
-			window.parent !== window && 
 			event.data.command != 'perform-url-check' &&
 			event.data.command != 'update-path'
 		) {
-			window.parent.postMessage(event.data, '*');
+			postParentMessage(event.data);
 		}
 	});
 
@@ -48,13 +47,11 @@
 				path: window.location,
 				title: document.title,
 			};
-			window.parent.postMessage(
-				{
-					command: 'update-path',
-					text: JSON.stringify(commandPayload),
-				},
-				'*'
-			);
+
+			postParentMessage({
+				command: 'update-path',
+				text: JSON.stringify(commandPayload),
+			});
 		}
 	}
 
@@ -63,10 +60,10 @@
 			path: window.location,
 			title: document.title,
 		};
-		window.parent.postMessage(
-			{ command: 'update-path', text: JSON.stringify(commandPayload) },
-			'*'
-		);
+		postParentMessage({
+			command: 'update-path',
+			text: JSON.stringify(commandPayload),
+		});
 		handleLinkHoverEnd();
 
 		var l = document.getElementsByTagName('a');
@@ -77,39 +74,32 @@
 		}
 	}
 
+	function postParentMessage(data) {
+		if (window.parent !== window) {
+			window.parent.postMessage(data, '*');
+		}
+	}
 	function handleLinkClick(linkTarget) {
 		if (linkTarget && linkTarget != '') {
 			if (!linkTarget.startsWith(host)) {
-				window.parent.postMessage(
-					{ command: 'open-external-link', text: linkTarget },
-					'*'
-				);
+				postParentMessage({ command: 'open-external-link', text: linkTarget });
 			} else {
 				// check all local URLs to make sure to catch pages that won't be injectable
-				window.parent.postMessage(
-					{ command: 'perform-url-check', text: linkTarget },
-					'*'
-				);
+				postParentMessage({ command: 'perform-url-check', text: linkTarget });
 			}
 		}
 	}
 
 	function handleLinkHoverStart(linkTarget) {
-		window.parent.postMessage(
-			{
-				command: 'link-hover-start',
-				text: linkTarget,
-			},
-			'*'
-		);
+		postParentMessage({
+			command: 'link-hover-start',
+			text: linkTarget,
+		});
 	}
 
 	function handleLinkHoverEnd() {
-		window.parent.postMessage(
-			{
-				command: 'link-hover-end',
-			},
-			'*'
-		);
+		postParentMessage({
+			command: 'link-hover-end',
+		});
 	}
 </script>
