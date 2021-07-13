@@ -287,8 +287,8 @@ export class Manager extends Disposable {
 				INIT_PANEL_TITLE,
 				vscode.ViewColumn.Beside,
 				{
-					...getWebviewOptions(this._extensionUri),
-					...getWebviewPanelOptions(),
+					...this.getWebviewOptions(),
+					...this.getWebviewPanelOptions(),
 				}
 			);
 		}
@@ -398,30 +398,33 @@ export class Manager extends Disposable {
 		}
 		this._notifiedAboutLooseFiles = true;
 	}
-}
 
-export function getWebviewOptions(
-	extensionUri: vscode.Uri
-): vscode.WebviewOptions {
-	return {
-		// Enable javascript in the webview
-		enableScripts: true,
+	public getWebviewOptions(): vscode.WebviewOptions {
+		const options = {
+			// Enable javascript in the webview
+			enableScripts: true,
 
-		// And restrict the webview to only loading content from our extension's `media` directory.
-		localResourceRoots: [
-			vscode.Uri.joinPath(extensionUri, 'media'),
-			vscode.Uri.joinPath(
-				extensionUri,
-				'node_modules',
-				'vscode-codicons',
-				'dist'
-			),
-		],
-	};
-}
+			localResourceRoots: [
+				vscode.Uri.joinPath(this._extensionUri, 'media'),
+				vscode.Uri.joinPath(
+					this._extensionUri,
+					'node_modules',
+					'vscode-codicons',
+					'dist'
+				),
+			],
+		};
 
-export function getWebviewPanelOptions(): vscode.WebviewPanelOptions {
-	return {
-		retainContextWhenHidden: true,
-	};
+		// const workspaceURI = this._workspaceManager.workspaceURI;
+		// if (workspaceURI) {
+		// 	options.localResourceRoots.push(workspaceURI);
+		// }
+		return options;
+	}
+
+	public getWebviewPanelOptions(): vscode.WebviewPanelOptions {
+		return {
+			retainContextWhenHidden: true,
+		};
+	}
 }

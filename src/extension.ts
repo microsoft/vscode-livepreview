@@ -1,10 +1,8 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { BrowserPreview } from './editorPreview/browserPreview';
-import { getWebviewOptions, Manager } from './manager';
+import { Manager } from './manager';
 import { EXTENSION_ID } from './utils/constants';
-import { PathUtil } from './utils/pathUtil';
 import {
 	Settings,
 	SETTINGS_SECTION_ID,
@@ -261,7 +259,7 @@ export function activate(context: vscode.ExtensionContext) {
 					return;
 				}
 				// Reset the webview options so we use latest uri for `localResourceRoots`.
-				webviewPanel.webview.options = getWebviewOptions(context.extensionUri);
+				webviewPanel.webview.options = manager.getWebviewOptions();
 				manager.createOrShowEmbeddedPreview(webviewPanel, file, relative);
 			},
 		});

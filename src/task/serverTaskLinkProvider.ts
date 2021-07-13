@@ -29,7 +29,7 @@ export class serverTaskLinkProvider
 	}
 
 	private isPtyTerm(terminal: string) {
-		return this.terminalName != "" && terminal.indexOf(this.terminalName) != -1; // there may be additional terminal text in a multi-root workspace
+		return this.terminalName != '' && terminal.indexOf(this.terminalName) != -1; // there may be additional terminal text in a multi-root workspace
 	}
 	async provideTerminalLinks(
 		context: vscode.TerminalLinkContext,
