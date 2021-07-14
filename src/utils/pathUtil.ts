@@ -63,4 +63,7 @@ export class PathUtil {
 	public static PathBeginsWith(file1: string, file2: string) {
 		return path.normalize(file1).startsWith(path.normalize(file2));
 	}
+	public static convertToUnixPath(file: string) {
+		return file.replace(/\\/g, '/');
+	}
 }

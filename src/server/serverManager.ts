@@ -15,7 +15,6 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { serverMsg } from '../manager';
-import minimatch = require('minimatch');
 
 export class Server extends Disposable {
 	private readonly _httpServer: HttpServer;
@@ -25,6 +24,7 @@ export class Server extends Disposable {
 	private _wsConnected = false;
 	private _httpConnected = false;
 	private _watchGlob = '';
+	private readonly _watcher;
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
@@ -43,51 +43,44 @@ export class Server extends Disposable {
 				_connectionManager
 			)
 		);
+
+		this._watcher = vscode.workspace.createFileSystemWatcher("**");
+
 		this._wsServer = this._register(
 			new WSServer(reporter, endpointManager, _workspaceManager)
 		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 
-		this._watchGlob = SettingUtil.GetConfig(_extensionUri).watchFiles;
-
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
-				const changedPath = e.document.uri.fsPath;
 				if (
 					e.contentChanges &&
 					e.contentChanges.length > 0 &&
 					this._reloadOnAnyChange
 				) {
-					this.refreshBrowsers(changedPath);
+					this._wsServer.refreshBrowsers();
 				}
 			})
 		);
 
 		this._register(
-			vscode.workspace.onDidSaveTextDocument((e) => {
-				const changedPath = e.uri.fsPath;
+			this._watcher.onDidChange((e) => {
 				if (this._reloadOnSave) {
-					this.refreshBrowsers(changedPath);
+					this._wsServer.refreshBrowsers();
 				}
 			})
 		);
 
 		this._register(
-			vscode.workspace.onDidRenameFiles(() => {
+			this._watcher.onDidDelete((e) => {
 				if (this._reloadOnAnyChange || this._reloadOnSave) {
 					this._wsServer.refreshBrowsers();
 				}
 			})
 		);
+
 		this._register(
-			vscode.workspace.onDidDeleteFiles(() => {
-				if (this._reloadOnAnyChange || this._reloadOnSave) {
-					this._wsServer.refreshBrowsers();
-				}
-			})
-		);
-		this._register(
-			vscode.workspace.onDidCreateFiles(() => {
+			this._watcher.onDidCreate((e) => {
 				if (this._reloadOnAnyChange || this._reloadOnSave) {
 					this._wsServer.refreshBrowsers();
 				}
@@ -134,8 +127,6 @@ export class Server extends Disposable {
 
 	public updateConfigurations() {
 		this._statusBar.updateConfigurations();
-
-		this._watchGlob = SettingUtil.GetConfig(this._extensionUri).watchFiles;
 	}
 
 	private readonly _onNewReqProcessed = this._register(
@@ -155,31 +146,6 @@ export class Server extends Disposable {
 			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
 			AutoRefreshPreview.onSave
 		);
-	}
-
-	private refreshBrowsers(changedPath = '') {
-		if (
-			changedPath.length == 0 ||
-			(this._watchGlob == '' && this._httpServer.hasServedFile(changedPath)) ||
-			(this._watchGlob != '' &&
-				this.pathMatchesGlob(changedPath, this._watchGlob))
-		) {
-			this._wsServer.refreshBrowsers();
-		}
-	}
-	private pathMatchesGlob(file: string, glob: string) {
-		if (this._workspaceManager.absPathInDefaultWorkspace(file)) {
-			file = this._workspaceManager.getFileRelativeToDefaultWorkspace(file);
-		}
-
-		file = file.replace(/\\/g, '/');
-
-		if (file.startsWith('/')) {
-			file = file.substr(1);
-		}
-
-		const match = minimatch(file, glob, { matchBase: true });
-		return match;
 	}
 
 	public closeServer(): void {
