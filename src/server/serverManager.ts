@@ -44,7 +44,7 @@ export class Server extends Disposable {
 			)
 		);
 
-		this._watcher = vscode.workspace.createFileSystemWatcher("**");
+		this._watcher = vscode.workspace.createFileSystemWatcher('**');
 
 		this._wsServer = this._register(
 			new WSServer(reporter, endpointManager, _workspaceManager)
