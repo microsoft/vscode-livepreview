@@ -1,5 +1,5 @@
 <!-- Script injected by VS Live Preview -->
-<script type="text/javascript" defer>
+<script type="text/javascript">
 	const url = '${WS_URL}';
 	const host = '${HTTP_URL}';
 	const connection = new WebSocket(url);
@@ -13,6 +13,7 @@
 		console.log('Error occurred.');
 		console.log(event);
 	};
+
 	connection.onmessage = (event) => handleSocketMessage(event.data);
 
 	window.addEventListener('message', (event) => handleMessage(event), false);
@@ -29,6 +30,49 @@
 			postParentMessage(event.data);
 		}
 	});
+
+	var _log = console.log;
+	var _error = console.error;
+	var _warning = console.warn;
+	var _info = console.info;
+
+	console.error = function(errMessage){
+		var messagePayload = {
+			type: 'error',
+			data: errMessage
+		}
+		postParentMessage({command:'error',text:JSON.stringify(messagePayload)});
+		_error.apply(console,arguments);
+	};
+
+	console.log = function(logMessage){
+		var messagePayload = {
+			type: 'log',
+			data: logMessage
+		}
+		postParentMessage({command:'log',text:JSON.stringify(messagePayload)});
+		_log.apply(console,arguments);
+	};
+
+	console.warn = function(warnMessage){
+		// do something with the warn message
+		var messagePayload = {
+			type: 'warning',
+			data: warnMessage
+		}
+		postParentMessage({command:'log',text:JSON.stringify(messagePayload)});
+		_warning.apply(console,arguments);
+	};
+
+	console.info = function(infoMessage){
+		// do something with the warn message
+		var messagePayload = {
+			type: 'info',
+			data: infoMessage
+		}
+		postParentMessage({command:'log',text:JSON.stringify(messagePayload)});
+		_info.apply(console,arguments);
+	};
 
 	function handleSocketMessage(data) {
 		const parsedMessage = JSON.parse(data);
