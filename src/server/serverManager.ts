@@ -64,6 +64,7 @@ export class Server extends Disposable {
 				if (
 					e.contentChanges &&
 					e.contentChanges.length > 0 &&
+					e.document.uri.scheme == 'file' &&
 					this._reloadOnAnyChange
 				) {
 					this._wsServer.refreshBrowsers();
