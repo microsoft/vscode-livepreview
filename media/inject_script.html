@@ -31,49 +31,31 @@
 		}
 	});
 
-	var _log = console.log;
-	var _error = console.error;
-	var _warning = console.warn;
-	var _info = console.info;
-
-	console.error = function(errMessage){
-		var messagePayload = {
-			type: 'error',
-			data: errMessage
-		}
-		postParentMessage({command:'error',text:JSON.stringify(messagePayload)});
-		_error.apply(console,arguments);
+	var consoleOverrides = {
+		'error': console.error,
+		'log': console.log,
+		'warn': console.warn,
+		'info': console.info
 	};
 
-	console.log = function(logMessage){
-		var messagePayload = {
-			type: 'log',
-			data: logMessage
-		}
-		postParentMessage({command:'log',text:JSON.stringify(messagePayload)});
-		_log.apply(console,arguments);
-	};
+	console.error = createConsoleOverride('error');
 
-	console.warn = function(warnMessage){
-		// do something with the warn message
-		var messagePayload = {
-			type: 'warning',
-			data: warnMessage
-		}
-		postParentMessage({command:'log',text:JSON.stringify(messagePayload)});
-		_warning.apply(console,arguments);
-	};
+	console.log = createConsoleOverride('log');
 
-	console.info = function(infoMessage){
-		// do something with the warn message
-		var messagePayload = {
-			type: 'info',
-			data: infoMessage
-		}
-		postParentMessage({command:'log',text:JSON.stringify(messagePayload)});
-		_info.apply(console,arguments);
-	};
+	console.warn = createConsoleOverride('warn');
 
+	console.info = createConsoleOverride('info');
+
+	function createConsoleOverride(type) {
+		return function (msg) {
+			var messagePayload = {
+				type: type,
+				data: JSON.stringify(msg)
+			};
+			postParentMessage({ command: 'log', text: JSON.stringify(messagePayload) });
+			consoleOverrides[type].apply(console, arguments);
+		};
+	}
 	function handleSocketMessage(data) {
 		const parsedMessage = JSON.parse(data);
 		switch (parsedMessage.command) {
