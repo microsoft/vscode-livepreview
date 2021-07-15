@@ -188,6 +188,14 @@
 				break;
 			}
 			// from child iframe
+			case 'log': {
+				vscode.postMessage({
+					command: 'log',
+					text: message.text,
+				});
+				break;
+			}
+			// from child iframe
 			case 'perform-url-check': {
 				sendData = {
 					command: 'urlCheck',

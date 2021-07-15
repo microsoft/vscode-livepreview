@@ -1,24 +1,15 @@
 import * as vscode from 'vscode';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { serverMsg } from '../manager';
-import { HOST } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
+import {
+	TerminalColor,
+	TerminalDeco,
+	TerminalStyleUtil,
+} from '../utils/terminalStyleUtil';
 import { FormatDateTime } from '../utils/utils';
 import { ServerStartedStatus, ServerArgs } from './serverTaskProvider';
 
-enum TerminalColor {
-	red = 31,
-	green = 32,
-	yellow = 33,
-	blue = 34,
-	purple = 35,
-	cyan = 36,
-}
-enum TerminalDeco {
-	reset = 0,
-	bold = 1,
-	underline = 4,
-}
 const CHAR_CODE_CTRL_C = 3;
 
 export class ServerTaskTerminal
@@ -74,12 +65,12 @@ export class ServerTaskTerminal
 		const firstHalfOfString = addr.substr(0, indexSecondColon);
 		const lastHalfOfString = addr.substr(indexSecondColon);
 		return (
-			this.colorTerminalString(
+			TerminalStyleUtil.ColorTerminalString(
 				firstHalfOfString,
 				TerminalColor.blue,
 				TerminalDeco.bold
 			) +
-			this.colorTerminalString(
+			TerminalStyleUtil.ColorTerminalString(
 				lastHalfOfString,
 				TerminalColor.purple,
 				TerminalDeco.bold
@@ -102,7 +93,7 @@ export class ServerTaskTerminal
 			}
 		}
 		this.writeEmitter.fire(
-			`Type ${this.colorTerminalString(
+			`Type ${TerminalStyleUtil.ColorTerminalString(
 				`CTRL+C`,
 				TerminalColor.red,
 				TerminalDeco.bold
@@ -120,7 +111,7 @@ export class ServerTaskTerminal
 			`This task will finish now, but the server will stay on since you've used the embedded preview recently.\r\n`
 		);
 		this.writeEmitter.fire(
-			this.colorTerminalString(
+			TerminalStyleUtil.ColorTerminalString(
 				`Run 'Stop Live Preview Server' in the command palette to close the server and close any previews.\r\n\r\n`,
 				TerminalColor.yellow
 			)
@@ -159,7 +150,7 @@ export class ServerTaskTerminal
 			this.writeEmitter.fire(
 				`[${FormatDateTime(date, ' ')}] ${
 					msg.method
-				}: ${this.colorTerminalString(
+				}: ${TerminalStyleUtil.ColorTerminalString(
 					msg.url,
 					TerminalColor.blue
 				)} | ${this.colorHttpStatus(msg.status)}\r\n> `
@@ -174,15 +165,7 @@ export class ServerTaskTerminal
 		} else if (status >= 300) {
 			color = TerminalColor.yellow;
 		}
-		return this.colorTerminalString(status.toString(), color);
-	}
-
-	private colorTerminalString(
-		input: string,
-		color: TerminalColor,
-		decoration = TerminalDeco.reset
-	) {
-		return `\x1b[${decoration};${color}m${input}\x1b[0m`;
+		return TerminalStyleUtil.ColorTerminalString(status.toString(), color);
 	}
 
 	handleInput(data: string) {

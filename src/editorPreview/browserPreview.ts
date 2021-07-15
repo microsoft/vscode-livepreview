@@ -6,6 +6,12 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { WebviewComm } from './webviewComm';
+import {
+	TerminalColor,
+	TerminalDeco,
+	TerminalStyleUtil,
+} from '../utils/terminalStyleUtil';
+import { FormatDateTime } from '../utils/utils';
 
 export class BrowserPreview extends Disposable {
 	public static readonly viewType = 'browserPreview';
@@ -36,10 +42,10 @@ export class BrowserPreview extends Disposable {
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _workspaceManager: WorkspaceManager,
-		private readonly _connectionManager: ConnectionManager
+		private readonly _connectionManager: ConnectionManager,
+		private readonly _outputChannel: vscode.OutputChannel
 	) {
 		super();
-
 		this._panel.iconPath = {
 			light: vscode.Uri.joinPath(
 				this._extensionUri,
@@ -111,8 +117,21 @@ export class BrowserPreview extends Disposable {
 					case 'go-to-file':
 						this.goToFullAddress(message.text);
 						return;
+
+					case 'log': {
+						const msgJSON = JSON.parse(message.text);
+						this.handleLog(msgJSON.type, msgJSON.data);
+						return;
+					}
 				}
 			})
+		);
+	}
+
+	private handleLog(type: string, log: string) {
+		const date = new Date();
+		this._outputChannel.appendLine(
+			`[${type} - ${FormatDateTime(date, ' ')}] ${log}`
 		);
 	}
 

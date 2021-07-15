@@ -1,5 +1,5 @@
 <!-- Script injected by VS Live Preview -->
-<script type="text/javascript" defer>
+<script type="text/javascript">
 	const url = '${WS_URL}';
 	const host = '${HTTP_URL}';
 	const connection = new WebSocket(url);
@@ -13,6 +13,7 @@
 		console.log('Error occurred.');
 		console.log(event);
 	};
+
 	connection.onmessage = (event) => handleSocketMessage(event.data);
 
 	window.addEventListener('message', (event) => handleMessage(event), false);
@@ -30,6 +31,34 @@
 		}
 	});
 
+	var consoleOverrides = {
+		ERROR: console.error,
+		LOG: console.log,
+		WARN: console.warn,
+		INFO: console.info,
+	};
+
+	console.error = createConsoleOverride('ERROR');
+
+	console.log = createConsoleOverride('LOG');
+
+	console.warn = createConsoleOverride('WARN');
+
+	console.info = createConsoleOverride('INFO');
+
+	function createConsoleOverride(type) {
+		return function (msg) {
+			var messagePayload = {
+				type: type,
+				data: JSON.stringify(msg),
+			};
+			postParentMessage({
+				command: 'log',
+				text: JSON.stringify(messagePayload),
+			});
+			consoleOverrides[type].apply(console, arguments);
+		};
+	}
 	function handleSocketMessage(data) {
 		const parsedMessage = JSON.parse(data);
 		switch (parsedMessage.command) {

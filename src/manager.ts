@@ -41,6 +41,7 @@ export class Manager extends Disposable {
 	private _connectionManager: ConnectionManager;
 	private _pendingLaunchInfo: launchInfo | undefined;
 	private _runTaskWithExternalPreview: boolean;
+	private readonly _outputChannel: vscode.OutputChannel;
 
 	private get _serverPort() {
 		return this._connectionManager.httpPort;
@@ -62,6 +63,10 @@ export class Manager extends Disposable {
 		private readonly _reporter: TelemetryReporter
 	) {
 		super();
+
+		this._outputChannel = vscode.window.createOutputChannel(
+			'Live Preview Console'
+		);
 
 		this._workspaceManager = this._register(new WorkspaceManager());
 		this._endpointManager = this._register(
@@ -310,7 +315,8 @@ export class Manager extends Disposable {
 				this._extensionUri,
 				this._reporter,
 				this._workspaceManager,
-				this._connectionManager
+				this._connectionManager,
+				this._outputChannel
 			)
 		);
 
