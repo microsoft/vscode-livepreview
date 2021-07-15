@@ -66,4 +66,24 @@ export class PathUtil {
 	public static convertToUnixPath(file: string) {
 		return file.replace(/\\/g, '/');
 	}
+
+	public static getUserDataDirFromStorageUri(file: string | undefined) {
+		if (!file) {
+			return file;
+		}
+		file = PathUtil.convertToUnixPath(file);
+		const parts = file.split('/');
+
+		const newParts = [];
+		for (const i in parts) {
+			if (parts[i].length > 0) {
+				newParts.push(parts[i]);
+			}
+			if (parts[i] == 'User') {
+				break;
+			} // TODO: find a more direct way of finding user-data-dir
+		}
+
+		return newParts.join('/');
+	}
 }

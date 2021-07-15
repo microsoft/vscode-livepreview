@@ -65,7 +65,8 @@ export class Manager extends Disposable {
 	}
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
-		private readonly _reporter: TelemetryReporter
+		private readonly _reporter: TelemetryReporter,
+		userDataDir: string | undefined
 	) {
 		super();
 
@@ -88,7 +89,8 @@ export class Manager extends Disposable {
 				this._endpointManager,
 				_reporter,
 				this._workspaceManager,
-				this._connectionManager
+				this._connectionManager,
+				userDataDir
 			)
 		);
 

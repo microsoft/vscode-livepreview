@@ -3,6 +3,7 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { Manager } from './manager';
 import { EXTENSION_ID } from './utils/constants';
+import { PathUtil } from './utils/pathUtil';
 import {
 	Settings,
 	SETTINGS_SECTION_ID,
@@ -15,7 +16,6 @@ let manager: Manager;
 
 export function activate(context: vscode.ExtensionContext) {
 	const extPackageJSON = context.extension.packageJSON;
-
 	reporter = new TelemetryReporter(
 		EXTENSION_ID,
 		extPackageJSON.version,
@@ -23,7 +23,11 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 	context.subscriptions.push(reporter);
 
-	manager = new Manager(context.extensionUri, reporter);
+	manager = new Manager(
+		context.extensionUri,
+		reporter,
+		PathUtil.getUserDataDirFromStorageUri(context.storageUri?.fsPath)
+	);
 	/* __GDPR__
 		"extension.startUp" : { 
 			"numWorkspaceFolders" : { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true }

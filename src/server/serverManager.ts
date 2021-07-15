@@ -15,6 +15,7 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { serverMsg } from '../manager';
+import { PathUtil } from '../utils/pathUtil';
 
 export class Server extends Disposable {
 	private readonly _httpServer: HttpServer;
@@ -23,7 +24,6 @@ export class Server extends Disposable {
 	private _isServerOn = false;
 	private _wsConnected = false;
 	private _httpConnected = false;
-	private _watchGlob = '';
 	private readonly _watcher;
 
 	constructor(
@@ -31,7 +31,8 @@ export class Server extends Disposable {
 		endpointManager: EndpointManager,
 		reporter: TelemetryReporter,
 		private readonly _workspaceManager: WorkspaceManager,
-		private readonly _connectionManager: ConnectionManager
+		private readonly _connectionManager: ConnectionManager,
+		userDataDir: string | undefined
 	) {
 		super();
 		this._httpServer = this._register(
@@ -51,6 +52,13 @@ export class Server extends Disposable {
 		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 
+		const notUserDataDirChange = function (file: vscode.Uri) {
+			return (
+				file.scheme != 'vscode-userdata' &&
+				(!userDataDir || !PathUtil.PathBeginsWith(file.fsPath, userDataDir))
+			);
+		};
+
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
 				if (
@@ -65,7 +73,7 @@ export class Server extends Disposable {
 
 		this._register(
 			this._watcher.onDidChange((e) => {
-				if (this._reloadOnSave) {
+				if (this._reloadOnSave && notUserDataDirChange(e)) {
 					this._wsServer.refreshBrowsers();
 				}
 			})
@@ -73,7 +81,10 @@ export class Server extends Disposable {
 
 		this._register(
 			this._watcher.onDidDelete((e) => {
-				if (this._reloadOnAnyChange || this._reloadOnSave) {
+				if (
+					(this._reloadOnAnyChange || this._reloadOnSave) &&
+					notUserDataDirChange(e)
+				) {
 					this._wsServer.refreshBrowsers();
 				}
 			})
@@ -81,7 +92,10 @@ export class Server extends Disposable {
 
 		this._register(
 			this._watcher.onDidCreate((e) => {
-				if (this._reloadOnAnyChange || this._reloadOnSave) {
+				if (
+					(this._reloadOnAnyChange || this._reloadOnSave) &&
+					notUserDataDirChange(e)
+				) {
 					this._wsServer.refreshBrowsers();
 				}
 			})

@@ -193,7 +193,6 @@
 					command: 'console',
 					text: message.text,
 				});
-				console.log(message.text);
 				break;
 			}
 			// from child iframe
