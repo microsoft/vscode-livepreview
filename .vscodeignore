@@ -2,8 +2,13 @@
 .vscode-test/**
 out/test/**
 src/**
+.github
 .gitignore
+.prettierrc.yaml
 tsconfig.json
 vsc-extension-quickstart.md
+codicon_copy.js
 node_modules
 test-workspace
+release_notes
+out/extension.js.map
