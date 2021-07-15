@@ -247,7 +247,7 @@
 		"build-preview": "npx webpack-cli --mode development",
 		"compile": "node codicon_copy.js && tsc -p ./",
 		"watch": "node codicon_copy.js && tsc -watch -p ./",
-		"format": "prettier ./src/**/*.ts --write"
+		"format": "prettier ./{src,media}/**/*.{ts,css,html,js} --write"
 	},
 	"devDependencies": {
 		"@types/mime": "^2.0.3",

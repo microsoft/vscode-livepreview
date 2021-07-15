@@ -2,7 +2,11 @@ import * as vscode from 'vscode';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { serverMsg } from '../manager';
 import { Disposable } from '../utils/dispose';
-import { TerminalColor, TerminalDeco, TerminalStyleUtil } from '../utils/terminalStyleUtil';
+import {
+	TerminalColor,
+	TerminalDeco,
+	TerminalStyleUtil,
+} from '../utils/terminalStyleUtil';
 import { FormatDateTime } from '../utils/utils';
 import { ServerStartedStatus, ServerArgs } from './serverTaskProvider';
 
@@ -163,8 +167,6 @@ export class ServerTaskTerminal
 		}
 		return TerminalStyleUtil.ColorTerminalString(status.toString(), color);
 	}
-
-
 
 	handleInput(data: string) {
 		if (data.length > 0 && data.charCodeAt(0) == CHAR_CODE_CTRL_C) {

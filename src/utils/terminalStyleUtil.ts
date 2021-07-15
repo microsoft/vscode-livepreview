@@ -21,5 +21,3 @@ export class TerminalStyleUtil {
 		return `\x1b[${decoration};${color}m${input}\x1b[0m`;
 	}
 }
-
-

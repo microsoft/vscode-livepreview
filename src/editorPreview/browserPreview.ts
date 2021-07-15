@@ -6,7 +6,11 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { WebviewComm } from './webviewComm';
-import { TerminalColor, TerminalDeco, TerminalStyleUtil } from '../utils/terminalStyleUtil';
+import {
+	TerminalColor,
+	TerminalDeco,
+	TerminalStyleUtil,
+} from '../utils/terminalStyleUtil';
 import { FormatDateTime } from '../utils/utils';
 
 export class BrowserPreview extends Disposable {
@@ -126,7 +130,9 @@ export class BrowserPreview extends Disposable {
 
 	private handleLog(type: string, log: string) {
 		const date = new Date();
-		this._outputChannel.appendLine(`[${type} - ${FormatDateTime(date, ' ')}] ${log}`);
+		this._outputChannel.appendLine(
+			`[${type} - ${FormatDateTime(date, ' ')}] ${log}`
+		);
 	}
 
 	dispose() {

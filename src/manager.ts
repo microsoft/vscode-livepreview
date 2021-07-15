@@ -64,8 +64,10 @@ export class Manager extends Disposable {
 	) {
 		super();
 
-		this._outputChannel = vscode.window.createOutputChannel("Live Preview Console");
-		
+		this._outputChannel = vscode.window.createOutputChannel(
+			'Live Preview Console'
+		);
+
 		this._workspaceManager = this._register(new WorkspaceManager());
 		this._endpointManager = this._register(
 			new EndpointManager(this._workspaceManager)
@@ -314,7 +316,7 @@ export class Manager extends Disposable {
 				this._reporter,
 				this._workspaceManager,
 				this._connectionManager,
-				this._outputChannel 
+				this._outputChannel
 			)
 		);
 

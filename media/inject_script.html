@@ -32,27 +32,30 @@
 	});
 
 	var consoleOverrides = {
-		'error': console.error,
-		'log': console.log,
-		'warn': console.warn,
-		'info': console.info
+		ERROR: console.error,
+		LOG: console.log,
+		WARN: console.warn,
+		INFO: console.info,
 	};
 
-	console.error = createConsoleOverride('error');
+	console.error = createConsoleOverride('ERROR');
 
-	console.log = createConsoleOverride('log');
+	console.log = createConsoleOverride('LOG');
 
-	console.warn = createConsoleOverride('warn');
+	console.warn = createConsoleOverride('WARN');
 
-	console.info = createConsoleOverride('info');
+	console.info = createConsoleOverride('INFO');
 
 	function createConsoleOverride(type) {
 		return function (msg) {
 			var messagePayload = {
 				type: type,
-				data: JSON.stringify(msg)
+				data: JSON.stringify(msg),
 			};
-			postParentMessage({ command: 'log', text: JSON.stringify(messagePayload) });
+			postParentMessage({
+				command: 'log',
+				text: JSON.stringify(messagePayload),
+			});
 			consoleOverrides[type].apply(console, arguments);
 		};
 	}
