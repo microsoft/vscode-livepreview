@@ -36,6 +36,7 @@
 		LOG: console.log,
 		WARN: console.warn,
 		INFO: console.info,
+		CLEAR: console.clear,
 	};
 
 	console.error = createConsoleOverride('ERROR');
@@ -46,6 +47,8 @@
 
 	console.info = createConsoleOverride('INFO');
 
+	console.clear = createConsoleOverride('CLEAR');
+
 	function createConsoleOverride(type) {
 		return function (msg) {
 			var messagePayload = {
@@ -53,7 +56,7 @@
 				data: JSON.stringify(msg),
 			};
 			postParentMessage({
-				command: 'log',
+				command: 'console',
 				text: JSON.stringify(messagePayload),
 			});
 			consoleOverrides[type].apply(console, arguments);

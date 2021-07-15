@@ -118,9 +118,9 @@ export class BrowserPreview extends Disposable {
 						this.goToFullAddress(message.text);
 						return;
 
-					case 'log': {
+					case 'console': {
 						const msgJSON = JSON.parse(message.text);
-						this.handleLog(msgJSON.type, msgJSON.data);
+						this.handleConsole(msgJSON.type, msgJSON.data);
 						return;
 					}
 				}
@@ -128,11 +128,15 @@ export class BrowserPreview extends Disposable {
 		);
 	}
 
-	private handleLog(type: string, log: string) {
-		const date = new Date();
-		this._outputChannel.appendLine(
-			`[${type} - ${FormatDateTime(date, ' ')}] ${log}`
-		);
+	private handleConsole(type: string, log: string) {
+		if (type == 'CLEAR') {
+			this._outputChannel.clear();
+		} else {
+			const date = new Date();
+			this._outputChannel.appendLine(
+				`[${type} - ${FormatDateTime(date, ' ')}] ${log}`
+			);
+		}
 	}
 
 	dispose() {
