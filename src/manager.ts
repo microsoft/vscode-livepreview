@@ -32,6 +32,7 @@ export interface launchInfo {
 	external: boolean;
 	file: string;
 	relative: boolean;
+	debug: boolean;
 	panel?: vscode.WebviewPanel;
 }
 export class Manager extends Disposable {
@@ -143,7 +144,8 @@ export class Manager extends Disposable {
 				if (this._pendingLaunchInfo.external) {
 					this.launchFileInExternalBrowser(
 						this._pendingLaunchInfo.file,
-						this._pendingLaunchInfo.relative
+						this._pendingLaunchInfo.relative,
+						this._pendingLaunchInfo.debug
 					);
 				} else {
 					this.launchFileInEmbeddedPreview(
@@ -192,7 +194,8 @@ export class Manager extends Disposable {
 	public createOrShowEmbeddedPreview(
 		panel: vscode.WebviewPanel | undefined = undefined,
 		file = '/',
-		relative = true
+		relative = true,
+		debug = false
 	): void {
 		if (!this._server.isRunning) {
 			this._pendingLaunchInfo = {
@@ -200,6 +203,7 @@ export class Manager extends Disposable {
 				panel: panel,
 				file: file,
 				relative: relative,
+				debug: debug,
 			};
 			this.openServer();
 		} else {
@@ -207,16 +211,17 @@ export class Manager extends Disposable {
 		}
 	}
 
-	public showPreviewInBrowser(file = '/', relative = true) {
+	public showPreviewInBrowser(file = '/', relative = true, debug = false) {
 		if (!this._serverTaskProvider.isRunning) {
 			if (!this._server.isRunning) {
 				this._pendingLaunchInfo = {
 					external: true,
 					file: file,
 					relative: relative,
+					debug: debug,
 				};
 			} else {
-				this.launchFileInExternalBrowser(file, relative);
+				this.launchFileInExternalBrowser(file, relative, debug);
 			}
 			if (this.workspace && this._runTaskWithExternalPreview) {
 				this._serverTaskProvider.extRunTask(
@@ -232,7 +237,7 @@ export class Manager extends Disposable {
 				}
 			}
 		} else {
-			this.launchFileInExternalBrowser(file, relative);
+			this.launchFileInExternalBrowser(file, relative, debug);
 		}
 	}
 
@@ -270,16 +275,23 @@ export class Manager extends Disposable {
 		return false;
 	}
 
-	private launchFileInExternalBrowser(file: string, relative: boolean) {
+	private launchFileInExternalBrowser(
+		file: string,
+		relative: boolean,
+		debug: boolean
+	) {
 		const relFile = this.transformNonRelativeFile(relative, file).replace(
 			/\\/g,
 			'/'
 		);
-		const uri = vscode.Uri.parse(
-			`http://${HOST}:${this._serverPort}${relFile}`
-		);
-		// will already resolve to local address
-		vscode.env.openExternal(uri);
+
+		const url = `http://${HOST}:${this._serverPort}${relFile}`;
+		if (debug) {
+			vscode.commands.executeCommand('extension.js-debug.debugLink', url);
+		} else {
+			// will already resolve to local address
+			vscode.env.openExternal(vscode.Uri.parse(url));
+		}
 	}
 
 	private launchFileInEmbeddedPreview(

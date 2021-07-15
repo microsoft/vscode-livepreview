@@ -68,6 +68,10 @@
 				"title": "Live Preview: Show Preview (External Browser)"
 			},
 			{
+				"command": "livePreview.start.externalDebug.atFile",
+				"title": "Live Preview: Debug Preview (External Browser)"
+			},
+			{
 				"command": "livePreview.start.internalPreview.atFile",
 				"title": "Live Preview: Show Preview (Internal Browser)"
 			},

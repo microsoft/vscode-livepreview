@@ -14,6 +14,7 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { WorkspaceManager } from '../../infoManagers/workspaceManager';
 import { EndpointManager } from '../../infoManagers/endpointManager';
 import { PathUtil } from '../../utils/pathUtil';
+import { INJECTED_ENDPOINT_NAME } from '../../utils/constants';
 
 export interface RespInfo {
 	ContentType: string | undefined;
@@ -35,6 +36,7 @@ export interface IndexDirEntry {
 export class ContentLoader extends Disposable {
 	public scriptInjector: HTMLInjector | undefined;
 	private _servedFiles = new Set<string>();
+	private _insertionTags = ['head', 'body', 'html', '!DOCTYPE'];
 
 	constructor(
 		private readonly _reporter: TelemetryReporter,
@@ -50,6 +52,18 @@ export class ContentLoader extends Disposable {
 
 	public get servedFiles() {
 		return this._servedFiles;
+	}
+
+	private get _scriptInjection() {
+		return `<script type="text/javascript" src="${INJECTED_ENDPOINT_NAME}"></script>`;
+	}
+	public loadInjectedJS() {
+		const fileString = this.scriptInjector?.script ?? '';
+
+		return {
+			Stream: Stream.Readable.from(fileString),
+			ContentType: 'text/javascript',
+		};
 	}
 
 	public createPageDoesNotExist(relativePath: string): RespInfo {
@@ -68,7 +82,7 @@ export class ContentLoader extends Disposable {
 				<h1>File not found</h1>
 				<p>The file <b>"${relativePath}"</b> cannot be found. It may have been moved, edited, or deleted.</p>
 			</body>
-			${this.scriptInjector?.script}
+			${this._scriptInjection}
 		</html>
 		`;
 
@@ -109,7 +123,7 @@ export class ContentLoader extends Disposable {
 				<h1>No Server Root</h1>
 				${customMsg}
 			</body>
-			${this.scriptInjector?.script}
+			${this._scriptInjection}
 		</html>
 		`;
 
@@ -203,7 +217,7 @@ export class ContentLoader extends Disposable {
 			</table>
 			</body>
 			
-		${this.scriptInjector?.script}
+			${this._scriptInjection}
 		</html>
 		`;
 
@@ -226,11 +240,11 @@ export class ContentLoader extends Disposable {
 				}
 				let fileContents = workspaceDocuments[i].getText();
 
-				if (workspaceDocuments[i].languageId == 'html') {
-					fileContents = this.injectIntoFile(
-						fileContents,
-						this.scriptInjector?.script ?? ''
-					);
+				if (
+					workspaceDocuments[i].languageId == 'html' ||
+					workspaceDocuments[i].languageId == 'xml'
+				) {
+					fileContents = this.injectIntoFile(fileContents);
 					contentType = 'text/html';
 				}
 
@@ -243,10 +257,7 @@ export class ContentLoader extends Disposable {
 		if (inFilesystem && i == workspaceDocuments.length) {
 			if (isFileInjectable(readPath)) {
 				const buffer = fs.readFileSync(readPath, 'utf8');
-				const injectedFileContents = this.injectIntoFile(
-					buffer.toString(),
-					this.scriptInjector?.script ?? ''
-				);
+				const injectedFileContents = this.injectIntoFile(buffer.toString());
 				stream = Stream.Readable.from(injectedFileContents);
 			} else {
 				stream = fs.createReadStream(readPath);
@@ -259,21 +270,31 @@ export class ContentLoader extends Disposable {
 		};
 	}
 
-	private injectIntoFile(contents: string, scriptInjection: string): string {
-		const re = new RegExp('<!DOCTYPE[\\s|\\w]*>', 'g');
+	private injectIntoFile(contents: string): string {
+		// order of preference for script placement:
+		// 1. after <head>
+		// 2. after <body>
+		// 3. after <html>
+		// 4. after <!DOCTYPE >
+		// 5. at the very beginning
 
-		re.test(contents);
+		let re;
+		let tagEnd = 0;
+		for (const i in this._insertionTags) {
+			re = new RegExp(`<${this._insertionTags[i]}[^>]*>`, 'g');
+			re.test(contents);
 
-		let docTypeEnd = re.lastIndex;
-		if (docTypeEnd == -1) {
-			docTypeEnd = 0;
+			tagEnd = re.lastIndex;
+			if (tagEnd != 0) {
+				break;
+			}
 		}
 
 		const newContents =
-			contents.substr(0, docTypeEnd) +
+			contents.substr(0, tagEnd) +
 			'\n' +
-			scriptInjection +
-			contents.substr(docTypeEnd);
+			this._scriptInjection +
+			contents.substr(tagEnd);
 		return newContents;
 	}
 }

@@ -123,39 +123,42 @@ export function activate(context: vscode.ExtensionContext) {
 	const openPreview = (
 		internal: boolean,
 		file: string,
-		isRelative: boolean
+		isRelative: boolean,
+		debug = false
 	) => {
 		if (internal) {
+			// for now, ignore debug or no debug
 			manager.createOrShowEmbeddedPreview(undefined, file, isRelative);
 		} else {
-			manager.showPreviewInBrowser(file, isRelative);
+			manager.showPreviewInBrowser(file, isRelative, debug);
 		}
 	};
 
 	const handleOpenFile = (
 		internal: boolean,
 		file: any,
-		fileStringRelative = true
+		fileStringRelative = true,
+		debug = false
 	) => {
 		if (typeof file == 'string') {
-			openPreview(internal, file, fileStringRelative);
+			openPreview(internal, file, fileStringRelative, debug);
 			return;
 		} else if (file instanceof vscode.Uri) {
 			const filePath = file?.fsPath;
 			if (filePath) {
-				openPreview(internal, filePath, false);
+				openPreview(internal, filePath, false, debug);
 				return;
 			} else {
 				const activeFilePath = GetActiveFile();
 				if (activeFilePath) {
-					openPreview(internal, activeFilePath, false);
+					openPreview(internal, activeFilePath, false, debug);
 					return;
 				}
 			}
 		} else {
 			const activeFilePath = GetActiveFile();
 			if (activeFilePath) {
-				openPreview(internal, activeFilePath, false);
+				openPreview(internal, activeFilePath, false, debug);
 				return;
 			}
 		}
@@ -217,6 +220,7 @@ export function activate(context: vscode.ExtensionContext) {
 				reporter.sendTelemetryEvent('preview', {
 					type: 'external',
 					location: 'atFile',
+					debug: 'false',
 				});
 				handleOpenFile(false, file, relativeFileString);
 			}
@@ -252,6 +256,26 @@ export function activate(context: vscode.ExtensionContext) {
 				vscode.window.showErrorMessage('Server already off.');
 			}
 		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.start.externalDebug.atFile`,
+			(file?: any, relativeFileString = true) => {
+				/* __GDPR__
+					"preview" :{
+						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					}
+				*/
+				reporter.sendTelemetryEvent('preview', {
+					type: 'external',
+					location: 'atFile',
+					debug: 'true',
+				});
+				handleOpenFile(false, file, relativeFileString, true);
+			}
+		)
 	);
 
 	if (vscode.window.registerWebviewPanelSerializer) {
