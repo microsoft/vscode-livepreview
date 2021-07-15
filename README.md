@@ -42,6 +42,11 @@ Although all of the images above use the embedded browser, you can also experien
 
 You can edit the preview target in the extension settings.
 
+### Console Output Channel (For Embedded Preview)
+For a simple view of the embedded preview's console messages, go to the `Output` tab and select `Embedded Live Preview Console` in the dropdown.
+
+![console-demo](./release_notes/images/misc/console-demo.gif)
+
 ### Workspace-less Previewing
 No workspace? No problem! For a quick preview of your file, the server can also access files outside of your workspace to preview. 
 
