@@ -12,7 +12,6 @@ export interface LiveServerConfigItem {
 	notifyOnOpenLooseFile: boolean;
 	runTaskWithExternalPreview: boolean;
 	defaultPreviewPath: string;
-	watchFiles: string;
 }
 
 export enum AutoRefreshPreview {
@@ -40,7 +39,6 @@ export const Settings: any = {
 	notifyOnOpenLooseFile: 'notifyOnOpenLooseFile',
 	runTaskWithExternalPreview: 'tasks.runTaskWithExternalPreview',
 	defaultPreviewPath: 'defaultPreviewPath',
-	watchFiles: 'watchFiles',
 };
 export const PreviewType: any = {
 	internalPreview: 'internalPreview',
@@ -84,7 +82,6 @@ export class SettingUtil {
 				true
 			),
 			defaultPreviewPath: config.get<string>(Settings.defaultPreviewPath, ''),
-			watchFiles: config.get<string>(Settings.watchFiles, ''),
 		};
 	}
 	public static GetPreviewType(extensionUri: vscode.Uri): string {
