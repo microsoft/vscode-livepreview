@@ -27,6 +27,14 @@
 	"categories": [
 		"Other"
 	],
+	"keywords": [
+		"html",
+		"preview",
+		"live",
+		"browser",
+		"reload",
+		"refresh"
+	],
 	"activationEvents": [
 		"workspaceContains:**/*.html",
 		"onWebviewPanel:browserPreview",
