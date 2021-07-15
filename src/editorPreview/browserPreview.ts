@@ -129,7 +129,7 @@ export class BrowserPreview extends Disposable {
 	}
 
 	private handleConsole(type: string, log: string) {
-		if (type=="CLEAR") {
+		if (type == 'CLEAR') {
 			this._outputChannel.clear();
 		} else {
 			const date = new Date();

@@ -2,7 +2,12 @@ import * as vscode from 'vscode';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { Disposable } from './utils/dispose';
 import { Server } from './server/serverManager';
-import { INIT_PANEL_TITLE, HOST, DONT_SHOW_AGAIN, OUTPUT_CHANNEL_NAME } from './utils/constants';
+import {
+	INIT_PANEL_TITLE,
+	HOST,
+	DONT_SHOW_AGAIN,
+	OUTPUT_CHANNEL_NAME,
+} from './utils/constants';
 import {
 	ServerStartedStatus,
 	ServerTaskProvider,
@@ -64,9 +69,8 @@ export class Manager extends Disposable {
 	) {
 		super();
 
-		this._outputChannel = vscode.window.createOutputChannel(
-			OUTPUT_CHANNEL_NAME
-		);
+		this._outputChannel =
+			vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
 
 		this._workspaceManager = this._register(new WorkspaceManager());
 		this._endpointManager = this._register(
