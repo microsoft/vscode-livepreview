@@ -41,7 +41,7 @@ export function isFileInjectable(file: string | undefined) {
 }
 
 export function hasInjectableFileEnding(file: string) {
-	const supportedEndings = [".html", ".htm", ".xhtml"];
+	const supportedEndings = ['.html', '.htm', '.xhtml'];
 	for (const i in supportedEndings) {
 		if (file.endsWith(supportedEndings[i])) {
 			return true;

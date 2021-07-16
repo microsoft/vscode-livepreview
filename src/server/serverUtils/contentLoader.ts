@@ -234,7 +234,7 @@ export class ContentLoader extends Disposable {
 		let stream;
 
 		let contentType = mime.getType(readPath) ?? 'text/plain';
-		
+
 		while (i < workspaceDocuments.length) {
 			if (PathUtil.PathEquals(readPath, workspaceDocuments[i].fileName)) {
 				if (inFilesystem && workspaceDocuments[i].isUntitled) {
@@ -242,9 +242,7 @@ export class ContentLoader extends Disposable {
 				}
 				let fileContents = workspaceDocuments[i].getText();
 
-				if (
-					workspaceDocuments[i].languageId == 'html'
-				) {
+				if (workspaceDocuments[i].languageId == 'html') {
 					fileContents = this.injectIntoFile(fileContents);
 					contentType = 'text/html';
 				}
