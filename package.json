@@ -88,7 +88,7 @@
 			"editor/title": [
 				{
 					"command": "livePreview.start.preview.atFile",
-					"when": "editorLangId == html",
+					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "navigation"
 				}
 			],
