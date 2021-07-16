@@ -138,7 +138,8 @@ export class HttpServer extends Disposable {
 
 		if (!basePath && (URLPathName == '/' || URLPathName == '')) {
 			const respInfo = this._contentLoader.createNoRootServer();
-			res.writeHead(200);
+			res.writeHead(404);
+			this.reportStatus(req, res);
 			stream = respInfo.Stream;
 
 			stream?.pipe(res);
