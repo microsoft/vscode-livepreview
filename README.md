@@ -19,38 +19,38 @@ Note: this extension is intended for projects where a server is not already crea
 ### HTML File Previewing
 Preview your HTML files quickly by clicking the preview button in the top right corner of your editor or using the context menu.
 
-![open-preview-btn](./img/open-preview-btn.gif)
-![open-context-menu](./img/open-context-menu.gif)
+![open-preview-btn](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/open-preview-btn.gif)
+![open-context-menu](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/open-context-menu.gif)
 ### Embedded Preview
 A preview is available in-editor for the files hosted by the server. The simple embedded browser features history tracking, a url bar, and a button to open the preview externally. 
 
-![browser-demo](./img/browser-demo.gif)
+![browser-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/browser-demo.gif)
 ### Live Refreshing
 See the changes as you make them. By default, changes appear as you make them in the editor. You can also change this in settings to refresh the preview on save or not at all. 
 
-![live-refresh](./img/live-refresh.gif)
+![live-refresh](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/live-refresh.gif)
 ### Persistent Server Task with Server Logging
 If you're looking for a persistent server to run, you can run a `Live Preview` task, which can optionally log the server traffic. You can also click on the traffic to open the file location of the file returned by the server.
 
-![task-demo](./img/task-demo.gif)
-![task-demo-2](./img/task-demo-2.gif)
+![task-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/task-demo.gif)
+![task-demo-2](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/task-demo-2.gif)
 
 ## External Browser Previewing
 Although all of the images above use the embedded browser, you can also experience the same features in an external browser.
 
-![external-window-demo](./img/external-window-demo.gif)
+![external-window-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/external-window-demo.gif)
 
 You can edit the preview target in the extension settings.
 
 ### Console Output Channel (For Embedded Preview)
 For a simple view of the embedded preview's console messages, go to the `Output` tab and select `Embedded Live Preview Console` in the dropdown.
 
-![console-demo](./img/console-demo.gif)
+![console-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/console-demo.gif)
 
 ### Workspace-less Previewing
 No workspace? No problem! For a quick preview of your file, the server can also access files outside of your workspace to preview. 
 
-![no-workspace-preview](./img/no-workspace-preview.gif)
+![no-workspace-preview](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/no-workspace-preview.gif)
 
 Notes about workspace-less extension use:
 - Linked files for these pages may not be correct if they are relative to a specific root (e.g. a project root). 
