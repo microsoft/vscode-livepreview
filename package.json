@@ -148,6 +148,11 @@
 					"group": "1_livepreview"
 				},
 				{
+					"command": "livePreview.start.externalDebug.atFile",
+					"when": "editorLangId == html && !notebookEditorFocused",
+					"group": "1_livepreview"
+				},
+				{
 					"command": "livePreview.end",
 					"when": "LivePreviewServerOn",
 					"group": "1_livepreview"
