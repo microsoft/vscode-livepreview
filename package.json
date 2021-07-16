@@ -28,7 +28,7 @@
 		"Other"
 	],
 	"activationEvents": [
-		"workspaceContains:**/*.html",
+		"workspaceContains:**/*.{html,htm,xhtml}",
 		"onWebviewPanel:browserPreview",
 		"onCommand:livePreview.start",
 		"onCommand:livePreview.start.preview.atIndex",
@@ -88,7 +88,7 @@
 			"editor/title": [
 				{
 					"command": "livePreview.start.preview.atFile",
-					"when": "editorLangId == html && !notebookEditorFocused",
+					"when": "editorLangId == html",
 					"group": "navigation"
 				}
 			],
