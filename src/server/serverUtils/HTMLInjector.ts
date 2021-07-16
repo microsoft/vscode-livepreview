@@ -26,8 +26,10 @@ export class HTMLInjector extends Disposable {
 		super();
 		const scriptPath = path.join(
 			extensionUri.fsPath,
-			'media',
-			'inject_script.html'
+			'src',
+			'server',
+			'serverMedia',
+			'injectScript.js'
 		);
 		this.rawScript = fs.readFileSync(scriptPath, 'utf8').toString();
 		this.initScript(this.rawScript);

@@ -36,7 +36,7 @@
 		"refresh"
 	],
 	"activationEvents": [
-		"workspaceContains:**/*.html",
+		"workspaceContains:**/*.{html,htm,xhtml}",
 		"onWebviewPanel:browserPreview",
 		"onCommand:livePreview.start",
 		"onCommand:livePreview.start.preview.atIndex",
@@ -74,6 +74,10 @@
 			{
 				"command": "livePreview.start.externalPreview.atFile",
 				"title": "Live Preview: Show Preview (External Browser)"
+			},
+			{
+				"command": "livePreview.start.externalDebug.atFile",
+				"title": "Live Preview: Debug Preview (External Browser)"
 			},
 			{
 				"command": "livePreview.start.internalPreview.atFile",
@@ -148,6 +152,11 @@
 				},
 				{
 					"command": "livePreview.start.externalPreview.atFile",
+					"when": "editorLangId == html && !notebookEditorFocused",
+					"group": "1_livepreview"
+				},
+				{
+					"command": "livePreview.start.externalDebug.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "1_livepreview"
 				},

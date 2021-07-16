@@ -24,3 +24,5 @@ export const EXTENSION_ID = 'ms-vscode.live-server';
 export const VSCODE_WEBVIEW = 'vscode-webview';
 
 export const OUTPUT_CHANNEL_NAME = 'Embedded Live Preview Console';
+
+export const INJECTED_ENDPOINT_NAME = '/___vscode_livepreview_injected_script';

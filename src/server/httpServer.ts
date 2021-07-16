@@ -5,7 +5,7 @@ import * as path from 'path';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { HTMLInjector } from './serverUtils/HTMLInjector';
-import { HOST } from '../utils/constants';
+import { HOST, INJECTED_ENDPOINT_NAME } from '../utils/constants';
 import { serverMsg } from '../manager';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
@@ -120,8 +120,19 @@ export class HttpServer extends Disposable {
 			return;
 		}
 
-		const endOfPath = req.url.lastIndexOf('?');
 		let stream;
+		if (req.url == INJECTED_ENDPOINT_NAME) {
+			const respInfo = this._contentLoader.loadInjectedJS();
+			const contentType = respInfo.ContentType ?? '';
+			res.writeHead(200, {
+				'Accept-Ranges': 'bytes',
+				'Content-Type': `${contentType}; charset=UTF-8`,
+			});
+			stream = respInfo.Stream;
+			stream?.pipe(res);
+			return;
+		}
+		const endOfPath = req.url.lastIndexOf('?');
 		let URLPathName =
 			endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
 
@@ -130,6 +141,7 @@ export class HttpServer extends Disposable {
 			res.writeHead(404);
 			this.reportStatus(req, res);
 			stream = respInfo.Stream;
+
 			stream?.pipe(res);
 			return;
 		}

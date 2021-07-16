@@ -37,7 +37,17 @@ export function isFileInjectable(file: string | undefined) {
 	}
 	const fileEndingRegex = /\.([^/.]+)$/; // regex for seeing if there is a file ending
 	const hasFileEnding = fileEndingRegex.test(file);
-	return !hasFileEnding || file.endsWith('.html');
+	return !hasFileEnding || hasInjectableFileEnding(file);
+}
+
+export function hasInjectableFileEnding(file: string) {
+	const supportedEndings = ['.html', '.htm', '.xhtml'];
+	for (const i in supportedEndings) {
+		if (file.endsWith(supportedEndings[i])) {
+			return true;
+		}
+	}
+	return false;
 }
 
 export function getNonce() {
