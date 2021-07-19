@@ -74,11 +74,11 @@ export class ConnectionManager extends Disposable {
 
 	public async resolveExternalHTTPUri(): Promise<vscode.Uri> {
 		const httpPortUri = this.constructLocalUri(this._httpPort);
-		return await vscode.env.asExternalUri(httpPortUri);
+		return vscode.env.asExternalUri(httpPortUri);
 	}
 
 	public async resolveExternalWSUri(): Promise<vscode.Uri> {
 		const wsPortUri = this.constructLocalUri(this._wsPort);
-		return await vscode.env.asExternalUri(wsPortUri);
+		return vscode.env.asExternalUri(wsPortUri);
 	}
 }

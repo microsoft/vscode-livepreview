@@ -32,12 +32,12 @@ export class WebviewComm extends Disposable {
 		this.currentAddress = initialFile;
 	}
 
-	public async resolveHost() {
-		return await this._connectionManager.resolveExternalHTTPUri();
+	public async resolveHost(): Promise<vscode.Uri> {
+		return this._connectionManager.resolveExternalHTTPUri();
 	}
 
-	private async resolveWsHost() {
-		return await this._connectionManager.resolveExternalWSUri();
+	private async resolveWsHost(): Promise<vscode.Uri> {
+		return this._connectionManager.resolveExternalWSUri();
 	}
 
 	public async constructAddress(

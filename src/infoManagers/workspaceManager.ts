@@ -87,7 +87,7 @@ export class WorkspaceManager extends Disposable {
 	public getFileRelativeToDefaultWorkspace(path: string): string {
 		const workspaceFolder = this.workspacePath;
 
-		if (workspaceFolder && path.startsWith(workspaceFolder)) {
+		if (workspaceFolder && this.absPathInDefaultWorkspace(path)) {
 			return PathUtil.ConvertToUnixPath(path.substr(workspaceFolder.length));
 		} else {
 			return '';

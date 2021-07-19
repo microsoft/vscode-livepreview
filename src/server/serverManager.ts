@@ -170,7 +170,7 @@ export class Server extends Disposable {
 	public closeServer(): void {
 		this._httpServer.close();
 		this._wsServer.close();
-		this._isServerOn = false; // TODO: find error conditions and return false when needed
+		this._isServerOn = false;
 		this._statusBar.ServerOff();
 
 		this.showServerStatusMessage('Server Closed');

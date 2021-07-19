@@ -23,12 +23,18 @@ import { WorkspaceManager } from './infoManagers/workspaceManager';
 import { ConnectionManager } from './infoManagers/connectionManager';
 import { PathUtil } from './utils/pathUtil';
 
+/**
+ * @description the server log item that is sent from the HTTP server to the server logging task.
+ */
 export interface serverMsg {
 	method: string;
 	url: string;
 	status: number;
 }
 
+/**
+ * @description the info for launching a preview, used after a server is launched.
+ */
 export interface launchInfo {
 	external: boolean;
 	file: string;
@@ -38,21 +44,18 @@ export interface launchInfo {
 }
 export class Manager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
+
 	private readonly _server: Server;
-	private _serverTaskProvider: ServerTaskProvider;
+	private readonly _serverTaskProvider: ServerTaskProvider;
+	private readonly _endpointManager: EndpointManager;
+	private readonly _workspaceManager: WorkspaceManager;
+	private readonly _connectionManager: ConnectionManager;
+	private readonly _outputChannel: vscode.OutputChannel;
+	private _pendingLaunchInfo: launchInfo | undefined;
+	private _runTaskWithExternalPreview: boolean;
 	private _previewActive = false;
 	private _currentTimeout: NodeJS.Timeout | undefined;
 	private _notifiedAboutLooseFiles = false;
-	private _endpointManager: EndpointManager;
-	private _workspaceManager: WorkspaceManager;
-	private _connectionManager: ConnectionManager;
-	private _pendingLaunchInfo: launchInfo | undefined;
-	private _runTaskWithExternalPreview: boolean;
-	private readonly _outputChannel: vscode.OutputChannel;
-
-	private get _serverPort() {
-		return this._connectionManager.httpPort;
-	}
 
 	public get workspace(): vscode.WorkspaceFolder | undefined {
 		return this._workspaceManager.workspace;
@@ -62,9 +65,6 @@ export class Manager extends Disposable {
 		return this._workspaceManager.workspacePath;
 	}
 
-	public get workspaceManager() {
-		return this._workspaceManager;
-	}
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
@@ -192,6 +192,13 @@ export class Manager extends Disposable {
 		this._server.closeServer();
 	}
 
+	/**
+	 * Creates an (or shows the existing) embedded preview.
+	 * @param {vscode.WebviewPanel} panel the panel, which may have been serialized from a previous session.
+	 * @param {string} file the filesystem path to open in the preview.
+	 * @param {boolean} relative whether the path was absolute or relative to the current workspace.
+	 * @param {boolean} debug whether to run in debug mode (not implemented).
+	 */
 	public createOrShowEmbeddedPreview(
 		panel: vscode.WebviewPanel | undefined = undefined,
 		file = '/',
@@ -199,6 +206,7 @@ export class Manager extends Disposable {
 		debug = false
 	): void {
 		if (!this._server.isRunning) {
+			// set the pending launch info, which will trigger once the server starts in `launchFileInEmbeddedPreview`
 			this._pendingLaunchInfo = {
 				external: false,
 				panel: panel,
@@ -212,9 +220,20 @@ export class Manager extends Disposable {
 		}
 	}
 
-	public showPreviewInBrowser(file = '/', relative = true, debug = false) {
+	/**
+	 * Opens the preview in an external browser.
+	 * @param {string} file the filesystem path to open in the preview.
+	 * @param {boolean} relative whether the path was absolute or relative to the current workspace.
+	 * @param {boolean} debug whether or not to run in debug mode.
+	 */
+	public showPreviewInBrowser(
+		file = '/',
+		relative = true,
+		debug = false
+	): void {
 		if (!this._serverTaskProvider.isRunning) {
 			if (!this._server.isRunning) {
+				// set the pending launch info, which will trigger once the server starts in `launchFileInExternalPreview`
 				this._pendingLaunchInfo = {
 					external: true,
 					file: file,
@@ -242,6 +261,11 @@ export class Manager extends Disposable {
 		}
 	}
 
+	/**
+	 * Start the server.
+	 * @param {boolean} fromTask whether the request is from a task; if so, it requires a reply to the terminal
+	 * @returns {boolean} whether or not the server started successfully.
+	 */
 	public openServer(fromTask = false): boolean {
 		if (!this._server.isRunning) {
 			return this._server.openServer(this._serverPort);
@@ -257,7 +281,11 @@ export class Manager extends Disposable {
 		return true;
 	}
 
-	// caller is reponsible for only calling this if nothing is using the server
+	/**
+	 * Stops the server.
+	 * NOTE: the caller is reponsible for only calling this if nothing is using the server.
+	 * @returns {boolean} whether or not the server stopped successfully.
+	 */
 	public closeServer(): boolean {
 		if (this._server.isRunning) {
 			this._server.closeServer();
@@ -276,24 +304,90 @@ export class Manager extends Disposable {
 		return false;
 	}
 
-	private launchFileInExternalBrowser(
-		file: string,
-		relative: boolean,
-		debug: boolean
-	) {
-		const relFile = PathUtil.ConvertToUnixPath(
-			this.transformNonRelativeFile(relative, file)
-		);
+	/**
+	 * @returns {WebviewOptions} the webview options to allow us to load the files we need in the webivew.
+	 */
+	public getWebviewOptions(): vscode.WebviewOptions {
+		const options = {
+			// Enable javascript in the webview
+			enableScripts: true,
 
-		const url = `http://${HOST}:${this._serverPort}${relFile}`;
-		if (debug) {
-			vscode.commands.executeCommand('extension.js-debug.debugLink', url);
-		} else {
-			// will already resolve to local address
-			vscode.env.openExternal(vscode.Uri.parse(url));
-		}
+			localResourceRoots: [
+				vscode.Uri.joinPath(this._extensionUri, 'media'),
+				vscode.Uri.joinPath(
+					this._extensionUri,
+					'node_modules',
+					'vscode-codicons',
+					'dist'
+				),
+			],
+		};
+		return options;
 	}
 
+	/**
+	 * @returns {vscode.WebviewPanelOptions} the webview panel options to allow it to always retain context.
+	 */
+	public getWebviewPanelOptions(): vscode.WebviewPanelOptions {
+		return {
+			retainContextWhenHidden: true,
+		};
+	}
+
+	/**
+	 * @param {string} file filesystem path to encode an endpoint for.
+	 * @returns {string} the endpoint name to get this file from the server.
+	 */
+	public encodeEndpoint(file: string): string {
+		return this._endpointManager.encodeLooseFileEndpoint(file);
+	}
+
+	/**
+	 * @param {string} endpoint the endpoint to decode into a file path
+	 * @returns {string | undefined} the file path served from the endpoint or undefined if the endpoint does not serve anything.
+	 */
+	public decodeEndpoint(endpoint: string): string | undefined {
+		return this._endpointManager.decodeLooseFileEndpoint(endpoint);
+	}
+
+	/**
+	 * Whether the file is in the current workspace.
+	 * @param {string} file the path to test.
+	 * @returns {boolean} whether it is in the server's workspace (will always return false if no workspace is open or in multi-workspace)
+	 */
+	public absPathInDefaultWorkspace(file: string): boolean {
+		return this._workspaceManager.absPathInDefaultWorkspace(file);
+	}
+
+	/**
+	 * @param {string} file the path to test.
+	 * @returns {boolean} whether the path exists when placed relative to the workspae root.
+	 */
+	public pathExistsRelativeToWorkspace(file: string): boolean {
+		return this._workspaceManager.pathExistsRelativeToDefaultWorkspace(file);
+	}
+
+	/**
+	 * @param {string} file the path to use
+	 * @returns {string} the path relative to default workspace. Will return empty string if `!absPathInDefaultWorkspace(file)`
+	 */
+	public getFileRelativeToDefaultWorkspace(file: string): string {
+		return this._workspaceManager.getFileRelativeToDefaultWorkspace(file);
+	}
+
+	/**
+	 * @returns {number} the port where the HTTP server is running.
+	 */
+	private get _serverPort(): number {
+		return this._connectionManager.httpPort;
+	}
+
+	/**
+	 * Actually launch the embedded browser preview (caller guarantees that the server has started.)
+	 * @param {string} file the filesystem path to preview.
+	 * @param {boolean} relative whether the path is relative.
+	 * @param {vscode.WebviewPanel | undefined} panel the webview panel to reuse if defined.
+	 */
 	private launchFileInEmbeddedPreview(
 		file: string,
 		relative: boolean,
@@ -322,6 +416,37 @@ export class Manager extends Disposable {
 		this.startEmbeddedPreview(panel, file);
 	}
 
+	/**
+	 * Actually launch the external browser preview (caller guarantees that the server has started.)
+	 * @param {string} file the filesystem path to preview.
+	 * @param {boolean} relative whether the path is relative.
+	 * @param {boolean} debug whether we are opening in a debug session.
+	 */
+	private launchFileInExternalBrowser(
+		file: string,
+		relative: boolean,
+		debug: boolean
+	) {
+		const relFile = PathUtil.ConvertToUnixPath(
+			this.transformNonRelativeFile(relative, file)
+		);
+
+		const url = `http://${HOST}:${this._serverPort}${relFile}`;
+		if (debug) {
+			vscode.commands.executeCommand('extension.js-debug.debugLink', url);
+		} else {
+			// will already resolve to local address
+			vscode.env.openExternal(vscode.Uri.parse(url));
+		}
+	}
+
+	/**
+	 * Handles opening the embedded preview and setting up its listeners.
+	 * After a browser preview is closed, the server will close if another browser preview has not opened after a period of time (configurable in settings)
+	 * or if a task is not runnning. Because of this, a timer is triggerred upon webview (embedded preview) disposal/closing.
+	 * @param {vscode.WebviewPanel} panel the panel to use to open the preview.
+	 * @param {string} file the path to preview relative to index (should already be encoded).
+	 */
 	private startEmbeddedPreview(panel: vscode.WebviewPanel, file: string) {
 		if (this._currentTimeout) {
 			clearTimeout(this._currentTimeout);
@@ -373,22 +498,12 @@ export class Manager extends Disposable {
 		);
 	}
 
-	public encodeEndpoint(location: string): string {
-		return this._endpointManager.encodeLooseFileEndpoint(location);
-	}
-
-	public decodeEndpoint(location: string): string | undefined {
-		return this._endpointManager.decodeLooseFileEndpoint(location);
-	}
-
-	public inServerWorkspace(file: string) {
-		return this._workspaceManager.absPathInDefaultWorkspace(file);
-	}
-
-	public pathExistsRelativeToWorkspace(file: string) {
-		return this._workspaceManager.pathExistsRelativeToDefaultWorkspace(file);
-	}
-
+	/**
+	 * Transforms non-relative files into a path that can be used by the server.
+	 * @param {boolean} relative whether the path is relative (if not relative, returns `file`).
+	 * @param {string} file the path to potentially transform.
+	 * @returns {string} the transformed path if the original `file` was realtive.
+	 */
 	private transformNonRelativeFile(relative: boolean, file: string): string {
 		if (!relative) {
 			if (!this._workspaceManager.absPathInDefaultWorkspace(file)) {
@@ -403,7 +518,10 @@ export class Manager extends Disposable {
 		return file;
 	}
 
-	private notifyLooseFileOpen() {
+	/**
+	 * @description notify the user that they are opening a file outside the current workspace(s).
+	 */
+	private notifyLooseFileOpen(): void {
 		/* __GDPR__
 			"preview.fileOutOfWorkspace" : {}
 		*/
@@ -424,29 +542,5 @@ export class Manager extends Disposable {
 				});
 		}
 		this._notifiedAboutLooseFiles = true;
-	}
-
-	public getWebviewOptions(): vscode.WebviewOptions {
-		const options = {
-			// Enable javascript in the webview
-			enableScripts: true,
-
-			localResourceRoots: [
-				vscode.Uri.joinPath(this._extensionUri, 'media'),
-				vscode.Uri.joinPath(
-					this._extensionUri,
-					'node_modules',
-					'vscode-codicons',
-					'dist'
-				),
-			],
-		};
-		return options;
-	}
-
-	public getWebviewPanelOptions(): vscode.WebviewPanelOptions {
-		return {
-			retainContextWhenHidden: true,
-		};
 	}
 }

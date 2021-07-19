@@ -15,6 +15,7 @@ import { WorkspaceManager } from '../../infoManagers/workspaceManager';
 import { EndpointManager } from '../../infoManagers/endpointManager';
 import { PathUtil } from '../../utils/pathUtil';
 import { INJECTED_ENDPOINT_NAME } from '../../utils/constants';
+import { ConnectionManager } from '../../infoManagers/connectionManager';
 
 export interface RespInfo {
 	ContentType: string | undefined;
@@ -39,11 +40,14 @@ export class ContentLoader extends Disposable {
 	private _insertionTags = ['head', 'body', 'html', '!DOCTYPE'];
 
 	constructor(
+		_extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
-		private readonly _workspaceManager: WorkspaceManager
+		private readonly _workspaceManager: WorkspaceManager,
+		_connectionManager: ConnectionManager
 	) {
 		super();
+		this._scriptInjector = new HTMLInjector(_extensionUri, _connectionManager);
 	}
 
 	public resetServedFiles() {
@@ -57,6 +61,7 @@ export class ContentLoader extends Disposable {
 	private get _scriptInjection() {
 		return `<script type="text/javascript" src="${INJECTED_ENDPOINT_NAME}"></script>`;
 	}
+
 	public loadInjectedJS() {
 		const fileString = this._scriptInjector?.script ?? '';
 
@@ -71,7 +76,6 @@ export class ContentLoader extends Disposable {
 			"server.pageDoesNotExist" : {}
 		*/
 		this._reporter.sendTelemetryEvent('server.pageDoesNotExist');
-		// TODO: make look better
 		const htmlString = `
 		<!DOCTYPE html>
 		<html>

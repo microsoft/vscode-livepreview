@@ -1,5 +1,8 @@
 import * as vscode from 'vscode';
 
+/**
+ * @description the object representation of the extension settings.
+ */
 export interface LiveServerConfigItem {
 	portNumber: number;
 	showStatusBarItem: boolean;
@@ -13,19 +16,31 @@ export interface LiveServerConfigItem {
 	defaultPreviewPath: string;
 }
 
+/**
+ * @description Options for the preview refresh settings dropdown.
+ */
 export enum AutoRefreshPreview {
 	onAnyChange = 'On All Changes in Editor',
 	onSave = 'On Changes to Saved Files',
 	never = 'Never',
 }
 
+/**
+ * @description Options for the preview target settings dropdown.
+ */
 export enum OpenPreviewTarget {
 	embeddedPreview = 'Embedded Preview',
 	externalBrowser = 'External Browser',
 }
 
+/**
+ * @description prefix for all extension contributions for Live Preview
+ */
 export const SETTINGS_SECTION_ID = 'livePreview';
 
+/**
+ * @description contains the string constants for all settings (`SETTINGS_SECTION_ID`.`).
+ */
 export const Settings: any = {
 	portNumber: 'portNumber',
 	showStatusBarItem: 'showStatusBarItem',
@@ -39,15 +54,25 @@ export const Settings: any = {
 	runTaskWithExternalPreview: 'tasks.runTaskWithExternalPreview',
 	defaultPreviewPath: 'defaultPreviewPath',
 };
+
+/**
+ * @description the potential previewType for commands (formatted as `${SETTINGS_SECTION_ID}.start.${previewType}.${target}`).
+ */
 export const PreviewType: any = {
 	internalPreview: 'internalPreview',
 	externalPreview: 'externalPreview',
 };
+
 export class SettingUtil {
-	public static GetConfig(resource: vscode.Uri): LiveServerConfigItem {
+	/**
+	 * @description Get the current settings JSON.
+	 * @param {vscode.Uri} extensionUri the extension URI
+	 * @returns {LiveServerConfigItem} the LiveServerConfigItem, which is a JSON object with all of the settings for Live Preview.
+	 */
+	public static GetConfig(extensionUri: vscode.Uri): LiveServerConfigItem {
 		const config = vscode.workspace.getConfiguration(
 			SETTINGS_SECTION_ID,
-			resource
+			extensionUri
 		);
 		return {
 			portNumber: config.get<number>(Settings.portNumber, 3000),
@@ -84,6 +109,11 @@ export class SettingUtil {
 		};
 	}
 
+	/**
+	 * @description Get the preferred preview target from settings.
+	 * @param {vscode.Uri} extensionUri the extension URI.
+	 * @returns {string} the constant in the command string indicating internal or external preview.
+	 */
 	public static GetPreviewType(extensionUri: vscode.Uri): string {
 		if (
 			SettingUtil.GetConfig(extensionUri).openPreviewTarget ==
@@ -95,6 +125,12 @@ export class SettingUtil {
 		}
 	}
 
+	/**
+	 * @description Update a Live Preview setting
+	 * @param {string} settingSuffix the suffix, `livePreview.<suffix>` of the setting to set.
+	 * @param {T} value the value to set the setting to.
+	 * @param {boolean} isGlobal whether to set the user setting, defaults to false.
+	 */
 	public static UpdateSettings<T>(
 		settingSuffix: string,
 		value: T,

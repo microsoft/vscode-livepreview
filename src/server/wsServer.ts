@@ -15,7 +15,7 @@ import { ConnectionManager } from '../infoManagers/connectionManager';
 export class WSServerWithOriginCheck extends WebSocket.Server {
 	public externalHostName: string | undefined;
 
-	shouldHandle(req: http.IncomingMessage): boolean {
+	public shouldHandle(req: http.IncomingMessage): boolean {
 		const origin = req.headers['origin'];
 		return <boolean>(
 			(origin &&

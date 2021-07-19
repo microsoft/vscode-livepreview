@@ -15,35 +15,41 @@ export const ServerArgs: any = {
 	verbose: '--verbose',
 };
 
+/**
+ * @description The respose to a task's request to start the server. Either the server starts or it was already started manually.
+ */
 export enum ServerStartedStatus {
 	JUST_STARTED,
 	STARTED_BY_EMBEDDED_PREV,
 }
+
+/**
+ * @description task provider for `Live Preview - Run Server` task.
+ */
 export class ServerTaskProvider
 	extends Disposable
 	implements vscode.TaskProvider
 {
-	static CustomBuildScriptType = 'Live Preview';
-	private tasks: vscode.Task[] | undefined;
+	public static CustomBuildScriptType = 'Live Preview';
+	private _tasks: vscode.Task[] | undefined;
 	private _terminal: ServerTaskTerminal | undefined;
 	private _termName = '';
 	private _terminalLinkProvider: serverTaskLinkProvider;
+
+	// emitters to allow manager to communicate with the terminal.
 	private readonly _onRequestToOpenServerEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
 
+	public readonly onRequestToOpenServer =
+		this._onRequestToOpenServerEmitter.event;
+
 	private readonly _onRequestOpenEditorToSide = this._register(
 		new vscode.EventEmitter<vscode.Uri>()
 	);
+
 	public readonly onRequestOpenEditorToSide =
 		this._onRequestOpenEditorToSide.event;
-
-	public get terminalName() {
-		return this._termName;
-	}
-
-	public readonly onRequestToOpenServer =
-		this._onRequestToOpenServerEmitter.event;
 
 	private readonly _onRequestToCloseServerEmitter = this._register(
 		new vscode.EventEmitter<void>()
@@ -71,26 +77,44 @@ export class ServerTaskProvider
 		});
 	}
 
-	public get isRunning() {
+	public get terminalName(): string {
+		return this._termName;
+	}
+
+	public get isRunning(): boolean {
 		if (this._terminal) {
 			return this._terminal.running;
 		}
 		return false;
 	}
 
-	public sendServerInfoToTerminal(msg: serverMsg) {
+	/**
+	 * @param {serverMsg} msg the log information to send to the terminal for server logging.
+	 */
+	public sendServerInfoToTerminal(msg: serverMsg): void {
 		if (this._terminal && this._terminal.running) {
-			this._terminal.sendServerMsg(msg);
+			this._terminal.showServerMsg(msg);
 		}
 	}
 
-	public serverStarted(externalUri: vscode.Uri, status: ServerStartedStatus) {
+	/**
+	 * @param {vscode.Uri} externalUri the address where the server was started.
+	 * @param {ServerStartedStatus} status information about whether or not the task started the server.
+	 */
+	public serverStarted(
+		externalUri: vscode.Uri,
+		status: ServerStartedStatus
+	): void {
 		if (this._terminal && this._terminal.running) {
 			this._terminal.serverStarted(externalUri, status);
 		}
 	}
 
-	public serverStop(now: boolean) {
+	/**
+	 * Used to notify the terminal the result of their `stop server` request.
+	 * @param {boolean} now whether or not the server stopped just now or whether it will continue to run
+	 */
+	public serverStop(now: boolean): void {
 		if (this._terminal && this._terminal.running) {
 			if (now) {
 				this._terminal.serverStopped();
@@ -100,8 +124,11 @@ export class ServerTaskProvider
 		}
 	}
 
-	// run task manually from extension.
-	public extRunTask(verbose: boolean) {
+	/**
+	 * Run task manually from extension
+	 * @param {boolean} verbose whether to run with the `--verbose` flag.
+	 */
+	public extRunTask(verbose: boolean): void {
 		/* __GDPR__
 			"tasks.terminal.startFromExtension" : {}
 		*/
@@ -123,33 +150,33 @@ export class ServerTaskProvider
 	}
 
 	public async provideTasks(): Promise<vscode.Task[]> {
-		return this.getTasks();
+		return this._getTasks();
 	}
 
 	public resolveTask(_task: vscode.Task): vscode.Task | undefined {
 		const flavor: string = _task.definition.flavor;
 		if (flavor) {
 			const definition: ServerTaskDefinition = <any>_task.definition;
-			return this.getTask(definition.flavor, definition);
+			return this._getTask(definition.flavor, definition);
 		}
 		return undefined;
 	}
 
-	private getTasks(): vscode.Task[] {
-		if (this.tasks !== undefined) {
-			return this.tasks;
+	private _getTasks(): vscode.Task[] {
+		if (this._tasks !== undefined) {
+			return this._tasks;
 		}
 
 		const args: string[][] = [[ServerArgs.verbose], []];
 
-		this.tasks = [];
+		this._tasks = [];
 		args.forEach((args) => {
-			this.tasks!.push(this.getTask(args));
+			this._tasks!.push(this._getTask(args));
 		});
-		return this.tasks;
+		return this._tasks;
 	}
 
-	private getTask(
+	private _getTask(
 		args: string[],
 		definition?: ServerTaskDefinition
 	): vscode.Task {
@@ -177,7 +204,7 @@ export class ServerTaskProvider
 
 		const custExec = new vscode.CustomExecution(
 			async (): Promise<ServerTaskTerminal> => {
-				// When the task is executed, this callback will run. Here, we setup for running the task.
+				// When the task is executed, this callback will run. Here, we set up for running the task.
 				if (this._terminal && this._terminal.running) {
 					return new ServerTaskTerminal([], this._reporter, false);
 				}

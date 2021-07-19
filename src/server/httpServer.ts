@@ -19,15 +19,21 @@ export class HttpServer extends Disposable {
 	public port = 0;
 
 	constructor(
-		private readonly _extensionUri: vscode.Uri,
+		_extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
 		private readonly _workspaceManager: WorkspaceManager,
-		private readonly _connectionManager: ConnectionManager
+		_connectionManager: ConnectionManager
 	) {
 		super();
 		this._contentLoader = this._register(
-			new ContentLoader(_reporter, _endpointManager, _workspaceManager)
+			new ContentLoader(
+				_extensionUri,
+				_reporter,
+				_endpointManager,
+				_workspaceManager,
+				_connectionManager
+			)
 		);
 	}
 
