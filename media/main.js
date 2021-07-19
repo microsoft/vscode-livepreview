@@ -1,13 +1,12 @@
-/* eslint-disable no-undef */
+/* eslint-env browser */
+/* global acquireVsCodeApi, WS_URL */
 // This script will be run within the webview itself
-
-// It cannot access the main VS Code APIs directly.
 (function () {
 	const vscode = acquireVsCodeApi();
 	const connection = new WebSocket(WS_URL);
 	var fadeLinkID = null;
 
-	leftMostNavGroup = [
+	const leftMostNavGroup = [
 		document.getElementById('back'),
 		document.getElementById('forward'),
 		document.getElementById('reload'),
@@ -55,7 +54,7 @@
 	function handleKeyUp(event) {
 		if (event.keyCode === 13) {
 			event.preventDefault();
-			linkTarget = document.getElementById('url-input').value;
+			const linkTarget = document.getElementById('url-input').value;
 			vscode.postMessage({
 				command: 'go-to-file',
 				text: linkTarget,
@@ -76,7 +75,7 @@
 	}
 
 	function handleNavGroup(nav) {
-		for (var i = 0; i < nav.length; i++) {
+		for (const i in nav) {
 			const currIndex = i;
 			nav[i].addEventListener('keydown', (event) =>
 				handleNavKeyDown(event, nav, currIndex)
@@ -87,9 +86,9 @@
 	function moveFocusNav(right, nav, startIndex) {
 		var numDisabled = 0;
 		var modifier = right ? 1 : -1;
-		index = startIndex;
+		var index = startIndex;
 		do {
-			newIndex = index + modifier;
+			var newIndex = index + modifier;
 			if (newIndex >= nav.length) {
 				newIndex = 0;
 			} else if (newIndex < 0) {
@@ -119,7 +118,7 @@
 
 	function adjustTabIndex() {
 		var reachedElem = false;
-		for (var i = 0; i < leftMostNavGroup.length; i++) {
+		for (const i in leftMostNavGroup) {
 			if (!leftMostNavGroup[i].disabled) {
 				if (reachedElem) {
 					leftMostNavGroup[i].tabIndex = -1;
@@ -137,14 +136,15 @@
 					.getElementById('hostedContent')
 					.contentWindow.postMessage('refresh', '*');
 				break;
-			case 'changed-history':
-				msgJSON = JSON.parse(message.text);
+			case 'changed-history': {
+				const msgJSON = JSON.parse(message.text);
 				document.getElementById(msgJSON.element).disabled = msgJSON.disabled;
 				adjustTabIndex();
 				break;
+			}
 			// from child iframe
 			case 'update-path': {
-				msgJSON = JSON.parse(message.text);
+				const msgJSON = JSON.parse(message.text);
 				vscode.postMessage({
 					command: 'update-path',
 					text: message.text,
@@ -172,7 +172,7 @@
 				break;
 			}
 			case 'set-url': {
-				msgJSON = JSON.parse(message.text);
+				const msgJSON = JSON.parse(message.text);
 				// setting a new address, ensure that previous link preview is gone
 				document.getElementById('link-preview').hidden = true;
 				setURLBar(msgJSON.fullPath);
@@ -197,7 +197,7 @@
 			}
 			// from child iframe
 			case 'perform-url-check': {
-				sendData = {
+				const sendData = {
 					command: 'urlCheck',
 					url: message.text,
 				};

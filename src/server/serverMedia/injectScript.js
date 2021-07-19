@@ -1,8 +1,8 @@
-/* eslint-disable no-undef */
-// Script injected by VS Live Preview
-const url = '${WS_URL}';
+/*eslint-env browser*/
+// Script injected by VS Code Live Preview
+const ws_url = '${WS_URL}';
 const host = '${HTTP_URL}';
-const connection = new WebSocket(url);
+const connection = new WebSocket(ws_url);
 
 connection.onmessage = (event) => handleSocketMessage(event.data);
 
@@ -21,7 +21,7 @@ window.addEventListener('message', (event) => {
 	}
 });
 
-var consoleOverrides = {
+const consoleOverrides = {
 	ERROR: console.error,
 	LOG: console.log,
 	WARN: console.warn,
@@ -41,7 +41,7 @@ console.clear = createConsoleOverride('CLEAR');
 
 function createConsoleOverride(type) {
 	return function (msg) {
-		var messagePayload = {
+		const messagePayload = {
 			type: type,
 			data: JSON.stringify(msg),
 		};
@@ -65,7 +65,7 @@ function handleMessage(event) {
 	if (event.data == 'refresh') {
 		window.location.reload();
 	} else if (event.data == 'setup-parent-listener') {
-		commandPayload = {
+		const commandPayload = {
 			path: window.location,
 			title: document.title,
 		};
@@ -78,7 +78,7 @@ function handleMessage(event) {
 }
 
 function onLoad() {
-	commandPayload = {
+	const commandPayload = {
 		path: window.location,
 		title: document.title,
 	};
@@ -88,11 +88,11 @@ function onLoad() {
 	});
 	handleLinkHoverEnd();
 
-	var l = document.getElementsByTagName('a');
-	for (var i = 0; i < l.length; i++) {
-		l[i].onclick = (e) => handleLinkClick(e.target.href);
-		l[i].onmouseenter = (e) => handleLinkHoverStart(e.target.href);
-		l[i].onmouseleave = (e) => handleLinkHoverEnd();
+	const links = document.getElementsByTagName('a');
+	for (const i in links) {
+		links[i].onclick = (e) => handleLinkClick(e.target.href);
+		links[i].onmouseenter = (e) => handleLinkHoverStart(e.target.href);
+		links[i].onmouseleave = (e) => handleLinkHoverEnd();
 	}
 }
 

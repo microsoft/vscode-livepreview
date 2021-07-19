@@ -21,6 +21,7 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from './infoManagers/endpointManager';
 import { WorkspaceManager } from './infoManagers/workspaceManager';
 import { ConnectionManager } from './infoManagers/connectionManager';
+import { PathUtil } from './utils/pathUtil';
 
 export interface serverMsg {
 	method: string;
@@ -87,8 +88,8 @@ export class Manager extends Disposable {
 		this._server = this._register(
 			new Server(
 				_extensionUri,
-				this._endpointManager,
 				_reporter,
+				this._endpointManager,
 				this._workspaceManager,
 				this._connectionManager,
 				userDataDir
@@ -280,9 +281,8 @@ export class Manager extends Disposable {
 		relative: boolean,
 		debug: boolean
 	) {
-		const relFile = this.transformNonRelativeFile(relative, file).replace(
-			/\\/g,
-			'/'
+		const relFile = PathUtil.ConvertToUnixPath(
+			this.transformNonRelativeFile(relative, file)
 		);
 
 		const url = `http://${HOST}:${this._serverPort}${relFile}`;
@@ -441,11 +441,6 @@ export class Manager extends Disposable {
 				),
 			],
 		};
-
-		// const workspaceURI = this._workspaceManager.workspaceURI;
-		// if (workspaceURI) {
-		// 	options.localResourceRoots.push(workspaceURI);
-		// }
 		return options;
 	}
 

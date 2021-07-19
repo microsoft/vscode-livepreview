@@ -16,11 +16,10 @@ import { PathUtil } from '../utils/pathUtil';
 export class HttpServer extends Disposable {
 	private _server: any;
 	private _contentLoader: ContentLoader;
-	private readonly _extensionUri;
 	public port = 0;
 
 	constructor(
-		extensionUri: vscode.Uri,
+		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
 		private readonly _workspaceManager: WorkspaceManager,
@@ -28,9 +27,8 @@ export class HttpServer extends Disposable {
 	) {
 		super();
 		this._contentLoader = this._register(
-			new ContentLoader(_reporter, _workspaceManager, _endpointManager)
+			new ContentLoader(_reporter, _endpointManager, _workspaceManager)
 		);
-		this._extensionUri = extensionUri;
 	}
 
 	private get _basePath() {
@@ -66,17 +64,6 @@ export class HttpServer extends Disposable {
 
 	public close() {
 		this._server.close();
-	}
-
-	public refreshInjector() {
-		if (!this._contentLoader.scriptInjector) {
-			this._contentLoader.scriptInjector = new HTMLInjector(
-				this._extensionUri,
-				this._connectionManager
-			);
-		} else {
-			this._contentLoader.scriptInjector.refresh();
-		}
 	}
 
 	private startHttpServer(): boolean {

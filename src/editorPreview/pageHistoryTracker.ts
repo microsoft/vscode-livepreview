@@ -81,7 +81,7 @@ export class PageHistory extends Disposable {
 	}
 
 	public addHistory(address: string): NavResponse | undefined {
-		address = address.replace(/\\/g, '/');
+		address = PathUtil.ConvertToUnixPath(address);
 		address = PathUtil.EscapePathParts(address);
 		const action = new Array<NavEditCommands>();
 		if (

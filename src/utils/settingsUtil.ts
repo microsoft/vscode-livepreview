@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { GO_TO_SETTINGS } from './constants';
 
 export interface LiveServerConfigItem {
 	portNumber: number;
@@ -84,6 +83,7 @@ export class SettingUtil {
 			defaultPreviewPath: config.get<string>(Settings.defaultPreviewPath, ''),
 		};
 	}
+
 	public static GetPreviewType(extensionUri: vscode.Uri): string {
 		if (
 			SettingUtil.GetConfig(extensionUri).openPreviewTarget ==
@@ -103,54 +103,5 @@ export class SettingUtil {
 		vscode.workspace
 			.getConfiguration(SETTINGS_SECTION_ID)
 			.update(settingSuffix, value, isGlobal);
-	}
-
-	public static SettingsSavedMessage(): void {
-		vscode.window
-			.showInformationMessage(
-				'Your selection has been saved in settings.',
-				GO_TO_SETTINGS
-			)
-			.then((selection: vscode.MessageItem | undefined) => {
-				if (selection === GO_TO_SETTINGS) {
-					vscode.commands.executeCommand(
-						'workbench.action.openSettings',
-						SETTINGS_SECTION_ID
-					);
-				}
-			});
-	}
-
-	public static UpdateWorkspacePath() {
-		// choose workspace path:
-		const workspacePaths = vscode.workspace.workspaceFolders?.map(
-			(e) => e.uri.fsPath
-		);
-
-		if (!workspacePaths) {
-			vscode.window.showErrorMessage('No workspaces open.');
-			return;
-		} else if (workspacePaths.length == 1) {
-			vscode.window.showErrorMessage(
-				'Only one workspace open, cannot select another one.'
-			);
-			return;
-		}
-
-		vscode.window
-			.showQuickPick(workspacePaths, {
-				placeHolder: 'Choose Default Workspace for Live Server',
-			})
-			.then((workspacePath) => {
-				if (!workspacePath) {
-					return;
-				}
-
-				SettingUtil.UpdateSettings(
-					Settings.serverWorkspace,
-					workspacePath,
-					false
-				);
-			});
 	}
 }

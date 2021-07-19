@@ -4,6 +4,7 @@ import { PathUtil } from '../utils/pathUtil';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { WorkspaceManager } from './workspaceManager';
+import { pathToFileURL } from 'url';
 
 export class EndpointManager extends Disposable {
 	// manages encoding and decoding endpoints
@@ -31,7 +32,7 @@ export class EndpointManager extends Disposable {
 		let fullParent = PathUtil.GetParentDir(location);
 		const child = PathUtil.GetFileName(location);
 
-		fullParent = fullParent.replace(/\\/g, '/');
+		fullParent = PathUtil.ConvertToUnixPath(fullParent);
 		this.validEndpointRoots.add(fullParent);
 		fullParent = PathUtil.EscapePathParts(fullParent);
 		let endpoint_prefix = `/endpoint_unsaved`;

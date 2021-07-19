@@ -4,6 +4,7 @@ import { ConnectionManager } from '../infoManagers/connectionManager';
 import { INIT_PANEL_TITLE } from '../utils/constants';
 import { NavEditCommands, PageHistory } from './pageHistoryTracker';
 import { getNonce, isFileInjectable } from '../utils/utils';
+import { PathUtil } from '../utils/pathUtil';
 
 export class WebviewComm extends Disposable {
 	private readonly _pageHistory: PageHistory;
@@ -46,7 +47,7 @@ export class WebviewComm extends Disposable {
 		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);
 		}
-		URLExt = URLExt.replace(/\\/g, '/');
+		URLExt = PathUtil.ConvertToUnixPath(URLExt);
 		URLExt = URLExt.startsWith('/') ? URLExt.substr(1) : URLExt;
 
 		if (!hostURI) {

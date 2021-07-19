@@ -9,7 +9,12 @@ import {
 	SettingUtil,
 	Settings,
 } from '../utils/settingsUtil';
-import { DONT_SHOW_AGAIN, HOST } from '../utils/constants';
+import {
+	DONT_SHOW_AGAIN,
+	HOST,
+	LIVE_PREVIEW_SERVER_ON,
+	UriSchemes,
+} from '../utils/constants';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
@@ -28,18 +33,18 @@ export class Server extends Disposable {
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
-		endpointManager: EndpointManager,
-		reporter: TelemetryReporter,
-		private readonly _workspaceManager: WorkspaceManager,
+		_reporter: TelemetryReporter,
+		_endpointManager: EndpointManager,
+		_workspaceManager: WorkspaceManager,
 		private readonly _connectionManager: ConnectionManager,
-		userDataDir: string | undefined
+		_userDataDir: string | undefined
 	) {
 		super();
 		this._httpServer = this._register(
 			new HttpServer(
 				_extensionUri,
-				reporter,
-				endpointManager,
+				_reporter,
+				_endpointManager,
 				_workspaceManager,
 				_connectionManager
 			)
@@ -48,14 +53,19 @@ export class Server extends Disposable {
 		this._watcher = vscode.workspace.createFileSystemWatcher('**');
 
 		this._wsServer = this._register(
-			new WSServer(reporter, endpointManager, _workspaceManager)
+			new WSServer(
+				_reporter,
+				_endpointManager,
+				_workspaceManager,
+				_connectionManager
+			)
 		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 
 		const notUserDataDirChange = function (file: vscode.Uri) {
 			return (
-				file.scheme != 'vscode-userdata' &&
-				(!userDataDir || !PathUtil.PathBeginsWith(file.fsPath, userDataDir))
+				file.scheme != UriSchemes.vscode_userdata &&
+				(!_userDataDir || !PathUtil.PathBeginsWith(file.fsPath, _userDataDir))
 			);
 		};
 
@@ -64,7 +74,8 @@ export class Server extends Disposable {
 				if (
 					e.contentChanges &&
 					e.contentChanges.length > 0 &&
-					e.document.uri.scheme == 'file' &&
+					(e.document.uri.scheme == UriSchemes.file ||
+						e.document.uri.scheme == UriSchemes.untitled) &&
 					this._reloadOnAnyChange
 				) {
 					this._wsServer.refreshBrowsers();
@@ -126,14 +137,7 @@ export class Server extends Disposable {
 			})
 		);
 
-		this._register(
-			this._connectionManager.onConnected((e) => {
-				this._httpServer.refreshInjector();
-				this._wsServer.externalHostName = `${e.httpURI.scheme}://${e.httpURI.authority}`;
-			})
-		);
-
-		vscode.commands.executeCommand('setContext', 'LivePreviewServerOn', false);
+		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, false);
 	}
 
 	public get isRunning(): boolean {
@@ -170,7 +174,7 @@ export class Server extends Disposable {
 		this._statusBar.ServerOff();
 
 		this.showServerStatusMessage('Server Closed');
-		vscode.commands.executeCommand('setContext', 'LivePreviewServerOn', false);
+		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, false);
 	}
 
 	public openServer(port: number): boolean {
@@ -219,7 +223,7 @@ export class Server extends Disposable {
 			port: this._httpServer.port,
 			ws_port: this._wsServer.ws_port,
 		});
-		vscode.commands.executeCommand('setContext', 'LivePreviewServerOn', true);
+		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, true);
 	}
 
 	private showServerStatusMessage(messsage: string) {

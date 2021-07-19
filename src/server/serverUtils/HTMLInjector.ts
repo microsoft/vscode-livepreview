@@ -20,12 +20,12 @@ export class HTMLInjector extends Disposable {
 		return this._script;
 	}
 	constructor(
-		extensionUri: vscode.Uri,
+		_extensionUri: vscode.Uri,
 		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
 		const scriptPath = path.join(
-			extensionUri.fsPath,
+			_extensionUri.fsPath,
 			'src',
 			'server',
 			'serverMedia',
@@ -33,6 +33,12 @@ export class HTMLInjector extends Disposable {
 		);
 		this.rawScript = fs.readFileSync(scriptPath, 'utf8').toString();
 		this.initScript(this.rawScript);
+
+		this._register(
+			this._connectionManager.onConnected((e) => {
+				this.refresh();
+			})
+		);
 	}
 
 	private async initScript(fileString: string) {

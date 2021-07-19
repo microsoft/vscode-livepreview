@@ -6,11 +6,6 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { WebviewComm } from './webviewComm';
-import {
-	TerminalColor,
-	TerminalDeco,
-	TerminalStyleUtil,
-} from '../utils/terminalStyleUtil';
 import { FormatDateTime } from '../utils/utils';
 
 export class BrowserPreview extends Disposable {
@@ -85,47 +80,51 @@ export class BrowserPreview extends Disposable {
 
 		// Handle messages from the webview
 		this._register(
-			this._panel.webview.onDidReceiveMessage((message) => {
-				switch (message.command) {
-					case 'alert':
-						vscode.window.showErrorMessage(message.text);
-						return;
-					case 'update-path': {
-						const msgJSON = JSON.parse(message.text);
-						this._webviewComm.handleNewPageLoad(
-							msgJSON.path.pathname,
-							msgJSON.title
-						);
-						return;
-					}
-					case 'go-back':
-						this._webviewComm.goBack();
-						return;
-					case 'go-forward':
-						this._webviewComm.goForwards();
-						return;
-					case 'open-browser':
-						this.handleOpenBrowser(message.text);
-						return;
-					case 'add-history': {
-						this._webviewComm.setUrlBar(message.text);
-						return;
-					}
-					case 'refresh-back-forward-buttons':
-						this._webviewComm.updateForwardBackArrows();
-						return;
-					case 'go-to-file':
-						this.goToFullAddress(message.text);
-						return;
-
-					case 'console': {
-						const msgJSON = JSON.parse(message.text);
-						this.handleConsole(msgJSON.type, msgJSON.data);
-						return;
-					}
-				}
-			})
+			this._panel.webview.onDidReceiveMessage((message) =>
+				this.handleWebviewMessage(message)
+			)
 		);
+	}
+
+	private handleWebviewMessage(message: any) {
+		switch (message.command) {
+			case 'alert':
+				vscode.window.showErrorMessage(message.text);
+				return;
+			case 'update-path': {
+				const msgJSON = JSON.parse(message.text);
+				this._webviewComm.handleNewPageLoad(
+					msgJSON.path.pathname,
+					msgJSON.title
+				);
+				return;
+			}
+			case 'go-back':
+				this._webviewComm.goBack();
+				return;
+			case 'go-forward':
+				this._webviewComm.goForwards();
+				return;
+			case 'open-browser':
+				this.handleOpenBrowser(message.text);
+				return;
+			case 'add-history': {
+				this._webviewComm.setUrlBar(message.text);
+				return;
+			}
+			case 'refresh-back-forward-buttons':
+				this._webviewComm.updateForwardBackArrows();
+				return;
+			case 'go-to-file':
+				this.goToFullAddress(message.text);
+				return;
+
+			case 'console': {
+				const msgJSON = JSON.parse(message.text);
+				this.handleConsole(msgJSON.type, msgJSON.data);
+				return;
+			}
+		}
 	}
 
 	private handleConsole(type: string, log: string) {

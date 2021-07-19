@@ -11,7 +11,6 @@ export enum TerminalDeco {
 	bold = 1,
 	underline = 4,
 }
-
 export class TerminalStyleUtil {
 	public static ColorTerminalString(
 		input: string,

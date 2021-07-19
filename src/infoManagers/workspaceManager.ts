@@ -88,7 +88,7 @@ export class WorkspaceManager extends Disposable {
 		const workspaceFolder = this.workspacePath;
 
 		if (workspaceFolder && path.startsWith(workspaceFolder)) {
-			return path.substr(workspaceFolder.length).replace(/\\/gi, '/');
+			return PathUtil.ConvertToUnixPath(path.substr(workspaceFolder.length));
 		} else {
 			return '';
 		}

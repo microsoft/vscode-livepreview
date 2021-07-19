@@ -34,14 +34,14 @@ export interface IndexDirEntry {
 }
 
 export class ContentLoader extends Disposable {
-	public scriptInjector: HTMLInjector | undefined;
+	private _scriptInjector: HTMLInjector | undefined;
 	private _servedFiles = new Set<string>();
 	private _insertionTags = ['head', 'body', 'html', '!DOCTYPE'];
 
 	constructor(
 		private readonly _reporter: TelemetryReporter,
-		private readonly _workspaceManager: WorkspaceManager,
-		private readonly _endpointManager: EndpointManager
+		private readonly _endpointManager: EndpointManager,
+		private readonly _workspaceManager: WorkspaceManager
 	) {
 		super();
 	}
@@ -58,7 +58,7 @@ export class ContentLoader extends Disposable {
 		return `<script type="text/javascript" src="${INJECTED_ENDPOINT_NAME}"></script>`;
 	}
 	public loadInjectedJS() {
-		const fileString = this.scriptInjector?.script ?? '';
+		const fileString = this._scriptInjector?.script ?? '';
 
 		return {
 			Stream: Stream.Readable.from(fileString),

@@ -1,5 +1,3 @@
-import * as vscode from 'vscode';
-
 export function FormatDateTime(date: Date, delimeter = ', '): string {
 	const mm = date.getMonth() + 1;
 	const dd = date.getDate().toString().padStart(2, '0');
@@ -25,10 +23,6 @@ export function FormatFileSize(bytes: number) {
 	}
 	const modifiedSize = (bytes / Math.pow(1024, i)).toFixed(1);
 	return `${modifiedSize} TB`;
-}
-
-export function GetActiveFile(): string | undefined {
-	return vscode.window.activeTextEditor?.document.fileName;
 }
 
 export function isFileInjectable(file: string | undefined) {
