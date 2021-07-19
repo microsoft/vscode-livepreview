@@ -35,14 +35,20 @@ If you're looking for a persistent server to run, you can run a `Live Preview` t
 ![task-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/task-demo.gif)
 ![task-demo-2](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/task-demo-2.gif)
 
-## External Browser Previewing
+### External Browser Previewing
 Although all of the images above use the embedded browser, you can also experience the same features in an external browser.
 
 ![external-window-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/external-window-demo.gif)
 
 You can edit the preview target in the extension settings.
 
-### Console Output Channel (For Embedded Preview)
+### External Browser Debugging
+The external browser preview also supports debugging via the built-in [js-debug](https://marketplace.visualstudio.com/items?itemName=ms-vscode.js-debug) extension and attaching to the [Edge Devtools Extension](https://marketplace.visualstudio.com/items?itemName=ms-edgedevtools.vscode-edge-devtools). This allows support for features such as setting breakpoints and inspecting elements. 
+
+![external-debug-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/external-debug-demo.gif)
+
+
+## Console Output Channel (For Embedded Preview)
 For a simple view of the embedded preview's console messages, go to the `Output` tab and select `Embedded Live Preview Console` in the dropdown.
 
 ![console-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/console-demo.gif)
@@ -62,14 +68,7 @@ The different workspaces will be assigned specific server endpoints, allowing yo
 ## Prerequisites
 To use this extension, you must have [Node JS v14+](https://nodejs.org/en/download/). 
 ## Running the extension
-### Download from the Marketplace
-You can install the extension [in the marketplace here](https://marketplace.visualstudio.com/items?itemName=ms-vscode.live-server)!
-### Manually Compiling and Running
-- Open this example in VS Code 1.56+
-- `npm install`
-- `npm run compile`
-- <kbd>F5</kbd> to start debugging
-
+You can install the extension [in the marketplace here](https://marketplace.visualstudio.com/items?itemName=ms-vscode.live-server). To contribute, see the [contributing page](https://github.com/microsoft/vscode-livepreview/blob/main/CONTRIBUTING.md).
 ## FAQ
 Q. What does the `"Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root."` message mean?
 
@@ -81,5 +80,9 @@ Why does this happen?
 
 The server is hosted from the root of the workspace that the user opens. Files outside of this can be previewed, but some file paths (such as a link to the root) may not go to the right place. **If you are working on a web project, it is advised that you open a workspace at the root of the project.**
 
+## Inspirations
+Special thanks to the following extensions for inspiring Live Preview! 💡
+- [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer)
+- [Five Server](https://marketplace.visualstudio.com/items?itemName=yandeu.five-server)
 ## Issue Tracking
 Please file issues against the [VS Code Live Preview repository](https://github.com/microsoft/vscode-livepreview/issues).
