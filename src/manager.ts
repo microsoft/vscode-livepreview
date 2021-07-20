@@ -371,7 +371,7 @@ export class Manager extends Disposable {
 	 * @param {string} file the path to use
 	 * @returns {string} the path relative to default workspace. Will return empty string if `!absPathInDefaultWorkspace(file)`
 	 */
-	public getFileRelativeToDefaultWorkspace(file: string): string {
+	public getFileRelativeToDefaultWorkspace(file: string): string | undefined {
 		return this._workspaceManager.getFileRelativeToDefaultWorkspace(file);
 	}
 
@@ -512,7 +512,8 @@ export class Manager extends Disposable {
 				}
 				file = this.encodeEndpoint(file);
 			} else {
-				file = this._workspaceManager.getFileRelativeToDefaultWorkspace(file);
+				file =
+					this._workspaceManager.getFileRelativeToDefaultWorkspace(file) ?? '';
 			}
 		}
 		return file;

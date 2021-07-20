@@ -6,6 +6,9 @@ import { NavEditCommands, PageHistory } from './pageHistoryTracker';
 import { getNonce, isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
 
+/**
+ * @description the object responsible for communicating messages to the webview.
+ */
 export class WebviewComm extends Disposable {
 	private readonly _pageHistory: PageHistory;
 	public currentAddress: string;
@@ -32,14 +35,25 @@ export class WebviewComm extends Disposable {
 		this.currentAddress = initialFile;
 	}
 
+	/**
+	 * @returns {Promise<vscode.Uri>} the promise containing the HTTP URI.
+	 */
 	public async resolveHost(): Promise<vscode.Uri> {
 		return this._connectionManager.resolveExternalHTTPUri();
 	}
 
+	/**
+	 * @returns {Promise<vscode.Uri>} the promise containing the WebSocket URI.
+	 */
 	private async resolveWsHost(): Promise<vscode.Uri> {
 		return this._connectionManager.resolveExternalWSUri();
 	}
 
+	/**
+	 * @param {string} URLExt the pathname to construct the address from.
+	 * @param {string} hostURI the (optional) URI of the host; alternatively, the function will manually generate the connection manager's HTTP URI if not provided with it initially.
+	 * @returns {Promise<string>} a promise for the address for the content.
+	 */
 	public async constructAddress(
 		URLExt: string,
 		hostURI?: vscode.Uri
@@ -56,11 +70,22 @@ export class WebviewComm extends Disposable {
 		return `${hostURI.toString()}${URLExt}`;
 	}
 
+	/**
+	 * @description go to a file in the embeded preview
+	 * @param {string} URLExt the pathname to navigate to
+	 * @param {boolean} updateHistory whether or not to update the history from this call.
+	 */
 	public async goToFile(URLExt: string, updateHistory = true) {
 		this.setHtml(this._panel.webview, URLExt, updateHistory);
 		this.currentAddress = URLExt;
 	}
 
+	/**
+	 * @description set the webivew's HTML to show embedded preview content.
+	 * @param {vscode.Webview} webview the webview to set the HTML.
+	 * @param {string} URLExt the pathname appended to the host to navigate the preview to.
+	 * @param {boolean} updateHistory whether or not to update the history from this call.
+	 */
 	public async setHtml(
 		webview: vscode.Webview,
 		URLExt: string,
@@ -90,11 +115,20 @@ export class WebviewComm extends Disposable {
 		}
 	}
 
+	/**
+	 * @description generate the HTML to load in the webview; this will contain the full-page iframe with the hosted content,
+	 *  in addition to the top navigation bar.
+	 * @param {vscode.Webview} webview the webview instance (to create sufficient webview URIs)/
+	 * @param {string} httpURL the address to navigate to in the iframe.
+	 * @param {string} wsServerAddr the address of the WebSocket server.
+	 * @param {string} httpServerAddr the address of the HTTP server.
+	 * @returns {string} the html to load in the webview.
+	 */
 	private getHtmlForWebview(
 		webview: vscode.Webview,
 		httpURL: string,
-		wsURL: string,
-		httpHost: string
+		wsServerAddr: string,
+		httpServerAddr: string
 	): string {
 		// Local path to main script run in the webview
 		const scriptPathOnDisk = vscode.Uri.joinPath(
@@ -136,11 +170,11 @@ export class WebviewComm extends Disposable {
 				-->
 				<meta http-equiv="Content-Security-Policy" content="
 				default-src 'none';
-				connect-src ${wsURL};
+				connect-src ${wsServerAddr};
 				font-src ${this._panel.webview.cspSource};
 				style-src ${this._panel.webview.cspSource};
 				script-src 'nonce-${nonce}';
-				frame-src ${httpHost};
+				frame-src ${httpServerAddr};
 				">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -186,13 +220,17 @@ export class WebviewComm extends Disposable {
 			</div>
 			<div id="link-preview"></div>
 				<script nonce="${nonce}">
-					const WS_URL= "${wsURL}";
+					const WS_URL= "${wsServerAddr}";
 				</script>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 		</html>`;
 	}
 
+	/**
+	 * @description set the webview's URL bar.
+	 * @param {string} pathname the pathname of the address to set the URL bar with.
+	 */
 	public async setUrlBar(pathname: string) {
 		this._panel.webview.postMessage({
 			command: 'set-url',
@@ -205,6 +243,9 @@ export class WebviewComm extends Disposable {
 		this.handleNewPageLoad(pathname);
 	}
 
+	/**
+	 * @param {NavEditCommands} command the enable/disable command for the webview's back/forward buttons
+	 */
 	public handleNavAction(command: NavEditCommands): void {
 		let text = {};
 		switch (command) {
@@ -228,6 +269,11 @@ export class WebviewComm extends Disposable {
 		});
 	}
 
+	/**
+	 * @description perform the appropriate updates when a new page loads.
+	 * @param {string} pathname path to file that loaded.
+	 * @param {string} panelTitle the panel title of file (if applicable).
+	 */
 	public handleNewPageLoad(pathname: string, panelTitle = ''): void {
 		// only load relative addresses
 		if (pathname.length > 0 && pathname[0] != '/') {
@@ -244,6 +290,9 @@ export class WebviewComm extends Disposable {
 		}
 	}
 
+	/**
+	 * @description send a request to the webview to update the enable/disable status of the back/forward buttons.
+	 */
 	public updateForwardBackArrows(): void {
 		const navigationStatus = this._pageHistory.currentCommands;
 		for (const i in navigationStatus) {
@@ -251,6 +300,9 @@ export class WebviewComm extends Disposable {
 		}
 	}
 
+	/**
+	 * @description go forwards in page history.
+	 */
 	public goForwards(): void {
 		const response = this._pageHistory.goForward();
 
@@ -264,6 +316,9 @@ export class WebviewComm extends Disposable {
 		}
 	}
 
+	/**
+	 * @description go backwards in page history.
+	 */
 	public goBack(): void {
 		const response = this._pageHistory.goBackward();
 

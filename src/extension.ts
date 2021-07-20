@@ -146,7 +146,7 @@ export function activate(context: vscode.ExtensionContext): void {
 			(file: vscode.Uri) => {
 				if (manager.absPathInDefaultWorkspace(file.fsPath)) {
 					const fileRelativeToWorkspace =
-						manager.getFileRelativeToDefaultWorkspace(file.fsPath);
+						manager.getFileRelativeToDefaultWorkspace(file.fsPath) ?? '';
 					SettingUtil.UpdateSettings(
 						Settings.defaultPreviewPath,
 						fileRelativeToWorkspace,

@@ -2,8 +2,11 @@ import * as vscode from 'vscode';
 import { Disposable } from '../../utils/dispose';
 import { SettingUtil } from '../../utils/settingsUtil';
 
-// flow is inspired by status bar in original Live Server extension
-// https://github.com/ritwickdey/vscode-live-server/blob/master/src/StatusbarUi.ts
+/**
+ * @description the status bar handler.
+ * The flow is inspired by status bar in original Live Server extension:
+ * https://github.com/ritwickdey/vscode-live-server/blob/master/src/StatusbarUi.ts
+ */
 export class StatusBarNotifier extends Disposable {
 	private _statusBar: vscode.StatusBarItem;
 	private _extensionUri: vscode.Uri;
@@ -19,6 +22,9 @@ export class StatusBarNotifier extends Disposable {
 		this._on = false;
 	}
 
+	/**
+	 * @description called to notify that the server turned on.
+	 */
 	public ServerOn(port: number) {
 		this._on = true;
 		if (SettingUtil.GetConfig(this._extensionUri).showStatusBarItem) {
@@ -34,11 +40,17 @@ export class StatusBarNotifier extends Disposable {
 		};
 	}
 
-	public ServerOff() {
+	/**
+	 * @description called to notify that the server shut down.
+	 */
+	public ServerOff(): void {
 		this._on = false;
 		this._statusBar.hide();
 	}
 
+	/**
+	 * @description update fields to address config changes.
+	 */
 	public updateConfigurations() {
 		if (SettingUtil.GetConfig(this._extensionUri).showStatusBarItem) {
 			if (this._on) {

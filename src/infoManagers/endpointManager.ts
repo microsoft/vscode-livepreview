@@ -4,8 +4,13 @@ import { PathUtil } from '../utils/pathUtil';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { WorkspaceManager } from './workspaceManager';
-import { pathToFileURL } from 'url';
 
+/**
+ * @description the object that manages the server endpoints for files outside of the default workspace
+ *
+ * encoding: actual file location -> endpoint used to access from server.
+ * decoding: endpoint used to access from server -> actual file location.
+ */
 export class EndpointManager extends Disposable {
 	// manages encoding and decoding endpoints
 
@@ -27,6 +32,11 @@ export class EndpointManager extends Disposable {
 			i++;
 		}
 	}
+
+	/**
+	 * @param location the file location to encode.
+	 * @returns the encoded endpoint.
+	 */
 	public encodeLooseFileEndpoint(location: string): string {
 		const parent = PathUtil.GetImmediateParentDir(location);
 		let fullParent = PathUtil.GetParentDir(location);
@@ -54,14 +64,10 @@ export class EndpointManager extends Disposable {
 		return unescape(endpoint);
 	}
 
-	private validPath(file: string) {
-		for (const item of this.validEndpointRoots.values()) {
-			if (file.startsWith(item)) {
-				return true;
-			}
-		}
-		return false;
-	}
+	/**
+	 * @param {string} urlPath the endpoint to check
+	 * @returns {string | undefined} the filesystem path that it loads or undefined if it doesn't decode to anything.
+	 */
 	public decodeLooseFileEndpoint(urlPath: string): string | undefined {
 		const path = PathUtil.UnescapePathParts(urlPath);
 		if (this.validPath(path) && fs.existsSync(path)) {
@@ -69,5 +75,18 @@ export class EndpointManager extends Disposable {
 		} else {
 			return undefined;
 		}
+	}
+
+	/**
+	 * @param {string} file the endpoint to check
+	 * @returns {boolean} whether the endpoint can be decoded to an acutal file path.
+	 */
+	private validPath(file: string): boolean {
+		for (const item of this.validEndpointRoots.values()) {
+			if (file.startsWith(item)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

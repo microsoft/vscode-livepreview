@@ -14,7 +14,11 @@
 
 	onLoad();
 
+	/**
+	 * @description run on load.
+	 */
 	function onLoad() {
+		// handle the arrow-key navigation between the leftmost nav group.
 		handleNavGroup(leftMostNavGroup);
 
 		connection.onerror = (error) => {
@@ -30,6 +34,7 @@
 			});
 		});
 
+		// add listeners to all nav buttons.
 		addNavButtonListeners();
 
 		document.getElementById('url-input').addEventListener('keyup', handleKeyUp);
@@ -43,14 +48,25 @@
 			.contentWindow.postMessage('setup-parent-listener', '*');
 	}
 
+	/**
+	 * @param {string} url the URL to use to set the URL bar.
+	 */
 	function setURLBar(url) {
 		document.getElementById('url-input').value = url;
 	}
 
+	/**
+	 * @description Update the webview's state with the current pathname to allow correct serialize/deserialize.
+	 * @param {string} pathname
+	 */
 	function updateState(pathname) {
 		vscode.setState({ currentAddress: pathname });
 	}
 
+	/**
+	 * @description handling key up on URL bar.
+	 * @param {keyup} event the keyup info.
+	 */
 	function handleKeyUp(event) {
 		if (event.keyCode === 13) {
 			event.preventDefault();
@@ -62,6 +78,12 @@
 		}
 	}
 
+	/**
+	 * @description handle key down in leftmost nav button area.
+	 * @param {keydown} event the keydown info.
+	 * @param {HTMLElement[]} nav the navigation elements.
+	 * @param {number} startIndex the index of the current HTMLElement focused (in `nav` array).
+	 */
 	function handleNavKeyDown(event, nav, startIndex) {
 		if (event.keyCode === 37) {
 			// left
@@ -83,7 +105,14 @@
 		}
 	}
 
+	/**
+	 * Move the focus appropriately based on left/right action.
+	 * @param {boolean} right whether to shift the focus right (!right will assume moving left).
+	 * @param {HTMLElement[]} nav the navigation elements.
+	 * @param {number} startIndex the index of the current HTMLElement focused (in `nav` array).
+	 */
 	function moveFocusNav(right, nav, startIndex) {
+		// logic behind shifting focus based on arrow-keys
 		var numDisabled = 0;
 		var modifier = right ? 1 : -1;
 		var index = startIndex;
@@ -103,19 +132,9 @@
 		}
 	}
 
-	function handleSocketMessage(data) {
-		const parsedMessage = JSON.parse(data);
-		switch (parsedMessage.command) {
-			case 'foundNonInjectable':
-				// if the file we went to is not injectable, make sure to add it to history manually
-				vscode.postMessage({
-					command: 'add-history',
-					text: parsedMessage.path,
-				});
-				return;
-		}
-	}
-
+	/**
+	 * @description adjust the tab indices of the navigation buttons based on which buttons are disabled.
+	 */
 	function adjustTabIndex() {
 		var reachedElem = false;
 		for (const i in leftMostNavGroup) {
@@ -129,6 +148,29 @@
 			}
 		}
 	}
+
+	/**
+	 * @description handle messages coming from WebSocket. Usually are messages notifying of non-injectable files
+	 *  that the extension should be aware of.
+	 * @param {any} data
+	 */
+	function handleSocketMessage(data) {
+		const parsedMessage = JSON.parse(data);
+		switch (parsedMessage.command) {
+			case 'foundNonInjectable':
+				// if the file we went to is not injectable, make sure to add it to history manually
+				vscode.postMessage({
+					command: 'add-history',
+					text: parsedMessage.path,
+				});
+				return;
+		}
+	}
+
+	/**
+	 * @description handle messages coming from the child frame and extension.
+	 * @param {any} message
+	 */
 	function handleMessage(message) {
 		switch (message.command) {
 			case 'refresh':
@@ -207,6 +249,10 @@
 		}
 	}
 
+	/**
+	 * @description Fade in or out the link preview.
+	 * @param {boolean} appear whether or not it should be fade from `hide -> show`; otherwise, will fade from `show -> hide`.
+	 */
 	function fadeLinkPreview(appear) {
 		var elem = document.getElementById('link-preview');
 
@@ -231,6 +277,10 @@
 			}
 		}, 25);
 	}
+
+	/**
+	 * @description Add funcionality to the nav buttons.
+	 */
 	function addNavButtonListeners() {
 		document.getElementById('back').onclick = function () {
 			vscode.postMessage({
