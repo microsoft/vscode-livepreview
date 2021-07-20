@@ -17,6 +17,9 @@ export class PageHistory extends Disposable {
 	private _current_back_enabled = false;
 	private _current_forward_enabled = false;
 
+	/**
+	 * @returns the current state of the back/forward buttons
+	 */
 	public get currentCommands(): Array<NavEditCommands> {
 		const action = new Array<NavEditCommands>();
 
@@ -35,6 +38,10 @@ export class PageHistory extends Disposable {
 		return action;
 	}
 
+	/**
+	 * @description manipulates the history to adjust for going forwards.
+	 * @returns {NavResponse} the state of the back/foward buttons as a result of going forwards.
+	 */
 	public goForward(): NavResponse {
 		const action = new Array<NavEditCommands>();
 		if (this._backstep > 0) {
@@ -57,7 +64,10 @@ export class PageHistory extends Disposable {
 			return { actions: action };
 		}
 	}
-
+	/**
+	 * @description manipulates the history to adjust for going backwards.
+	 * @returns {NavResponse} the state of the back/foward buttons as a result of going backwards.
+	 */
 	public goBackward(): NavResponse {
 		const action = new Array<NavEditCommands>();
 		if (this._backstep < this._history.length - 1) {
@@ -80,8 +90,15 @@ export class PageHistory extends Disposable {
 		}
 	}
 
+	/**
+	 * @description Add an address to the history. Will not add it if it identical to the previous entry.
+	 * Stores all directory pathnames without `/` at the end, as allowing for a mix of both
+	 * causes redirection that makes history tracking tricky.
+	 * @param {string} address the address to add.
+	 * @returns {NavResponse | undefined} the state of the back/fowards buttons after adding the item.
+	 */
 	public addHistory(address: string): NavResponse | undefined {
-		address = address.replace(/\\/g, '/');
+		address = PathUtil.ConvertToUnixPath(address);
 		address = PathUtil.EscapePathParts(address);
 		const action = new Array<NavEditCommands>();
 		if (

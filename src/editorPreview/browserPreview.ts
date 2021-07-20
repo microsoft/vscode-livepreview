@@ -6,13 +6,11 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { WebviewComm } from './webviewComm';
-import {
-	TerminalColor,
-	TerminalDeco,
-	TerminalStyleUtil,
-} from '../utils/terminalStyleUtil';
 import { FormatDateTime } from '../utils/utils';
 
+/**
+ * @description the embedded preview object, containing the webview panel showing the preview.
+ */
 export class BrowserPreview extends Disposable {
 	public static readonly viewType = 'browserPreview';
 	private readonly _webviewComm: WebviewComm;
@@ -21,16 +19,25 @@ export class BrowserPreview extends Disposable {
 	);
 	public readonly onDispose = this._onDisposeEmitter.event;
 
+	// _onShiftToExternalBrowser is fired when the user presses the "Open in browser" button.
 	private readonly _onShiftToExternalBrowser = this._register(
 		new vscode.EventEmitter<void>()
 	);
 	public readonly onShiftToExternalBrowser =
 		this._onShiftToExternalBrowser.event;
 
+	/**
+	 * @description close the embedded browser.
+	 */
 	public close(): void {
 		this._panel.dispose();
 	}
 
+	/**
+	 * Show the existing embedded preview.
+	 * @param column which column to show it in.
+	 * @param file the file (pathname) to go to.
+	 */
 	public reveal(column: number, file = '/'): void {
 		this._webviewComm.goToFile(file);
 		this._panel.reveal(column);
@@ -85,49 +92,62 @@ export class BrowserPreview extends Disposable {
 
 		// Handle messages from the webview
 		this._register(
-			this._panel.webview.onDidReceiveMessage((message) => {
-				switch (message.command) {
-					case 'alert':
-						vscode.window.showErrorMessage(message.text);
-						return;
-					case 'update-path': {
-						const msgJSON = JSON.parse(message.text);
-						this._webviewComm.handleNewPageLoad(
-							msgJSON.path.pathname,
-							msgJSON.title
-						);
-						return;
-					}
-					case 'go-back':
-						this._webviewComm.goBack();
-						return;
-					case 'go-forward':
-						this._webviewComm.goForwards();
-						return;
-					case 'open-browser':
-						this.handleOpenBrowser(message.text);
-						return;
-					case 'add-history': {
-						this._webviewComm.setUrlBar(message.text);
-						return;
-					}
-					case 'refresh-back-forward-buttons':
-						this._webviewComm.updateForwardBackArrows();
-						return;
-					case 'go-to-file':
-						this.goToFullAddress(message.text);
-						return;
-
-					case 'console': {
-						const msgJSON = JSON.parse(message.text);
-						this.handleConsole(msgJSON.type, msgJSON.data);
-						return;
-					}
-				}
-			})
+			this._panel.webview.onDidReceiveMessage((message) =>
+				this.handleWebviewMessage(message)
+			)
 		);
 	}
 
+	/**
+	 * @description handle messages from the webview (see messages sent from `media/main.js`).
+	 * @param {any} message the message from webview
+	 */
+	private handleWebviewMessage(message: any): void {
+		switch (message.command) {
+			case 'alert':
+				vscode.window.showErrorMessage(message.text);
+				return;
+			case 'update-path': {
+				const msgJSON = JSON.parse(message.text);
+				this._webviewComm.handleNewPageLoad(
+					msgJSON.path.pathname,
+					msgJSON.title
+				);
+				return;
+			}
+			case 'go-back':
+				this._webviewComm.goBack();
+				return;
+			case 'go-forward':
+				this._webviewComm.goForwards();
+				return;
+			case 'open-browser':
+				this.handleOpenBrowser(message.text);
+				return;
+			case 'add-history': {
+				this._webviewComm.setUrlBar(message.text);
+				return;
+			}
+			case 'refresh-back-forward-buttons':
+				this._webviewComm.updateForwardBackArrows();
+				return;
+			case 'go-to-file':
+				this.goToFullAddress(message.text);
+				return;
+
+			case 'console': {
+				const msgJSON = JSON.parse(message.text);
+				this.handleConsole(msgJSON.type, msgJSON.data);
+				return;
+			}
+		}
+	}
+
+	/**
+	 * @description handle console message that should appear in output channel.
+	 * @param {string} type the type of log
+	 * @param {string} log the log contents
+	 */
 	private handleConsole(type: string, log: string) {
 		if (type == 'CLEAR') {
 			this._outputChannel.clear();
@@ -145,14 +165,21 @@ export class BrowserPreview extends Disposable {
 		super.dispose();
 	}
 
-	public get panel() {
+	public get panel(): vscode.WebviewPanel {
 		return this._panel;
 	}
 
+	/**
+	 * @description extension-side reload of webivew.
+	 */
 	private reloadWebview() {
 		this._webviewComm.goToFile(this._webviewComm.currentAddress, false);
 	}
 
+	/**
+	 * Open in external browser. This also warns the user in the case where the URL is external to the hosted content.
+	 * @param {string} givenURL the (full) URL to open up in the external browser.
+	 */
 	private async handleOpenBrowser(givenURL: string) {
 		if (givenURL == '') {
 			// open at current address, needs task start
@@ -189,6 +216,9 @@ export class BrowserPreview extends Disposable {
 		this._webviewComm.updateForwardBackArrows();
 	}
 
+	/**
+	 * @param {string} address the (full) address to navigate to; will open in external browser if it is an external address.
+	 */
 	public async goToFullAddress(address: string) {
 		const host = await this._webviewComm.resolveHost();
 		let hostString = host.toString();
@@ -203,6 +233,11 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
+	/**
+	 * Set the panel title accordingly, given the title and pathname given
+	 * @param {string} title the page title of the page being hosted.
+	 * @param {string} pathname the pathname of the path being hosted.
+	 */
 	private setPanelTitle(title = '', pathname = 'Preview'): void {
 		if (title == '') {
 			pathname = unescape(pathname);

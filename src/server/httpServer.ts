@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
-import { HTMLInjector } from './serverUtils/HTMLInjector';
 import { HOST, INJECTED_ENDPOINT_NAME } from '../utils/constants';
 import { serverMsg } from '../manager';
 import TelemetryReporter from 'vscode-extension-telemetry';
@@ -16,30 +15,38 @@ import { PathUtil } from '../utils/pathUtil';
 export class HttpServer extends Disposable {
 	private _server: any;
 	private _contentLoader: ContentLoader;
-	private readonly _extensionUri;
 	public port = 0;
 
 	constructor(
-		extensionUri: vscode.Uri,
+		_extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
 		private readonly _workspaceManager: WorkspaceManager,
-		private readonly _connectionManager: ConnectionManager
+		_connectionManager: ConnectionManager
 	) {
 		super();
 		this._contentLoader = this._register(
-			new ContentLoader(_reporter, _workspaceManager, _endpointManager)
+			new ContentLoader(
+				_extensionUri,
+				_reporter,
+				_endpointManager,
+				_workspaceManager,
+				_connectionManager
+			)
 		);
-		this._extensionUri = extensionUri;
 	}
 
-	private get _basePath() {
+	/**
+	 * @returns {string | undefined} the path where the server index is located.
+	 */
+	private get _basePath(): string | undefined {
 		return this._workspaceManager.workspacePath;
 	}
 
 	private readonly _onConnected = this._register(
 		new vscode.EventEmitter<number>()
 	);
+
 	public readonly onConnected = this._onConnected.event;
 
 	private readonly _onNewReqProcessed = this._register(
@@ -47,6 +54,10 @@ export class HttpServer extends Disposable {
 	);
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
+	/**
+	 * @param {string} file file to check
+	 * @returns {boolean} whether the HTTP server has served `file` since last reset or beginning of extension activation.
+	 */
 	public hasServedFile(file: string) {
 		if (this._contentLoader.servedFiles) {
 			for (const item of this._contentLoader.servedFiles.values()) {
@@ -58,27 +69,27 @@ export class HttpServer extends Disposable {
 		return false;
 	}
 
-	public start(port: number) {
+	/**
+	 * @description start the HTTP server.
+	 * @param {number} port port to try to start server on.
+	 */
+	public start(port: number): void {
 		this.port = port;
 		this._contentLoader.resetServedFiles();
 		this.startHttpServer();
 	}
 
+	/**
+	 * @description stop the HTTP server.
+	 */
 	public close() {
 		this._server.close();
 	}
 
-	public refreshInjector() {
-		if (!this._contentLoader.scriptInjector) {
-			this._contentLoader.scriptInjector = new HTMLInjector(
-				this._extensionUri,
-				this._connectionManager
-			);
-		} else {
-			this._contentLoader.scriptInjector.refresh();
-		}
-	}
-
+	/**
+	 * @description contains all of the listeners required to start the server and recover on port collision.
+	 * @returns {boolean} whether the HTTP server started successfully (currently only returns true)
+	 */
 	private startHttpServer(): boolean {
 		this._server = this.createServer();
 
@@ -110,11 +121,17 @@ export class HttpServer extends Disposable {
 		return true;
 	}
 
+	/**
+	 * @description contains the logic for content serving.
+	 * @param {string | undefined} basePath the path where the server index is located.
+	 * @param {http.IncomingMessage} req the request received
+	 * @param {http.ServerResponse} res the response to be loaded
+	 */
 	private serveStream(
 		basePath: string | undefined,
 		req: http.IncomingMessage,
 		res: http.ServerResponse
-	) {
+	): void {
 		if (!req || !req.url) {
 			this.reportAndReturn(500, req, res);
 			return;
@@ -241,22 +258,36 @@ export class HttpServer extends Disposable {
 		return;
 	}
 
-	private createServer() {
+	/**
+	 * @returns the created HTTP server with the serving logic.
+	 */
+	private createServer(): http.Server {
 		return http.createServer((req, res) =>
 			this.serveStream(this._basePath, req, res)
 		);
 	}
 
+	/**
+	 * @description write the status to the header, send data for logging, then end.
+	 * @param {number} status the status returned
+	 * @param {http.IncomingMessage} req the request object
+	 * @param {http.ServerResponse} res the response object
+	 */
 	private reportAndReturn(
 		status: number,
 		req: http.IncomingMessage,
 		res: http.ServerResponse
-	) {
+	): void {
 		res.writeHead(status);
 		this.reportStatus(req, res);
 		res.end();
 	}
 
+	/**
+	 * @description send the server logging information to the terminal logging task.
+	 * @param {http.IncomingMessage} req the request object
+	 * @param {http.ServerResponse} res the response object
+	 */
 	private reportStatus(req: http.IncomingMessage, res: http.ServerResponse) {
 		this._onNewReqProcessed.fire({
 			method: req.method ?? '',

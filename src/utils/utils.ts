@@ -1,4 +1,9 @@
-import * as vscode from 'vscode';
+/**
+ * @description Function that formats the given date and time into a human-readable string.
+ * @param date the date to be formatting.
+ * @param delimeter what character to place between the date and time (defaults to comma).
+ * @returns a string that expresses the shortened date and time.
+ */
 
 export function FormatDateTime(date: Date, delimeter = ', '): string {
 	const mm = date.getMonth() + 1;
@@ -12,7 +17,12 @@ export function FormatDateTime(date: Date, delimeter = ', '): string {
 	return `${mm}/${dd}/${yy}${delimeter}${hh}:${mi}:${ss}`;
 }
 
-export function FormatFileSize(bytes: number) {
+/**
+ * @description Expresses a file's byte size in B, kB, MB, or GB.
+ * @param bytes the number of bytes
+ * @returns the shortened file size with its units.
+ */
+export function FormatFileSize(bytes: number): string {
 	const sizeUnits = ['B', 'kB', 'MB', 'GB'];
 
 	let i = 0;
@@ -27,11 +37,12 @@ export function FormatFileSize(bytes: number) {
 	return `${modifiedSize} TB`;
 }
 
-export function GetActiveFile(): string | undefined {
-	return vscode.window.activeTextEditor?.document.fileName;
-}
-
-export function isFileInjectable(file: string | undefined) {
+/**
+ * @description Uses file path or filename to determine whether the file can be injected with the script (no file ending or has supported ending).
+ * @param file the file to test
+ * @returns whether the file is injectable.
+ */
+export function isFileInjectable(file: string | undefined): boolean {
 	if (!file) {
 		return false;
 	}
@@ -40,7 +51,12 @@ export function isFileInjectable(file: string | undefined) {
 	return !hasFileEnding || hasInjectableFileEnding(file);
 }
 
-export function hasInjectableFileEnding(file: string) {
+/**
+ * @description Similar to isFileInjectable, but files without a file ending will return false.
+ * @param file the file to test
+ * @returns whether it is injectable.
+ */
+function hasInjectableFileEnding(file: string): boolean {
 	const supportedEndings = ['.html', '.htm', '.xhtml'];
 	for (const i in supportedEndings) {
 		if (file.endsWith(supportedEndings[i])) {
@@ -50,7 +66,11 @@ export function hasInjectableFileEnding(file: string) {
 	return false;
 }
 
-export function getNonce() {
+/**
+ * @description Generates the randomized nonce for the webview (embedded preview).
+ * @returns 64-long randomized nonce.
+ */
+export function getNonce(): string {
 	let text = '';
 	const possible =
 		'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

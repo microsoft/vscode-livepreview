@@ -9,7 +9,12 @@ import {
 	SettingUtil,
 	Settings,
 } from '../utils/settingsUtil';
-import { DONT_SHOW_AGAIN, HOST } from '../utils/constants';
+import {
+	DONT_SHOW_AGAIN,
+	HOST,
+	LIVE_PREVIEW_SERVER_ON,
+	UriSchemes,
+} from '../utils/constants';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
@@ -28,18 +33,18 @@ export class Server extends Disposable {
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
-		endpointManager: EndpointManager,
-		reporter: TelemetryReporter,
-		private readonly _workspaceManager: WorkspaceManager,
+		_reporter: TelemetryReporter,
+		_endpointManager: EndpointManager,
+		_workspaceManager: WorkspaceManager,
 		private readonly _connectionManager: ConnectionManager,
-		userDataDir: string | undefined
+		_userDataDir: string | undefined
 	) {
 		super();
 		this._httpServer = this._register(
 			new HttpServer(
 				_extensionUri,
-				reporter,
-				endpointManager,
+				_reporter,
+				_endpointManager,
 				_workspaceManager,
 				_connectionManager
 			)
@@ -48,14 +53,19 @@ export class Server extends Disposable {
 		this._watcher = vscode.workspace.createFileSystemWatcher('**');
 
 		this._wsServer = this._register(
-			new WSServer(reporter, endpointManager, _workspaceManager)
+			new WSServer(
+				_reporter,
+				_endpointManager,
+				_workspaceManager,
+				_connectionManager
+			)
 		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 
 		const notUserDataDirChange = function (file: vscode.Uri) {
 			return (
-				file.scheme != 'vscode-userdata' &&
-				(!userDataDir || !PathUtil.PathBeginsWith(file.fsPath, userDataDir))
+				file.scheme != UriSchemes.vscode_userdata &&
+				(!_userDataDir || !PathUtil.PathBeginsWith(file.fsPath, _userDataDir))
 			);
 		};
 
@@ -64,7 +74,8 @@ export class Server extends Disposable {
 				if (
 					e.contentChanges &&
 					e.contentChanges.length > 0 &&
-					e.document.uri.scheme == 'file' &&
+					(e.document.uri.scheme == UriSchemes.file ||
+						e.document.uri.scheme == UriSchemes.untitled) &&
 					this._reloadOnAnyChange
 				) {
 					this._wsServer.refreshBrowsers();
@@ -126,53 +137,48 @@ export class Server extends Disposable {
 			})
 		);
 
-		this._register(
-			this._connectionManager.onConnected((e) => {
-				this._httpServer.refreshInjector();
-				this._wsServer.externalHostName = `${e.httpURI.scheme}://${e.httpURI.authority}`;
-			})
-		);
-
-		vscode.commands.executeCommand('setContext', 'LivePreviewServerOn', false);
+		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, false);
 	}
 
+	/**
+	 * @returns {boolean} whether the HTTP server is on.
+	 */
 	public get isRunning(): boolean {
 		return this._isServerOn;
 	}
 
-	public updateConfigurations() {
+	/**
+	 * @description update fields to address config changes.
+	 */
+	public updateConfigurations(): void {
 		this._statusBar.updateConfigurations();
 	}
 
+	// on each new request processed by the HTTP server, we should
+	// relay the information to the task terminal for logging.
 	private readonly _onNewReqProcessed = this._register(
 		new vscode.EventEmitter<serverMsg>()
 	);
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
-	private get _reloadOnAnyChange() {
-		return (
-			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
-			AutoRefreshPreview.onAnyChange
-		);
-	}
-
-	private get _reloadOnSave() {
-		return (
-			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
-			AutoRefreshPreview.onSave
-		);
-	}
-
+	/**
+	 * @description close the server instances.
+	 */
 	public closeServer(): void {
 		this._httpServer.close();
 		this._wsServer.close();
-		this._isServerOn = false; // TODO: find error conditions and return false when needed
+		this._isServerOn = false;
 		this._statusBar.ServerOff();
 
 		this.showServerStatusMessage('Server Closed');
-		vscode.commands.executeCommand('setContext', 'LivePreviewServerOn', false);
+		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, false);
 	}
 
+	/**
+	 * @description open the server instances.
+	 * @param {number} port the port to try to start the HTTP server on.
+	 * @returns {boolean} whether the server has been started correctly.
+	 */
 	public openServer(port: number): boolean {
 		this._httpConnected = false;
 		this._wsConnected = false;
@@ -186,6 +192,31 @@ export class Server extends Disposable {
 		return false;
 	}
 
+	/**
+	 * @description whether to reload on any change from the editor.
+	 */
+	private get _reloadOnAnyChange(): boolean {
+		return (
+			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
+			AutoRefreshPreview.onAnyChange
+		);
+	}
+
+	/**
+	 * @description whether to reload on file save.
+	 */
+	private get _reloadOnSave(): boolean {
+		return (
+			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
+			AutoRefreshPreview.onSave
+		);
+	}
+
+	/**
+	 * Find the first free port following (or on) the initial port configured in settings
+	 * @param startPort the port to start the check on
+	 * @param callback the callback triggerred when a free port has been found.
+	 */
 	private findFreePort(
 		startPort: number,
 		callback: (port: number) => void
@@ -208,6 +239,9 @@ export class Server extends Disposable {
 		sock.connect(port, HOST);
 	}
 
+	/**
+	 * @description called when both servers are connected. Performs operations to update server status.
+	 */
 	private connected() {
 		this._isServerOn = true;
 		this._statusBar.ServerOn(this._httpServer.port);
@@ -217,11 +251,15 @@ export class Server extends Disposable {
 		);
 		this._connectionManager.connected({
 			port: this._httpServer.port,
-			ws_port: this._wsServer.ws_port,
+			wsPort: this._wsServer.wsPort,
 		});
-		vscode.commands.executeCommand('setContext', 'LivePreviewServerOn', true);
+		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, true);
 	}
 
+	/**
+	 * @description show messages related to server status updates if configured to do so in settings.
+	 * @param messsage message to show.
+	 */
 	private showServerStatusMessage(messsage: string) {
 		if (
 			SettingUtil.GetConfig(this._extensionUri).showServerStatusNotifications

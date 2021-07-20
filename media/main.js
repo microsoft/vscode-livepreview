@@ -1,13 +1,12 @@
-/* eslint-disable no-undef */
+/* eslint-env browser */
+/* global acquireVsCodeApi, WS_URL */
 // This script will be run within the webview itself
-
-// It cannot access the main VS Code APIs directly.
 (function () {
 	const vscode = acquireVsCodeApi();
 	const connection = new WebSocket(WS_URL);
 	var fadeLinkID = null;
 
-	leftMostNavGroup = [
+	const leftMostNavGroup = [
 		document.getElementById('back'),
 		document.getElementById('forward'),
 		document.getElementById('reload'),
@@ -15,7 +14,11 @@
 
 	onLoad();
 
+	/**
+	 * @description run on load.
+	 */
 	function onLoad() {
+		// handle the arrow-key navigation between the leftmost nav group.
 		handleNavGroup(leftMostNavGroup);
 
 		connection.onerror = (error) => {
@@ -31,6 +34,7 @@
 			});
 		});
 
+		// add listeners to all nav buttons.
 		addNavButtonListeners();
 
 		document.getElementById('url-input').addEventListener('keyup', handleKeyUp);
@@ -44,18 +48,29 @@
 			.contentWindow.postMessage('setup-parent-listener', '*');
 	}
 
+	/**
+	 * @param {string} url the URL to use to set the URL bar.
+	 */
 	function setURLBar(url) {
 		document.getElementById('url-input').value = url;
 	}
 
+	/**
+	 * @description Update the webview's state with the current pathname to allow correct serialize/deserialize.
+	 * @param {string} pathname
+	 */
 	function updateState(pathname) {
 		vscode.setState({ currentAddress: pathname });
 	}
 
+	/**
+	 * @description handling key up on URL bar.
+	 * @param {keyup} event the keyup info.
+	 */
 	function handleKeyUp(event) {
 		if (event.keyCode === 13) {
 			event.preventDefault();
-			linkTarget = document.getElementById('url-input').value;
+			const linkTarget = document.getElementById('url-input').value;
 			vscode.postMessage({
 				command: 'go-to-file',
 				text: linkTarget,
@@ -63,6 +78,12 @@
 		}
 	}
 
+	/**
+	 * @description handle key down in leftmost nav button area.
+	 * @param {keydown} event the keydown info.
+	 * @param {HTMLElement[]} nav the navigation elements.
+	 * @param {number} startIndex the index of the current HTMLElement focused (in `nav` array).
+	 */
 	function handleNavKeyDown(event, nav, startIndex) {
 		if (event.keyCode === 37) {
 			// left
@@ -76,7 +97,7 @@
 	}
 
 	function handleNavGroup(nav) {
-		for (var i = 0; i < nav.length; i++) {
+		for (const i in nav) {
 			const currIndex = i;
 			nav[i].addEventListener('keydown', (event) =>
 				handleNavKeyDown(event, nav, currIndex)
@@ -84,12 +105,19 @@
 		}
 	}
 
+	/**
+	 * Move the focus appropriately based on left/right action.
+	 * @param {boolean} right whether to shift the focus right (!right will assume moving left).
+	 * @param {HTMLElement[]} nav the navigation elements.
+	 * @param {number} startIndex the index of the current HTMLElement focused (in `nav` array).
+	 */
 	function moveFocusNav(right, nav, startIndex) {
+		// logic behind shifting focus based on arrow-keys
 		var numDisabled = 0;
 		var modifier = right ? 1 : -1;
-		index = startIndex;
+		var index = startIndex;
 		do {
-			newIndex = index + modifier;
+			var newIndex = index + modifier;
 			if (newIndex >= nav.length) {
 				newIndex = 0;
 			} else if (newIndex < 0) {
@@ -104,6 +132,28 @@
 		}
 	}
 
+	/**
+	 * @description adjust the tab indices of the navigation buttons based on which buttons are disabled.
+	 */
+	function adjustTabIndex() {
+		var reachedElem = false;
+		for (const i in leftMostNavGroup) {
+			if (!leftMostNavGroup[i].disabled) {
+				if (reachedElem) {
+					leftMostNavGroup[i].tabIndex = -1;
+				} else {
+					leftMostNavGroup[i].tabIndex = 0;
+					reachedElem = true;
+				}
+			}
+		}
+	}
+
+	/**
+	 * @description handle messages coming from WebSocket. Usually are messages notifying of non-injectable files
+	 *  that the extension should be aware of.
+	 * @param {any} data
+	 */
 	function handleSocketMessage(data) {
 		const parsedMessage = JSON.parse(data);
 		switch (parsedMessage.command) {
@@ -117,19 +167,10 @@
 		}
 	}
 
-	function adjustTabIndex() {
-		var reachedElem = false;
-		for (var i = 0; i < leftMostNavGroup.length; i++) {
-			if (!leftMostNavGroup[i].disabled) {
-				if (reachedElem) {
-					leftMostNavGroup[i].tabIndex = -1;
-				} else {
-					leftMostNavGroup[i].tabIndex = 0;
-					reachedElem = true;
-				}
-			}
-		}
-	}
+	/**
+	 * @description handle messages coming from the child frame and extension.
+	 * @param {any} message
+	 */
 	function handleMessage(message) {
 		switch (message.command) {
 			case 'refresh':
@@ -137,14 +178,15 @@
 					.getElementById('hostedContent')
 					.contentWindow.postMessage('refresh', '*');
 				break;
-			case 'changed-history':
-				msgJSON = JSON.parse(message.text);
+			case 'changed-history': {
+				const msgJSON = JSON.parse(message.text);
 				document.getElementById(msgJSON.element).disabled = msgJSON.disabled;
 				adjustTabIndex();
 				break;
+			}
 			// from child iframe
 			case 'update-path': {
-				msgJSON = JSON.parse(message.text);
+				const msgJSON = JSON.parse(message.text);
 				vscode.postMessage({
 					command: 'update-path',
 					text: message.text,
@@ -172,7 +214,7 @@
 				break;
 			}
 			case 'set-url': {
-				msgJSON = JSON.parse(message.text);
+				const msgJSON = JSON.parse(message.text);
 				// setting a new address, ensure that previous link preview is gone
 				document.getElementById('link-preview').hidden = true;
 				setURLBar(msgJSON.fullPath);
@@ -197,7 +239,7 @@
 			}
 			// from child iframe
 			case 'perform-url-check': {
-				sendData = {
+				const sendData = {
 					command: 'urlCheck',
 					url: message.text,
 				};
@@ -207,6 +249,10 @@
 		}
 	}
 
+	/**
+	 * @description Fade in or out the link preview.
+	 * @param {boolean} appear whether or not it should be fade from `hide -> show`; otherwise, will fade from `show -> hide`.
+	 */
 	function fadeLinkPreview(appear) {
 		var elem = document.getElementById('link-preview');
 
@@ -231,6 +277,10 @@
 			}
 		}, 25);
 	}
+
+	/**
+	 * @description Add funcionality to the nav buttons.
+	 */
 	function addNavButtonListeners() {
 		document.getElementById('back').onclick = function () {
 			vscode.postMessage({

@@ -12,11 +12,17 @@ import { ServerStartedStatus, ServerArgs } from './serverTaskProvider';
 
 const CHAR_CODE_CTRL_C = 3;
 
+/**
+ * @description the pseudoterminal associated with the Live Preview task.
+ */
 export class ServerTaskTerminal
 	extends Disposable
 	implements vscode.Pseudoterminal
 {
 	public running = false;
+
+	// This object will request to open and close the server, so its parent
+	// must listen for these requests and act accordingly.
 	private readonly _onRequestToOpenServerEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
@@ -30,8 +36,11 @@ export class ServerTaskTerminal
 		this._onRequestToCloseServerEmitter.event;
 
 	private readonly _verbose;
+
+	// `writeEmitter` and `closeEmitter` are inherited from the pseudoterminal.
 	private writeEmitter = new vscode.EventEmitter<string>();
 	onDidWrite: vscode.Event<string> = this.writeEmitter.event;
+
 	public closeEmitter = new vscode.EventEmitter<number>();
 	onDidClose?: vscode.Event<number> = this.closeEmitter.event;
 
@@ -50,36 +59,47 @@ export class ServerTaskTerminal
 		}
 	}
 
-	private getSecondColonPos(str: string) {
-		const indexColon = str.indexOf(':');
-		if (indexColon == -1) {
-			return str.length;
+	public open(): void {
+		// At this point we can start using the terminal.
+		if (this._executeServer) {
+			this.running = true;
+			this.writeEmitter.fire('Opening Server...\r\n');
+			this._onRequestToOpenServerEmitter.fire();
+		} else {
+			this.writeEmitter.fire(
+				`Server already running in another task. Closing now.\r\n`
+			);
+			this.close();
 		}
-
-		const indexSecondColon = str.indexOf(':', indexColon + 1);
-		return indexSecondColon == -1 ? str.length : indexSecondColon;
 	}
 
-	private formatAddr(addr: string) {
-		const indexSecondColon = this.getSecondColonPos(addr);
-		const firstHalfOfString = addr.substr(0, indexSecondColon);
-		const lastHalfOfString = addr.substr(indexSecondColon);
-		return (
-			TerminalStyleUtil.ColorTerminalString(
-				firstHalfOfString,
-				TerminalColor.blue,
-				TerminalDeco.bold
-			) +
-			TerminalStyleUtil.ColorTerminalString(
-				lastHalfOfString,
-				TerminalColor.purple,
-				TerminalDeco.bold
-			)
-		);
+	public close(): void {
+		this.running = false;
+		if (this._executeServer) {
+			this._onRequestToCloseServerEmitter.fire();
+			this.closeEmitter.fire(0);
+		} else {
+			this.closeEmitter.fire(1);
+		}
 	}
 
-	public serverStarted(externalUri: vscode.Uri, status: ServerStartedStatus) {
-		const formattedAddress = this.formatAddr(externalUri.toString());
+	public handleInput(data: string): void {
+		if (data.length > 0 && data.charCodeAt(0) == CHAR_CODE_CTRL_C) {
+			this.writeEmitter.fire(`Closing the server...\r\n`);
+			this._onRequestToCloseServerEmitter.fire();
+		}
+	}
+
+	/**
+	 * @description called by the parent to notify that the server has started (or was already started) successfully and the task can now start.
+	 * @param {vscode.Uri} externalUri the address of the server index.
+	 * @param {ServerStartedStatus} status tells the terminal whether the server started because of the task or not.
+	 */
+	public serverStarted(
+		externalUri: vscode.Uri,
+		status: ServerStartedStatus
+	): void {
+		const formattedAddress = this._formatAddr(externalUri.toString());
 		switch (status) {
 			case ServerStartedStatus.JUST_STARTED: {
 				this.writeEmitter.fire(`Started Server on ${formattedAddress}\r\n`);
@@ -101,12 +121,18 @@ export class ServerTaskTerminal
 		);
 	}
 
-	public serverStopped() {
+	/**
+	 * @description Called by the parent to tell the terminal that the server has stopped. May have been a result of the task ending or the result of a manual server shutdown.
+	 */
+	public serverStopped(): void {
 		this.writeEmitter.fire(`Server stopped. Bye!`);
 		this.close();
 	}
 
-	public serverWillBeStopped() {
+	/**
+	 * Called the parent to tell the terminal that is it safe to end the task, but the server will continue to be on to support the embedded preview. This will end the task.
+	 */
+	public serverWillBeStopped(): void {
 		this.writeEmitter.fire(
 			`This task will finish now, but the server will stay on since you've used the embedded preview recently.\r\n`
 		);
@@ -119,31 +145,10 @@ export class ServerTaskTerminal
 		this.close();
 	}
 
-	open(): void {
-		// At this point we can start using the terminal.
-		if (this._executeServer) {
-			this.running = true;
-			this.writeEmitter.fire('Opening Server...\r\n');
-			this._onRequestToOpenServerEmitter.fire();
-		} else {
-			this.writeEmitter.fire(
-				`Server already running in another task. Closing now.\r\n`
-			);
-			this.close();
-		}
-	}
-
-	close(): void {
-		this.running = false;
-		if (this._executeServer) {
-			this._onRequestToCloseServerEmitter.fire();
-			this.closeEmitter.fire(0);
-		} else {
-			this.closeEmitter.fire(1);
-		}
-	}
-
-	public sendServerMsg(msg: serverMsg) {
+	/**
+	 * @param {serverMsg} msg the log message data from the HTTP server to show in the terminal
+	 */
+	public showServerMsg(msg: serverMsg): void {
 		if (this._verbose) {
 			const date = new Date();
 
@@ -153,12 +158,16 @@ export class ServerTaskTerminal
 				}: ${TerminalStyleUtil.ColorTerminalString(
 					msg.url,
 					TerminalColor.blue
-				)} | ${this.colorHttpStatus(msg.status)}\r\n> `
+				)} | ${this._colorHttpStatus(msg.status)}\r\n> `
 			);
 		}
 	}
 
-	private colorHttpStatus(status: number) {
+	/**
+	 * @param {number} status the [HTTP status code](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status) sent by the server
+	 * @returns {string} the styled terminal string (red, yellow, or green).
+	 */
+	private _colorHttpStatus(status: number): string {
 		let color = TerminalColor.green;
 		if (status >= 400) {
 			color = TerminalColor.red;
@@ -168,10 +177,39 @@ export class ServerTaskTerminal
 		return TerminalStyleUtil.ColorTerminalString(status.toString(), color);
 	}
 
-	handleInput(data: string) {
-		if (data.length > 0 && data.charCodeAt(0) == CHAR_CODE_CTRL_C) {
-			this.writeEmitter.fire(`Closing the server...\r\n`);
-			this._onRequestToCloseServerEmitter.fire();
+	/**
+	 * @param {string} str string to test
+	 * @returns {number} location of the second colon, used to find the colon before the port number.
+	 */
+	private _getSecondColonPos(str: string): number {
+		const indexColon = str.indexOf(':');
+		if (indexColon == -1) {
+			return str.length;
 		}
+
+		const indexSecondColon = str.indexOf(':', indexColon + 1);
+		return indexSecondColon == -1 ? str.length : indexSecondColon;
+	}
+
+	/**
+	 * @param {string} addr web address to format
+	 * @returns {string} `addr` with base address colored blue and port number colored purple.
+	 */
+	private _formatAddr(addr: string) {
+		const indexSecondColon = this._getSecondColonPos(addr);
+		const firstHalfOfString = addr.substr(0, indexSecondColon);
+		const lastHalfOfString = addr.substr(indexSecondColon);
+		return (
+			TerminalStyleUtil.ColorTerminalString(
+				firstHalfOfString,
+				TerminalColor.blue,
+				TerminalDeco.bold
+			) +
+			TerminalStyleUtil.ColorTerminalString(
+				lastHalfOfString,
+				TerminalColor.purple,
+				TerminalDeco.bold
+			)
+		);
 	}
 }

@@ -9,25 +9,24 @@ import {
 	SETTINGS_SECTION_ID,
 	SettingUtil,
 } from './utils/settingsUtil';
-import { GetActiveFile } from './utils/utils';
 
 let reporter: TelemetryReporter;
 let manager: Manager;
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): void {
 	const extPackageJSON = context.extension.packageJSON;
 	reporter = new TelemetryReporter(
 		EXTENSION_ID,
 		extPackageJSON.version,
 		extPackageJSON.aiKey
 	);
-	context.subscriptions.push(reporter);
 
 	manager = new Manager(
 		context.extensionUri,
 		reporter,
-		PathUtil.getUserDataDirFromStorageUri(context.storageUri?.fsPath)
+		PathUtil.GetUserDataDirFromStorageUri(context.storageUri?.fsPath)
 	);
+
 	/* __GDPR__
 		"extension.startUp" : { 
 			"numWorkspaceFolders" : { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true }
@@ -39,87 +38,6 @@ export function activate(context: vscode.ExtensionContext) {
 		{ numWorkspaceFolders: vscode.workspace.workspaceFolders?.length ?? 0 }
 	);
 
-	vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start`, () => {
-		const filePath = SettingUtil.GetConfig(
-			context.extensionUri
-		).defaultPreviewPath;
-		if (filePath == '') {
-			if (manager.workspace) {
-				vscode.commands.executeCommand(
-					`${SETTINGS_SECTION_ID}.start.preview.atIndex`
-				);
-			} else {
-				manager.openServer();
-			}
-		} else {
-			vscode.commands.executeCommand(
-				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-				filePath,
-				manager.workspaceManager.pathExistsRelativeToDefaultWorkspace(filePath)
-			);
-		}
-	});
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand(
-			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-			(file?: any, relativeFileString = true) => {
-				const previewType = SettingUtil.GetPreviewType(context.extensionUri);
-				vscode.commands.executeCommand(
-					`${SETTINGS_SECTION_ID}.start.${previewType}.atFile`,
-					file,
-					relativeFileString
-				);
-			}
-		)
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand(
-			`${SETTINGS_SECTION_ID}.config.selectWorkspace`,
-			() => {
-				SettingUtil.UpdateWorkspacePath();
-			}
-		)
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand(
-			`${SETTINGS_SECTION_ID}.start.preview.atIndex`,
-			(file?: any) => {
-				const previewType = SettingUtil.GetPreviewType(context.extensionUri);
-				vscode.commands.executeCommand(
-					`${SETTINGS_SECTION_ID}.start.${previewType}.atIndex`,
-					file
-				);
-			}
-		)
-	);
-	context.subscriptions.push(
-		vscode.commands.registerCommand(
-			`${SETTINGS_SECTION_ID}.setDefaultOpenFile`,
-			(file: vscode.Uri) => {
-				if (manager.workspaceManager.absPathInDefaultWorkspace(file.fsPath)) {
-					const fileRelativeToWorkspace =
-						manager.workspaceManager.getFileRelativeToDefaultWorkspace(
-							file.fsPath
-						);
-					SettingUtil.UpdateSettings(
-						Settings.defaultPreviewPath,
-						fileRelativeToWorkspace,
-						false
-					);
-				} else {
-					SettingUtil.UpdateSettings(
-						Settings.defaultPreviewPath,
-						file.fsPath,
-						false
-					);
-				}
-			}
-		)
-	);
-
 	const openPreview = (
 		internal: boolean,
 		file: string,
@@ -127,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
 		debug = false
 	) => {
 		if (internal) {
-			// for now, ignore debug or no debug
+			// for now, ignore debug or no debug for embedded preview
 			manager.createOrShowEmbeddedPreview(undefined, file, isRelative);
 		} else {
 			manager.showPreviewInBrowser(file, isRelative, debug);
@@ -149,14 +67,15 @@ export function activate(context: vscode.ExtensionContext) {
 				openPreview(internal, filePath, false, debug);
 				return;
 			} else {
-				const activeFilePath = GetActiveFile();
+				const activeFilePath =
+					vscode.window.activeTextEditor?.document.fileName;
 				if (activeFilePath) {
 					openPreview(internal, activeFilePath, false, debug);
 					return;
 				}
 			}
 		} else {
-			const activeFilePath = GetActiveFile();
+			const activeFilePath = vscode.window.activeTextEditor?.document.fileName;
 			if (activeFilePath) {
 				openPreview(internal, activeFilePath, false, debug);
 				return;
@@ -168,6 +87,81 @@ export function activate(context: vscode.ExtensionContext) {
 		);
 		return;
 	};
+
+	context.subscriptions.push(reporter);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start`, () => {
+			const filePath = SettingUtil.GetConfig(
+				context.extensionUri
+			).defaultPreviewPath;
+			if (filePath == '') {
+				if (manager.workspace) {
+					vscode.commands.executeCommand(
+						`${SETTINGS_SECTION_ID}.start.preview.atIndex`
+					);
+				} else {
+					manager.openServer();
+				}
+			} else {
+				vscode.commands.executeCommand(
+					`${SETTINGS_SECTION_ID}.start.preview.atFile`,
+					filePath,
+					manager.pathExistsRelativeToWorkspace(filePath)
+				);
+			}
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
+			(file?: any, relativeFileString = true) => {
+				const previewType = SettingUtil.GetPreviewType(context.extensionUri);
+				vscode.commands.executeCommand(
+					`${SETTINGS_SECTION_ID}.start.${previewType}.atFile`,
+					file,
+					relativeFileString
+				);
+			}
+		)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.start.preview.atIndex`,
+			(file?: any) => {
+				const previewType = SettingUtil.GetPreviewType(context.extensionUri);
+				vscode.commands.executeCommand(
+					`${SETTINGS_SECTION_ID}.start.${previewType}.atIndex`,
+					file
+				);
+			}
+		)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.setDefaultOpenFile`,
+			(file: vscode.Uri) => {
+				if (manager.absPathInDefaultWorkspace(file.fsPath)) {
+					const fileRelativeToWorkspace =
+						manager.getFileRelativeToDefaultWorkspace(file.fsPath) ?? '';
+					SettingUtil.UpdateSettings(
+						Settings.defaultPreviewPath,
+						fileRelativeToWorkspace,
+						false
+					);
+				} else {
+					SettingUtil.UpdateSettings(
+						Settings.defaultPreviewPath,
+						file.fsPath,
+						false
+					);
+				}
+			}
+		)
+	);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
@@ -298,7 +292,6 @@ export function activate(context: vscode.ExtensionContext) {
 					webviewPanel.dispose();
 					return;
 				}
-				// Reset the webview options so we use latest uri for `localResourceRoots`.
 				webviewPanel.webview.options = manager.getWebviewOptions();
 				manager.createOrShowEmbeddedPreview(webviewPanel, file, relative);
 			},

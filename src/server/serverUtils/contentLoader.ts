@@ -15,11 +15,19 @@ import { WorkspaceManager } from '../../infoManagers/workspaceManager';
 import { EndpointManager } from '../../infoManagers/endpointManager';
 import { PathUtil } from '../../utils/pathUtil';
 import { INJECTED_ENDPOINT_NAME } from '../../utils/constants';
+import { ConnectionManager } from '../../infoManagers/connectionManager';
 
+/**
+ * @description the response information to give back to the server object
+ */
 export interface RespInfo {
 	ContentType: string | undefined;
 	Stream: Stream.Readable | fs.ReadStream | undefined;
 }
+
+/**
+ * @description table entry for a file in the auto-generated index.
+ */
 export interface IndexFileEntry {
 	LinkSrc: string;
 	LinkName: string;
@@ -27,38 +35,60 @@ export interface IndexFileEntry {
 	DateTime: string;
 }
 
+/**
+ * @description table entry for a directory in the auto-generated index.
+ */
 export interface IndexDirEntry {
 	LinkSrc: string;
 	LinkName: string;
 	DateTime: string;
 }
 
+/**
+ * @description object responsible for loading content requested by the HTTP server.
+ */
 export class ContentLoader extends Disposable {
-	public scriptInjector: HTMLInjector | undefined;
-	private _servedFiles = new Set<string>();
+	private _scriptInjector: HTMLInjector | undefined;
+	private _servedFiles: Set<string> = new Set<string>();
 	private _insertionTags = ['head', 'body', 'html', '!DOCTYPE'];
 
 	constructor(
+		_extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
+		private readonly _endpointManager: EndpointManager,
 		private readonly _workspaceManager: WorkspaceManager,
-		private readonly _endpointManager: EndpointManager
+		_connectionManager: ConnectionManager
 	) {
 		super();
+		this._scriptInjector = new HTMLInjector(_extensionUri, _connectionManager);
 	}
 
-	public resetServedFiles() {
+	/**
+	 * @description reset the list of served files; served files are used to watch changes for when being changed in the editor.
+	 */
+	public resetServedFiles(): void {
 		this._servedFiles = new Set<string>();
 	}
 
-	public get servedFiles() {
+	/**
+	 * @returns the files served by the HTTP server
+	 */
+	public get servedFiles(): Set<string> {
 		return this._servedFiles;
 	}
 
-	private get _scriptInjection() {
+	/**
+	 * @returns the script tags needed to reference the custom script endpoint.
+	 */
+	private get _scriptInjection(): string {
 		return `<script type="text/javascript" src="${INJECTED_ENDPOINT_NAME}"></script>`;
 	}
-	public loadInjectedJS() {
-		const fileString = this.scriptInjector?.script ?? '';
+
+	/**
+	 * @returns {RespInfo} the injected script and its content type.
+	 */
+	public loadInjectedJS(): RespInfo {
+		const fileString = this._scriptInjector?.script ?? '';
 
 		return {
 			Stream: Stream.Readable.from(fileString),
@@ -66,12 +96,16 @@ export class ContentLoader extends Disposable {
 		};
 	}
 
+	/**
+	 * @description create a "page does not exist" page to pair with the 404 error.
+	 * @param relativePath the path that does not exist
+	 * @returns {RespInfo} the response information
+	 */
 	public createPageDoesNotExist(relativePath: string): RespInfo {
 		/* __GDPR__
 			"server.pageDoesNotExist" : {}
 		*/
 		this._reporter.sendTelemetryEvent('server.pageDoesNotExist');
-		// TODO: make look better
 		const htmlString = `
 		<!DOCTYPE html>
 		<html>
@@ -92,7 +126,11 @@ export class ContentLoader extends Disposable {
 		};
 	}
 
-	public createNoRootServer() {
+	/**
+	 * @description In a multi-root case, the index will not lead to anything. Create this page to list all possible indices to visit.
+	 * @returns {RespInfo} the response info
+	 */
+	public createNoRootServer(): RespInfo {
 		let customMsg;
 		if (this._workspaceManager.numPaths == 0) {
 			customMsg = `<p>You have no workspace open, so the index does not direct to anything.</p>`;
@@ -132,6 +170,14 @@ export class ContentLoader extends Disposable {
 			ContentType: 'text/html',
 		};
 	}
+
+	/**
+	 * @description Create a defaut index page (served if no `index.html` file is available for the directory).
+	 * @param {string} readPath the absolute path visited.
+	 * @param {string} relativePath the relative path (from workspace root).
+	 * @param {string} titlePath the path shown in the title.
+	 * @returns {RespInfo} the response info.
+	 */
 	public createIndexPage(
 		readPath: string,
 		relativePath: string,
@@ -227,6 +273,12 @@ export class ContentLoader extends Disposable {
 		};
 	}
 
+	/**
+	 * @description get the file contents and load it into a form that can be served.
+	 * @param {string} readPath the absolute file path to read from
+	 * @param {boolean} inFilesystem whether the path is in the filesystem (false for untitled files in editor)
+	 * @returns {RespInfo} the response info
+	 */
 	public getFileStream(readPath: string, inFilesystem = true): RespInfo {
 		this._servedFiles.add(readPath);
 		const workspaceDocuments = vscode.workspace.textDocuments;
@@ -269,6 +321,14 @@ export class ContentLoader extends Disposable {
 		};
 	}
 
+	/**
+	 * Inject the script tags to reference the custom Live Preview script.
+	 * NOTE: they are injected on the same line as existing content to ensure that
+	 * the debugging works, since `js-debug` relies on the line numbers on the filesystem
+	 * matching the served line numbers.
+	 * @param {string} contents the contents to inject.
+	 * @returns {string} the injected string.
+	 */
 	private injectIntoFile(contents: string): string {
 		// order of preference for script placement:
 		// 1. after <head>

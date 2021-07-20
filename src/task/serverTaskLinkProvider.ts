@@ -6,12 +6,17 @@ import { HOST } from '../utils/constants';
 import { URL } from 'url';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { SETTINGS_SECTION_ID } from '../utils/settingsUtil';
+
+/**
+ * @description the link provider that runs on Live Preview's `Run Server` task
+ */
 export class serverTaskLinkProvider
 	extends Disposable
 	implements vscode.TerminalLinkProvider
 {
-	public terminalName;
-
+	// Triggers the editor to open a file, but to the side of the preview,
+	// which means that the manager must use the panel column info from the preview
+	// to open the file in a column where the preview is not.
 	private readonly _onRequestOpenEditorToSide = this._register(
 		new vscode.EventEmitter<vscode.Uri>()
 	);
@@ -19,44 +24,40 @@ export class serverTaskLinkProvider
 		this._onRequestOpenEditorToSide.event;
 
 	constructor(
-		terminalName: string,
+		public terminalName: string,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
 		private readonly _workspaceManager: WorkspaceManager
 	) {
 		super();
-		this.terminalName = terminalName;
 		vscode.window.registerTerminalLinkProvider(this);
 	}
 
-	private isPtyTerm(terminal: string) {
-		return this.terminalName != '' && terminal.indexOf(this.terminalName) != -1; // there may be additional terminal text in a multi-root workspace
-	}
-	async provideTerminalLinks(
+	public async provideTerminalLinks(
 		context: vscode.TerminalLinkContext,
 		token: vscode.CancellationToken
-	) {
+	): Promise<vscode.TerminalLink[]> {
 		const links = new Array<vscode.TerminalLink>();
 		if (
 			!context.terminal.creationOptions.name ||
-			!this.isPtyTerm(context.terminal.creationOptions.name)
+			!this._isLivePreviewTerminal(context.terminal.creationOptions.name)
 		) {
 			return links;
 		}
 
-		this.findFullLinkRegex(context.line, links);
-		this.findPathnameRegex(context.line, links);
+		this._findFullLinkRegex(context.line, links);
+		this._findPathnameRegex(context.line, links);
 		return links;
 	}
 
-	async handleTerminalLink(link: any) {
+	public async handleTerminalLink(link: any): Promise<void> {
 		/* __GDPR__
 			"task.terminal.handleTerminalLink" : {}
 		*/
 		this._reporter.sendTelemetryEvent('task.terminal.handleTerminalLink');
 
 		if (link.inEditor) {
-			this.openRelativeLinkInWorkspace(link.data, link.isDir);
+			this._openRelativeLinkInWorkspace(link.data, link.isDir);
 		} else {
 			vscode.commands.executeCommand(
 				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
@@ -65,7 +66,25 @@ export class serverTaskLinkProvider
 		}
 	}
 
-	private findPathnameRegex(input: string, links: Array<vscode.TerminalLink>) {
+	/**
+	 * @param {string} terminalName the terminal name of the target terminal
+	 * @returns Whether it is a task terminal from the `Live Preview - Run Server` task.
+	 */
+	private _isLivePreviewTerminal(terminalName: string): boolean {
+		return (
+			this.terminalName != '' && terminalName.indexOf(this.terminalName) != -1
+		); // there may be additional terminal text in a multi-root workspace
+	}
+
+	/**
+	 * Collects the printed pathnames (e.g. `/file.html`) as terminal links.
+	 * @param {string} input the line read from the terminal.
+	 * @param {Array<vscode.TerminalLink>} links the array of links (pass-by-reference) that are added to.
+	 */
+	private _findPathnameRegex(
+		input: string,
+		links: Array<vscode.TerminalLink>
+	): void {
 		// match relative links
 		const partialLinkRegex = new RegExp(
 			`(?<=\\s)\\/([:/(\\w%\\-.:@)]*)\\?*[\\w=]*`,
@@ -99,31 +118,13 @@ export class serverTaskLinkProvider
 		} while (partialLinkMatches);
 	}
 
-	private openRelativeLinkInWorkspace(file: string, isDir: boolean) {
-		file = unescape(file);
-		const isWorkspaceFile =
-			this._workspaceManager.pathExistsRelativeToAnyWorkspace(file);
+	/**
+	 * Detects the host address (e.g. http://127.0.0.1:3000) as a terminal link.
+	 * @param {string} input the line read from the terminal.
+	 * @param {Array<vscode.TerminalLink>} links the array of links (pass-by-reference) that are added to.
+	 */
 
-		const fullPath = isWorkspaceFile
-			? this._workspaceManager.workspace?.uri + file
-			: 'file:///' + this._endpointManager.decodeLooseFileEndpoint(file);
-
-		const uri = vscode.Uri.parse(fullPath);
-
-		if (isDir) {
-			if (!this._workspaceManager.absPathInAnyWorkspace(uri.fsPath)) {
-				vscode.window.showErrorMessage(
-					'Cannot reveal folder. It is not in the open workspace.'
-				);
-			} else {
-				vscode.commands.executeCommand('revealInExplorer', uri);
-			}
-		} else {
-			this._onRequestOpenEditorToSide.fire(uri);
-		}
-	}
-
-	private findFullLinkRegex(input: string, links: Array<vscode.TerminalLink>) {
+	private _findFullLinkRegex(input: string, links: Array<vscode.TerminalLink>) {
 		const fullLinkRegex = new RegExp(
 			`\\b\\w{2,20}:\\/\\/(?:localhost|${HOST}|:\\d{2,5})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
 			'g'
@@ -148,5 +149,37 @@ export class serverTaskLinkProvider
 				}
 			}
 		} while (fullURLMatches);
+	}
+
+	/**
+	 * Opens a terminal link in the editor.
+	 * Expected behavior:
+	 * - If it's a filename, show files by opening them in editor.
+	 * - If it's a directory, highlight it in the file explorer. Will show an error if that directory is not in the current workspace(s).
+	 * @param {string} file the path to open in the editor
+	 * @param {boolean} isDir whether it is a directory.
+	 */
+	private _openRelativeLinkInWorkspace(file: string, isDir: boolean): void {
+		file = unescape(file);
+		const isWorkspaceFile =
+			this._workspaceManager.pathExistsRelativeToAnyWorkspace(file);
+
+		const fullPath = isWorkspaceFile
+			? this._workspaceManager.workspace?.uri + file
+			: 'file:///' + this._endpointManager.decodeLooseFileEndpoint(file);
+
+		const uri = vscode.Uri.parse(fullPath);
+
+		if (isDir) {
+			if (!this._workspaceManager.absPathInAnyWorkspace(uri.fsPath)) {
+				vscode.window.showErrorMessage(
+					'Cannot reveal folder. It is not in the open workspace.'
+				);
+			} else {
+				vscode.commands.executeCommand('revealInExplorer', uri);
+			}
+		} else {
+			this._onRequestOpenEditorToSide.fire(uri);
+		}
 	}
 }
