@@ -243,7 +243,10 @@ export class Manager extends Disposable {
 			} else {
 				this.launchFileInExternalBrowser(file, relative, debug);
 			}
-			if (this.workspace && this._runTaskWithExternalPreview) {
+			if (
+				this._workspaceManager.numPaths > 0 &&
+				this._runTaskWithExternalPreview
+			) {
 				this._serverTaskProvider.extRunTask(
 					SettingUtil.GetConfig(this._extensionUri)
 						.browserPreviewLaunchServerLogging
