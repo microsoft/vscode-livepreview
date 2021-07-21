@@ -100,6 +100,11 @@ export class ServerTaskTerminal
 		status: ServerStartedStatus
 	): void {
 		const formattedAddress = this._formatAddr(externalUri.toString());
+		if (!this._verbose) {
+			this.writeEmitter.fire(
+				`This task does not have logging. To get logging, use the "--verbose" flag.\r\n`
+			);
+		}
 		switch (status) {
 			case ServerStartedStatus.JUST_STARTED: {
 				this.writeEmitter.fire(`Started Server on ${formattedAddress}\r\n`);

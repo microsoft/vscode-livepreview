@@ -474,7 +474,10 @@ export class Manager extends Disposable {
 					!this._serverTaskProvider.isRunning &&
 					this._runTaskWithExternalPreview
 				) {
-					this._serverTaskProvider.extRunTask(true);
+					this._serverTaskProvider.extRunTask(
+						SettingUtil.GetConfig(this._extensionUri)
+							.browserPreviewLaunchServerLogging
+					);
 				}
 			})
 		);

@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as path from 'path';
 
 /**
@@ -44,8 +45,12 @@ export class PathUtil {
 	/**
 	 * @param {string} file a file path.
 	 * @returns {string} The parent pathname that the file belongs to; e.g. `c:/a/file/path.txt` returns `c:/a/file/`.
+	 * Using `c:/a/file/` should return `c:/a/file/` since `c:/a/file/` is a directory already.
 	 */
 	public static GetParentDir(file: string): string {
+		if (fs.existsSync(file) && fs.statSync(file).isDirectory()) {
+			return file;
+		}
 		return path.dirname(file);
 	}
 
@@ -59,9 +64,17 @@ export class PathUtil {
 
 	/**
 	 * @param {string} file a file path.
+	 * @param {boolean} returnEmptyOnDir whether to return an empty string when given an existing directory.
 	 * @returns {string} The filename from the path; e.g. `c:/a/file/path.txt` returns `path.txt`.
 	 */
-	public static GetFileName(file: string): string {
+	public static GetFileName(file: string, returnEmptyOnDir = false): string {
+		if (
+			returnEmptyOnDir &&
+			fs.existsSync(file) &&
+			fs.statSync(file).isDirectory()
+		) {
+			return '';
+		}
 		return path.basename(file);
 	}
 

@@ -40,7 +40,7 @@ export class EndpointManager extends Disposable {
 	public encodeLooseFileEndpoint(location: string): string {
 		const parent = PathUtil.GetImmediateParentDir(location);
 		let fullParent = PathUtil.GetParentDir(location);
-		const child = PathUtil.GetFileName(location);
+		const child = PathUtil.GetFileName(location, true);
 
 		fullParent = PathUtil.ConvertToUnixPath(fullParent);
 		this.validEndpointRoots.add(fullParent);

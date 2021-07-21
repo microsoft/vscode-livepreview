@@ -29,3 +29,5 @@ export const UriSchemes: any = {
 };
 
 export const LIVE_PREVIEW_SERVER_ON = 'LivePreviewServerOn';
+
+export const TASK_TERMINAL_NAME = 'Run Server';

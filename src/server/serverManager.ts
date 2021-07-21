@@ -170,7 +170,7 @@ export class Server extends Disposable {
 		this._isServerOn = false;
 		this._statusBar.ServerOff();
 
-		this.showServerStatusMessage('Server Closed');
+		this.showServerStatusMessage('Server Stopped');
 		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, false);
 	}
 
@@ -247,7 +247,7 @@ export class Server extends Disposable {
 		this._statusBar.ServerOn(this._httpServer.port);
 
 		this.showServerStatusMessage(
-			`Server Opened on Port ${this._httpServer.port}`
+			`Server Started on Port ${this._httpServer.port}`
 		);
 		this._connectionManager.connected({
 			port: this._httpServer.port,
