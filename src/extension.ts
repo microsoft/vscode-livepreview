@@ -184,6 +184,38 @@ export function activate(context: vscode.ExtensionContext): void {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.start.externalDebugPreview.atIndex`,
+			() => {
+				/* __GDPR__
+					"preview" :{
+						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					}
+				*/
+				reporter.sendTelemetryEvent('preview', {
+					type: 'external',
+					location: 'atIndex',
+					debug: 'true',
+				});
+				manager.showPreviewInBrowser('/', true, true);
+			}
+		)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.start.debugPreview.atIndex`,
+			() => {
+				// TODO: implement internalDebugPreview and use settings to choose which one to launch
+				vscode.commands.executeCommand(
+					`${SETTINGS_SECTION_ID}.start.externalDebugPreview.atIndex`
+				);
+			}
+		)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atIndex`,
 			() => {
 				/* __GDPR__
@@ -223,6 +255,40 @@ export function activate(context: vscode.ExtensionContext): void {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.start.externalDebugPreview.atFile`,
+			(file?: any, relativeFileString = true) => {
+				/* __GDPR__
+					"preview" :{
+						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
+					}
+				*/
+				reporter.sendTelemetryEvent('preview', {
+					type: 'external',
+					location: 'atFile',
+					debug: 'true',
+				});
+				handleOpenFile(false, file, relativeFileString, true);
+			}
+		)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.start.debugPreview.atFile`,
+			(file?: any, relativeFileString = true) => {
+				// TODO: implement internalDebugPreview and use settings to choose which one to launch
+				vscode.commands.executeCommand(
+					`${SETTINGS_SECTION_ID}.start.externalDebugPreview.atFile`,
+					file,
+					relativeFileString
+				);
+			}
+		)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
 			(file?: any, relativeFileString = true) => {
 				/* __GDPR__
@@ -250,26 +316,6 @@ export function activate(context: vscode.ExtensionContext): void {
 				vscode.window.showErrorMessage('Server already off.');
 			}
 		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand(
-			`${SETTINGS_SECTION_ID}.start.externalDebug.atFile`,
-			(file?: any, relativeFileString = true) => {
-				/* __GDPR__
-					"preview" :{
-						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
-						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
-					}
-				*/
-				reporter.sendTelemetryEvent('preview', {
-					type: 'external',
-					location: 'atFile',
-					debug: 'true',
-				});
-				handleOpenFile(false, file, relativeFileString, true);
-			}
-		)
 	);
 
 	if (vscode.window.registerWebviewPanelSerializer) {

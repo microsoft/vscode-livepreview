@@ -468,19 +468,19 @@ export class Manager extends Disposable {
 
 		this._previewActive = true;
 
-		this._register(
-			this.currentPanel.onShiftToExternalBrowser(() => {
-				if (
-					!this._serverTaskProvider.isRunning &&
-					this._runTaskWithExternalPreview
-				) {
-					this._serverTaskProvider.extRunTask(
-						SettingUtil.GetConfig(this._extensionUri)
-							.browserPreviewLaunchServerLogging
-					);
-				}
-			})
-		);
+		// this._register(
+		// 	this.currentPanel.onShiftToExternalBrowser(() => {
+		// 		if (
+		// 			!this._serverTaskProvider.isRunning &&
+		// 			this._runTaskWithExternalPreview
+		// 		) {
+		// 			this._serverTaskProvider.extRunTask(
+		// 				SettingUtil.GetConfig(this._extensionUri)
+		// 					.browserPreviewLaunchServerLogging
+		// 			);
+		// 		}
+		// 	})
+		// );
 
 		this._register(
 			this.currentPanel.onDispose(() => {

@@ -2,7 +2,7 @@
 	"name": "live-server",
 	"displayName": "Live Preview",
 	"description": "Hosts a local server in your workspace for you to preview your webpages.",
-	"version": "0.2.4",
+	"version": "0.2.5",
 	"preview": true,
 	"aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
 	"publisher": "ms-vscode",
@@ -33,7 +33,8 @@
 		"live",
 		"browser",
 		"reload",
-		"refresh"
+		"refresh",
+		"livepreview"
 	],
 	"activationEvents": [
 		"workspaceContains:**/*.{html,htm,xhtml}",
@@ -64,6 +65,11 @@
 				"icon": "$(open-preview)"
 			},
 			{
+				"command": "livePreview.start.debugPreview.atFile",
+				"title": "Live Preview: Show Debug Preview",
+				"icon": "$(debug-alt)"
+			},
+			{
 				"command": "livePreview.start.externalPreview.atIndex",
 				"title": "Live Preview: Show Preview at Index (External Browser)"
 			},
@@ -72,12 +78,17 @@
 				"title": "Live Preview: Show Preview at Index (Internal Browser)"
 			},
 			{
+				"command": "livePreview.start.externalDebugPreview.atIndex",
+				"title": "Live Preview: Show Debug Preview at Index (External Browser)"
+			},
+			{
 				"command": "livePreview.start.externalPreview.atFile",
 				"title": "Live Preview: Show Preview (External Browser)"
 			},
 			{
-				"command": "livePreview.start.externalDebug.atFile",
-				"title": "Live Preview: Debug Preview (External Browser)"
+				"command": "livePreview.start.externalDebugPreview.atFile",
+				"title": "Live Preview: Show Debug Preview (External Browser)",
+				"icon": "$(debug-alt)"
 			},
 			{
 				"command": "livePreview.start.internalPreview.atFile",
@@ -93,11 +104,18 @@
 			}
 		],
 		"menus": {
-			"editor/title": [
+			"editor/title/run": [
 				{
 					"command": "livePreview.start.preview.atFile",
-					"when": "editorLangId == html && !notebookEditorFocused",
-					"group": "navigation"
+					"group": "1_livepreview@1",
+					"title": "preview file",
+					"when": "resourceLangId == html"
+				},
+				{
+					"command": "livePreview.start.debugPreview.atFile",
+					"group": "1_livepreview@2",
+					"title": "preview file",
+					"when": "resourceLangId == html"
 				}
 			],
 			"explorer/context": [
@@ -146,6 +164,10 @@
 					"when": "false"
 				},
 				{
+					"command": "livePreview.start.externalDebugPreview.atIndex",
+					"when": "false"
+				},
+				{
 					"command": "livePreview.start.internalPreview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "1_livepreview"
@@ -156,7 +178,7 @@
 					"group": "1_livepreview"
 				},
 				{
-					"command": "livePreview.start.externalDebug.atFile",
+					"command": "livePreview.start.externalDebugPreview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "1_livepreview"
 				},
@@ -234,6 +256,11 @@
 					"type": "string",
 					"default": "",
 					"description": "The file to automatically show upon starting the server. Leave blank to open at the index."
+				},
+				"livePreview.debugOnExternalPreview": {
+					"type": "boolean",
+					"default": true,
+					"description": "Whether or not to attach the JavaScript debugger on external preview launches."
 				}
 			}
 		},
