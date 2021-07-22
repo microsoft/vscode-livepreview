@@ -262,7 +262,6 @@
 		"watch": "node codicon_copy.js && tsc -watch -p ./",
 		"format": "prettier ./{src,media}/**/*.{ts,css,html,js} --write",
 		"download-api": "npx vscode-dts dev",
-		"postdownload-api": "npx vscode-dts main",
 		"postinstall": "npm run download-api"
 	},
 	"devDependencies": {
