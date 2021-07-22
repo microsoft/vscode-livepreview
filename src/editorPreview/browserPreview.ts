@@ -187,7 +187,6 @@ export class BrowserPreview extends Disposable {
 				)}.atFile`,
 				uri
 			);
-			// vscode.env.openExternal(uri);
 		} else {
 			const uri = vscode.Uri.parse(givenURL);
 			vscode.window
