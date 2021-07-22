@@ -20,13 +20,6 @@ export class BrowserPreview extends Disposable {
 	);
 	public readonly onDispose = this._onDisposeEmitter.event;
 
-	// _onShiftToExternalBrowser is fired when the user presses the "Open in browser" button.
-	// private readonly _onShiftToExternalBrowser = this._register(
-	// 	new vscode.EventEmitter<void>()
-	// );
-	// public readonly onShiftToExternalBrowser =
-	// 	this._onShiftToExternalBrowser.event;
-
 	/**
 	 * @description close the embedded browser.
 	 */
@@ -188,9 +181,6 @@ export class BrowserPreview extends Disposable {
 				this._webviewComm.currentAddress
 			);
 			const uri = vscode.Uri.parse(givenURI.toString());
-			// tells manager that it can launch browser immediately
-			// task will run in case browser preview is closed.
-			// this._onShiftToExternalBrowser.fire();
 			vscode.commands.executeCommand(
 				`${SETTINGS_SECTION_ID}.start.${SettingUtil.GetExternalPreviewType(
 					this._extensionUri
