@@ -98,7 +98,9 @@ export function activate(context: vscode.ExtensionContext): void {
 			if (filePath == '') {
 				if (manager.workspace) {
 					vscode.commands.executeCommand(
-						`${SETTINGS_SECTION_ID}.start.preview.atIndex`
+						`${SETTINGS_SECTION_ID}.start.preview.atFile`,
+						'/',
+						true
 					);
 				} else {
 					manager.openServer();
@@ -129,74 +131,14 @@ export function activate(context: vscode.ExtensionContext): void {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
-			`${SETTINGS_SECTION_ID}.start.preview.atIndex`,
-			(file?: any) => {
-				const previewType = SettingUtil.GetPreviewType(context.extensionUri);
+			`${SETTINGS_SECTION_ID}.start.debugPreview.atFile`,
+			(file?: any, relativeFileString = true) => {
+				// TODO: implement internalDebugPreview and use settings to choose which one to launch
 				vscode.commands.executeCommand(
-					`${SETTINGS_SECTION_ID}.start.${previewType}.atIndex`,
-					file
+					`${SETTINGS_SECTION_ID}.start.externalDebugPreview.atFile`,
+					file,
+					relativeFileString
 				);
-			}
-		)
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand(
-			`${SETTINGS_SECTION_ID}.setDefaultOpenFile`,
-			(file: vscode.Uri) => {
-				if (manager.absPathInDefaultWorkspace(file.fsPath)) {
-					const fileRelativeToWorkspace =
-						manager.getFileRelativeToDefaultWorkspace(file.fsPath) ?? '';
-					SettingUtil.UpdateSettings(
-						Settings.defaultPreviewPath,
-						fileRelativeToWorkspace,
-						false
-					);
-				} else {
-					SettingUtil.UpdateSettings(
-						Settings.defaultPreviewPath,
-						file.fsPath,
-						false
-					);
-				}
-			}
-		)
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand(
-			`${SETTINGS_SECTION_ID}.start.externalPreview.atIndex`,
-			() => {
-				/* __GDPR__
-					"preview" :{
-						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
-						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
-					}
-				*/
-				reporter.sendTelemetryEvent('preview', {
-					type: 'external',
-					location: 'atIndex',
-				});
-				manager.showPreviewInBrowser();
-			}
-		)
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand(
-			`${SETTINGS_SECTION_ID}.start.internalPreview.atIndex`,
-			() => {
-				/* __GDPR__
-					"preview" :{
-						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
-						"location" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"}
-					}
-				*/
-				reporter.sendTelemetryEvent('preview', {
-					type: 'internal',
-					location: 'atIndex',
-				});
-				manager.createOrShowEmbeddedPreview();
 			}
 		)
 	);
@@ -241,20 +183,8 @@ export function activate(context: vscode.ExtensionContext): void {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.end`, () => {
-			if (!manager.closeServer()) {
-				/* __GDPR__
-					"server.forceClose" : {}
-				*/
-				reporter.sendTelemetryEvent('server.forceClose');
-				vscode.window.showErrorMessage('Server already off.');
-			}
-		})
-	);
-
-	context.subscriptions.push(
 		vscode.commands.registerCommand(
-			`${SETTINGS_SECTION_ID}.start.externalDebug.atFile`,
+			`${SETTINGS_SECTION_ID}.start.externalDebugPreview.atFile`,
 			(file?: any, relativeFileString = true) => {
 				/* __GDPR__
 					"preview" :{
@@ -268,6 +198,41 @@ export function activate(context: vscode.ExtensionContext): void {
 					debug: 'true',
 				});
 				handleOpenFile(false, file, relativeFileString, true);
+			}
+		)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.end`, () => {
+			if (!manager.closeServer()) {
+				/* __GDPR__
+					"server.forceClose" : {}
+				*/
+				reporter.sendTelemetryEvent('server.forceClose');
+				vscode.window.showErrorMessage('Server already off.');
+			}
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.setDefaultOpenFile`,
+			(file: vscode.Uri) => {
+				if (manager.absPathInDefaultWorkspace(file.fsPath)) {
+					const fileRelativeToWorkspace =
+						manager.getFileRelativeToDefaultWorkspace(file.fsPath) ?? '';
+					SettingUtil.UpdateSettings(
+						Settings.defaultPreviewPath,
+						fileRelativeToWorkspace,
+						false
+					);
+				} else {
+					SettingUtil.UpdateSettings(
+						Settings.defaultPreviewPath,
+						file.fsPath,
+						false
+					);
+				}
 			}
 		)
 	);

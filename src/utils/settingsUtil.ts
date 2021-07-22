@@ -14,6 +14,7 @@ export interface LiveServerConfigItem {
 	notifyOnOpenLooseFile: boolean;
 	runTaskWithExternalPreview: boolean;
 	defaultPreviewPath: string;
+	debugOnExternalPreview: boolean;
 }
 
 /**
@@ -53,6 +54,7 @@ export const Settings: any = {
 	notifyOnOpenLooseFile: 'notifyOnOpenLooseFile',
 	runTaskWithExternalPreview: 'tasks.runTaskWithExternalPreview',
 	defaultPreviewPath: 'defaultPreviewPath',
+	debugOnExternalPreview: 'debugOnExternalPreview',
 };
 
 /**
@@ -61,6 +63,7 @@ export const Settings: any = {
 export const PreviewType: any = {
 	internalPreview: 'internalPreview',
 	externalPreview: 'externalPreview',
+	externalDebugPreview: 'externalDebugPreview',
 };
 
 export class SettingUtil {
@@ -106,6 +109,10 @@ export class SettingUtil {
 				true
 			),
 			defaultPreviewPath: config.get<string>(Settings.defaultPreviewPath, ''),
+			debugOnExternalPreview: config.get<boolean>(
+				Settings.debugOnExternalPreview,
+				true
+			),
 		};
 	}
 
@@ -121,10 +128,17 @@ export class SettingUtil {
 		) {
 			return PreviewType.internalPreview;
 		} else {
-			return PreviewType.externalPreview;
+			return SettingUtil.GetExternalPreviewType(extensionUri);
 		}
 	}
 
+	public static GetExternalPreviewType(extensionUri: vscode.Uri): string {
+		if (SettingUtil.GetConfig(extensionUri).debugOnExternalPreview) {
+			return PreviewType.externalDebugPreview;
+		} else {
+			return PreviewType.externalPreview;
+		}
+	}
 	/**
 	 * @description Update a Live Preview setting
 	 * @param {string} settingSuffix the suffix, `livePreview.<suffix>` of the setting to set.

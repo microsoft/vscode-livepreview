@@ -7,6 +7,7 @@ import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { WebviewComm } from './webviewComm';
 import { FormatDateTime } from '../utils/utils';
+import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
 
 /**
  * @description the embedded preview object, containing the webview panel showing the preview.
@@ -18,13 +19,6 @@ export class BrowserPreview extends Disposable {
 		new vscode.EventEmitter<void>()
 	);
 	public readonly onDispose = this._onDisposeEmitter.event;
-
-	// _onShiftToExternalBrowser is fired when the user presses the "Open in browser" button.
-	private readonly _onShiftToExternalBrowser = this._register(
-		new vscode.EventEmitter<void>()
-	);
-	public readonly onShiftToExternalBrowser =
-		this._onShiftToExternalBrowser.event;
 
 	/**
 	 * @description close the embedded browser.
@@ -187,10 +181,12 @@ export class BrowserPreview extends Disposable {
 				this._webviewComm.currentAddress
 			);
 			const uri = vscode.Uri.parse(givenURI.toString());
-			// tells manager that it can launch browser immediately
-			// task will run in case browser preview is closed.
-			this._onShiftToExternalBrowser.fire();
-			vscode.env.openExternal(uri);
+			vscode.commands.executeCommand(
+				`${SETTINGS_SECTION_ID}.start.${SettingUtil.GetExternalPreviewType(
+					this._extensionUri
+				)}.atFile`,
+				uri
+			);
 		} else {
 			const uri = vscode.Uri.parse(givenURL);
 			vscode.window
@@ -202,7 +198,13 @@ export class BrowserPreview extends Disposable {
 				.then((selection: vscode.MessageItem | undefined) => {
 					if (selection) {
 						if (selection === OPEN_EXTERNALLY) {
-							vscode.env.openExternal(uri);
+							// vscode.env.openExternal(uri);
+							vscode.commands.executeCommand(
+								`${SETTINGS_SECTION_ID}.start.${SettingUtil.GetExternalPreviewType(
+									this._extensionUri
+								)}.atFile`,
+								uri
+							);
 						}
 					}
 				});
