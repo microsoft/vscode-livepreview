@@ -125,6 +125,10 @@
 					"when": "false"
 				},
 				{
+					"command": "livePreview.start.debugPreview.atFile",
+					"when": "false"
+				},
+				{
 					"command": "livePreview.start.internalPreview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "1_livepreview"
