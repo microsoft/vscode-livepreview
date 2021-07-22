@@ -8,4 +8,3 @@ media/extension*
 */.vscode/*
 .vscode/*
 .devcontainer/*
-*.d.ts
