@@ -21,11 +21,13 @@ import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { serverMsg } from '../manager';
 import { PathUtil } from '../utils/pathUtil';
+import { serverPortAttributesProvider } from './serverPortAttributesProvider';
 
 export class Server extends Disposable {
 	private readonly _httpServer: HttpServer;
 	private readonly _wsServer: WSServer;
 	private readonly _statusBar: StatusBarNotifier;
+	private readonly _portAttributes: serverPortAttributesProvider;
 	private _isServerOn = false;
 	private _wsConnected = false;
 	private _httpConnected = false;
@@ -40,13 +42,15 @@ export class Server extends Disposable {
 		_userDataDir: string | undefined
 	) {
 		super();
+		this._portAttributes = this._register(new serverPortAttributesProvider());
 		this._httpServer = this._register(
 			new HttpServer(
 				_extensionUri,
 				_reporter,
 				_endpointManager,
 				_workspaceManager,
-				_connectionManager
+				_connectionManager,
+				this._portAttributes
 			)
 		);
 
@@ -57,7 +61,8 @@ export class Server extends Disposable {
 				_reporter,
 				_endpointManager,
 				_workspaceManager,
-				_connectionManager
+				_connectionManager,
+				this._portAttributes
 			)
 		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));

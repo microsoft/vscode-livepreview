@@ -1,4 +1,5 @@
 {
+	"enableProposedApi": true,
 	"name": "live-server",
 	"displayName": "Live Preview",
 	"description": "Hosts a local server in your workspace for you to preview your webpages.",
@@ -259,7 +260,10 @@
 		"build-preview": "npx webpack-cli --mode development",
 		"compile": "node codicon_copy.js && tsc -p ./",
 		"watch": "node codicon_copy.js && tsc -watch -p ./",
-		"format": "prettier ./{src,media}/**/*.{ts,css,html,js} --write"
+		"format": "prettier ./{src,media}/**/*.{ts,css,html,js} --write",
+		"download-api": "npx vscode-dts dev",
+		"postdownload-api": "npx vscode-dts main",
+		"postinstall": "npm run download-api"
 	},
 	"devDependencies": {
 		"@types/mime": "^2.0.3",

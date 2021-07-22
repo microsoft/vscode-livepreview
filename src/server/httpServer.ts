@@ -11,18 +11,20 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { PathUtil } from '../utils/pathUtil';
+import { serverPortAttributesProvider } from './serverPortAttributesProvider';
 
 export class HttpServer extends Disposable {
 	private _server: any;
 	private _contentLoader: ContentLoader;
-	public port = 0;
+	public _port = 0;
 
 	constructor(
 		_extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
 		private readonly _workspaceManager: WorkspaceManager,
-		_connectionManager: ConnectionManager
+		_connectionManager: ConnectionManager,
+		private readonly _portAttributes: serverPortAttributesProvider
 	) {
 		super();
 		this._contentLoader = this._register(
@@ -34,6 +36,18 @@ export class HttpServer extends Disposable {
 				_connectionManager
 			)
 		);
+	}
+
+	/**
+	 * @returns {number} the port where the HTTP server is hosted.
+	 */
+	public get port() {
+		return this._port;
+	}
+
+	private set port(portNum: number) {
+		this._portAttributes.httpPort = portNum;
+		this._port = portNum;
 	}
 
 	/**
