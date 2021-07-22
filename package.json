@@ -40,12 +40,8 @@
 		"workspaceContains:**/*.{html,htm,xhtml}",
 		"onWebviewPanel:browserPreview",
 		"onCommand:livePreview.start",
-		"onCommand:livePreview.start.preview.atIndex",
 		"onCommand:livePreview.start.preview.atFile",
-		"onCommand:livePreview.start.externalPreview.atIndex",
-		"onCommand:livePreview.start.internalPreview.atIndex",
-		"onCommand:livePreview.start.externalPreview.atFile",
-		"onCommand:livePreview.start.internalPreview.atFile",
+		"onCommand:livePreview.start.debugPreview.atFile",
 		"onCommand:livePreview.end"
 	],
 	"main": "./out/extension.js",
@@ -56,10 +52,6 @@
 				"title": "Live Preview: Start Server"
 			},
 			{
-				"command": "livePreview.start.preview.atIndex",
-				"title": "Live Preview: Show Preview at Index Page"
-			},
-			{
 				"command": "livePreview.start.preview.atFile",
 				"title": "Live Preview: Show Preview",
 				"icon": "$(open-preview)"
@@ -68,18 +60,6 @@
 				"command": "livePreview.start.debugPreview.atFile",
 				"title": "Live Preview: Show Debug Preview",
 				"icon": "$(debug-alt)"
-			},
-			{
-				"command": "livePreview.start.externalPreview.atIndex",
-				"title": "Live Preview: Show Preview at Index (External Browser)"
-			},
-			{
-				"command": "livePreview.start.internalPreview.atIndex",
-				"title": "Live Preview: Show Preview at Index (Internal Browser)"
-			},
-			{
-				"command": "livePreview.start.externalDebugPreview.atIndex",
-				"title": "Live Preview: Show Debug Preview at Index (External Browser)"
 			},
 			{
 				"command": "livePreview.start.externalPreview.atFile",
@@ -104,18 +84,11 @@
 			}
 		],
 		"menus": {
-			"editor/title/run": [
+			"editor/title": [
 				{
 					"command": "livePreview.start.preview.atFile",
-					"group": "1_livepreview@1",
-					"title": "preview file",
-					"when": "resourceLangId == html"
-				},
-				{
-					"command": "livePreview.start.debugPreview.atFile",
-					"group": "1_livepreview@2",
-					"title": "preview file",
-					"when": "resourceLangId == html"
+					"when": "editorLangId == html && !notebookEditorFocused",
+					"group": "navigation"
 				}
 			],
 			"explorer/context": [
@@ -149,22 +122,6 @@
 				},
 				{
 					"command": "livePreview.start.preview.atFile",
-					"when": "false"
-				},
-				{
-					"command": "livePreview.start.preview.atIndex",
-					"when": "false"
-				},
-				{
-					"command": "livePreview.start.externalPreview.atIndex",
-					"when": "false"
-				},
-				{
-					"command": "livePreview.start.internalPreview.atIndex",
-					"when": "false"
-				},
-				{
-					"command": "livePreview.start.externalDebugPreview.atIndex",
 					"when": "false"
 				},
 				{
