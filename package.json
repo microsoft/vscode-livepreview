@@ -61,7 +61,7 @@
 			},
 			{
 				"command": "livePreview.start.debugPreview.atFile",
-				"title": "Live Preview: Show Debug Preview",
+				"title": "Live Preview: Debug Preview",
 				"icon": "$(debug-alt)"
 			},
 			{
@@ -87,11 +87,13 @@
 			}
 		],
 		"menus": {
-			"editor/title": [
+			"editor/title/run": [
 				{
 					"command": "livePreview.start.preview.atFile",
-					"when": "editorLangId == html && !notebookEditorFocused",
-					"group": "navigation"
+					"group": "1_livepreview@1"},
+				{
+					"command": "livePreview.start.debugPreview.atFile",
+					"group": "1_livepreview@2"
 				}
 			],
 			"explorer/context": [
