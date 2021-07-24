@@ -75,9 +75,16 @@ function onLoad() {
  */
 function createConsoleOverride(type) {
 	return function (msg) {
+		let stringifiedMsg = msg.toString();
+		try {
+			stringifiedMsg = JSON.stringify(msg);
+		} catch (err) {
+			// noop
+		}
+
 		const messagePayload = {
 			type: type,
-			data: JSON.stringify(msg),
+			data: stringifiedMsg,
 		};
 		postParentMessage({
 			command: 'console',
