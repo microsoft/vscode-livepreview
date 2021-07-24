@@ -37,15 +37,14 @@
 		"livepreview"
 	],
 	"activationEvents": [
-		"workspaceContains:**/*.{html,htm,xhtml}",
+		"onLanguage:html",
 		"onWebviewPanel:browserPreview",
 		"onCommand:livePreview.start",
 		"onCommand:livePreview.start.preview.atFile",
 		"onCommand:livePreview.start.debugPreview.atFile",
 		"onCommand:livePreview.start.internalPreview.atFile",
 		"onCommand:livePreview.start.externalPreview.atFile",
-		"onCommand:livePreview.start.externalDebugPreview.atFile",
-		"onCommand:livePreview.end"
+		"onCommand:livePreview.start.externalDebugPreview.atFile"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
