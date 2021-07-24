@@ -2,15 +2,28 @@
 /* global acquireVsCodeApi, WS_URL */
 // This script will be run within the webview itself
 (function () {
-	const vscode = acquireVsCodeApi();
-	const connection = new WebSocket(WS_URL);
-	var fadeLinkID = null;
+	const KEYCODE_ENTER = 13,
+		KEYCODE_LEFT = 37,
+		KEYCODE_RIGHT = 39,
+		vscode = acquireVsCodeApi(),
+		connection = new WebSocket(WS_URL),
+		leftMostNavGroup = [
+			document.getElementById('back'),
+			document.getElementById('forward'),
+			document.getElementById('reload'),
+		],
+		rightMostNavGroup = [
+			document.getElementById('browser-open'),
+			document.getElementById('find'),
+		],
+		findMostNavGroup = [
+			document.getElementById('find-prev'),
+			document.getElementById('find-next'),
+			document.getElementById('find-x'),
+		];
 
-	const leftMostNavGroup = [
-		document.getElementById('back'),
-		document.getElementById('forward'),
-		document.getElementById('reload'),
-	];
+	var fadeLinkID = null;
+	var ctrlDown = false;
 
 	onLoad();
 
@@ -20,6 +33,8 @@
 	function onLoad() {
 		// handle the arrow-key navigation between the leftmost nav group.
 		handleNavGroup(leftMostNavGroup);
+		handleNavGroup(rightMostNavGroup);
+		handleNavGroup(findMostNavGroup);
 
 		connection.onerror = (error) => {
 			console.log('WebSocket error: ');
@@ -37,15 +52,40 @@
 		// add listeners to all nav buttons.
 		addNavButtonListeners();
 
-		document.getElementById('url-input').addEventListener('keyup', handleKeyUp);
+		document.getElementById('url-input').addEventListener('keydown', (e) => {
+			if (checkKeyCodeDetected(e, KEYCODE_ENTER)) {
+				goToUrl();
+			}
+		});
+
+		// set up keys for navigating find
+		document.getElementById('find-input').addEventListener('keydown', (e) => {
+			if (checkKeyCodeDetected(e, KEYCODE_ENTER)) {
+				findNext();
+			}
+		});
+
+		document.addEventListener('keydown', (e) => {
+			ctrlDown = e.ctrlKey || e.metaKey;
+			if ((e.key == 'F' || e.key == 'f') && ctrlDown) {
+				showFind();
+			}
+		});
+
+		document.addEventListener('keyup', (e) => {
+			ctrlDown = e.ctrlKey || e.metaKey;
+		});
 
 		window.addEventListener('message', (event) => {
 			handleMessage(event.data); // The json data that the extension sent
 		});
 
-		document
-			.getElementById('hostedContent')
-			.contentWindow.postMessage('setup-parent-listener', '*');
+		document.getElementById('hostedContent').contentWindow.postMessage(
+			{
+				command: 'setup-parent-listener',
+			},
+			'*'
+		);
 	}
 
 	/**
@@ -63,45 +103,28 @@
 		vscode.setState({ currentAddress: pathname });
 	}
 
-	/**
-	 * @description handling key up on URL bar.
-	 * @param {keyup} event the keyup info.
-	 */
-	function handleKeyUp(event) {
-		if (event.keyCode === 13) {
-			event.preventDefault();
-			const linkTarget = document.getElementById('url-input').value;
-			vscode.postMessage({
-				command: 'go-to-file',
-				text: linkTarget,
-			});
-		}
+	function goToUrl() {
+		const linkTarget = document.getElementById('url-input').value;
+		vscode.postMessage({
+			command: 'go-to-file',
+			text: linkTarget,
+		});
 	}
 
-	/**
-	 * @description handle key down in leftmost nav button area.
-	 * @param {keydown} event the keydown info.
-	 * @param {HTMLElement[]} nav the navigation elements.
-	 * @param {number} startIndex the index of the current HTMLElement focused (in `nav` array).
-	 */
-	function handleNavKeyDown(event, nav, startIndex) {
-		if (event.keyCode === 37) {
-			// left
-			moveFocusNav(false, nav, startIndex);
-			event.preventDefault();
-		} else if (event.keyCode === 39) {
-			// right
-			moveFocusNav(true, nav, startIndex);
-			event.preventDefault();
-		}
+	function checkKeyCodeDetected(event, keyCode) {
+		return event.keyCode == keyCode;
 	}
 
 	function handleNavGroup(nav) {
 		for (const i in nav) {
 			const currIndex = i;
-			nav[i].addEventListener('keydown', (event) =>
-				handleNavKeyDown(event, nav, currIndex)
-			);
+			nav[i].addEventListener('keydown', (e) => {
+				if (checkKeyCodeDetected(e, KEYCODE_LEFT)) {
+					moveFocusNav(false, nav, currIndex);
+				} else if (checkKeyCodeDetected(e, KEYCODE_RIGHT)) {
+					moveFocusNav(true, nav, currIndex);
+				}
+			});
 		}
 	}
 
@@ -117,7 +140,7 @@
 		var modifier = right ? 1 : -1;
 		var index = startIndex;
 		do {
-			var newIndex = index + modifier;
+			var newIndex = Number(index) + modifier;
 			if (newIndex >= nav.length) {
 				newIndex = 0;
 			} else if (newIndex < 0) {
@@ -174,14 +197,25 @@
 	function handleMessage(message) {
 		switch (message.command) {
 			case 'refresh':
-				document
-					.getElementById('hostedContent')
-					.contentWindow.postMessage('refresh', '*');
+				document.getElementById('hostedContent').contentWindow.postMessage(
+					JSON.stringify({
+						command: 'setup-parent-listener',
+					}),
+					'*'
+				);
 				break;
 			case 'changed-history': {
 				const msgJSON = JSON.parse(message.text);
 				document.getElementById(msgJSON.element).disabled = msgJSON.disabled;
 				adjustTabIndex();
+				break;
+			}
+			case 'set-url': {
+				const msgJSON = JSON.parse(message.text);
+				// setting a new address, ensure that previous link preview is gone
+				document.getElementById('link-preview').hidden = true;
+				setURLBar(msgJSON.fullPath);
+				updateState(msgJSON.pathname);
 				break;
 			}
 			// from child iframe
@@ -202,23 +236,15 @@
 			case 'link-hover-start': {
 				if (message.text.trim().length) {
 					document.getElementById('link-preview').innerHTML = message.text;
-					fadeLinkPreview(true);
+					fadeElement(true, document.getElementById('link-preview'));
 				}
 				break;
 			}
 			// from child iframe
 			case 'link-hover-end': {
 				if (!document.getElementById('link-preview').hidden) {
-					fadeLinkPreview(false);
+					fadeElement(false, document.getElementById('link-preview'));
 				}
-				break;
-			}
-			case 'set-url': {
-				const msgJSON = JSON.parse(message.text);
-				// setting a new address, ensure that previous link preview is gone
-				document.getElementById('link-preview').hidden = true;
-				setURLBar(msgJSON.fullPath);
-				updateState(msgJSON.pathname);
 				break;
 			}
 			// from child iframe
@@ -246,6 +272,45 @@
 				connection.send(JSON.stringify(sendData));
 				break;
 			}
+			// from child iframe
+			case 'show-find-icon': {
+				document.getElementById('find-result').hidden = true;
+				var codicon = document.getElementById('find-result-icon');
+				const fromClass = message.text ? 'codicon-error' : 'codicon-pass';
+				const toClass = message.text ? 'codicon-pass' : 'codicon-error';
+				if (!codicon.classList.contains(toClass)) {
+					codicon.classList.remove(fromClass);
+					codicon.classList.add(toClass);
+				}
+				fadeElement(true, document.getElementById('find-result'));
+				break;
+			}
+			case 'show-find': {
+				showFind();
+				break;
+			}
+		}
+	}
+
+	function showFind() {
+		if (document.getElementById('findBox').hidden) {
+			fadeElement(true, document.getElementById('findBox'));
+		}
+		document.getElementById('find-input').focus();
+	}
+
+	function hideFind() {
+		if (!document.getElementById('findBox').hidden) {
+			fadeElement(false, document.getElementById('findBox'));
+			document.getElementById('find-result').hidden = true;
+		}
+	}
+
+	function toggleFind() {
+		if (document.getElementById('findBox').hidden) {
+			showFind();
+		} else {
+			hideFind();
 		}
 	}
 
@@ -253,23 +318,21 @@
 	 * @description Fade in or out the link preview.
 	 * @param {boolean} appear whether or not it should be fade from `hide -> show`; otherwise, will fade from `show -> hide`.
 	 */
-	function fadeLinkPreview(appear) {
-		var elem = document.getElementById('link-preview');
-
+	function fadeElement(appear, elem) {
 		var initOpacity = appear ? 0 : 1;
 		var finalOpacity = appear ? 1 : 0;
 
 		elem.style.opacity = initOpacity;
 		clearInterval(fadeLinkID);
 		if (appear) {
-			document.getElementById('link-preview').hidden = false;
+			elem.hidden = false;
 		}
 
 		fadeLinkID = setInterval(function () {
 			if (elem.style.opacity == finalOpacity) {
 				clearInterval(fadeLinkID);
 				if (!appear) {
-					document.getElementById('link-preview').hidden = true;
+					elem.hidden = true;
 				}
 			} else {
 				elem.style.opacity =
@@ -278,6 +341,25 @@
 		}, 25);
 	}
 
+	function findNext() {
+		document.getElementById('hostedContent').contentWindow.postMessage(
+			{
+				command: 'find-next',
+				text: document.getElementById('find-input').value,
+			},
+			'*'
+		);
+	}
+
+	function findPrev() {
+		document.getElementById('hostedContent').contentWindow.postMessage(
+			{
+				command: 'find-prev',
+				text: document.getElementById('find-input').value,
+			},
+			'*'
+		);
+	}
 	/**
 	 * @description Add funcionality to the nav buttons.
 	 */
@@ -297,15 +379,23 @@
 		document.getElementById('reload').onclick = function () {
 			document
 				.getElementById('hostedContent')
-				.contentWindow.postMessage('refresh', '*');
+				.contentWindow.postMessage({ command: 'refresh' }, '*');
 			document.getElementById('reload').blur();
 		};
 
-		document.getElementById('browserOpen').onclick = function () {
+		document.getElementById('browser-open').onclick = function () {
 			vscode.postMessage({
 				command: 'open-browser',
 				text: '',
 			});
 		};
+
+		document.getElementById('find').onclick = toggleFind;
+
+		document.getElementById('find-next').onclick = findNext;
+
+		document.getElementById('find-prev').onclick = findPrev;
+
+		document.getElementById('find-x').onclick = hideFind;
 	}
 })();

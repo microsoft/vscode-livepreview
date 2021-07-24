@@ -7,6 +7,8 @@ const ws_url = '${WS_URL}';
 const host = '${HTTP_URL}';
 const connection = new WebSocket(ws_url);
 
+let ctrlDown = false;
+
 connection.onmessage = (event) => handleSocketMessage(event.data);
 
 window.addEventListener('message', (event) => handleMessage(event), false);
@@ -64,8 +66,21 @@ function onLoad() {
 		// In embedded preview, all link clicks must be checked to see if the target page can be injected with this file's script.
 		links[i].onclick = (e) => handleLinkClick(e.target.href);
 		links[i].onmouseenter = (e) => handleLinkHoverStart(e.target.href);
-		links[i].onmouseleave = (e) => handleLinkHoverEnd();
+		links[i].onmouseleave = handleLinkHoverEnd;
 	}
+
+	document.addEventListener('keydown', (e) => {
+		ctrlDown = e.ctrlKey || e.metaKey;
+		if (e.key == 'F' || e.key == 'f') {
+			postParentMessage({
+				command: 'show-find',
+			});
+		}
+	});
+
+	document.addEventListener('keyup', (e) => {
+		ctrlDown = e.ctrlKey || e.metaKey;
+	});
 }
 
 /**
@@ -75,11 +90,16 @@ function onLoad() {
  */
 function createConsoleOverride(type) {
 	return function (msg) {
-		let stringifiedMsg = msg.toString();
+		let stringifiedMsg = 'undefined';
+
 		try {
 			stringifiedMsg = JSON.stringify(msg);
 		} catch (err) {
-			// noop
+			try {
+				stringifiedMsg = msg.toString();
+			} catch (err) {
+				// noop
+			}
 		}
 
 		const messagePayload = {
@@ -112,19 +132,69 @@ function handleSocketMessage(data) {
  * @param {any} event
  */
 function handleMessage(event) {
-	if (event.data == 'refresh') {
-		window.location.reload();
-	} else if (event.data == 'setup-parent-listener') {
-		const commandPayload = {
-			path: window.location,
-			title: document.title,
-		};
+	const message = event.data;
+	switch (message.command) {
+		case 'refresh':
+			window.location.reload();
+			break;
+		case 'setup-parent-listener': {
+			const commandPayload = {
+				path: window.location,
+				title: document.title,
+			};
 
-		postParentMessage({
-			command: 'update-path',
-			text: JSON.stringify(commandPayload),
-		});
+			postParentMessage({
+				command: 'update-path',
+				text: JSON.stringify(commandPayload),
+			});
+			break;
+		}
+		case 'find-next': {
+			let findResult = window.find(message.text);
+			if (!findResult) {
+				if (hasFindResults(message.text)) {
+					findToBeginning(message.text);
+					findResult = true;
+				}
+			}
+			postParentMessage({
+				command: 'show-find-icon',
+				text: findResult,
+			});
+			break;
+		}
+		case 'find-prev': {
+			let findResult = window.find(message.text, false, true);
+			if (!findResult) {
+				if (hasFindResults(message.text)) {
+					findToEnd(message.text);
+					findResult = true;
+				}
+			}
+			postParentMessage({
+				command: 'show-find-icon',
+				text: findResult,
+			});
+			break;
+		}
 	}
+}
+
+function hasFindResults(searchString) {
+	window.getSelection().removeAllRanges();
+	const canGoForward = window.find(searchString);
+	const canGoBack = window.find(searchString, false, true);
+	return canGoForward || canGoBack;
+}
+
+function findToBeginning(searchString) {
+	window.getSelection().removeAllRanges();
+	window.find(searchString);
+}
+
+function findToEnd(searchString) {
+	window.getSelection().removeAllRanges();
+	window.find(searchString, false, true);
 }
 
 /**

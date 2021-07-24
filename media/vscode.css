@@ -49,7 +49,8 @@ iframe {
 	background: white; /* Browsers default to a white background */
 }
 
-.controls {
+.controls,
+.find {
 	display: block;
 	width: 100%;
 	height: 2em;
@@ -115,6 +116,7 @@ iframe {
 .header nav button:focus {
 	outline-color: var(--vscode-focusBorder);
 }
+
 .content iframe {
 	display: table-cell;
 	width: 100%;
@@ -154,4 +156,45 @@ textarea::placeholder {
 	box-shadow: 1px -1px 5px rgb(129, 129, 129);
 	border-radius: 1px;
 	opacity: 0;
+}
+
+.find-container {
+	position: absolute;
+	margin-top: 3px;
+	right: 15px;
+	opacity: 0;
+}
+.find {
+	/* width:60%; */
+	border-radius: 2px;
+	padding: 5px;
+	background: var(--vscode-editor-background);
+	margin-top: 0.5em;
+	right: 0px;
+	display: block;
+}
+
+.find-input {
+	flex: 1;
+}
+.find nav {
+	display: flex;
+}
+.find button i {
+	display: flex;
+	margin-right: 0.3em;
+	padding: 0px;
+}
+
+.find-result {
+	position: relative;
+	right: 22px;
+	top: 1px;
+}
+
+.find-result i {
+	position: absolute;
+	display: flex;
+	padding: 4px 0em 4px 0px;
+	background-color: var(--vscode-input-background);
 }

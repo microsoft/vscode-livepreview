@@ -207,12 +207,48 @@ export class WebviewComm extends Disposable {
 								class="url-input" 
 								type="text">
 							<button
-								id="browserOpen"
+								id="browser-open"
 								title="Open in browser"
 								class="open-external-button icon"><i class="codicon codicon-link-external"></i></button>
+							<button
+								id="find"
+								title="find"
+								tabIndex=-1
+								class="find-button icon"><i class="codicon codicon-search"></i></button>
+							
+							
+
 						</nav>
+						<div class="find-container" id="findBox" hidden=true>
+							<nav class="find">
+								<input 
+									id="find-input"
+									class="find-input" 
+									type="text">
+								<div
+									id="find-result"
+									class="find-result icon" hidden=true><i id="find-result-icon" class="codicon" ></i></div>
+								<button
+									id="find-prev"
+									title="Previous"
+									class="find-prev-button icon"><i class="codicon codicon-chevron-up"></i></button>
+								<button
+									id="find-next"
+									tabIndex=-1
+									title="Next"
+									class="find-next-button icon"><i class="codicon codicon-chevron-down"></i></button>
+								<button
+									id="find-x"
+									tabIndex=-1
+									title="Close"
+									class="find-x-button icon"><i class="codicon codicon-chrome-close"></i></button>
+								
+							</nav>
+						</div>
 					</div>
+					
 				</div>
+				
 				<div class="content">
 					<iframe id="hostedContent" src="${httpURL}"></iframe>
 				</div>
