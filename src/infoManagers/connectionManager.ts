@@ -1,6 +1,6 @@
 import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
-import { HOST } from '../utils/constants';
+import { DEFAULT_HOST } from '../utils/constants';
 
 /**
  * @description the port information that the server manager provides.
@@ -25,10 +25,12 @@ export interface ConnectionInfo {
 export class ConnectionManager extends Disposable {
 	public httpServerBase: string | undefined;
 	public wsServerBase: string | undefined;
-	public _wsPort: number;
-	public _httpPort: number;
+	private _wsPort: number;
+	private _httpPort: number;
 	private _initHttpPort;
 	private _initWSPort;
+	private _initHost: string;
+	public host: string;
 
 	public get wsPort() {
 		return this._wsPort;
@@ -38,13 +40,24 @@ export class ConnectionManager extends Disposable {
 		return this._httpPort;
 	}
 
-	constructor(httpPort: number, wsPort: number) {
+	constructor(httpPort: number, wsPort: number, host: string) {
 		super();
 		this._initHttpPort = httpPort;
 		this._initWSPort = wsPort;
 
+		if (this._validHost(host)) {
+			this._initHost = host;
+		} else {
+			vscode.window.showErrorMessage(
+				`The local IP address "${host}" is not formatted correctly. Using default ${DEFAULT_HOST}.`
+			);
+			this._initHost = DEFAULT_HOST;
+		}
+
 		this._httpPort = this._initHttpPort;
 		this._wsPort = this._initWSPort;
+
+		this.host = this._initHost;
 	}
 
 	/**
@@ -74,6 +87,7 @@ export class ConnectionManager extends Disposable {
 	public disconnected(): void {
 		this._httpPort = this._initHttpPort;
 		this._wsPort = this._initWSPort;
+		this.host = this._initHost;
 	}
 
 	/**
@@ -82,6 +96,17 @@ export class ConnectionManager extends Disposable {
 	public set pendingPort(port: number) {
 		this._initHttpPort = port;
 		this._initWSPort = port + 1;
+	}
+
+	public set pendingHost(host: string) {
+		if (this._validHost(host)) {
+			this._initHost = host;
+		} else {
+			vscode.window.showErrorMessage(
+				`The local IP address "${host}" is not formatted correctly. Will use default host ${DEFAULT_HOST}.`
+			);
+			this._initHost = DEFAULT_HOST;
+		}
 	}
 
 	private readonly _onConnected = this._register(
@@ -106,11 +131,27 @@ export class ConnectionManager extends Disposable {
 		return vscode.env.asExternalUri(wsPortUri);
 	}
 
+	public resetHostToDefault() {
+		if (this.host != DEFAULT_HOST) {
+			vscode.window.showErrorMessage(
+				`The IP address "${this.host}" cannot be used to host the server. Using default IP ${DEFAULT_HOST}.`
+			);
+			this._initHost = DEFAULT_HOST;
+			this.host = this._initHost;
+		}
+	}
+	private _validHost(host: string) {
+		const re = new RegExp(
+			`(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}`,
+			'g'
+		);
+		return re.test(host);
+	}
 	/**
 	 * @param {number} port
 	 * @returns the local address URI.
 	 */
 	private constructLocalUri(port: number) {
-		return vscode.Uri.parse(`http://${HOST}:${port}`);
+		return vscode.Uri.parse(`http://${this.host}:${port}`);
 	}
 }

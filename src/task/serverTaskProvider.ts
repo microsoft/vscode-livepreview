@@ -7,6 +7,7 @@ import { Disposable } from '../utils/dispose';
 import { serverTaskLinkProvider } from './serverTaskLinkProvider';
 import { ServerTaskTerminal } from './serverTaskTerminal';
 import { TASK_TERMINAL_NAME } from '../utils/constants';
+import { ConnectionManager } from '../infoManagers/connectionManager';
 
 interface ServerTaskDefinition extends vscode.TaskDefinition {
 	args: string[];
@@ -62,7 +63,8 @@ export class ServerTaskProvider
 	constructor(
 		private readonly _reporter: TelemetryReporter,
 		endpointManager: EndpointManager,
-		private readonly _workspaceManager: WorkspaceManager
+		private readonly _workspaceManager: WorkspaceManager,
+		_connectionManager: ConnectionManager
 	) {
 		super();
 		this._terminalLinkProvider = this._register(
@@ -70,7 +72,8 @@ export class ServerTaskProvider
 				'',
 				_reporter,
 				endpointManager,
-				_workspaceManager
+				_workspaceManager,
+				_connectionManager
 			)
 		);
 		this._terminalLinkProvider.onRequestOpenEditorToSide((e) => {
