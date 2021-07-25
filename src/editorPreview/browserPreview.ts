@@ -134,6 +134,11 @@ export class BrowserPreview extends Disposable {
 				this.handleConsole(msgJSON.type, msgJSON.data);
 				return;
 			}
+			case 'devtools-open':
+				vscode.commands.executeCommand(
+					'workbench.action.webview.openDeveloperTools'
+				);
+				return;
 		}
 	}
 

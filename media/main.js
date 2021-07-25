@@ -1,40 +1,54 @@
 /* eslint-env browser */
 /* global acquireVsCodeApi, WS_URL */
+
 // This script will be run within the webview itself
 (function () {
 	const KEYCODE_ENTER = 13,
 		KEYCODE_LEFT = 37,
+		KEYCODE_UP = 38,
 		KEYCODE_RIGHT = 39,
+		KEYCODE_DOWN = 40,
 		vscode = acquireVsCodeApi(),
 		connection = new WebSocket(WS_URL),
-		leftMostNavGroup = [
-			document.getElementById('back'),
-			document.getElementById('forward'),
-			document.getElementById('reload'),
-		],
-		rightMostNavGroup = [
-			document.getElementById('browser-open'),
-			document.getElementById('find'),
-		],
-		findMostNavGroup = [
-			document.getElementById('find-prev'),
-			document.getElementById('find-next'),
-			document.getElementById('find-x'),
-		];
+		navGroups = {
+			'leftmost-nav': true,
+			'extra-menu-nav': false,
+			'find-nav': true,
+		};
+	// 	leftMostNavGroup = [
+	// 		document.getElementById('back'),
+	// 		document.getElementById('forward'),
+	// 		document.getElementById('reload'),
+	// 	],
+	// 	findNavGroup = [
+	// 		document.getElementById('find-prev'),
+	// 		document.getElementById('find-next'),
+	// 		document.getElementById('find-x'),
+	// 	];
 
+	// console.log(stuff);
+
+	// console.log(menuNavGroup);
 	var fadeLinkID = null;
 	var ctrlDown = false;
 
 	onLoad();
 
+	function getNavGroupElems(containerID) {
+		return Array.prototype.slice.call(
+			document.getElementsByClassName(containerID)
+		);
+	}
 	/**
 	 * @description run on load.
 	 */
 	function onLoad() {
-		// handle the arrow-key navigation between the leftmost nav group.
-		handleNavGroup(leftMostNavGroup);
-		handleNavGroup(rightMostNavGroup);
-		handleNavGroup(findMostNavGroup);
+		for (let containerID in navGroups) {
+			const leftRight = navGroups[containerID];
+			console.log(containerID);
+			console.log(getNavGroupElems(containerID));
+			handleNavGroup(getNavGroupElems(containerID), leftRight);
+		}
 
 		connection.onerror = (error) => {
 			console.log('WebSocket error: ');
@@ -76,6 +90,18 @@
 			ctrlDown = e.ctrlKey || e.metaKey;
 		});
 
+		document.getElementById('more').addEventListener('keydown', (e) => {
+			if (!document.getElementById('extras-menu-pane').hidden) {
+				const menuNavGroup = getNavGroupElems('extra-menu-nav');
+				console.log(menuNavGroup);
+				console.log('owoo');
+				if (checkKeyCodeDetected(e, KEYCODE_DOWN)) {
+					menuNavGroup[0].focus();
+				} else if (checkKeyCodeDetected(e, KEYCODE_UP)) {
+					menuNavGroup[menuNavGroup.length - 1].focus();
+				}
+			}
+		});
 		window.addEventListener('message', (event) => {
 			handleMessage(event.data); // The json data that the extension sent
 		});
@@ -115,13 +141,15 @@
 		return event.keyCode == keyCode;
 	}
 
-	function handleNavGroup(nav) {
+	function handleNavGroup(nav, useRightLeft) {
 		for (const i in nav) {
 			const currIndex = i;
 			nav[i].addEventListener('keydown', (e) => {
-				if (checkKeyCodeDetected(e, KEYCODE_LEFT)) {
+				if (checkKeyCodeDetected(e, useRightLeft ? KEYCODE_LEFT : KEYCODE_UP)) {
 					moveFocusNav(false, nav, currIndex);
-				} else if (checkKeyCodeDetected(e, KEYCODE_RIGHT)) {
+				} else if (
+					checkKeyCodeDetected(e, useRightLeft ? KEYCODE_RIGHT : KEYCODE_DOWN)
+				) {
 					moveFocusNav(true, nav, currIndex);
 				}
 			});
@@ -160,6 +188,7 @@
 	 */
 	function adjustTabIndex() {
 		var reachedElem = false;
+		const leftMostNavGroup = getNavGroupElems('leftmost-nav');
 		for (const i in leftMostNavGroup) {
 			if (!leftMostNavGroup[i].disabled) {
 				if (reachedElem) {
@@ -293,26 +322,26 @@
 	}
 
 	function showFind() {
-		if (document.getElementById('findBox').hidden) {
-			fadeElement(true, document.getElementById('findBox'));
+		if (document.getElementById('find-box').hidden) {
+			fadeElement(true, document.getElementById('find-box'));
 		}
 		document.getElementById('find-input').focus();
 	}
 
 	function hideFind() {
-		if (!document.getElementById('findBox').hidden) {
-			fadeElement(false, document.getElementById('findBox'));
+		if (!document.getElementById('find-box').hidden) {
+			fadeElement(false, document.getElementById('find-box'));
 			document.getElementById('find-result').hidden = true;
 		}
 	}
 
-	function toggleFind() {
-		if (document.getElementById('findBox').hidden) {
-			showFind();
-		} else {
-			hideFind();
-		}
-	}
+	// function toggleFind() {
+	// 	if (document.getElementById('find-box').hidden) {
+	// 		showFind();
+	// 	} else {
+	// 		hideFind();
+	// 	}
+	// }
 
 	/**
 	 * @description Fade in or out the link preview.
@@ -384,13 +413,42 @@
 		};
 
 		document.getElementById('browser-open').onclick = function () {
+			document.getElementById('extras-menu-pane').hidden = true;
 			vscode.postMessage({
 				command: 'open-browser',
 				text: '',
 			});
 		};
+		document.body.onblur = function () {
+			document.getElementById('extras-menu-pane').hidden = true;
+		};
 
-		document.getElementById('find').onclick = toggleFind;
+		document.body.onclick = function () {
+			document.getElementById('extras-menu-pane').hidden = true;
+		};
+
+		document.getElementById('extras-menu-pane').onclick = function (e) {
+			e.stopPropagation();
+		};
+
+		document.getElementById('more').onclick = function (e) {
+			const menuPane = document.getElementById('extras-menu-pane');
+			menuPane.hidden = !menuPane.hidden;
+			e.stopPropagation();
+		};
+
+		document.getElementById('devtools-open').onclick = function () {
+			document.getElementById('extras-menu-pane').hidden = true;
+			vscode.postMessage({
+				command: 'devtools-open',
+				text: '',
+			});
+		};
+
+		document.getElementById('find').onclick = function () {
+			document.getElementById('extras-menu-pane').hidden = true;
+			showFind();
+		};
 
 		document.getElementById('find-next').onclick = findNext;
 

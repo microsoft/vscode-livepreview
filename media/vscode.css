@@ -196,5 +196,42 @@ textarea::placeholder {
 	position: absolute;
 	display: flex;
 	padding: 4px 0em 4px 0px;
+	background-color: var(--vscode-menu-background);
+}
+
+.extras-menu {
+	position: absolute;
+	margin-top: 2.5em;
+	right: 0px;
+	opacity: 1;
+}
+.extras-menu table {
 	background-color: var(--vscode-input-background);
+	padding: 0.5em 0;
+	box-shadow: 0 0px 5px rgb(0 0 0 / 0.2);
+}
+
+/* .extras-menu td:hover {
+	background-color: var(--vscode-inputOption-activeBackground);
+	cursor: pointer;
+} */
+/* .extras-menu table {
+	border:none;
+	
+} */
+.extras-menu button {
+	background-color: var(--vscode-toolbar-background);
+	color: var(--vscode-toolbar-foreground);
+	padding: 7px 15px;
+	width: 100%;
+	margin: 0px;
+	text-align: left;
+	border: none;
+	outline: inherit;
+	font-weight: normal;
+}
+
+.extras-menu button:hover,
+.extras-menu button:focus {
+	background-color: var(--vscode-toolbar-hoverBackground);
 }

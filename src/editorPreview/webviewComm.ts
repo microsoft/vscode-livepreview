@@ -191,35 +191,31 @@ export class WebviewComm extends Disposable {
 							<button
 								id="back"
 								title="Back"
-								class="back-button icon"><i class="codicon codicon-arrow-left"></i></button>
+								class="back-button icon leftmost-nav"><i class="codicon codicon-arrow-left"></i></button>
 
 							<button
 								id="forward"
 								title="Forward"
-								class="forward-button icon"><i class="codicon codicon-arrow-right"></i></button>
+								class="forward-button icon leftmost-nav"><i class="codicon codicon-arrow-right"></i></button>
 
 							<button
 								id="reload"
 								title="Reload"
-								class="reload-button icon"><i class="codicon codicon-refresh"></i></button>
+								class="reload-button icon leftmost-nav"><i class="codicon codicon-refresh"></i></button>
+							
 							<input 
 								id="url-input"
 								class="url-input" 
 								type="text">
 							<button
-								id="browser-open"
-								title="Open in browser"
-								class="open-external-button icon"><i class="codicon codicon-link-external"></i></button>
-							<button
-								id="find"
-								title="find"
-								tabIndex=-1
-								class="find-button icon"><i class="codicon codicon-search"></i></button>
+								id="more"
+								title="More Browser Actions"
+								class="more-button icon"><i class="codicon codicon-list-flat"></i></button>
 							
 							
 
 						</nav>
-						<div class="find-container" id="findBox" hidden=true>
+						<div class="find-container" id="find-box" hidden=true>
 							<nav class="find">
 								<input 
 									id="find-input"
@@ -231,22 +227,43 @@ export class WebviewComm extends Disposable {
 								<button
 									id="find-prev"
 									title="Previous"
-									class="find-prev-button icon"><i class="codicon codicon-chevron-up"></i></button>
+									class="find-prev-button icon find-nav"><i class="codicon codicon-chevron-up"></i></button>
 								<button
 									id="find-next"
 									tabIndex=-1
 									title="Next"
-									class="find-next-button icon"><i class="codicon codicon-chevron-down"></i></button>
+									class="find-next-button icon find-nav"><i class="codicon codicon-chevron-down"></i></button>
 								<button
 									id="find-x"
 									tabIndex=-1
 									title="Close"
-									class="find-x-button icon"><i class="codicon codicon-chrome-close"></i></button>
+									class="find-x-button icon find-nav"><i class="codicon codicon-chrome-close"></i></button>
 								
 							</nav>
 						</div>
 					</div>
-					
+					<div class="extras-menu" id="extras-menu-pane" hidden=true;>
+						<table cellspacing="0" cellpadding="0">
+							<tr>
+								<td>
+									<button tabIndex=-1 
+										id="browser-open" class="extra-menu-nav">Open in Browser</button>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<button tabIndex=-1 
+										id="find" class="extra-menu-nav">Find in Page</button>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<button tabIndex=-1 
+										id="devtools-open" class="extra-menu-nav">Open Devtools Pane</button>
+								</td>
+							</tr>
+						</table>
+					</div>
 				</div>
 				
 				<div class="content">
