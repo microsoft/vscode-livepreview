@@ -13,7 +13,9 @@ Note: this extension is intended for projects where a server is not already crea
 - [Prerequisites](#prerequisites)
 - [Running the Extension](#running-the-extension)
 - [FAQ](#faq)
+- [Inspirations](#inspirations)
 - [Issue Tracking](#issue-tracking)
+- [Changelog](#changelog)
 
 ## Features
 ### HTML File Previewing
@@ -58,6 +60,8 @@ You can edit the preview target in the extension settings.
 ### External Browser Debugging
 The external browser preview also supports debugging via the built-in [js-debug](https://marketplace.visualstudio.com/items?itemName=ms-vscode.js-debug) extension and attaching to the [Edge Devtools Extension](https://marketplace.visualstudio.com/items?itemName=ms-edgedevtools.vscode-edge-devtools). This allows support for features such as setting breakpoints and inspecting elements. 
 
+Run `Live Preview: Show Debug Preview` in the command palette to get these debugging features.
+
 ![external-debug-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/external-debug-demo.gif)
 
 
@@ -93,7 +97,7 @@ Why does this happen?
 
 The server is hosted from the root of the workspace that the user opens. Files outside of this can be previewed, but some file paths (such as a link to the root) may not go to the right place. **If you are working on a web project, it is advised that you open a workspace at the root of the project.**
 
-Q. I'm trying to use Live Preview in Codespaces and the Embedded Preview isn't working.
+Q. I'm trying to use Live Preview in Codespaces and the embedded preview isn't working.
 
 A. Currently, you will need to manually navigate to the links host the forwarded port content before it works
 
