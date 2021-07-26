@@ -32,9 +32,12 @@ The simple embedded browser features the following:
 - Expandable menu, allowing users to:
 	- Preview the current page in browser
 	- Perform a page search
+		- Can also use <kbd>CTRL</kbd>+<kbd>F</kbd> to open the find box and <kbd>Enter</kbd> to go to the next result.
 	- Open the editor's webview DevTools
 
+![find-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/find-demo.gif)
 
+![webview-devtools-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/webview-devtools-demo.gif)
 ### Live Refreshing
 See the changes as you make them. By default, changes appear as you make them in the editor. You can also change this in settings to refresh the preview on save or not at all. 
 
