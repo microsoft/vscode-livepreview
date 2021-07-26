@@ -222,7 +222,7 @@
 				},
 				"livePreview.debugOnExternalPreview": {
 					"type": "boolean",
-					"default": true,
+					"default": false,
 					"description": "Whether or not to attach the JavaScript debugger on external preview launches."
 				},
 				"livePreview.hostIP": {
