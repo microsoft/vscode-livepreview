@@ -32,7 +32,7 @@ The simple embedded browser features the following:
 - Expandable menu, allowing users to:
 	- Preview the current page in browser
 	- Perform a page search
-		- Can also use <kbd>CTRL</kbd>+<kbd>F</kbd> to open the find box and <kbd>Enter</kbd> to go to the next result.
+		- Tip: You can also use <kbd>CTRL</kbd>+<kbd>F</kbd> to open the find box and <kbd>Enter</kbd> to go to the next result
 	- Open the editor's webview DevTools
 
 ![find-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/find-demo.gif)

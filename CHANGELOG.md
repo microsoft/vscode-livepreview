@@ -17,7 +17,7 @@ Changes have only been tracked starting from `v0.2.2`
 - Added external browser debugging using `js-debug`. [#93](https://github.com/microsoft/vscode-livepreview/pull/93)
 - Support `HTM/XHTML` files the same as HTML files. [#93](https://github.com/microsoft/vscode-livepreview/pull/93)
 
-## 0.2.5 (TBD)
+## 0.2.5 (July 26, 2021)
 - General code cleanup. [#103](https://github.com/microsoft/vscode-livepreview/pull/103)
 - Added "Debug on External Preview" to allow users to modify the default external browser behavior. [#105](https://github.com/microsoft/vscode-livepreview/pull/105)
 - Changed activation to require user to be on HTML file rather than if the workspace contains an HTML file. [#110](https://github.com/microsoft/vscode-livepreview/pull/110)
