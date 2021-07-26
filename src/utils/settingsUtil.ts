@@ -113,7 +113,7 @@ export class SettingUtil {
 			defaultPreviewPath: config.get<string>(Settings.defaultPreviewPath, ''),
 			debugOnExternalPreview: config.get<boolean>(
 				Settings.debugOnExternalPreview,
-				true
+				false
 			),
 			hostIP: config.get<string>(Settings.hostIP, '127.0.0.1'),
 		};
