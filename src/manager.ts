@@ -4,7 +4,6 @@ import { Disposable } from './utils/dispose';
 import { Server } from './server/serverManager';
 import {
 	INIT_PANEL_TITLE,
-	HOST,
 	DONT_SHOW_AGAIN,
 	OUTPUT_CHANNEL_NAME,
 } from './utils/constants';
@@ -81,8 +80,9 @@ export class Manager extends Disposable {
 		);
 		const serverPort = SettingUtil.GetConfig(_extensionUri).portNumber;
 		const serverWSPort = serverPort;
+		const serverHost = SettingUtil.GetConfig(_extensionUri).hostIP;
 		this._connectionManager = this._register(
-			new ConnectionManager(serverPort, serverWSPort)
+			new ConnectionManager(serverPort, serverWSPort, serverHost)
 		);
 
 		this._server = this._register(
@@ -99,7 +99,8 @@ export class Manager extends Disposable {
 		this._serverTaskProvider = new ServerTaskProvider(
 			this._reporter,
 			this._endpointManager,
-			this._workspaceManager
+			this._workspaceManager,
+			this._connectionManager
 		);
 
 		this._runTaskWithExternalPreview =
@@ -165,6 +166,9 @@ export class Manager extends Disposable {
 				this._connectionManager.pendingPort = SettingUtil.GetConfig(
 					this._extensionUri
 				).portNumber;
+				this._connectionManager.pendingHost = SettingUtil.GetConfig(
+					this._extensionUri
+				).hostIP;
 				this._runTaskWithExternalPreview = SettingUtil.GetConfig(
 					this._extensionUri
 				).runTaskWithExternalPreview;
@@ -434,7 +438,7 @@ export class Manager extends Disposable {
 			this.transformNonRelativeFile(relative, file)
 		);
 
-		const url = `http://${HOST}:${this._serverPort}${relFile}`;
+		const url = `http://${this._connectionManager.host}:${this._serverPort}${relFile}`;
 		if (debug) {
 			vscode.commands.executeCommand('extension.js-debug.debugLink', url);
 		} else {

@@ -15,6 +15,7 @@ export interface LiveServerConfigItem {
 	runTaskWithExternalPreview: boolean;
 	defaultPreviewPath: string;
 	debugOnExternalPreview: boolean;
+	hostIP: string;
 }
 
 /**
@@ -55,6 +56,7 @@ export const Settings: any = {
 	runTaskWithExternalPreview: 'tasks.runTaskWithExternalPreview',
 	defaultPreviewPath: 'defaultPreviewPath',
 	debugOnExternalPreview: 'debugOnExternalPreview',
+	hostIP: 'hostIP',
 };
 
 /**
@@ -113,6 +115,7 @@ export class SettingUtil {
 				Settings.debugOnExternalPreview,
 				true
 			),
+			hostIP: config.get<string>(Settings.hostIP, '127.0.0.1'),
 		};
 	}
 

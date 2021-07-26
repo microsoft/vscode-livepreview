@@ -9,7 +9,7 @@ import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
-import { HOST, UriSchemes } from '../utils/constants';
+import { UriSchemes } from '../utils/constants';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 
 /**
@@ -63,7 +63,7 @@ export class WSServer extends Disposable {
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
 		private readonly _workspaceManager: WorkspaceManager,
-		_connectionManager: ConnectionManager
+		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
 
@@ -131,7 +131,7 @@ export class WSServer extends Disposable {
 	private startWSServer(basePath: string): boolean {
 		this._wss = new WSServerWithOriginCheck({
 			port: this._wsPort,
-			host: HOST,
+			host: this._connectionManager.host,
 		});
 		this._wss.on('connection', (ws: WebSocket) =>
 			this.handleWSConnection(basePath, ws)
@@ -148,6 +148,9 @@ export class WSServer extends Disposable {
 	private handleWSError(basePath: string, err: any): void {
 		if (err.code == 'EADDRINUSE') {
 			this._wsPort++;
+			this.startWSServer(basePath);
+		} else if (err.code == 'EADDRNOTAVAIL') {
+			this._connectionManager.resetHostToDefault();
 			this.startWSServer(basePath);
 		} else {
 			/* __GDPR__
