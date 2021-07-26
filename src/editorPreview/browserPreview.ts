@@ -8,6 +8,7 @@ import { ConnectionManager } from '../infoManagers/connectionManager';
 import { WebviewComm } from './webviewComm';
 import { FormatDateTime } from '../utils/utils';
 import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
+import * as path from 'path';
 
 /**
  * @description the embedded preview object, containing the webview panel showing the preview.
@@ -249,7 +250,7 @@ export class BrowserPreview extends Disposable {
 				) {
 					this._panel.title = PathUtil.GetFileName(pathname);
 				} else {
-					this._panel.title = pathname.substr(1);
+					this._panel.title = path.basename(pathname.substr(1));
 				}
 			} else {
 				this._panel.title = pathname;
