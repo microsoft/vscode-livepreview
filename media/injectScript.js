@@ -3,9 +3,9 @@
  * Script injected by the VS Code Live Preview Extension.
  * http://aka.ms/live-preview
  */
-const ws_url = '${WS_URL}';
-const host = '${HTTP_URL}';
-const connection = new WebSocket(ws_url);
+const ws_url = '${WS_URL}',
+	host = '${HTTP_URL}',
+	connection = new WebSocket(ws_url);
 
 let ctrlDown = false;
 
@@ -59,6 +59,7 @@ function onLoad() {
 		command: 'update-path',
 		text: JSON.stringify(commandPayload),
 	});
+
 	handleLinkHoverEnd();
 
 	const links = document.getElementsByTagName('a');
@@ -180,6 +181,10 @@ function handleMessage(event) {
 	}
 }
 
+/**
+ * @param {string} searchString the string to search for.
+ * @returns whether this string has find results on the page.
+ */
 function hasFindResults(searchString) {
 	window.getSelection().removeAllRanges();
 	const canGoForward = window.find(searchString);
@@ -187,11 +192,19 @@ function hasFindResults(searchString) {
 	return canGoForward || canGoBack;
 }
 
+/**
+ * @param {string} searchString the string to search for.
+ * @returns move the find position to the beginning of the page.
+ */
 function findToBeginning(searchString) {
 	window.getSelection().removeAllRanges();
 	window.find(searchString);
 }
 
+/**
+ * @param {string} searchString the string to search for.
+ * @returns move the find position to the end of the page.
+ */
 function findToEnd(searchString) {
 	window.getSelection().removeAllRanges();
 	window.find(searchString, false, true);

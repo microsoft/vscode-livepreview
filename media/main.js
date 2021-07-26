@@ -3,11 +3,11 @@
 
 // This script will be run within the webview itself
 (function () {
-	const KEYCODE_ENTER = 13,
-		KEYCODE_LEFT = 37,
-		KEYCODE_UP = 38,
-		KEYCODE_RIGHT = 39,
-		KEYCODE_DOWN = 40,
+	const KEY_ENTER = 'Enter',
+		KEY_LEFT = 'ArrowLeft',
+		KEY_UP = 'ArrowUp',
+		KEY_RIGHT = 'ArrowRight',
+		KEY_DOWN = 'ArrowDown',
 		vscode = acquireVsCodeApi(),
 		connection = new WebSocket(WS_URL),
 		navGroups = {
@@ -15,39 +15,18 @@
 			'extra-menu-nav': false,
 			'find-nav': true,
 		};
-	// 	leftMostNavGroup = [
-	// 		document.getElementById('back'),
-	// 		document.getElementById('forward'),
-	// 		document.getElementById('reload'),
-	// 	],
-	// 	findNavGroup = [
-	// 		document.getElementById('find-prev'),
-	// 		document.getElementById('find-next'),
-	// 		document.getElementById('find-x'),
-	// 	];
-
-	// console.log(stuff);
-
-	// console.log(menuNavGroup);
-	var fadeLinkID = null;
-	var ctrlDown = false;
+	let fadeLinkID = null,
+		ctrlDown = false;
 
 	onLoad();
 
-	function getNavGroupElems(containerID) {
-		return Array.prototype.slice.call(
-			document.getElementsByClassName(containerID)
-		);
-	}
 	/**
 	 * @description run on load.
 	 */
 	function onLoad() {
-		for (let containerID in navGroups) {
-			const leftRight = navGroups[containerID];
-			console.log(containerID);
-			console.log(getNavGroupElems(containerID));
-			handleNavGroup(getNavGroupElems(containerID), leftRight);
+		for (let groupClassName in navGroups) {
+			const leftRight = navGroups[groupClassName];
+			handleNavGroup(getNavGroupElems(groupClassName), leftRight);
 		}
 
 		connection.onerror = (error) => {
@@ -63,22 +42,22 @@
 			});
 		});
 
-		// add listeners to all nav buttons.
 		addNavButtonListeners();
 
 		document.getElementById('url-input').addEventListener('keydown', (e) => {
-			if (checkKeyCodeDetected(e, KEYCODE_ENTER)) {
+			if (checkKeyCodeDetected(e, KEY_ENTER)) {
 				goToUrl();
 			}
 		});
 
 		// set up keys for navigating find
 		document.getElementById('find-input').addEventListener('keydown', (e) => {
-			if (checkKeyCodeDetected(e, KEYCODE_ENTER)) {
+			if (checkKeyCodeDetected(e, KEY_ENTER)) {
 				findNext();
 			}
 		});
 
+		// listen for CTRL+F for opening the find menu
 		document.addEventListener('keydown', (e) => {
 			ctrlDown = e.ctrlKey || e.metaKey;
 			if ((e.key == 'F' || e.key == 'f') && ctrlDown) {
@@ -93,11 +72,9 @@
 		document.getElementById('more').addEventListener('keydown', (e) => {
 			if (!document.getElementById('extras-menu-pane').hidden) {
 				const menuNavGroup = getNavGroupElems('extra-menu-nav');
-				console.log(menuNavGroup);
-				console.log('owoo');
-				if (checkKeyCodeDetected(e, KEYCODE_DOWN)) {
+				if (checkKeyCodeDetected(e, KEY_DOWN)) {
 					menuNavGroup[0].focus();
-				} else if (checkKeyCodeDetected(e, KEYCODE_UP)) {
+				} else if (checkKeyCodeDetected(e, KEY_UP)) {
 					menuNavGroup[menuNavGroup.length - 1].focus();
 				}
 			}
@@ -111,6 +88,17 @@
 				command: 'setup-parent-listener',
 			},
 			'*'
+		);
+	}
+
+	/**
+	 *
+	 * @param {string} groupClassName the class name that is applied to elements of this nav group
+	 * @returns
+	 */
+	function getNavGroupElems(groupClassName) {
+		return Array.prototype.slice.call(
+			document.getElementsByClassName(groupClassName)
 		);
 	}
 
@@ -137,18 +125,28 @@
 		});
 	}
 
-	function checkKeyCodeDetected(event, keyCode) {
-		return event.keyCode == keyCode;
+	/**
+	 * @param {any} event the event processed
+	 * @param {number} key the key to check for
+	 * @returns whether the event includes the key pressed.
+	 */
+	function checkKeyCodeDetected(event, key) {
+		return event.key == key;
 	}
 
+	/**
+	 * Add keyboard listeners to navigation keys to allow arrow key navigation in the button groups.
+	 * @param {HTMLElement[]} nav the navigation elements.
+	 * @param {boolean} useRightLeft whether or not to navigate using right/left arrows. If false, uses up/down arrows.
+	 */
 	function handleNavGroup(nav, useRightLeft) {
 		for (const i in nav) {
 			const currIndex = i;
 			nav[i].addEventListener('keydown', (e) => {
-				if (checkKeyCodeDetected(e, useRightLeft ? KEYCODE_LEFT : KEYCODE_UP)) {
+				if (checkKeyCodeDetected(e, useRightLeft ? KEY_LEFT : KEY_UP)) {
 					moveFocusNav(false, nav, currIndex);
 				} else if (
-					checkKeyCodeDetected(e, useRightLeft ? KEYCODE_RIGHT : KEYCODE_DOWN)
+					checkKeyCodeDetected(e, useRightLeft ? KEY_RIGHT : KEY_DOWN)
 				) {
 					moveFocusNav(true, nav, currIndex);
 				}
@@ -164,11 +162,12 @@
 	 */
 	function moveFocusNav(right, nav, startIndex) {
 		// logic behind shifting focus based on arrow-keys
-		var numDisabled = 0;
-		var modifier = right ? 1 : -1;
-		var index = startIndex;
+		let numDisabled = 0,
+			modifier = right ? 1 : -1,
+			index = startIndex,
+			newIndex = index;
 		do {
-			var newIndex = Number(index) + modifier;
+			newIndex = Number(index) + modifier;
 			if (newIndex >= nav.length) {
 				newIndex = 0;
 			} else if (newIndex < 0) {
@@ -187,7 +186,7 @@
 	 * @description adjust the tab indices of the navigation buttons based on which buttons are disabled.
 	 */
 	function adjustTabIndex() {
-		var reachedElem = false;
+		let reachedElem = false;
 		const leftMostNavGroup = getNavGroupElems('leftmost-nav');
 		for (const i in leftMostNavGroup) {
 			if (!leftMostNavGroup[i].disabled) {
@@ -225,6 +224,7 @@
 	 */
 	function handleMessage(message) {
 		switch (message.command) {
+			// from extension
 			case 'refresh':
 				document.getElementById('hostedContent').contentWindow.postMessage(
 					JSON.stringify({
@@ -233,12 +233,14 @@
 					'*'
 				);
 				break;
+			// from extension
 			case 'changed-history': {
 				const msgJSON = JSON.parse(message.text);
 				document.getElementById(msgJSON.element).disabled = msgJSON.disabled;
 				adjustTabIndex();
 				break;
 			}
+			// from extension
 			case 'set-url': {
 				const msgJSON = JSON.parse(message.text);
 				// setting a new address, ensure that previous link preview is gone
@@ -304,7 +306,7 @@
 			// from child iframe
 			case 'show-find-icon': {
 				document.getElementById('find-result').hidden = true;
-				var codicon = document.getElementById('find-result-icon');
+				let codicon = document.getElementById('find-result-icon');
 				const fromClass = message.text ? 'codicon-error' : 'codicon-pass';
 				const toClass = message.text ? 'codicon-pass' : 'codicon-error';
 				if (!codicon.classList.contains(toClass)) {
@@ -314,6 +316,7 @@
 				fadeElement(true, document.getElementById('find-result'));
 				break;
 			}
+			// from child iframe
 			case 'show-find': {
 				showFind();
 				break;
@@ -321,6 +324,9 @@
 		}
 	}
 
+	/**
+	 * @description show the find menu
+	 */
 	function showFind() {
 		if (document.getElementById('find-box').hidden) {
 			fadeElement(true, document.getElementById('find-box'));
@@ -328,6 +334,9 @@
 		document.getElementById('find-input').focus();
 	}
 
+	/**
+	 * @description hide the find menu
+	 */
 	function hideFind() {
 		if (!document.getElementById('find-box').hidden) {
 			fadeElement(false, document.getElementById('find-box'));
@@ -335,21 +344,13 @@
 		}
 	}
 
-	// function toggleFind() {
-	// 	if (document.getElementById('find-box').hidden) {
-	// 		showFind();
-	// 	} else {
-	// 		hideFind();
-	// 	}
-	// }
-
 	/**
 	 * @description Fade in or out the link preview.
 	 * @param {boolean} appear whether or not it should be fade from `hide -> show`; otherwise, will fade from `show -> hide`.
 	 */
 	function fadeElement(appear, elem) {
-		var initOpacity = appear ? 0 : 1;
-		var finalOpacity = appear ? 1 : 0;
+		let initOpacity = appear ? 0 : 1;
+		let finalOpacity = appear ? 1 : 0;
 
 		elem.style.opacity = initOpacity;
 		clearInterval(fadeLinkID);
@@ -370,6 +371,9 @@
 		}, 25);
 	}
 
+	/**
+	 * @description highlight the next find result on the page.
+	 */
 	function findNext() {
 		document.getElementById('hostedContent').contentWindow.postMessage(
 			{
@@ -380,6 +384,9 @@
 		);
 	}
 
+	/**
+	 * @description highlight the previous find result on the page.
+	 */
 	function findPrev() {
 		document.getElementById('hostedContent').contentWindow.postMessage(
 			{
@@ -390,7 +397,7 @@
 		);
 	}
 	/**
-	 * @description Add funcionality to the nav buttons.
+	 * @description Add click/keyboard listeners to all toolbar buttons.
 	 */
 	function addNavButtonListeners() {
 		document.getElementById('back').onclick = function () {
@@ -419,6 +426,8 @@
 				text: '',
 			});
 		};
+
+		// close extra-menu-pane whenever not clicking on it
 		document.body.onblur = function () {
 			document.getElementById('extras-menu-pane').hidden = true;
 		};
@@ -430,6 +439,13 @@
 		document.getElementById('extras-menu-pane').onclick = function (e) {
 			e.stopPropagation();
 		};
+		const menuNavGroup = getNavGroupElems('extra-menu-nav');
+
+		for (let i in menuNavGroup) {
+			menuNavGroup[i].onmouseover = function (e) {
+				menuNavGroup[i].focus();
+			};
+		}
 
 		document.getElementById('more').onclick = function (e) {
 			const menuPane = document.getElementById('extras-menu-pane');

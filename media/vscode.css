@@ -165,7 +165,6 @@ textarea::placeholder {
 	opacity: 0;
 }
 .find {
-	/* width:60%; */
 	border-radius: 2px;
 	padding: 5px;
 	background: var(--vscode-editor-background);
@@ -211,14 +210,6 @@ textarea::placeholder {
 	box-shadow: 0 0px 5px rgb(0 0 0 / 0.2);
 }
 
-/* .extras-menu td:hover {
-	background-color: var(--vscode-inputOption-activeBackground);
-	cursor: pointer;
-} */
-/* .extras-menu table {
-	border:none;
-	
-} */
 .extras-menu button {
 	background-color: var(--vscode-toolbar-background);
 	color: var(--vscode-toolbar-foreground);
@@ -231,7 +222,6 @@ textarea::placeholder {
 	font-weight: normal;
 }
 
-.extras-menu button:hover,
 .extras-menu button:focus {
 	background-color: var(--vscode-toolbar-hoverBackground);
 }

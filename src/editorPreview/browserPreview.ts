@@ -190,7 +190,8 @@ export class BrowserPreview extends Disposable {
 				`${SETTINGS_SECTION_ID}.start.${SettingUtil.GetExternalPreviewType(
 					this._extensionUri
 				)}.atFile`,
-				uri
+				uri,
+				false
 			);
 		} else {
 			const uri = vscode.Uri.parse(givenURL);
@@ -203,13 +204,7 @@ export class BrowserPreview extends Disposable {
 				.then((selection: vscode.MessageItem | undefined) => {
 					if (selection) {
 						if (selection === OPEN_EXTERNALLY) {
-							// vscode.env.openExternal(uri);
-							vscode.commands.executeCommand(
-								`${SETTINGS_SECTION_ID}.start.${SettingUtil.GetExternalPreviewType(
-									this._extensionUri
-								)}.atFile`,
-								uri
-							);
+							vscode.env.openExternal(uri);
 						}
 					}
 				});
