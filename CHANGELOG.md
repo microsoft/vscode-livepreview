@@ -19,6 +19,9 @@ Changes have only been tracked starting from `v0.2.2`
 
 ## 0.2.5 (TBD)
 - General code cleanup. [#103](https://github.com/microsoft/vscode-livepreview/pull/103)
-- Changed external debug preview to be the default external preview. [#105](https://github.com/microsoft/vscode-livepreview/pull/105)
-  - Added "Debug on External Preview" to allow users to modify the default external browser behavior.
+- Added "Debug on External Preview" to allow users to modify the default external browser behavior. [#105](https://github.com/microsoft/vscode-livepreview/pull/105)
 - Changed activation to require user to be on HTML file rather than if the workspace contains an HTML file. [#110](https://github.com/microsoft/vscode-livepreview/pull/110)
+- Added "Find in page" functionality. [#115](https://github.com/microsoft/vscode-livepreview/pull/115)
+- Added expandable menu with various options in place of "open in browser". [#115](https://github.com/microsoft/vscode-livepreview/pull/115)
+- Added shortcut to open webview devtools in editor. [#115](https://github.com/microsoft/vscode-livepreview/pull/115)
+- Added option to configure host IP address. [#117](https://github.com/microsoft/vscode-livepreview/pull/117)
