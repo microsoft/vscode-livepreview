@@ -11,7 +11,6 @@ import {
 } from '../utils/settingsUtil';
 import {
 	DONT_SHOW_AGAIN,
-	HOST,
 	LIVE_PREVIEW_SERVER_ON,
 	UriSchemes,
 } from '../utils/constants';
@@ -223,12 +222,12 @@ export class Server extends Disposable {
 	): void {
 		let port = startPort;
 		const sock = new net.Socket();
-
+		const host = this._connectionManager.host;
 		sock.setTimeout(500);
 		sock.on('connect', function () {
 			sock.destroy();
 			port++;
-			sock.connect(port, HOST);
+			sock.connect(port, host);
 		});
 		sock.on('error', function (e) {
 			callback(port);
@@ -236,7 +235,7 @@ export class Server extends Disposable {
 		sock.on('timeout', function () {
 			callback(port);
 		});
-		sock.connect(port, HOST);
+		sock.connect(port, host);
 	}
 
 	/**

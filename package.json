@@ -224,6 +224,11 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Whether or not to attach the JavaScript debugger on external preview launches."
+				},
+				"livePreview.hostIP": {
+					"type": "string",
+					"default": "127.0.0.1",
+					"description": "The local IP host address to host your files on."
 				}
 			}
 		},
