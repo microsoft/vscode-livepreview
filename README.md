@@ -2,7 +2,7 @@
 
 ![Build](https://github.com/andreamah/VS-Code-LiveServer-V2-Extension/actions/workflows/build.yml/badge.svg)
 
-⚠️ WARNING: this extension is still under initial development! Use at your own risk. ⚠️
+⚠️ WARNING: this extension is still under development! ⚠️
 
 An extension that hosts a local server for you to preview your web projects on! 
 
@@ -13,7 +13,9 @@ Note: this extension is intended for projects where a server is not already crea
 - [Prerequisites](#prerequisites)
 - [Running the Extension](#running-the-extension)
 - [FAQ](#faq)
+- [Inspirations](#inspirations)
 - [Issue Tracking](#issue-tracking)
+- [Changelog](#changelog)
 
 ## Features
 ### HTML File Previewing
@@ -22,9 +24,22 @@ Preview your HTML files quickly by clicking the preview button in the top right 
 ![open-preview-btn](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/open-preview-btn.gif)
 ![open-context-menu](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/open-context-menu.gif)
 ### Embedded Preview
-A preview is available in-editor for the files hosted by the server. The simple embedded browser features history tracking, a url bar, and a button to open the preview externally. 
+A preview is available in-editor for the files hosted by the server.
 
 ![browser-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/browser-demo.gif)
+
+The simple embedded browser features the following:
+- Page history tracking 
+- URL bar for address-based navigation
+- Expandable menu, allowing users to:
+	- Preview the current page in browser
+	- Perform a page search
+		- Tip: You can also use <kbd>CTRL</kbd>+<kbd>F</kbd> to open the find box and <kbd>Enter</kbd> to go to the next result
+	- Open the editor's webview DevTools
+
+![find-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/find-demo.gif)
+
+![webview-devtools-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/webview-devtools-demo.gif)
 ### Live Refreshing
 See the changes as you make them. By default, changes appear as you make them in the editor. You can also change this in settings to refresh the preview on save or not at all. 
 
@@ -44,6 +59,8 @@ You can edit the preview target in the extension settings.
 
 ### External Browser Debugging
 The external browser preview also supports debugging via the built-in [js-debug](https://marketplace.visualstudio.com/items?itemName=ms-vscode.js-debug) extension and attaching to the [Edge Devtools Extension](https://marketplace.visualstudio.com/items?itemName=ms-edgedevtools.vscode-edge-devtools). This allows support for features such as setting breakpoints and inspecting elements. 
+
+Run `Live Preview: Show Debug Preview` in the command palette to get these debugging features.
 
 ![external-debug-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/external-debug-demo.gif)
 
@@ -80,9 +97,20 @@ Why does this happen?
 
 The server is hosted from the root of the workspace that the user opens. Files outside of this can be previewed, but some file paths (such as a link to the root) may not go to the right place. **If you are working on a web project, it is advised that you open a workspace at the root of the project.**
 
+Q. I'm trying to use Live Preview in Codespaces and the embedded preview isn't working.
+
+A. Currently, you will need to manually navigate to the links host the forwarded port content before it works
+
+In the area of the editor where the integrated terminal usually is, navigate to `Ports` and open the local address in the browser. You can do this by using <kbd>CTRL</kbd>+<kbd>Click</kbd> on the URL in the `Ports` menu.
+
+Allow the browser to perform the necessary redirects, then close the windows. Re-open the preview window and it _should_ work now.
+
 ## Inspirations
 Special thanks to the following extensions for inspiring Live Preview! 💡
 - [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer)
 - [Five Server](https://marketplace.visualstudio.com/items?itemName=yandeu.five-server)
 ## Issue Tracking
 Please file issues against the [VS Code Live Preview repository](https://github.com/microsoft/vscode-livepreview/issues).
+
+## Changelog
+See the project's changelog [here](https://github.com/microsoft/vscode-livepreview/blob/main/CHANGELOG.md).

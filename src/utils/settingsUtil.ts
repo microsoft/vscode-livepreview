@@ -14,6 +14,8 @@ export interface LiveServerConfigItem {
 	notifyOnOpenLooseFile: boolean;
 	runTaskWithExternalPreview: boolean;
 	defaultPreviewPath: string;
+	debugOnExternalPreview: boolean;
+	hostIP: string;
 }
 
 /**
@@ -53,6 +55,8 @@ export const Settings: any = {
 	notifyOnOpenLooseFile: 'notifyOnOpenLooseFile',
 	runTaskWithExternalPreview: 'tasks.runTaskWithExternalPreview',
 	defaultPreviewPath: 'defaultPreviewPath',
+	debugOnExternalPreview: 'debugOnExternalPreview',
+	hostIP: 'hostIP',
 };
 
 /**
@@ -61,6 +65,7 @@ export const Settings: any = {
 export const PreviewType: any = {
 	internalPreview: 'internalPreview',
 	externalPreview: 'externalPreview',
+	externalDebugPreview: 'externalDebugPreview',
 };
 
 export class SettingUtil {
@@ -106,6 +111,11 @@ export class SettingUtil {
 				true
 			),
 			defaultPreviewPath: config.get<string>(Settings.defaultPreviewPath, ''),
+			debugOnExternalPreview: config.get<boolean>(
+				Settings.debugOnExternalPreview,
+				false
+			),
+			hostIP: config.get<string>(Settings.hostIP, '127.0.0.1'),
 		};
 	}
 
@@ -121,10 +131,17 @@ export class SettingUtil {
 		) {
 			return PreviewType.internalPreview;
 		} else {
-			return PreviewType.externalPreview;
+			return SettingUtil.GetExternalPreviewType(extensionUri);
 		}
 	}
 
+	public static GetExternalPreviewType(extensionUri: vscode.Uri): string {
+		if (SettingUtil.GetConfig(extensionUri).debugOnExternalPreview) {
+			return PreviewType.externalDebugPreview;
+		} else {
+			return PreviewType.externalPreview;
+		}
+	}
 	/**
 	 * @description Update a Live Preview setting
 	 * @param {string} settingSuffix the suffix, `livePreview.<suffix>` of the setting to set.

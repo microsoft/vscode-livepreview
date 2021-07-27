@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
-import { HOST, INJECTED_ENDPOINT_NAME } from '../utils/constants';
+import { INJECTED_ENDPOINT_NAME } from '../utils/constants';
 import { serverMsg } from '../manager';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
@@ -23,7 +23,7 @@ export class HttpServer extends Disposable {
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
 		private readonly _workspaceManager: WorkspaceManager,
-		_connectionManager: ConnectionManager,
+		private readonly _connectionManager: ConnectionManager,
 		private readonly _portAttributes: serverPortAttributesProvider
 	) {
 		super();
@@ -115,7 +115,10 @@ export class HttpServer extends Disposable {
 		this._server.on('error', (err: any) => {
 			if (err.code == 'EADDRINUSE') {
 				this.port++;
-				this._server.listen(this.port, HOST);
+				this._server.listen(this.port, this._connectionManager.host);
+			} else if (err.code == 'EADDRNOTAVAIL') {
+				this._connectionManager.resetHostToDefault();
+				this._server.listen(this.port, this._connectionManager.host);
 			} else {
 				/* __GDPR__
 					"server.err" : { 
@@ -131,7 +134,7 @@ export class HttpServer extends Disposable {
 			}
 		});
 
-		this._server.listen(this.port, HOST);
+		this._server.listen(this.port, this._connectionManager.host);
 		return true;
 	}
 

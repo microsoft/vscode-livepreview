@@ -2,8 +2,8 @@
 	"enableProposedApi": true,
 	"name": "live-server",
 	"displayName": "Live Preview",
-	"description": "Hosts a local server in your workspace for you to preview your webpages.",
-	"version": "0.2.4",
+	"description": "Hosts a local server in your workspace for you to preview your webpages on.",
+	"version": "0.2.5",
 	"preview": true,
 	"aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
 	"publisher": "ms-vscode",
@@ -23,7 +23,7 @@
 		"vscode": "^1.56.0"
 	},
 	"bugs": {
-		"url": "https://github.com/microsoft/vscode-liveserver/issues"
+		"url": "https://github.com/microsoft/vscode-livepreview/issues"
 	},
 	"categories": [
 		"Other"
@@ -34,19 +34,18 @@
 		"live",
 		"browser",
 		"reload",
-		"refresh"
+		"refresh",
+		"livepreview"
 	],
 	"activationEvents": [
-		"workspaceContains:**/*.{html,htm,xhtml}",
+		"onLanguage:html",
 		"onWebviewPanel:browserPreview",
 		"onCommand:livePreview.start",
-		"onCommand:livePreview.start.preview.atIndex",
 		"onCommand:livePreview.start.preview.atFile",
-		"onCommand:livePreview.start.externalPreview.atIndex",
-		"onCommand:livePreview.start.internalPreview.atIndex",
-		"onCommand:livePreview.start.externalPreview.atFile",
+		"onCommand:livePreview.start.debugPreview.atFile",
 		"onCommand:livePreview.start.internalPreview.atFile",
-		"onCommand:livePreview.end"
+		"onCommand:livePreview.start.externalPreview.atFile",
+		"onCommand:livePreview.start.externalDebugPreview.atFile"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -56,29 +55,23 @@
 				"title": "Live Preview: Start Server"
 			},
 			{
-				"command": "livePreview.start.preview.atIndex",
-				"title": "Live Preview: Show Preview at Index Page"
-			},
-			{
 				"command": "livePreview.start.preview.atFile",
 				"title": "Live Preview: Show Preview",
 				"icon": "$(open-preview)"
 			},
 			{
-				"command": "livePreview.start.externalPreview.atIndex",
-				"title": "Live Preview: Show Preview at Index (External Browser)"
-			},
-			{
-				"command": "livePreview.start.internalPreview.atIndex",
-				"title": "Live Preview: Show Preview at Index (Internal Browser)"
+				"command": "livePreview.start.debugPreview.atFile",
+				"title": "Live Preview: Show Debug Preview",
+				"icon": "$(debug-alt)"
 			},
 			{
 				"command": "livePreview.start.externalPreview.atFile",
 				"title": "Live Preview: Show Preview (External Browser)"
 			},
 			{
-				"command": "livePreview.start.externalDebug.atFile",
-				"title": "Live Preview: Debug Preview (External Browser)"
+				"command": "livePreview.start.externalDebugPreview.atFile",
+				"title": "Live Preview: Show Debug Preview (External Browser)",
+				"icon": "$(debug-alt)"
 			},
 			{
 				"command": "livePreview.start.internalPreview.atFile",
@@ -135,15 +128,7 @@
 					"when": "false"
 				},
 				{
-					"command": "livePreview.start.preview.atIndex",
-					"when": "false"
-				},
-				{
-					"command": "livePreview.start.externalPreview.atIndex",
-					"when": "false"
-				},
-				{
-					"command": "livePreview.start.internalPreview.atIndex",
+					"command": "livePreview.start.debugPreview.atFile",
 					"when": "false"
 				},
 				{
@@ -157,7 +142,7 @@
 					"group": "1_livepreview"
 				},
 				{
-					"command": "livePreview.start.externalDebug.atFile",
+					"command": "livePreview.start.externalDebugPreview.atFile",
 					"when": "editorLangId == html && !notebookEditorFocused",
 					"group": "1_livepreview"
 				},
@@ -235,6 +220,16 @@
 					"type": "string",
 					"default": "",
 					"description": "The file to automatically show upon starting the server. Leave blank to open at the index."
+				},
+				"livePreview.debugOnExternalPreview": {
+					"type": "boolean",
+					"default": false,
+					"description": "Whether or not to attach the JavaScript debugger on external preview launches."
+				},
+				"livePreview.hostIP": {
+					"type": "string",
+					"default": "127.0.0.1",
+					"description": "The local IP host address to host your files on."
 				}
 			}
 		},

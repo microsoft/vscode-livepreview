@@ -2,10 +2,10 @@ import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { HOST } from '../utils/constants';
 import { URL } from 'url';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { SETTINGS_SECTION_ID } from '../utils/settingsUtil';
+import { ConnectionManager } from '../infoManagers/connectionManager';
 
 /**
  * @description the link provider that runs on Live Preview's `Run Server` task
@@ -27,7 +27,8 @@ export class serverTaskLinkProvider
 		public terminalName: string,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
-		private readonly _workspaceManager: WorkspaceManager
+		private readonly _workspaceManager: WorkspaceManager,
+		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
 		vscode.window.registerTerminalLinkProvider(this);
@@ -126,7 +127,7 @@ export class serverTaskLinkProvider
 
 	private _findFullLinkRegex(input: string, links: Array<vscode.TerminalLink>) {
 		const fullLinkRegex = new RegExp(
-			`\\b\\w{2,20}:\\/\\/(?:localhost|${HOST}|:\\d{2,5})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
+			`\\b\\w{2,20}:\\/\\/(?:localhost|${this._connectionManager.host}|:\\d{2,5})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
 			'g'
 		);
 
