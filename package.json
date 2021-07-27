@@ -22,7 +22,7 @@
 		"vscode": "^1.56.0"
 	},
 	"bugs": {
-		"url": "https://github.com/microsoft/vscode-liveserver/issues"
+		"url": "https://github.com/microsoft/vscode-livepreview/issues"
 	},
 	"categories": [
 		"Other"
