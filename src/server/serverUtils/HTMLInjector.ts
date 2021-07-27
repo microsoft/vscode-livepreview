@@ -43,11 +43,11 @@ export class HTMLInjector extends Disposable {
 			'injectScript.js'
 		);
 		this.rawScript = fs.readFileSync(scriptPath, 'utf8').toString();
-		this.initScript(this.rawScript);
+		this.initScript(this.rawScript, undefined, undefined);
 
 		this._register(
 			this._connectionManager.onConnected((e) => {
-				this.refresh();
+				this.refresh(e.httpURI, e.wsURI);
 			})
 		);
 	}
@@ -56,9 +56,17 @@ export class HTMLInjector extends Disposable {
 	 * @description populate `this._script` with the script containing replacements for the server addresses.
 	 * @param {string} fileString the raw loaded script with no replacements yet.
 	 */
-	private async initScript(fileString: string) {
-		const httpUri = await this._connectionManager.resolveExternalHTTPUri();
-		const wsUri = await this._connectionManager.resolveExternalWSUri();
+	private async initScript(
+		fileString: string,
+		httpUri: vscode.Uri | undefined,
+		wsUri: vscode.Uri | undefined
+	) {
+		if (!httpUri) {
+			httpUri = await this._connectionManager.resolveExternalHTTPUri();
+		}
+		if (!wsUri) {
+			wsUri = await this._connectionManager.resolveExternalWSUri();
+		}
 		const wsURL = `ws://${wsUri.authority}`;
 		let httpURL = `${httpUri.scheme}://${httpUri.authority}`;
 
@@ -92,7 +100,7 @@ export class HTMLInjector extends Disposable {
 	/**
 	 * @description re-populate the script field with replacements. Will re-query the connection manager for the port and host.
 	 */
-	public refresh() {
-		this.initScript(this.rawScript);
+	private refresh(httpUri: vscode.Uri, wsUri: vscode.Uri) {
+		this.initScript(this.rawScript, httpUri, wsUri);
 	}
 }
