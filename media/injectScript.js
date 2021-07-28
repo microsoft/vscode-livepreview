@@ -3,37 +3,12 @@
  * Script injected by the VS Code Live Preview Extension.
  * http://aka.ms/live-preview
  */
-const ws_url = '${WS_URL}',
-	host = '${HTTP_URL}',
-	connection = new WebSocket(ws_url);
-
-let ctrlDown = false;
-
-connection.onmessage = (event) => handleSocketMessage(event.data);
 
 window.addEventListener('message', (event) => handleMessage(event), false);
 
 document.addEventListener('DOMContentLoaded', function (e) {
 	onLoad();
 });
-
-window.addEventListener('message', (event) => {
-	if (
-		event.data.command != 'perform-url-check' &&
-		event.data.command != 'update-path'
-	) {
-		postParentMessage(event.data);
-	}
-});
-
-// Override console messages to allow the user to see console messages in the output channel (embedded preview only).
-const consoleOverrides = {
-	ERROR: console.error,
-	LOG: console.log,
-	WARN: console.warn,
-	INFO: console.info,
-	CLEAR: console.clear,
-};
 
 console.error = createConsoleOverride('ERROR');
 
@@ -49,6 +24,11 @@ console.clear = createConsoleOverride('CLEAR');
  * @description run initialization on load.
  */
 function onLoad() {
+	let connection = new WebSocket('${WS_URL}');
+	connection.onmessage = (event) => handleSocketMessage(event.data);
+
+	let ctrlDown = false;
+
 	const commandPayload = {
 		path: window.location,
 		title: document.title,
@@ -72,7 +52,7 @@ function onLoad() {
 
 	document.addEventListener('keydown', (e) => {
 		ctrlDown = e.ctrlKey || e.metaKey;
-		if (e.key == 'F' || e.key == 'f') {
+		if ((e.key == 'F' || e.key == 'f') && ctrlDown) {
 			postParentMessage({
 				command: 'show-find',
 			});
@@ -90,6 +70,14 @@ function onLoad() {
  * @param {string} type the type of console log (e.g. info, warn, error, etc.).
  */
 function createConsoleOverride(type) {
+	// Override console messages to allow the user to see console messages in the output channel (embedded preview only).
+	const consoleOverrides = {
+		ERROR: console.error,
+		LOG: console.log,
+		WARN: console.warn,
+		INFO: console.info,
+		CLEAR: console.clear,
+	};
 	return function (msg) {
 		let stringifiedMsg = 'undefined';
 
@@ -134,6 +122,7 @@ function handleSocketMessage(data) {
  */
 function handleMessage(event) {
 	const message = event.data;
+
 	switch (message.command) {
 		case 'refresh':
 			window.location.reload();
@@ -177,6 +166,14 @@ function handleMessage(event) {
 				text: findResult,
 			});
 			break;
+		}
+		default: {
+			if (
+				event.data.command != 'perform-url-check' &&
+				event.data.command != 'update-path'
+			) {
+				postParentMessage(event.data);
+			}
 		}
 	}
 }
@@ -226,6 +223,7 @@ function postParentMessage(data) {
  * @param {string} linkTarget
  */
 function handleLinkClick(linkTarget) {
+	const host = '${HTTP_URL}';
 	if (linkTarget && linkTarget != '') {
 		if (!linkTarget.startsWith(host)) {
 			// The embedded preview does not support external sites; let the extension know that an external link has been

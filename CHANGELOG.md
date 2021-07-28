@@ -1,5 +1,7 @@
 Changes have only been tracked starting from `v0.2.2`
-
+## 0.2.6 (July 28, 2021)
+- Restricted remote sessions from hosting on custom IP host. [#123](https://github.com/microsoft/vscode-livepreview/pull/123)
+- Cleaned up injected script to reduce global variables. [#124](https://github.com/microsoft/vscode-livepreview/pull/125)
 ## 0.2.5 (July 26, 2021)
 - General code cleanup. [#103](https://github.com/microsoft/vscode-livepreview/pull/103)
 - Added "Debug on External Preview" to allow users to modify the default external browser behavior. [#105](https://github.com/microsoft/vscode-livepreview/pull/105)
