@@ -5,6 +5,7 @@
  */
 
 window.addEventListener('message', (event) => handleMessage(event), false);
+window.addEventListener('error', (event) => handleError(event), false);
 
 document.addEventListener('DOMContentLoaded', function (e) {
 	onLoad();
@@ -175,6 +176,31 @@ function handleMessage(event) {
 				postParentMessage(event.data);
 			}
 		}
+	}
+}
+
+/**
+ * Handle errors from the parent (specifically for embedded preview).
+ * @param {any} event
+ */
+function handleError(event) {
+	const stackMessage = event.error.stack;
+	// stackMessages given in the form:
+	//    "errorType: errorMessage"
+	// Example:
+	//    "SyntaxError: Illegal newline after throw"
+	const errorType = stackMessage.split(':')[0];
+
+	// ignore errors such as SyntaxError, ReferenceError, etc
+	if (errorType === 'Error') {
+		const messagePayload = {
+			type: 'UNCAUGHT_ERROR',
+			data: stackMessage,
+		};
+		postParentMessage({
+			command: 'console',
+			text: JSON.stringify(messagePayload),
+		});
 	}
 }
 
