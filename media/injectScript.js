@@ -83,7 +83,7 @@ function createConsoleOverride(type) {
 
 		try {
 			stringifiedMsg = JSON.stringify(msg);
-			if (!stringifiedMsg) throw new Error('stringifiedMsg is undefined');
+			if (!stringifiedMsg) throw new Error('message is not in JSON format');
 		} catch (err) {
 			try {
 				stringifiedMsg = msg.toString();
