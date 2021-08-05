@@ -1,4 +1,8 @@
-Changes have only been tracked starting from `v0.2.2`
+# Changelog
+## 0.2.7 (August 5, 2021)
+- Print exceptions to console. [#134](https://github.com/microsoft/vscode-livepreview/pull/134)
+- Improve logging of functions. [#135](https://github.com/microsoft/vscode-livepreview/pull/135)
+
 ## 0.2.6 (July 28, 2021)
 - Restricted remote sessions from hosting on custom IP host. [#123](https://github.com/microsoft/vscode-livepreview/pull/123)
 - Cleaned up injected script to reduce global variables. [#124](https://github.com/microsoft/vscode-livepreview/pull/125)
@@ -27,3 +31,6 @@ Changes have only been tracked starting from `v0.2.2`
 - Adjusted "Open Automatically on Server Start" to take relative paths in workspace. [#74](https://github.com/microsoft/vscode-livepreview/pull/74)
 - Fixed favicon display on external preview. [#76](https://github.com/microsoft/vscode-livepreview/pull/76)
 - Fixed high CPU usage bug in external browser [#78](https://github.com/microsoft/vscode-livepreview/pull/78)
+
+
+Changes have only been tracked starting from `v0.2.2`
