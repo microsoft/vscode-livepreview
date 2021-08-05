@@ -8,3 +8,4 @@ media/extension*
 */.vscode/*
 .vscode/*
 .devcontainer/*
+.DS_Store
