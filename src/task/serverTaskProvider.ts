@@ -6,7 +6,7 @@ import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { Disposable } from '../utils/dispose';
 import { serverTaskLinkProvider } from './serverTaskLinkProvider';
 import { ServerTaskTerminal } from './serverTaskTerminal';
-import { TASK_TERMINAL_NAME } from '../utils/constants';
+import { TASK_TERMINAL_BASE_NAME } from '../utils/constants';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 
 interface ServerTaskDefinition extends vscode.TaskDefinition {
@@ -191,7 +191,7 @@ export class ServerTaskProvider
 			};
 		}
 
-		let taskName = TASK_TERMINAL_NAME;
+		let taskName = TASK_TERMINAL_BASE_NAME;
 		for (const i in args) {
 			taskName += ` ${args[i]}`;
 		}
