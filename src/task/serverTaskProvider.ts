@@ -6,7 +6,7 @@ import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { Disposable } from '../utils/dispose';
 import { serverTaskLinkProvider } from './serverTaskLinkProvider';
 import { ServerTaskTerminal } from './serverTaskTerminal';
-import { TASK_TERMINAL_NAME } from '../utils/constants';
+import { TASK_TERMINAL_BASE_NAME } from '../utils/constants';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 
 interface ServerTaskDefinition extends vscode.TaskDefinition {
@@ -191,11 +191,15 @@ export class ServerTaskProvider
 			};
 		}
 
+		let taskName = TASK_TERMINAL_BASE_NAME;
+		for (const i in args) {
+			taskName += ` ${args[i]}`;
+		}
 		if (this._terminal && this._terminal.running) {
 			return new vscode.Task(
 				definition,
 				this._workspaceManager.workspace ?? vscode.TaskScope.Workspace,
-				TASK_TERMINAL_NAME,
+				taskName,
 				ServerTaskProvider.CustomBuildScriptType,
 				undefined
 			);
@@ -209,8 +213,8 @@ export class ServerTaskProvider
 				}
 
 				this._terminal = new ServerTaskTerminal(args, this._reporter);
-				this._termName = TASK_TERMINAL_NAME;
-				this._terminalLinkProvider.terminalName = TASK_TERMINAL_NAME;
+				this._termName = taskName;
+				this._terminalLinkProvider.terminalName = taskName;
 				this._terminal.onRequestToOpenServer((e) => {
 					this._onRequestToOpenServerEmitter.fire(e);
 				});
@@ -225,7 +229,7 @@ export class ServerTaskProvider
 		const task = new vscode.Task(
 			definition,
 			vscode.TaskScope.Workspace,
-			TASK_TERMINAL_NAME,
+			taskName,
 			ServerTaskProvider.CustomBuildScriptType,
 			custExec
 		);

@@ -50,7 +50,11 @@ export class ConnectionManager extends Disposable {
 				`The local IP address "${host}" is not formatted correctly. Using default ${DEFAULT_HOST}.`
 			);
 			this._initHost = DEFAULT_HOST;
-		} else if (vscode.env.remoteName != '' && host != DEFAULT_HOST) {
+		} else if (
+			vscode.env.remoteName &&
+			vscode.env.remoteName != '' &&
+			host != DEFAULT_HOST
+		) {
 			vscode.window.showErrorMessage(
 				`Cannot use the host "${host}" when using a remote connection. Using default ${DEFAULT_HOST}.`
 			);
