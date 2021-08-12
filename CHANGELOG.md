@@ -1,4 +1,9 @@
 # Changelog
+
+## 0.2.8 (August 12, 2021)
+- Fixed Custom IP Error on Local Session. [#140](https://github.com/microsoft/vscode-livepreview/pull/#140)
+-  Fixed Identical Task Names. [#141](https://github.com/microsoft/vscode-livepreview/pull/#141)
+
 ## 0.2.7 (August 5, 2021)
 - Print exceptions to console. [#134](https://github.com/microsoft/vscode-livepreview/pull/134)
 - Improve logging of functions. [#135](https://github.com/microsoft/vscode-livepreview/pull/135)
