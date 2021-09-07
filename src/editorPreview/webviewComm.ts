@@ -169,12 +169,12 @@ export class WebviewComm extends Disposable {
 					and only allow scripts that have a specific nonce.
 				-->
 				<meta http-equiv="Content-Security-Policy" content="
-				default-src 'none';
-				connect-src ${wsServerAddr};
-				font-src ${this._panel.webview.cspSource};
-				style-src ${this._panel.webview.cspSource};
-				script-src 'nonce-${nonce}';
-				frame-src ${httpServerAddr};
+					default-src 'none';
+					connect-src ${wsServerAddr};
+					font-src ${this._panel.webview.cspSource};
+					style-src ${this._panel.webview.cspSource};
+					script-src 'nonce-${nonce}';
+					frame-src ${httpServerAddr};
 				">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -192,17 +192,14 @@ export class WebviewComm extends Disposable {
 								id="back"
 								title="Back"
 								class="back-button icon leftmost-nav"><i class="codicon codicon-arrow-left"></i></button>
-
 							<button
 								id="forward"
 								title="Forward"
 								class="forward-button icon leftmost-nav"><i class="codicon codicon-arrow-right"></i></button>
-
 							<button
 								id="reload"
 								title="Reload"
 								class="reload-button icon leftmost-nav"><i class="codicon codicon-refresh"></i></button>
-							
 							<input 
 								id="url-input"
 								class="url-input" 
@@ -211,9 +208,6 @@ export class WebviewComm extends Disposable {
 								id="more"
 								title="More Browser Actions"
 								class="more-button icon"><i class="codicon codicon-list-flat"></i></button>
-							
-							
-
 						</nav>
 						<div class="find-container" id="find-box" hidden=true>
 							<nav class="find">
@@ -238,7 +232,6 @@ export class WebviewComm extends Disposable {
 									tabIndex=-1
 									title="Close"
 									class="find-x-button icon find-nav"><i class="codicon codicon-chrome-close"></i></button>
-								
 							</nav>
 						</div>
 					</div>
@@ -265,11 +258,9 @@ export class WebviewComm extends Disposable {
 						</table>
 					</div>
 				</div>
-				
 				<div class="content">
 					<iframe id="hostedContent" src="${httpURL}"></iframe>
 				</div>
-				
 			</div>
 			<div id="link-preview"></div>
 				<script nonce="${nonce}">

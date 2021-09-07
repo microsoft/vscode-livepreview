@@ -305,15 +305,14 @@
 			}
 			// from child iframe
 			case 'show-find-icon': {
-				document.getElementById('find-result').hidden = true;
-				let codicon = document.getElementById('find-result-icon');
-				const fromClass = message.text ? 'codicon-error' : 'codicon-pass';
-				const toClass = message.text ? 'codicon-pass' : 'codicon-error';
-				if (!codicon.classList.contains(toClass)) {
-					codicon.classList.remove(fromClass);
-					codicon.classList.add(toClass);
+				const codicon = document.getElementById('find-result-icon');
+				const iconClass = message.text ? 'codicon-pass' : 'codicon-error';
+
+				if (!codicon.classList.contains(iconClass)) {
+					codicon.className = `codicon ${iconClass}`;
+					document.getElementById('find-result').hidden = true;
+					fadeElement(true, document.getElementById('find-result'));
 				}
-				fadeElement(true, document.getElementById('find-result'));
 				break;
 			}
 			// from child iframe
