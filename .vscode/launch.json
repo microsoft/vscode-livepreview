@@ -1,0 +1,28 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Launch Extension",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+			"skipFiles": ["<node_internals>/**/*.js", "**/node_modules/**/*.js"],
+			"smartStep": true,
+			"sourceMaps": true,
+			"outFiles": ["${workspaceFolder}/dist/*.js"]
+		},
+		{
+			"name": "Watch & Launch Extension",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+			"skipFiles": ["<node_internals>/**/*.js", "**/node_modules/**/*.js"],
+			"preLaunchTask": "npm: watch",
+			"smartStep": true,
+			"sourceMaps": true,
+			"outFiles": ["${workspaceFolder}/dist/*.js"]
+		}
+	]
+}
