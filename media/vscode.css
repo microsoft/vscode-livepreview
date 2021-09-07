@@ -195,7 +195,7 @@ textarea::placeholder {
 	position: absolute;
 	display: flex;
 	padding: 4px 0em 4px 0px;
-	background-color: var(--vscode-menu-background);
+	background-color: var(--vscode-input-background);
 }
 
 .extras-menu {
