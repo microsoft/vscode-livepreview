@@ -25,6 +25,8 @@ const config = {
 	},
 	devtool: 'source-map',
 	externals: {
+		'applicationinsights-native-metrics':
+			'commonjs applicationinsights-native-metrics', // https://github.com/microsoft/vscode-extension-telemetry/issues/41#issuecomment-598852991
 		vscode: 'commonjs vscode', // the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed, 📖 -> https://webpack.js.org/configuration/externals/
 		'utf-8-validate': 'commonjs utf-8-validate',
 		bufferutil: 'commonjs bufferutil',
