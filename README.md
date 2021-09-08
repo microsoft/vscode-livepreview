@@ -1,7 +1,5 @@
 # Live Preview - VS Code Extension 📡
 
-![Build](https://github.com/andreamah/VS-Code-LiveServer-V2-Extension/actions/workflows/build.yml/badge.svg)
-
 ⚠️ WARNING: this extension is still under development! ⚠️
 
 An extension that hosts a local server for you to preview your web projects on! 
