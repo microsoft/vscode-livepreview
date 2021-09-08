@@ -23,8 +23,5 @@ jobs:
   - script: yarn run compile
     displayName: Compile
 
-  - script: yarn run compile
-    displayName: Compile
-
   - script: yarn eslint src
     displayName: Run ESLint
