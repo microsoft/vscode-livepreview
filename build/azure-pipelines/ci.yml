@@ -1,0 +1,23 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+- job:
+  displayName: Compile
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "14.x"
+
+  - script: yarn run compile
+    displayName: Compile
+
+  - script: yarn run compile
+    displayName: Compile
+
+  - script: yarn eslint src
+    displayName: Run ESLint

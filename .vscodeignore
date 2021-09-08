@@ -7,7 +7,7 @@ src/**
 .prettierrc.yaml
 tsconfig.json
 vsc-extension-quickstart.md
-codicon_copy.js
+build
 node_modules
 test-workspace
 release_notes
