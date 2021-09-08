@@ -1,5 +1,9 @@
 name: $(Date:yyyyMMdd)$(Rev:.r)
 
+trigger:
+  branches:
+    include:
+    - main
 pr: none
 
 pool:
@@ -12,6 +16,9 @@ jobs:
   - task: NodeTool@0
     inputs:
       versionSpec: "14.x"
+
+  - script: yarn install
+    displayName: Install dependencies
 
   - script: yarn run compile
     displayName: Compile
