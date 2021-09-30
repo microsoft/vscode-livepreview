@@ -9,31 +9,52 @@ pr: none
 pool:
   vmImage: ubuntu-latest
 
-jobs:
-- job:
-  displayName: Compile
-  steps:
-  - task: NodeTool@0
-    inputs:
-      versionSpec: "14.x"
-
-  - script: |
-      VSIX=$(node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\"")
-      echo "##vso[task.setvariable variable=VSIX]$VSIX"
-    displayName: Set VSIX environment variable
-
-  - script: yarn install --frozen-lockfile
-    displayName: Install dependencies
-
-  - script: yarn run compile
+stages:
+- stage:
+  displayName: Compile & Package
+  jobs:
+  - job:
     displayName: Compile
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: "14.x"
 
-  - script: yarn eslint src
-    displayName: Run ESLint
+    - script: |
+        VSIX=$(node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\"")
+        echo "##vso[task.setvariable variable=VSIX]$VSIX"
+      displayName: Set VSIX environment variable
 
-  - script: npx vsce package -o ./$(VSIX)
-    displayName: Package extension
+    - script: yarn install --frozen-lockfile
+      displayName: Install dependencies
 
-  - publish: $(System.DefaultWorkingDirectory)/$(VSIX)
-    artifact: extension
-    displayName: Publish artifact
+    - script: yarn run compile
+      displayName: Compile
+
+    - script: yarn eslint src
+      displayName: Run ESLint
+
+    - script: npx vsce package -o ./$(VSIX)
+      displayName: Package extension
+
+    - publish: $(System.DefaultWorkingDirectory)/$(VSIX)
+      artifact: extension
+      displayName: Publish artifact
+
+- stage:
+  displayName: Publish
+  jobs:
+  - job:
+    displayName: Publish
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: "14.x"
+
+    - script: |
+        VSIX=$(node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\"")
+        echo "##vso[task.setvariable variable=VSIX]$VSIX"
+      displayName: Set VSIX environment variable
+
+    - download: current
+      displayName: Download artifact
