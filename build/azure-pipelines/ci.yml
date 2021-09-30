@@ -17,21 +17,16 @@ jobs:
     inputs:
       versionSpec: "14.x"
 
-  - bash: |
+  - script: |
       echo "##vso[task.setvariable variable=sauce]crushed tomatoes"
 
-  - bash: |
-      PACKAGE_NAME=$(node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\"")
-      echo "##vso[task.setvariable variable=PackageName]$PACKAGE_NAME"
-      echo "##vso[task.setvariable variable=sauce]$PACKAGE_NAME"
-      echo "package name is $PACKAGE_NAME"
+  - script: |
+      VSIX=$(node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\"")
+      echo "##vso[task.setvariable variable=VSIX]$VSIX"
     displayName: Set package name
 
-  - bash: |
-      echo "my environment variable is $SAUCE"
-
-  - bash: |
-      echo "extension name is $PACKAGENAME"
+  - script: |
+      echo "extension name is $VSIX"
 
   - script: yarn install --frozen-lockfile
     displayName: Install dependencies
@@ -42,5 +37,5 @@ jobs:
   - script: yarn eslint src
     displayName: Run ESLint
 
-  - script: npx vsce package
+  - script: npx vsce package -o ./$VSIX
     displayName: Package extension
