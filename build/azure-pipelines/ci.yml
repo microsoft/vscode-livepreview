@@ -22,6 +22,7 @@ jobs:
 
   - bash: |
       PACKAGE_NAME=$(node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\"")
+      echo "##vso[task.setvariable variable=PackageName]$PACKAGE_NAME"
       echo "##vso[task.setvariable variable=sauce]$PACKAGE_NAME"
       echo "package name is $PACKAGE_NAME"
     displayName: Set package name
@@ -30,7 +31,7 @@ jobs:
       echo "my environment variable is $SAUCE"
 
   - bash: |
-      echo "extension name is $PACKAGE_NAME"
+      echo "extension name is $PACKAGENAME"
 
   - script: yarn install --frozen-lockfile
     displayName: Install dependencies
