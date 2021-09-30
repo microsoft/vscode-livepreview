@@ -20,6 +20,11 @@ jobs:
   - bash: |
       echo "##vso[task.setvariable variable=sauce]crushed tomatoes"
 
+  - bash: |
+      echo "my environment variable is $SAUCE"
+  - pwsh: |
+      Write-Host "my environment variable is $env:SAUCE"
+
   - script: |
       node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\""
 
