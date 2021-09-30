@@ -18,7 +18,7 @@ jobs:
       versionSpec: "14.x"
 
   - script: |
-      PACKAGE_NAME=$(node -p "require("./package.json").name")
+      PACKAGE_NAME=$(node -p "require(\"./package.json\").name")
       echo "##vso[task.setvariable variable=PackageName]$PACKAGE_NAME"
     displayName: Set package name
 
