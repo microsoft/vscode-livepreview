@@ -18,11 +18,17 @@ jobs:
       versionSpec: "14.x"
 
   - bash: |
-      PACKAGE_NAME=$(node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\"" )
-      echo "##vso[task.setvariable variable=PackageName]$PACKAGE_NAME"
-    displayName: Set package name
+      echo "##vso[task.setvariable variable=sauce]crushed tomatoes"
 
-  - bash: echo $(PACKAGE_NAME)
+  - script: |
+      node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\""
+
+  # - bash: |
+  #     PACKAGE_NAME=$(node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\"")
+  #     echo "##vso[task.setvariable variable=PackageName]$PACKAGE_NAME"
+  #   displayName: Set package name
+
+  # - bash: echo $(PACKAGE_NAME)
 
   - script: yarn install --frozen-lockfile
     displayName: Install dependencies
