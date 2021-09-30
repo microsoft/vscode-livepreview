@@ -1,8 +1,12 @@
 # Changelog
 
+## 0.2.9 (September 30, 2021)
+- Fixed an issue with the find widget icon background. [#156](https://github.com/microsoft/vscode-livepreview/issues/156)
+- Fixed an issue that causes the find widget to flicker while navigating through matches. [#157](https://github.com/microsoft/vscode-livepreview/issues/157) 
+
 ## 0.2.8 (August 12, 2021)
 - Fixed Custom IP Error on Local Session. [#140](https://github.com/microsoft/vscode-livepreview/pull/#140)
--  Fixed Identical Task Names. [#141](https://github.com/microsoft/vscode-livepreview/pull/#141)
+- Fixed Identical Task Names. [#141](https://github.com/microsoft/vscode-livepreview/pull/#141)
 
 ## 0.2.7 (August 5, 2021)
 - Print exceptions to console. [#134](https://github.com/microsoft/vscode-livepreview/pull/134)
@@ -21,18 +25,18 @@
 - Added shortcut to open webview devtools in editor. [#115](https://github.com/microsoft/vscode-livepreview/pull/115)
 - Added option to configure host IP address. [#117](https://github.com/microsoft/vscode-livepreview/pull/117)
 
-## v0.2.4 (July 21, 2021)
+## 0.2.4 (July 21, 2021)
 - Reduced `.vsix` size from ~25MB to ~200KB [#86](https://github.com/microsoft/vscode-livepreview/pull/86)
 - Added keywords to `package.json` for better marketplace search. [#87](https://github.com/microsoft/vscode-livepreview/pull/87)
 - Changed injected script to fetch from server for cleaner client code. [#93](https://github.com/microsoft/vscode-livepreview/pull/93)
 - Added external browser debugging using `js-debug`. [#93](https://github.com/microsoft/vscode-livepreview/pull/93)
 - Support `HTM/XHTML` files the same as HTML files. [#93](https://github.com/microsoft/vscode-livepreview/pull/93)
 
-## v0.2.3 (July 15, 2021)
+## 0.2.3 (July 15, 2021)
 - Added support for watch scripts (e.g.: for Sass files). For this, use the "On Changes to Saved Files" option for the "Auto Refresh Preview" setting. [#82](https://github.com/microsoft/vscode-livepreview/pull/82)
 - Piped `console` logging to Output Channel (Embedded Live Preview Console). [#83](https://github.com/microsoft/vscode-livepreview/pull/83), [#85](https://github.com/microsoft/vscode-livepreview/pull/85)
 
-## v0.2.2 (July 13, 2021)
+## 0.2.2 (July 13, 2021)
 - Adjusted "Open Automatically on Server Start" to take relative paths in workspace. [#74](https://github.com/microsoft/vscode-livepreview/pull/74)
 - Fixed favicon display on external preview. [#76](https://github.com/microsoft/vscode-livepreview/pull/76)
 - Fixed high CPU usage bug in external browser [#78](https://github.com/microsoft/vscode-livepreview/pull/78)
