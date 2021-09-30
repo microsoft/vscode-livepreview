@@ -22,18 +22,14 @@ jobs:
 
   - bash: |
       echo "my environment variable is $SAUCE"
-  - pwsh: |
-      Write-Host "my environment variable is $env:SAUCE"
 
-  - script: |
-      node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\""
+  - bash: |
+      PACKAGE_NAME=$(node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\"")
+      echo "##vso[task.setvariable variable=PackageName]$PACKAGE_NAME"
+    displayName: Set package name
 
-  # - bash: |
-  #     PACKAGE_NAME=$(node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\"")
-  #     echo "##vso[task.setvariable variable=PackageName]$PACKAGE_NAME"
-  #   displayName: Set package name
-
-  # - bash: echo $(PACKAGE_NAME)
+  - bash: |
+      echo "extension name is $PACKAGE_NAME"
 
   - script: yarn install --frozen-lockfile
     displayName: Install dependencies
