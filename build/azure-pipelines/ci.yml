@@ -61,6 +61,8 @@ stages:
       runOnce:
             deploy:
               steps:
+              - checkout: self
+
               - task: NodeTool@0
                 inputs:
                   versionSpec: "14.x"
@@ -73,5 +75,5 @@ stages:
               # - download: current
               #   displayName: Download artifact
 
-              - script: npx vsce publish --packagePath ./$(VSIX) -p
+              - script: npx vsce publish --packagePath ./$(VSIX) -p $(MARKETPLACE_PAT)
                 displayName: Publish extension
