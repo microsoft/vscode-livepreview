@@ -18,15 +18,9 @@ jobs:
       versionSpec: "14.x"
 
   - script: |
-      echo "##vso[task.setvariable variable=sauce]crushed tomatoes"
-
-  - script: |
       VSIX=$(node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\"")
       echo "##vso[task.setvariable variable=VSIX]$VSIX"
-    displayName: Set package name
-
-  - script: |
-      echo "extension name is $VSIX"
+    displayName: Set VSIX environment variable
 
   - script: yarn install --frozen-lockfile
     displayName: Install dependencies
@@ -37,5 +31,9 @@ jobs:
   - script: yarn eslint src
     displayName: Run ESLint
 
-  - script: npx vsce package -o ./$VSIX
+  - script: npx vsce package -o ./$(VSIX)
     displayName: Package extension
+
+  - publish: $(System.DefaultWorkingDirectory)/$(VSIX)
+    artifact: extension
+    displayName: Publish artifact
