@@ -73,5 +73,5 @@ stages:
               # - download: current
               #   displayName: Download artifact
 
-              - script: npx vsce publish --packagePath ./$(VSIX) -p ${{ secrets.MARKETPLACE_PAT }}
+              - script: npx vsce publish --packagePath ./$(VSIX) -p
                 displayName: Publish extension
