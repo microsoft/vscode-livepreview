@@ -75,5 +75,5 @@ stages:
               # - download: current
               #   displayName: Download artifact
 
-              - script: npx vsce publish --packagePath ./$(VSIX) -p $(MARKETPLACE_PAT)
+              - script: npx vsce publish --packagePath $(Pipeline.Workspace)/extension/$(VSIX) -p $(MARKETPLACE_PAT)
                 displayName: Publish extension
