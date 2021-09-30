@@ -14,7 +14,7 @@ stages:
   displayName: Compile & Package
   jobs:
   - job:
-    displayName: Compile
+    displayName: Compile & Package
     steps:
     - task: NodeTool@0
       inputs:
@@ -23,7 +23,7 @@ stages:
     - script: |
         VSIX=$(node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\"")
         echo "##vso[task.setvariable variable=VSIX]$VSIX"
-      displayName: Set VSIX environment variable
+      displayName: Set environment variable
 
     - script: yarn install --frozen-lockfile
       displayName: Install dependencies
@@ -41,20 +41,33 @@ stages:
       artifact: extension
       displayName: Publish artifact
 
+    - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+      displayName: "Component Detection"
+      inputs:
+        sourceScanPath: $(Build.SourcesDirectory)
+      continueOnError: true
+
 - stage:
   displayName: Publish
   jobs:
-  - job:
+  - deployment: DeployAppService
     displayName: Publish
-    steps:
-    - task: NodeTool@0
-      inputs:
-        versionSpec: "14.x"
+    environment: VSCode-Markerplace
+    strategy:
+      runOnce:
+            deploy:
+              steps:
+              - task: NodeTool@0
+                inputs:
+                  versionSpec: "14.x"
 
-    - script: |
-        VSIX=$(node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\"")
-        echo "##vso[task.setvariable variable=VSIX]$VSIX"
-      displayName: Set VSIX environment variable
+              - script: |
+                  VSIX=$(node -p "require(\"./package.json\").name + \"-\" + require(\"./package.json\").version + \".vsix\"")
+                  echo "##vso[task.setvariable variable=VSIX]$VSIX"
+                displayName: Set environment variable
 
-    - download: current
-      displayName: Download artifact
+              - download: current
+                displayName: Download artifact
+
+              - script: npx vsce package -o ./$(VSIX)
+                displayName: Publish extension
