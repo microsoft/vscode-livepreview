@@ -9,6 +9,10 @@ pr: none
 pool:
   vmImage: ubuntu-latest
 
+variables:
+- name: skipComponentGovernanceDetection
+  value: true
+
 stages:
 - stage:
   displayName: Compile & Package
@@ -52,7 +56,7 @@ stages:
   jobs:
   - deployment: DeployAppService
     displayName: Publish
-    environment: VSCode-Markerplace
+    environment: VSCode-Marketplace
     strategy:
       runOnce:
             deploy:
@@ -66,8 +70,8 @@ stages:
                   echo "##vso[task.setvariable variable=VSIX]$VSIX"
                 displayName: Set environment variable
 
-              - download: current
-                displayName: Download artifact
+              # - download: current
+              #   displayName: Download artifact
 
-              - script: npx vsce package -o ./$(VSIX)
+              - script: npx vsce publish --packagePath ./$(VSIX) -p ${{ secrets.MARKETPLACE_PAT }}
                 displayName: Publish extension
