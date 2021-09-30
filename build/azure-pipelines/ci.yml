@@ -76,4 +76,4 @@ stages:
 
               - script: npx vsce publish --packagePath $(Pipeline.Workspace)/extension/$(VSIX) -p $(MARKETPLACE_PAT)
                 displayName: Publish extension
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+  # condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
