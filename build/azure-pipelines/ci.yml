@@ -26,5 +26,5 @@ jobs:
   - script: yarn eslint src
     displayName: Run ESLint
 
-  - script: vsce package
+  - script: npx vsce package
     displayName: Package extension
