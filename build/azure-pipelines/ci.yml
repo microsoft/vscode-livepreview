@@ -78,4 +78,4 @@ stages:
                 displayName: Publish extension
                 env:
                   VSCE_PAT: $(MARKETPLACE_PAT)
-  # condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
