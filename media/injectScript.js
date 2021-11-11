@@ -57,11 +57,38 @@ function onLoad() {
 			postParentMessage({
 				command: 'show-find',
 			});
+			return;
 		}
+		postParentMessage({
+			command: 'did-keydown',
+			key: {
+				key: e.key,
+				keyCode: e.keyCode,
+				code: e.code,
+				shiftKey: e.shiftKey,
+				altKey: e.altKey,
+				ctrlKey: e.ctrlKey,
+				metaKey: e.metaKey,
+				repeat: e.repeat,
+			},
+		});
 	});
 
 	document.addEventListener('keyup', (e) => {
 		ctrlDown = e.ctrlKey || e.metaKey;
+		postParentMessage({
+			command: 'did-keyup',
+			key: {
+				key: e.key,
+				keyCode: e.keyCode,
+				code: e.code,
+				shiftKey: e.shiftKey,
+				altKey: e.altKey,
+				ctrlKey: e.ctrlKey,
+				metaKey: e.metaKey,
+				repeat: e.repeat,
+			},
+		});
 	});
 }
 

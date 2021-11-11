@@ -250,6 +250,16 @@
 				break;
 			}
 			// from child iframe
+			case 'did-keydown': {
+				handleKeyEvent('keydown', message.key);
+				break;
+			}
+			// from child iframe
+			case 'did-keyup': {
+				handleKeyEvent('keyup', message.key);
+				break;
+			}
+			// from child iframe
 			case 'update-path': {
 				const msgJSON = JSON.parse(message.text);
 				vscode.postMessage({
@@ -395,6 +405,7 @@
 			'*'
 		);
 	}
+
 	/**
 	 * @description Add click/keyboard listeners to all toolbar buttons.
 	 */
@@ -470,5 +481,16 @@
 		document.getElementById('find-prev').onclick = findPrev;
 
 		document.getElementById('find-x').onclick = hideFind;
+	}
+
+	/**
+	 * @description Create/displatch a keyboard event coming from child iframe.
+	 */
+	function handleKeyEvent(type, event) {
+		const emulatedKeyboardEvent = new KeyboardEvent(type, event);
+		Object.defineProperty(emulatedKeyboardEvent, 'target', {
+			get: () => document,
+		});
+		window.dispatchEvent(emulatedKeyboardEvent);
 	}
 })();
