@@ -50,6 +50,13 @@
 			}
 		});
 
+		// set up key to dismiss find
+		document.getElementById('find-box').addEventListener('keydown', (e) => {
+			if (!document.getElementById('find-box').hidden && e.key == 'Escape' && !ctrlDown) {
+				hideFind();
+			}
+		});
+
 		// set up keys for navigating find
 		document.getElementById('find-input').addEventListener('keydown', (e) => {
 			if (checkKeyCodeDetected(e, KEY_ENTER)) {
@@ -79,6 +86,7 @@
 				}
 			}
 		});
+		
 		window.addEventListener('message', (event) => {
 			handleMessage(event.data); // The json data that the extension sent
 		});
