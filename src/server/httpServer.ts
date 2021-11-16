@@ -167,9 +167,9 @@ export class HttpServer extends Disposable {
 		}
 
 		let looseFile = false;
-		let absoluteReadPath = path.join(basePath ?? '', unescape(URLPathName));
+		let absoluteReadPath = path.join(basePath ?? '', decodeURI(URLPathName));
 		let contentType = 'application/octet-stream';
-
+ 
 		if (URLPathName.startsWith('/endpoint_unsaved')) {
 			const untitledFileName = URLPathName.substr(
 				URLPathName.lastIndexOf('/') + 1
