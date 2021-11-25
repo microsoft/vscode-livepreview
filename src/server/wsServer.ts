@@ -11,6 +11,7 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { UriSchemes } from '../utils/constants';
 import { ConnectionManager } from '../infoManagers/connectionManager';
+import { serverPortAttributesProvider } from './serverPortAttributesProvider';
 
 /**
  * @description override the `Websocket.Server` class to check websocket connection origins;
@@ -63,7 +64,8 @@ export class WSServer extends Disposable {
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
 		private readonly _workspaceManager: WorkspaceManager,
-		private readonly _connectionManager: ConnectionManager
+		private readonly _connectionManager: ConnectionManager,
+		private readonly _portAttributes: serverPortAttributesProvider
 	) {
 		super();
 
@@ -86,6 +88,7 @@ export class WSServer extends Disposable {
 	}
 
 	public set wsPort(portNum: number) {
+		this._portAttributes.wsPort = portNum;
 		this._wsPort = portNum;
 	}
 
@@ -100,7 +103,7 @@ export class WSServer extends Disposable {
 	 * @param {number} wsPort the port to try to connect to.
 	 */
 	public start(wsPort: number): void {
-		this._wsPort = wsPort;
+		this.wsPort = wsPort;
 		this.startWSServer(this._basePath ?? '');
 	}
 
@@ -147,7 +150,7 @@ export class WSServer extends Disposable {
 	 */
 	private handleWSError(basePath: string, err: any): void {
 		if (err.code == 'EADDRINUSE') {
-			this._wsPort++;
+			this.wsPort++;
 			this.startWSServer(basePath);
 		} else if (err.code == 'EADDRNOTAVAIL') {
 			this._connectionManager.resetHostToDefault();
@@ -171,8 +174,8 @@ export class WSServer extends Disposable {
 	 * @description handle the websocket successfully connecting.
 	 */
 	private handleWSListen(): void {
-		console.log(`Websocket server is running on port ${this._wsPort}`);
-		this._onConnected.fire(this._wsPort);
+		console.log(`Websocket server is running on port ${this.wsPort}`);
+		this._onConnected.fire(this.wsPort);
 	}
 
 	/**
