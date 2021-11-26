@@ -49,7 +49,7 @@ stages:
       displayName: Download NOTICE file
 
     - script: |
-        cp $(Pipeline.Workspace)/NOTICE.txt/NOTICE.txt ThirdPartyNotices.txt
+        cp $(Pipeline.Workspace)/NOTICE.txt/NOTICE.txt NOTICE.txt
       displayName: Copy NOTICE file
 
     - script: npx vsce package -o ./$(VSIX)
