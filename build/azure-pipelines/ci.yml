@@ -40,6 +40,18 @@ stages:
     - script: yarn eslint src
       displayName: Run ESLint
 
+    - task: notice@0
+      displayName: NOTICE File Generator
+      inputs:
+        outputformat: 'text'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: Download NOTICE file
+
+    - script: |
+        cp $(Pipeline.Workspace)/NOTICE.txt/NOTICE.txt ThirdPartyNotices.txt
+      displayName: Copy NOTICE file
+
     - script: npx vsce package -o ./$(VSIX)
       displayName: Package extension
 
