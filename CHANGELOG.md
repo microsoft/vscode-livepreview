@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.10 (November 29, 2021)
+- Added support for IPv6 addresses to the `livePreview.hostIP` setting. [#179](https://github.com/microsoft/vscode-livepreview/issues/179)
+- Fixed an issue with dismissing the search widget when pressing the Esc key. [#130](https://github.com/microsoft/vscode-livepreview/issues/130)
+- Fixed an issue with using keybindings when focused on embedded preview. [#119](https://github.com/microsoft/vscode-livepreview/issues/119) 
+
 ## 0.2.9 (September 30, 2021)
 - Fixed an issue with the find widget icon background. [#156](https://github.com/microsoft/vscode-livepreview/issues/156)
 - Fixed an issue that causes the find widget to flicker while navigating through matches. [#157](https://github.com/microsoft/vscode-livepreview/issues/157) 
