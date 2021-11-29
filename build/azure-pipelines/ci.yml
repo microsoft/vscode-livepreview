@@ -40,6 +40,11 @@ stages:
     - script: yarn eslint src
       displayName: Run ESLint
 
+    - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+      displayName: "Component Detection"
+      inputs:
+        sourceScanPath: $(Build.SourcesDirectory)
+
     - task: notice@0
       displayName: NOTICE File Generator
       inputs:
@@ -58,12 +63,6 @@ stages:
     - publish: $(System.DefaultWorkingDirectory)/$(VSIX)
       artifact: extension
       displayName: Publish artifact
-
-    - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
-      displayName: "Component Detection"
-      inputs:
-        sourceScanPath: $(Build.SourcesDirectory)
-      continueOnError: true
 
 - stage:
   displayName: Publish
