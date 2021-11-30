@@ -324,7 +324,8 @@ export class Manager extends Disposable {
 				vscode.Uri.joinPath(
 					this._extensionUri,
 					'node_modules',
-					'vscode-codicons',
+					'@vscode',
+					'codicons',
 					'dist'
 				),
 			],

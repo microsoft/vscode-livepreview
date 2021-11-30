@@ -49,11 +49,11 @@ const config = {
 		new CopyPlugin({
 			patterns: [
 				{
-					from: './node_modules/vscode-codicons/dist/codicon.css',
+					from: './node_modules/@vscode/codicons/dist/codicon.css',
 					to: '../media/codicon.css',
 				},
 				{
-					from: './node_modules/vscode-codicons/dist/codicon.ttf',
+					from: './node_modules/@vscode/codicons/dist/codicon.ttf',
 					to: '../media/codicon.ttf',
 				},
 			],
