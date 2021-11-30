@@ -275,9 +275,9 @@
 		"webpack-cli": "^4.7.0"
 	},
 	"dependencies": {
+		"@vscode/codicons": "0.0.26",
 		"mime": "^2.5.2",
 		"url": "^0.11.0",
-		"vscode-codicons": "0.0.17",
 		"vscode-extension-telemetry": "0.3.2",
 		"ws": "^7.4.6"
 	}
