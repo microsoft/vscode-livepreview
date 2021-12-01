@@ -153,6 +153,22 @@ export class ServerTaskProvider
 			});
 	}
 
+	public globalRunTask(): void {
+		/* __GDPR__
+			"tasks.terminal.startFromTasks.json" : {}
+		*/
+		vscode.tasks
+			.fetchTasks()
+			.then((tasks) => {
+				const selTasks = tasks.filter(
+					(x) =>
+						(x.name === "Start App"));
+				if (selTasks.length > 0) {
+					vscode.tasks.executeTask(selTasks[0]);
+				}
+			});
+	}
+
 	public async provideTasks(): Promise<vscode.Task[]> {
 		return this._getTasks();
 	}
