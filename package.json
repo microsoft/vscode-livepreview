@@ -2,7 +2,7 @@
 	"name": "live-server",
 	"displayName": "Live Preview",
 	"description": "Hosts a local server in your workspace for you to preview your webpages on.",
-	"version": "0.2.10",
+	"version": "0.2.11",
 	"preview": true,
 	"aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
 	"publisher": "ms-vscode",

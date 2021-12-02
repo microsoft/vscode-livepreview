@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.11 (December 2, 2021)
+- Reverted the change to support IPv6 addresses using the `livePreview.hostIP` setting. [#179](https://github.com/microsoft/vscode-livepreview/issues/179)
+
 ## 0.2.10 (November 29, 2021)
 - Added support for IPv6 addresses to the `livePreview.hostIP` setting. [#179](https://github.com/microsoft/vscode-livepreview/issues/179)
 - Fixed an issue with dismissing the search widget when pressing the Esc key. [#130](https://github.com/microsoft/vscode-livepreview/issues/130)

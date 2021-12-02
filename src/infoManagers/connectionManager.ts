@@ -1,7 +1,7 @@
 import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
 import { DEFAULT_HOST } from '../utils/constants';
-import { isIP } from 'net';
+import { isIPv4 } from 'net';
 
 /**
  * @description the port information that the server manager provides.
@@ -151,7 +151,7 @@ export class ConnectionManager extends Disposable {
 		}
 	}
 	private _validHost(host: string) {
-		return isIP(host) !== 0;
+		return isIPv4(host);
 	}
 	/**
 	 * @param {number} port
