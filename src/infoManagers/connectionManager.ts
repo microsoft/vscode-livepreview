@@ -4,14 +4,6 @@ import { DEFAULT_HOST } from '../utils/constants';
 import { isIPv4 } from 'net';
 
 /**
- * @description the port information that the server manager provides.
- */
-export interface PortInfo {
-	port: number;
-	wsPort: number;
-}
-
-/**
  * @description the information that gets fired to emitter listeners on connection
  */
 export interface ConnectionInfo {
@@ -27,6 +19,7 @@ export class ConnectionManager extends Disposable {
 	public httpServerBase: string | undefined;
 	public wsServerBase: string | undefined;
 	private _wsPort: number;
+	private _wsPath: string;
 	private _httpPort: number;
 	private _initHttpPort;
 	private _initWSPort;
@@ -66,20 +59,24 @@ export class ConnectionManager extends Disposable {
 
 		this._httpPort = this._initHttpPort;
 		this._wsPort = this._initWSPort;
+		this._wsPath = '';
 
 		this.host = this._initHost;
 	}
 
 	/**
 	 * Called by the server manager to inform this object that a connection has been successful.
-	 * @param {PortInfo} ports ports where the HTTP and WS servers are hosted.
+	 * @param httpPort HTTP server port number
+	 * @param wsPort WS server port number
+	 * @param wsPath WS server path
 	 */
-	public connected(ports: PortInfo): void {
-		this._httpPort = ports.port;
-		this._wsPort = ports.wsPort;
+	public connected(httpPort: number, wsPort: number, wsPath: string): void {
+		this._httpPort = httpPort;
+		this._wsPort = wsPort;
+		this._wsPath = wsPath;
 
 		const httpPortUri = this.constructLocalUri(this._httpPort);
-		const wsPortUri = this.constructLocalUri(this._wsPort);
+		const wsPortUri = this.constructLocalUri(this._wsPort, this._wsPath);
 
 		vscode.env.asExternalUri(httpPortUri).then((externalHTTPUri) => {
 			vscode.env.asExternalUri(wsPortUri).then((externalWSUri) => {
@@ -97,6 +94,7 @@ export class ConnectionManager extends Disposable {
 	public disconnected(): void {
 		this._httpPort = this._initHttpPort;
 		this._wsPort = this._initWSPort;
+		this._wsPath = '';
 		this.host = this._initHost;
 	}
 
@@ -137,7 +135,7 @@ export class ConnectionManager extends Disposable {
 	 * @returns {Promise<vscode.Uri>} a promise for the WS URI
 	 */
 	public async resolveExternalWSUri(): Promise<vscode.Uri> {
-		const wsPortUri = this.constructLocalUri(this._wsPort);
+		const wsPortUri = this.constructLocalUri(this._wsPort, this._wsPath);
 		return vscode.env.asExternalUri(wsPortUri);
 	}
 
@@ -157,7 +155,7 @@ export class ConnectionManager extends Disposable {
 	 * @param {number} port
 	 * @returns the local address URI.
 	 */
-	private constructLocalUri(port: number) {
-		return vscode.Uri.parse(`http://${this.host}:${port}`);
+	private constructLocalUri(port: number, path?: string) {
+		return vscode.Uri.parse(`http://${this.host}:${port}${path ? `/${path}` : ''}`);
 	}
 }

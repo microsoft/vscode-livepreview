@@ -4,6 +4,7 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import { URL } from 'url';
+import { randomBytes } from 'crypto';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
@@ -36,21 +37,29 @@ export class WSServerWithOriginCheck extends WebSocket.Server {
 /**
  * @description the websocket server, usually hosted on the port following the HTTP server port.
  * It serves two purposes:
- * - Messages from the server to the clients tell it to refresh when there are changes. The requests occur in `ServerManager`, but use this websocket server.
- * - Messages from the client to the server check the "injectability" of the file that is being navigated to. This only occurs in the webview (embedded preview).
- * 	Being "injectable" means that we can inject our custom script into the file. The injectable script has the following **main** roles:
- * 			1. Facilitates live refresh.
- *			2. Relays the current address to the webview from inside of the iframe. Without the injected script, the extension preview cannot properly handle history or display the address/title of the page in the webview.
- *			3. Checks new links for injectability, although this case isn't currently handled since non-html files are unlikely to have hyperlinks.
- * 			4. Overrides the console to pipe console messages to the output channel.
+ * - Messages from the server to the clients tell it to refresh when there are changes.
+ *   The requests occur in `ServerManager`, but use this websocket server.
+ * - Messages from the client to the server check the "injectability" of the file that is being navigated to.
+ *   This only occurs in the webview (embedded preview).
  *
- * Only #2 needs to be handled for non-injectable files, since the others are unecessary for non-html files.
- * To handle displaying the information and handling history correctly, the client (when inside of a webview) will
- * let the websocket server know where it is navigating to before going there. If the address it is going to is non-injectable,
- * then the extension will relay the address to the `BrowserPreview` instance containing the embedded preview to provide the appropriate information and refresh the history.
+ *	 Being "injectable" means that we can inject our custom script into the file.
+ *	 The injectable script has the following **main** roles:
+ * 	   1. Facilitates live refresh.
+ *	   2. Relays the current address to the webview from inside of the iframe. Without the injected script, the
+ * 		  extension preview cannot properly handle history or display the address/title of the page in the webview.
+ *	   3. Checks new links for injectability, although this case isn't currently handled since non-html files are
+		  unlikely to have hyperlinks.
+ *	   4. Overrides the console to pipe console messages to the output channel.
+ *
+ *	 Only #2 needs to be handled for non-injectable files, since the others are unecessary for non-html files.
+ *	 To handle displaying the information and handling history correctly, the client (when inside of a webview)
+ *	 will let the websocket server know where it is navigating to before going there. If the address it is going
+ *	 to is non-injectable, then the extension will relay the address to the `BrowserPreview` instance containing
+ *	 the embedded preview to provide the appropriate information and refresh the history.
  */
 export class WSServer extends Disposable {
 	private _wss: WSServerWithOriginCheck | undefined;
+	private _wsPath!: string;
 	private _wsPort = 0;
 
 	public set externalHostName(hostName: string) {
@@ -81,6 +90,10 @@ export class WSServer extends Disposable {
 		return this._workspaceManager.workspacePath;
 	}
 
+	public get wsPath() {
+		return this._wsPath;
+	}
+
 	public get wsPort() {
 		return this._wsPort;
 	}
@@ -91,7 +104,7 @@ export class WSServer extends Disposable {
 
 	// once connected, we must let the server manager know, as it needs to know when both servers are ready.
 	private readonly _onConnected = this._register(
-		new vscode.EventEmitter<number>()
+		new vscode.EventEmitter<void>()
 	);
 	public readonly onConnected = this._onConnected.event;
 
@@ -101,6 +114,7 @@ export class WSServer extends Disposable {
 	 */
 	public start(wsPort: number): void {
 		this._wsPort = wsPort;
+		this._wsPath = randomBytes(20).toString('hex');
 		this.startWSServer(this._basePath ?? '');
 	}
 
@@ -132,6 +146,7 @@ export class WSServer extends Disposable {
 		this._wss = new WSServerWithOriginCheck({
 			port: this._wsPort,
 			host: this._connectionManager.host,
+			path: this._wsPath
 		});
 		this._wss.on('connection', (ws: WebSocket) =>
 			this.handleWSConnection(basePath, ws)
@@ -172,7 +187,7 @@ export class WSServer extends Disposable {
 	 */
 	private handleWSListen(): void {
 		console.log(`Websocket server is running on port ${this._wsPort}`);
-		this._onConnected.fire(this._wsPort);
+		this._onConnected.fire();
 	}
 
 	/**

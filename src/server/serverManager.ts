@@ -248,10 +248,7 @@ export class Server extends Disposable {
 		this.showServerStatusMessage(
 			`Server Started on Port ${this._httpServer.port}`
 		);
-		this._connectionManager.connected({
-			port: this._httpServer.port,
-			wsPort: this._wsServer.wsPort,
-		});
+		this._connectionManager.connected(this._httpServer.port,this._wsServer.wsPort, this._wsServer.wsPath);
 		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, true);
 	}
 
