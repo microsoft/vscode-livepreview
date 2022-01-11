@@ -16,6 +16,13 @@ resources:
       ref: main
       endpoint: Monaco
 
+stages:
+  - stage:
+    jobs:
+      steps:
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '14.x'
 
 # pool:
 #   vmImage: ubuntu-latest
