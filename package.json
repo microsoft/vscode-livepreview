@@ -276,7 +276,6 @@
 	},
 	"dependencies": {
 		"@vscode/codicons": "0.0.26",
-		"crypto": "1.0.1",
 		"mime": "^2.5.2",
 		"url": "^0.11.0",
 		"vscode-extension-telemetry": "0.3.2",
