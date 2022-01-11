@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.2.12 (January 11, 2022)
-- Use random path for the WebSocket server
+- Use random path for the WebSocket server. [#193](https://github.com/microsoft/vscode-livepreview/issues/193)
 
 ## 0.2.11 (December 2, 2021)
 - Reverted the change to support IPv6 addresses using the `livePreview.hostIP` setting. [#179](https://github.com/microsoft/vscode-livepreview/issues/179)
