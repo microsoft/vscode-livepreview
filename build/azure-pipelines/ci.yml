@@ -18,14 +18,10 @@ resources:
 
 extends:
   template: azure-pipelines/vscode-extension.yml@templates
-
-  stages:
-    - stage:
-      jobs:
-        steps:
-          - task: NodeTool@0
-            inputs:
-              versionSpec: '14.x'
+  parameters:
+    buildSteps:
+      - bash: echo Test
+        displayName: succeed
 # pool:
 #   vmImage: ubuntu-latest
 
