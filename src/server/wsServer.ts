@@ -27,9 +27,9 @@ export class WSServerWithOriginCheck extends WebSocket.Server {
 	public shouldHandle(req: http.IncomingMessage): boolean {
 		const origin = req.headers['origin'];
 		return <boolean>(
-			(origin &&
+			(super.shouldHandle(req) && origin &&
 				(origin.startsWith(UriSchemes.vscode_webview) ||
-					(this.externalHostName && origin == this.externalHostName)))
+					(this.externalHostName && origin === this.externalHostName)))
 		);
 	}
 }
@@ -114,7 +114,7 @@ export class WSServer extends Disposable {
 	 */
 	public start(wsPort: number): void {
 		this._wsPort = wsPort;
-		this._wsPath = randomBytes(20).toString('hex');
+		this._wsPath = `/${randomBytes(20).toString('hex')}`;
 		this.startWSServer(this._basePath ?? '');
 	}
 

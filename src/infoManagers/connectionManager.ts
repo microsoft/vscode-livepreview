@@ -156,6 +156,6 @@ export class ConnectionManager extends Disposable {
 	 * @returns the local address URI.
 	 */
 	private constructLocalUri(port: number, path?: string) {
-		return vscode.Uri.parse(`http://${this.host}:${port}${path ? `/${path}` : ''}`);
+		return vscode.Uri.parse(`http://${this.host}:${port}${path ?? ''}`);
 	}
 }
