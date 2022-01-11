@@ -10,20 +10,22 @@ pr: none
 
 resources:
   repositories:
-    - repository: vscode-engineering
+    - repository: templates
       type: github
       name: microsoft/vscode-engineering
       ref: main
       endpoint: Monaco
 
-stages:
-  - stage:
-    jobs:
-      steps:
-        - task: NodeTool@0
-          inputs:
-            versionSpec: '14.x'
+extends:
+  template: azure-pipelines/vscode-extension.yml@templates
 
+  stages:
+    - stage:
+      jobs:
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '14.x'
 # pool:
 #   vmImage: ubuntu-latest
 
