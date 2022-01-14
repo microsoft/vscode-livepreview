@@ -17,7 +17,7 @@ resources:
       endpoint: Monaco
 
 extends:
-  template: azure-pipelines/vscode-extension.yml@templates
+  template: azure-pipelines/extension/stable.yml@templates
   parameters:
     buildSteps:
       - script: yarn install --frozen-lockfile
