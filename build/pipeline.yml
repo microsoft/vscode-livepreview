@@ -1,0 +1,30 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - main
+  tags:
+    include: ['*']
+pr: none
+
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      name: microsoft/vscode-engineering
+      ref: main
+      endpoint: Monaco
+
+extends:
+  template: azure-pipelines/extension/stable.yml@templates
+  parameters:
+    buildSteps:
+      - script: yarn install --frozen-lockfile
+        displayName: Install dependencies
+
+      - script: yarn run compile
+        displayName: Compile
+
+      - script: yarn eslint src
+        displayName: Run ESLint
