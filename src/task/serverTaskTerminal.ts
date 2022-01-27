@@ -13,7 +13,7 @@ import { ServerStartedStatus, ServerArgs } from './serverTaskProvider';
 const CHAR_CODE_CTRL_C = 3;
 
 /**
- * @description the pseudoterminal associated with the Live Preview task.
+ * @description the pseudoterminal associated with the Live Server Preview task.
  */
 export class ServerTaskTerminal
 	extends Disposable
@@ -143,7 +143,7 @@ export class ServerTaskTerminal
 		);
 		this.writeEmitter.fire(
 			TerminalStyleUtil.ColorTerminalString(
-				`Run 'Stop Live Preview Server' in the command palette to close the server and close any previews.\r\n\r\n`,
+				`Run 'Stop Live Server Preview Server' in the command palette to close the server and close any previews.\r\n\r\n`,
 				TerminalColor.yellow
 			)
 		);

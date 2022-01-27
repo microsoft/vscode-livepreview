@@ -36,7 +36,7 @@ export enum OpenPreviewTarget {
 }
 
 /**
- * @description prefix for all extension contributions for Live Preview
+ * @description prefix for all extension contributions for Live Server Preview
  */
 export const SETTINGS_SECTION_ID = 'livePreview';
 
@@ -72,7 +72,7 @@ export class SettingUtil {
 	/**
 	 * @description Get the current settings JSON.
 	 * @param {vscode.Uri} extensionUri the extension URI
-	 * @returns {LiveServerConfigItem} the LiveServerConfigItem, which is a JSON object with all of the settings for Live Preview.
+	 * @returns {LiveServerConfigItem} the LiveServerConfigItem, which is a JSON object with all of the settings for Live Server Preview.
 	 */
 	public static GetConfig(extensionUri: vscode.Uri): LiveServerConfigItem {
 		const config = vscode.workspace.getConfiguration(
@@ -143,7 +143,7 @@ export class SettingUtil {
 		}
 	}
 	/**
-	 * @description Update a Live Preview setting
+	 * @description Update a Live Server Preview setting
 	 * @param {string} settingSuffix the suffix, `livePreview.<suffix>` of the setting to set.
 	 * @param {T} value the value to set the setting to.
 	 * @param {boolean} isGlobal whether to set the user setting, defaults to false.

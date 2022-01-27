@@ -45,7 +45,7 @@
 
 ## 0.2.3 (July 15, 2021)
 - Added support for watch scripts (e.g.: for Sass files). For this, use the "On Changes to Saved Files" option for the "Auto Refresh Preview" setting. [#82](https://github.com/microsoft/vscode-livepreview/pull/82)
-- Piped `console` logging to Output Channel (Embedded Live Preview Console). [#83](https://github.com/microsoft/vscode-livepreview/pull/83), [#85](https://github.com/microsoft/vscode-livepreview/pull/85)
+- Piped `console` logging to Output Channel (Embedded Live Server Preview Console). [#83](https://github.com/microsoft/vscode-livepreview/pull/83), [#85](https://github.com/microsoft/vscode-livepreview/pull/85)
 
 ## 0.2.2 (July 13, 2021)
 - Adjusted "Open Automatically on Server Start" to take relative paths in workspace. [#74](https://github.com/microsoft/vscode-livepreview/pull/74)

@@ -322,7 +322,7 @@ export class ContentLoader extends Disposable {
 	}
 
 	/**
-	 * Inject the script tags to reference the custom Live Preview script.
+	 * Inject the script tags to reference the custom Live Server Preview script.
 	 * NOTE: they are injected on the same line as existing content to ensure that
 	 * the debugging works, since `js-debug` relies on the line numbers on the filesystem
 	 * matching the served line numbers.

@@ -1,6 +1,6 @@
 /*eslint-env browser*/
 /**
- * Script injected by the VS Code Live Preview Extension.
+ * Script injected by the VS Code Live Server Preview Extension.
  * http://aka.ms/live-preview
  */
 

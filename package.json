@@ -1,6 +1,6 @@
 {
 	"name": "live-server",
-	"displayName": "Live Preview",
+	"displayName": "Live Server Preview",
 	"description": "Hosts a local server in your workspace for you to preview your webpages on.",
 	"version": "0.2.12",
 	"preview": true,
@@ -15,7 +15,7 @@
 		"virtualWorkspaces": false,
 		"untrustedWorkspaces": {
 			"supported": false,
-			"description": "Live Preview runs a server to host workspace files."
+			"description": "Live Server Preview runs a server to host workspace files."
 		}
 	},
 	"engines": {
@@ -51,38 +51,38 @@
 		"commands": [
 			{
 				"command": "livePreview.start",
-				"title": "Live Preview: Start Server"
+				"title": "Live Server Preview: Start Server"
 			},
 			{
 				"command": "livePreview.start.preview.atFile",
-				"title": "Live Preview: Show Preview",
+				"title": "Live Server Preview: Show Preview",
 				"icon": "$(open-preview)"
 			},
 			{
 				"command": "livePreview.start.debugPreview.atFile",
-				"title": "Live Preview: Show Debug Preview",
+				"title": "Live Server Preview: Show Debug Preview",
 				"icon": "$(debug-alt)"
 			},
 			{
 				"command": "livePreview.start.externalPreview.atFile",
-				"title": "Live Preview: Show Preview (External Browser)"
+				"title": "Live Server Preview: Show Preview (External Browser)"
 			},
 			{
 				"command": "livePreview.start.externalDebugPreview.atFile",
-				"title": "Live Preview: Show Debug Preview (External Browser)",
+				"title": "Live Server Preview: Show Debug Preview (External Browser)",
 				"icon": "$(debug-alt)"
 			},
 			{
 				"command": "livePreview.start.internalPreview.atFile",
-				"title": "Live Preview: Show Preview (Internal Browser)"
+				"title": "Live Server Preview: Show Preview (Internal Browser)"
 			},
 			{
 				"command": "livePreview.setDefaultOpenFile",
-				"title": "Live Preview: Open Automatically on Server Start"
+				"title": "Live Server Preview: Open Automatically on Server Start"
 			},
 			{
 				"command": "livePreview.end",
-				"title": "Live Preview: Stop Server"
+				"title": "Live Server Preview: Stop Server"
 			}
 		],
 		"menus": {
@@ -157,14 +157,14 @@
 			]
 		},
 		"configuration": {
-			"title": "Live Preview",
+			"title": "Live Server Preview",
 			"properties": {
 				"livePreview.portNumber": {
 					"type": "number",
 					"default": 3000,
 					"minimum": 0,
 					"maximum": 65535,
-					"description": "Which local port the live preview's server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port."
+					"description": "Which local port the live Server preview's server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port."
 				},
 				"livePreview.serverKeepAliveAfterEmbeddedPreviewClose": {
 					"type": "number",
@@ -234,7 +234,7 @@
 		},
 		"taskDefinitions": [
 			{
-				"type": "Live Preview",
+				"type": "Live Server Preview",
 				"required": [
 					"args"
 				],

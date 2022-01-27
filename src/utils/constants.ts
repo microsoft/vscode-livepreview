@@ -17,7 +17,7 @@ export const DEFAULT_HOST = '127.0.0.1';
 
 export const EXTENSION_ID = 'ms-vscode.live-server';
 
-export const OUTPUT_CHANNEL_NAME = 'Embedded Live Preview Console';
+export const OUTPUT_CHANNEL_NAME = 'Embedded Live Server Preview Console';
 
 export const INJECTED_ENDPOINT_NAME = '/___vscode_livepreview_injected_script';
 

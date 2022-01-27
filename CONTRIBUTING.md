@@ -1,6 +1,6 @@
-# Contributing to the VS Code Live Preview Extension
+# Contributing to the VS Code Live Server Preview Extension
 
-Welcome, and thank you for your interest in contributing to VS Code Live Preview!
+Welcome, and thank you for your interest in contributing to VS Code Live Server Preview!
 
 There are many ways in which you can contribute, beyond writing code. The goal of this document is to provide a high-level overview of how you can get involved.
 

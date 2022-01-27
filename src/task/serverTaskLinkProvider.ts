@@ -8,7 +8,7 @@ import { SETTINGS_SECTION_ID } from '../utils/settingsUtil';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 
 /**
- * @description the link provider that runs on Live Preview's `Run Server` task
+ * @description the link provider that runs on Live Server Preview's `Run Server` task
  */
 export class serverTaskLinkProvider
 	extends Disposable
@@ -69,7 +69,7 @@ export class serverTaskLinkProvider
 
 	/**
 	 * @param {string} terminalName the terminal name of the target terminal
-	 * @returns Whether it is a task terminal from the `Live Preview - Run Server` task.
+	 * @returns Whether it is a task terminal from the `Live Server Preview - Run Server` task.
 	 */
 	private _isLivePreviewTerminal(terminalName: string): boolean {
 		return (
