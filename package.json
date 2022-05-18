@@ -51,7 +51,7 @@
 		"commands": [
 			{
 				"command": "livePreview.start",
-				"title": "Live Preview: Start Server"
+				"title": "%commands.startserver%"
 			},
 			{
 				"command": "livePreview.start.preview.atFile",
@@ -271,6 +271,7 @@
 		"prettier-eslint-cli": "^5.0.1",
 		"ts-loader": "^9.2.2",
 		"typescript": "^4.2.2",
+		"vscode-nls-dev": "^4.0.0",
 		"webpack": "^5.38.1",
 		"webpack-cli": "^4.7.0"
 	},
@@ -279,6 +280,7 @@
 		"mime": "^2.5.2",
 		"url": "^0.11.0",
 		"vscode-extension-telemetry": "0.3.2",
+		"vscode-nls": "^5.0.1",
 		"ws": "^7.4.6"
 	}
 }
