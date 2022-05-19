@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { Disposable } from './utils/dispose';
 import { Server } from './server/serverManager';
@@ -21,6 +22,8 @@ import { EndpointManager } from './infoManagers/endpointManager';
 import { WorkspaceManager } from './infoManagers/workspaceManager';
 import { ConnectionManager } from './infoManagers/connectionManager';
 import { PathUtil } from './utils/pathUtil';
+
+const localize = nls.loadMessageBundle();
 
 /**
  * @description the server log item that is sent from the HTTP server to the server logging task.
@@ -530,7 +533,7 @@ export class Manager extends Disposable {
 		) {
 			vscode.window
 				.showWarningMessage(
-					'Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root.',
+					localize('not part of workspace', 'Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root.'),
 					DONT_SHOW_AGAIN
 				)
 				.then((selection: vscode.MessageItem | undefined) => {

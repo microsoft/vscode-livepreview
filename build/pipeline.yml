@@ -19,6 +19,8 @@ resources:
 extends:
   template: azure-pipelines/extension/stable.yml@templates
   parameters:
+    locTsConfigs: $(Build.SourcesDirectory)/tsconfig.json
+    locBundleDestination: '$(Build.SourcesDirectory)/out'
     buildSteps:
       - script: yarn install --frozen-lockfile
         displayName: Install dependencies

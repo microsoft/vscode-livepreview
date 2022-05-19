@@ -1,4 +1,6 @@
+import './setupNls';
 import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { Manager } from './manager';
@@ -12,6 +14,8 @@ import {
 
 let reporter: TelemetryReporter;
 let manager: Manager;
+
+const localize = nls.loadMessageBundle();
 
 export function activate(context: vscode.ExtensionContext): void {
 	const extPackageJSON = context.extension.packageJSON;
@@ -83,7 +87,7 @@ export function activate(context: vscode.ExtensionContext): void {
 		}
 
 		vscode.window.showErrorMessage(
-			'This file is not a part of the workspace where the server has started. Cannot preview.'
+			localize('not part of workspace', 'This file is not a part of the workspace where the server has started. Cannot preview.')
 		);
 		return;
 	};
