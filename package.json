@@ -51,38 +51,46 @@
 		"commands": [
 			{
 				"command": "livePreview.start",
-				"title": "%commands.startserver%"
+				"title": "%commands.startServer%",
+				"category": "%commands.category%"
 			},
 			{
 				"command": "livePreview.start.preview.atFile",
-				"title": "Live Preview: Show Preview",
+				"title": "%commands.showPreview%",
+				"category": "%commands.category%",
 				"icon": "$(open-preview)"
 			},
 			{
 				"command": "livePreview.start.debugPreview.atFile",
-				"title": "Live Preview: Show Debug Preview",
+				"title": "%commands.showDebugPreview%",
+				"category": "%commands.category%",
 				"icon": "$(debug-alt)"
 			},
 			{
 				"command": "livePreview.start.externalPreview.atFile",
-				"title": "Live Preview: Show Preview (External Browser)"
+				"title": "%commands.showPreviewExternalBrowser%",
+				"category": "%commands.category%"
 			},
 			{
 				"command": "livePreview.start.externalDebugPreview.atFile",
-				"title": "Live Preview: Show Debug Preview (External Browser)",
+				"title": "%commands.showDebugPreviewExternalBrowser%",
+				"category": "%commands.category%",
 				"icon": "$(debug-alt)"
 			},
 			{
 				"command": "livePreview.start.internalPreview.atFile",
-				"title": "Live Preview: Show Preview (Internal Browser)"
+				"title": "%commands.showPreviewInternalBrowser%",
+				"category": "%commands.category%"
 			},
 			{
 				"command": "livePreview.setDefaultOpenFile",
-				"title": "Live Preview: Open Automatically on Server Start"
+				"title": "%commands.openAutomaticallyOnServerStart%",
+				"category": "%commands.category%"
 			},
 			{
 				"command": "livePreview.end",
-				"title": "Live Preview: Stop Server"
+				"title": "%commands.stopServer%",
+				"category": "%commands.category%"
 			}
 		],
 		"menus": {
