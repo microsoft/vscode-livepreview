@@ -1,3 +1,11 @@
 {
-	"commands.startserver": "Live Preview: Start Server"
+	"commands.category": "Live Preview",
+	"commands.startServer": "Start Server",
+	"commands.showPreview": "Show Preview",
+	"commands.showDebugPreview": "Show Debug Preview",
+	"commands.showPreviewExternalBrowser": "Show Preview (External Browser)",
+	"commands.showDebugPreviewExternalBrowser": "Show Debug Preview (External Browser)",
+	"commands.showPreviewInternalBrowser": "Show Preview (Internal Browser)",
+	"commands.openAutomaticallyOnServerStart": "Open Automatically on Server Start",
+	"commands.stopServer": "Stop Server"
 }
