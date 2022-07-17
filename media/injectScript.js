@@ -140,7 +140,7 @@ function handleSocketMessage(data) {
 	const parsedMessage = JSON.parse(data);
 	switch (parsedMessage.command) {
 		case 'reload': {
-			window.location.reload();
+			reloadPage();
 		}
 	}
 }
@@ -154,7 +154,7 @@ function handleMessage(event) {
 
 	switch (message.command) {
 		case 'refresh':
-			window.location.reload();
+			reloadPage();
 			break;
 		case 'setup-parent-listener': {
 			const commandPayload = {
@@ -283,10 +283,10 @@ function handleLinkClick(linkTarget) {
 			// The embedded preview does not support external sites; let the extension know that an external link has been
 			// opened in the embedded preview; this will open the modal to ask the user to navigate in an external browser
 			// and will force the embedded preview back to the previous page.
-			postParentMessage({ command: 'open-external-link', text: linkTarget });
+			postParentMessage({command: 'open-external-link', text: linkTarget});
 		} else {
 			// Check all local URLs to make sure to catch pages that won't be injectable
-			postParentMessage({ command: 'perform-url-check', text: linkTarget });
+			postParentMessage({command: 'perform-url-check', text: linkTarget});
 		}
 	}
 }
@@ -310,4 +310,14 @@ function handleLinkHoverEnd() {
 	postParentMessage({
 		command: 'link-hover-end',
 	});
+}
+
+/**
+ * Reloads page when requested by a socket message or parent.
+ * Reloading is prevented if the document body has a `data-server-no-reload` attribute.
+ */
+function reloadPage() {
+	const block = (document.body) ? document.body.hasAttribute('data-server-no-reload') : false;
+	if (block) return;
+	window.location.reload();
 }
