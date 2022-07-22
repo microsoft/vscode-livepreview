@@ -107,7 +107,7 @@ export class HttpServer extends Disposable {
 				this._server.listen(this.port, this._connectionManager.host);
 			} else {
 				/* __GDPR__
-					"server.err" : { 
+					"server.err" : {
 						"type": {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
 						"err": {"classification": "CallstackOrException", "purpose": "PerformanceAndHealth"}
 					}
@@ -167,7 +167,7 @@ export class HttpServer extends Disposable {
 		}
 
 		let looseFile = false;
-		let absoluteReadPath = path.join(basePath ?? '', unescape(URLPathName));
+		let absoluteReadPath = path.join(basePath ?? '', decodeURI(URLPathName));
 		let contentType = 'application/octet-stream';
 
 		if (URLPathName.startsWith('/endpoint_unsaved')) {
@@ -225,7 +225,7 @@ export class HttpServer extends Disposable {
 				contentType = respInfo.ContentType ?? '';
 			} else {
 				// create a default index page
-				URLPathName = unescape(URLPathName);
+				URLPathName = decodeURI(URLPathName);
 				const respInfo = this._contentLoader.createIndexPage(
 					absoluteReadPath,
 					URLPathName,
