@@ -248,7 +248,7 @@ export function activate(context: vscode.ExtensionContext): void {
 				state: any
 			) {
 				let relative = true;
-				let file = unescape(state.currentAddress) ?? '/';
+				let file = (state && unescape(state.currentAddress)) ?? '/';
 
 				if (!manager.pathExistsRelativeToWorkspace(file)) {
 					const absFile = manager.decodeEndpoint(file);
