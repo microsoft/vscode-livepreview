@@ -156,6 +156,9 @@ function handleMessage(event) {
 		case 'refresh':
 			reloadPage();
 			break;
+		case 'refresh-forced':
+			window.location.reload();
+			break;
 		case 'setup-parent-listener': {
 			const commandPayload = {
 				path: window.location,
@@ -314,7 +317,7 @@ function handleLinkHoverEnd() {
 
 /**
  * Reloads page when requested by a socket message or parent.
- * Reloading is prevented if the document body has a `data-server-no-reload` attribute.
+ * Auto-reloading is prevented if the document body has a `data-server-no-reload` attribute.
  */
 function reloadPage() {
 	const block = (document.body) ? document.body.hasAttribute('data-server-no-reload') : false;
