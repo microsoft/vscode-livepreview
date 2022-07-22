@@ -86,7 +86,7 @@
 				}
 			}
 		});
-		
+
 		window.addEventListener('message', (event) => {
 			handleMessage(event.data); // The json data that the extension sent
 		});
@@ -114,7 +114,7 @@
 	 * @param {string} url the URL to use to set the URL bar.
 	 */
 	function setURLBar(url) {
-		document.getElementById('url-input').value = url;
+		document.getElementById('url-input').value = decodeURI(url);
 	}
 
 	/**
@@ -122,7 +122,7 @@
 	 * @param {string} pathname
 	 */
 	function updateState(pathname) {
-		vscode.setState({ currentAddress: pathname });
+		vscode.setState({ currentAddress: decodeURI(pathname) });
 	}
 
 	function goToUrl() {
