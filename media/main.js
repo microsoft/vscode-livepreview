@@ -433,7 +433,7 @@
 		document.getElementById('reload').onclick = function () {
 			document
 				.getElementById('hostedContent')
-				.contentWindow.postMessage({ command: 'refresh' }, '*');
+				.contentWindow.postMessage({ command: 'refresh-forced'}, '*');
 			document.getElementById('reload').blur();
 		};
 

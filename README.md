@@ -42,6 +42,9 @@ The simple embedded browser features the following:
 See the changes as you make them. By default, changes appear as you make them in the editor. You can also change this in settings to refresh the preview on save or not at all. 
 
 ![live-refresh](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/live-refresh.gif)
+
+Individual pages can opt out of live refreshing by adding the `<body>` attribute `data-server-no-reload`.
+
 ### Persistent Server Task with Server Logging
 If you're looking for a persistent server to run, you can run a `Live Preview` task, which can optionally log the server traffic. You can also click on the traffic to open the file location of the file returned by the server.
 
