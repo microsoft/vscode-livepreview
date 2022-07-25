@@ -244,7 +244,9 @@
 			// from extension
 			case 'changed-history': {
 				const msgJSON = JSON.parse(message.text);
-				document.getElementById(msgJSON.element).disabled = msgJSON.disabled;
+				if (msgJSON.element) {
+					document.getElementById(msgJSON.element).disabled = msgJSON.disabled;
+				}
 				adjustTabIndex();
 				break;
 			}
