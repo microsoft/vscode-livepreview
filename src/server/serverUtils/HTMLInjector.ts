@@ -86,14 +86,13 @@ export class HTMLInjector extends Disposable {
 	 * @returns {string} string with all replacements performed on.
 	 */
 	private replace(script: string, replaces: replaceObj[]): string {
-		for (const i in replaces) {
-			const replace = replaces[i];
+		replaces.forEach(replace=>{
 			const placeHolderIndex = script.indexOf(replace.original);
 			script =
 				script.substr(0, placeHolderIndex) +
 				replace.replacement +
 				script.substr(placeHolderIndex + replace.original.length);
-		}
+		});
 		return script;
 	}
 
