@@ -14,13 +14,13 @@ export class PathUtil {
 	 * @returns {string} the escaped path.
 	 */
 	public static EscapePathParts(file: string): string {
-		file = unescape(file);
+		file = decodeURI(file);
 		const parts = file.split('/');
 
 		const newParts = [];
 		for (const i in parts) {
 			if (parts[i].length > 0) {
-				newParts.push(escape(parts[i]));
+				newParts.push(encodeURI(parts[i]));
 			}
 		}
 		return newParts.join('/');
@@ -36,7 +36,7 @@ export class PathUtil {
 		const newParts = [];
 		for (const i in parts) {
 			if (parts[i].length > 0) {
-				newParts.push(unescape(parts[i]));
+				newParts.push(decodeURI(parts[i]));
 			}
 		}
 		return newParts.join('/');

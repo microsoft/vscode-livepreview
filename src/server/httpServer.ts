@@ -158,7 +158,10 @@ export class HttpServer extends Disposable {
 
 		if (!basePath && (URLPathName == '/' || URLPathName == '')) {
 			const respInfo = this._contentLoader.createNoRootServer();
-			res.writeHead(404);
+			res.writeHead(404, {
+				'Accept-Ranges': 'bytes',
+				'Content-Type': `${respInfo.ContentType}; charset=UTF-8`,
+			});
 			this.reportStatus(req, res);
 			stream = respInfo.Stream;
 
@@ -167,7 +170,9 @@ export class HttpServer extends Disposable {
 		}
 
 		let looseFile = false;
-		let absoluteReadPath = path.join(basePath ?? '', unescape(URLPathName));
+		URLPathName = decodeURI(URLPathName);
+		let absoluteReadPath = path.join(basePath ?? '', URLPathName);
+		
 		let contentType = 'application/octet-stream';
 
 		if (URLPathName.startsWith('/endpoint_unsaved')) {
@@ -199,7 +204,10 @@ export class HttpServer extends Disposable {
 			} else {
 				const respInfo =
 					this._contentLoader.createPageDoesNotExist(absoluteReadPath);
-				res.writeHead(404);
+				res.writeHead(404, {
+					'Accept-Ranges': 'bytes',
+					'Content-Type': `${respInfo.ContentType}; charset=UTF-8`,
+				});
 				this.reportStatus(req, res);
 				stream = respInfo.Stream;
 				stream?.pipe(res);
@@ -212,6 +220,7 @@ export class HttpServer extends Disposable {
 				const queries =
 					endOfPath == -1 ? '' : `${req.url.substring(endOfPath)}`;
 
+				URLPathName = encodeURI(URLPathName);
 				res.setHeader('Location', `${URLPathName}/${queries}`);
 				this.reportAndReturn(302, req, res); // redirect
 				return;
@@ -225,7 +234,6 @@ export class HttpServer extends Disposable {
 				contentType = respInfo.ContentType ?? '';
 			} else {
 				// create a default index page
-				URLPathName = unescape(URLPathName);
 				const respInfo = this._contentLoader.createIndexPage(
 					absoluteReadPath,
 					URLPathName,
