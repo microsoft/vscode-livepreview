@@ -1,4 +1,7 @@
 # Changelog
+## 0.2.13 (July 29, 2022)
+- Support unicode characters (e.g. Chinese characters) in filenames. [#131](https://github.com/microsoft/vscode-livepreview/issues/131)
+- Page-based opt-out of live refreshing using the `data-server-no-reload` body attribute. [#241](https://github.com/microsoft/vscode-livepreview/issues/241)
 
 ## 0.2.12 (January 11, 2022)
 - Use random path for the WebSocket server. [#193](https://github.com/microsoft/vscode-livepreview/issues/193)
