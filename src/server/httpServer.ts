@@ -107,7 +107,7 @@ export class HttpServer extends Disposable {
 				this._server.listen(this.port, this._connectionManager.host);
 			} else {
 				/* __GDPR__
-					"server.err" : { 
+					"server.err" : {
 						"type": {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
 						"err": {"classification": "CallstackOrException", "purpose": "PerformanceAndHealth"}
 					}
@@ -146,7 +146,7 @@ export class HttpServer extends Disposable {
 			const contentType = respInfo.ContentType ?? '';
 			res.writeHead(200, {
 				'Accept-Ranges': 'bytes',
-				'Content-Type': `${contentType}; charset=UTF-8`,
+				'Content-Type': contentType,
 			});
 			stream = respInfo.Stream;
 			stream?.pipe(res);
@@ -160,7 +160,7 @@ export class HttpServer extends Disposable {
 			const respInfo = this._contentLoader.createNoRootServer();
 			res.writeHead(404, {
 				'Accept-Ranges': 'bytes',
-				'Content-Type': `${respInfo.ContentType}; charset=UTF-8`,
+				'Content-Type': respInfo.ContentType,
 			});
 			this.reportStatus(req, res);
 			stream = respInfo.Stream;
@@ -172,7 +172,7 @@ export class HttpServer extends Disposable {
 		let looseFile = false;
 		URLPathName = decodeURI(URLPathName);
 		let absoluteReadPath = path.join(basePath ?? '', URLPathName);
-		
+
 		let contentType = 'application/octet-stream';
 
 		if (URLPathName.startsWith('/endpoint_unsaved')) {
@@ -188,7 +188,7 @@ export class HttpServer extends Disposable {
 				contentType = content.ContentType ?? '';
 				res.writeHead(200, {
 					'Accept-Ranges': 'bytes',
-					'Content-Type': `${contentType}; charset=UTF-8`,
+					'Content-Type': contentType,
 				});
 				stream.pipe(res);
 				return;
@@ -206,7 +206,7 @@ export class HttpServer extends Disposable {
 					this._contentLoader.createPageDoesNotExist(absoluteReadPath);
 				res.writeHead(404, {
 					'Accept-Ranges': 'bytes',
-					'Content-Type': `${respInfo.ContentType}; charset=UTF-8`,
+					'Content-Type': respInfo.ContentType,
 				});
 				this.reportStatus(req, res);
 				stream = respInfo.Stream;
