@@ -257,7 +257,7 @@ export class HttpServer extends Disposable {
 			});
 			res.writeHead(200, {
 				'Accept-Ranges': 'bytes',
-				'Content-Type': `${contentType}; charset=UTF-8`,
+				'Content-Type': contentType,
 			});
 			stream.pipe(res);
 		} else {
