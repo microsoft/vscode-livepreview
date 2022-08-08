@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as net from 'net';
+import * as nls from 'vscode-nls';
 import { Disposable } from '../utils/dispose';
 import { WSServer } from './wsServer';
 import { HttpServer } from './httpServer';
@@ -21,6 +22,7 @@ import { ConnectionManager } from '../infoManagers/connectionManager';
 import { serverMsg } from '../manager';
 import { PathUtil } from '../utils/pathUtil';
 
+const localize = nls.loadMessageBundle();
 export class Server extends Disposable {
 	private readonly _httpServer: HttpServer;
 	private readonly _wsServer: WSServer;
@@ -246,9 +248,17 @@ export class Server extends Disposable {
 		this._statusBar.ServerOn(this._httpServer.port);
 
 		this.showServerStatusMessage(
-			`Server Started on Port ${this._httpServer.port}`
+			localize(
+				'serverStartedOnPort',
+				'Server Started on Port {0}',
+				this._httpServer.port
+			)
 		);
-		this._connectionManager.connected(this._httpServer.port,this._wsServer.wsPort, this._wsServer.wsPath);
+		this._connectionManager.connected(
+			this._httpServer.port,
+			this._wsServer.wsPort,
+			this._wsServer.wsPath
+		);
 		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, true);
 	}
 

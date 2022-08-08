@@ -1,10 +1,13 @@
 import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { INIT_PANEL_TITLE } from '../utils/constants';
 import { NavEditCommands, PageHistory } from './pageHistoryTracker';
 import { getNonce, isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
+
+const localize = nls.loadMessageBundle();
 
 /**
  * @description the object responsible for communicating messages to the webview.
@@ -159,6 +162,17 @@ export class WebviewComm extends Disposable {
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = getNonce();
 
+		const back = localize('back', 'Back');
+		const forward = localize('forward', 'Forward');
+		const reload = localize('reload', 'Reload');
+		const more = localize('more', 'More Browser Actions');
+		const find_prev = localize('findPrev', 'Previous');
+		const find_next = localize('findNext', 'Next');
+		const find_x = localize('findX', 'Close');
+		const browser_open = localize('browser_open', 'Open in Browser');
+		const find = localize('find', 'Find in Page');
+		const devtools_open = localize('devtoolsOpen', 'Open Devtools Pane');
+
 		return `<!DOCTYPE html>
 		<html lang="en">
 			<head>
@@ -190,47 +204,47 @@ export class WebviewComm extends Disposable {
 						<nav class="controls">
 							<button
 								id="back"
-								title="Back"
+								title="${back}"
 								class="back-button icon leftmost-nav"><i class="codicon codicon-arrow-left"></i></button>
 							<button
 								id="forward"
-								title="Forward"
+								title="${forward}"
 								class="forward-button icon leftmost-nav"><i class="codicon codicon-arrow-right"></i></button>
 							<button
 								id="reload"
-								title="Reload"
+								title="${reload}"
 								class="reload-button icon leftmost-nav"><i class="codicon codicon-refresh"></i></button>
-							<input 
+							<input
 								id="url-input"
-								class="url-input" 
+								class="url-input"
 								type="text">
 							<button
 								id="more"
-								title="More Browser Actions"
+								title="${more}"
 								class="more-button icon"><i class="codicon codicon-list-flat"></i></button>
 						</nav>
 						<div class="find-container" id="find-box" hidden=true>
 							<nav class="find">
-								<input 
+								<input
 									id="find-input"
-									class="find-input" 
+									class="find-input"
 									type="text">
 								<div
 									id="find-result"
 									class="find-result icon" hidden=true><i id="find-result-icon" class="codicon" ></i></div>
 								<button
 									id="find-prev"
-									title="Previous"
+									title="${find_prev}"
 									class="find-prev-button icon find-nav"><i class="codicon codicon-chevron-up"></i></button>
 								<button
 									id="find-next"
 									tabIndex=-1
-									title="Next"
+									title="${find_next}"
 									class="find-next-button icon find-nav"><i class="codicon codicon-chevron-down"></i></button>
 								<button
 									id="find-x"
 									tabIndex=-1
-									title="Close"
+									title="${find_x}"
 									class="find-x-button icon find-nav"><i class="codicon codicon-chrome-close"></i></button>
 							</nav>
 						</div>
@@ -239,20 +253,20 @@ export class WebviewComm extends Disposable {
 						<table cellspacing="0" cellpadding="0">
 							<tr>
 								<td>
-									<button tabIndex=-1 
-										id="browser-open" class="extra-menu-nav">Open in Browser</button>
+									<button tabIndex=-1
+										id="browser-open" class="extra-menu-nav">${browser_open}</button>
 								</td>
 							</tr>
 							<tr>
 								<td>
-									<button tabIndex=-1 
-										id="find" class="extra-menu-nav">Find in Page</button>
+									<button tabIndex=-1
+										id="find" class="extra-menu-nav">${find}</button>
 								</td>
 							</tr>
 							<tr>
 								<td>
-									<button tabIndex=-1 
-										id="devtools-open" class="extra-menu-nav">Open Devtools Pane</button>
+									<button tabIndex=-1
+										id="devtools-open" class="extra-menu-nav">${devtools_open}</button>
 								</td>
 							</tr>
 						</table>

@@ -1,6 +1,9 @@
 import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
 import { Disposable } from '../../utils/dispose';
 import { SettingUtil } from '../../utils/settingsUtil';
+
+const localize = nls.loadMessageBundle();
 
 /**
  * @description the status bar handler.
@@ -31,10 +34,15 @@ export class StatusBarNotifier extends Disposable {
 			this._statusBar.show();
 		}
 
-		this._statusBar.text = `$(radio-tower) Port: ${port}`;
-		this._statusBar.tooltip = `Live Preview running on port ${port}`;
+		const portTitle = localize('port', 'Port: {0}', port);
+		this._statusBar.text = `$(radio-tower) ${portTitle}`;
+		this._statusBar.tooltip = localize(
+			'livePreviewRunningOnPort',
+			'Live Preview running on port {0}',
+			port
+		);
 		this._statusBar.command = {
-			title: 'Open Command Palette',
+			title: localize('openCommandPalette', 'Open Command Palette'),
 			command: 'workbench.action.quickOpen',
 			arguments: ['>Live Preview: '],
 		};

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as nls from 'vscode-nls';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { INJECTED_ENDPOINT_NAME } from '../utils/constants';
@@ -11,6 +12,8 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { PathUtil } from '../utils/pathUtil';
+
+const localize = nls.loadMessageBundle();
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -94,7 +97,13 @@ export class HttpServer extends Disposable {
 		this._server = this.createServer();
 
 		this._server.on('listening', () => {
-			console.log(`Server is running on port ${this.port}`);
+			console.log(
+				localize(
+					'serverRunningOnPort',
+					'Server is running on port {0}',
+					this.port
+				)
+			);
 			this._onConnected.fire(this.port);
 		});
 
@@ -116,7 +125,7 @@ export class HttpServer extends Disposable {
 					type: 'http',
 					err: err,
 				});
-				console.log(`Unknown error: ${err}`);
+				console.log(localize('unknownError', 'Unknown error: {0}', err));
 			}
 		});
 

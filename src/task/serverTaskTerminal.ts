@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { serverMsg } from '../manager';
 import { Disposable } from '../utils/dispose';
@@ -10,6 +11,7 @@ import {
 import { FormatDateTime } from '../utils/utils';
 import { ServerStartedStatus, ServerArgs } from './serverTaskProvider';
 
+const localize = nls.loadMessageBundle();
 const CHAR_CODE_CTRL_C = 3;
 
 /**
@@ -63,11 +65,16 @@ export class ServerTaskTerminal
 		// At this point we can start using the terminal.
 		if (this._executeServer) {
 			this.running = true;
-			this.writeEmitter.fire('Opening Server...\r\n');
+			this.writeEmitter.fire(
+				localize('openingServer', 'Opening Server...\r\n')
+			);
 			this._onRequestToOpenServerEmitter.fire();
 		} else {
 			this.writeEmitter.fire(
-				`Server already running in another task. Closing now.\r\n`
+				localize(
+					'serverAlreadyRunning',
+					`Server already running in another task. Closing now.\r\n`
+				)
 			);
 			this.close();
 		}
@@ -85,7 +92,7 @@ export class ServerTaskTerminal
 
 	public handleInput(data: string): void {
 		if (data.length > 0 && data.charCodeAt(0) == CHAR_CODE_CTRL_C) {
-			this.writeEmitter.fire(`Closing the server...\r\n`);
+			localize('serverClosing', `Closing the server...\r\n`);
 			this._onRequestToCloseServerEmitter.fire();
 		}
 	}
@@ -102,27 +109,50 @@ export class ServerTaskTerminal
 		const formattedAddress = this._formatAddr(externalUri.toString());
 		if (!this._verbose) {
 			this.writeEmitter.fire(
-				`This task does not have logging. To get logging, use the "--verbose" flag.\r\n`
+				localize(
+					{
+						key: 'noLoggerWarning',
+						comment: [
+							"{Locked='--verbose'}",
+							"Do not translate the '--verbose' part",
+						],
+					},
+					'This task does not have logging. To get logging, use the "--verbose" flag.\r\n'
+				)
 			);
 		}
 		switch (status) {
 			case ServerStartedStatus.JUST_STARTED: {
-				this.writeEmitter.fire(`Started Server on ${formattedAddress}\r\n`);
+				this.writeEmitter.fire(
+					localize(
+						'startedServer',
+						'Started Server on {0}\r\n',
+						formattedAddress
+					)
+				);
 				break;
 			}
 			case ServerStartedStatus.STARTED_BY_EMBEDDED_PREV: {
 				this.writeEmitter.fire(
-					`Server already on at ${formattedAddress}\r\n> `
+					localize(
+						'serverAlreadyStarted',
+						'Server already on at {0}\r\n> ',
+						formattedAddress
+					)
 				);
 				break;
 			}
 		}
 		this.writeEmitter.fire(
-			`Type ${TerminalStyleUtil.ColorTerminalString(
-				`CTRL+C`,
-				TerminalColor.red,
-				TerminalDeco.bold
-			)} to close the server.\r\n\r\n> `
+			localize(
+				'ctrlCToCloseServer',
+				'Type {0} to close the server.\r\n\r\n> ',
+				TerminalStyleUtil.ColorTerminalString(
+					`CTRL+C`,
+					TerminalColor.red,
+					TerminalDeco.bold
+				)
+			)
 		);
 	}
 
@@ -130,7 +160,7 @@ export class ServerTaskTerminal
 	 * @description Called by the parent to tell the terminal that the server has stopped. May have been a result of the task ending or the result of a manual server shutdown.
 	 */
 	public serverStopped(): void {
-		this.writeEmitter.fire(`Server stopped. Bye!`);
+		this.writeEmitter.fire(localize('serverStopped', 'Server stopped. Bye!'));
 		this.close();
 	}
 
@@ -139,11 +169,23 @@ export class ServerTaskTerminal
 	 */
 	public serverWillBeStopped(): void {
 		this.writeEmitter.fire(
-			`This task will finish now, but the server will stay on since you've used the embedded preview recently.\r\n`
+			localize(
+				'taskFinished',
+				`This task will finish now, but the server will stay on since you've used the embedded preview recently.\r\n`
+			)
 		);
 		this.writeEmitter.fire(
 			TerminalStyleUtil.ColorTerminalString(
-				`Run 'Stop Live Preview Server' in the command palette to close the server and close any previews.\r\n\r\n`,
+				localize(
+					{
+						key: 'runToStopServer',
+						comment: [
+							"{Locked='Live Preview: Stop Server'}",
+							"Do not translate the 'Live Preview: Stop Server' part",
+						],
+					},
+					`Run 'Live Preview: Stop Server' in the command palette to close the server and close any previews.\r\n\r\n`
+				),
 				TerminalColor.yellow
 			)
 		);

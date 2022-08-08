@@ -3,6 +3,7 @@ import * as WebSocket from 'ws';
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as nls from 'vscode-nls';
 import { URL } from 'url';
 import { randomBytes } from 'crypto';
 import { Disposable } from '../utils/dispose';
@@ -12,6 +13,8 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { UriSchemes } from '../utils/constants';
 import { ConnectionManager } from '../infoManagers/connectionManager';
+
+const localize = nls.loadMessageBundle();
 
 /**
  * @description override the `Websocket.Server` class to check websocket connection origins;
@@ -27,7 +30,8 @@ export class WSServerWithOriginCheck extends WebSocket.Server {
 	public shouldHandle(req: http.IncomingMessage): boolean {
 		const origin = req.headers['origin'];
 		return <boolean>(
-			(super.shouldHandle(req) && origin &&
+			(super.shouldHandle(req) &&
+				origin &&
 				(origin.startsWith(UriSchemes.vscode_webview) ||
 					(this.externalHostName && origin === this.externalHostName)))
 		);
@@ -169,7 +173,7 @@ export class WSServer extends Disposable {
 			this.startWSServer(basePath);
 		} else {
 			/* __GDPR__
-				"server.err" : { 
+				"server.err" : {
 					"type": {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
 					"err": {"classification": "CallstackOrException", "purpose": "PerformanceAndHealth"}
 				}
@@ -178,7 +182,7 @@ export class WSServer extends Disposable {
 				type: 'ws',
 				err: err,
 			});
-			console.log(`Unknown error: ${err}`);
+			console.log(localize('unknownError', 'Unknown error: {0}', err));
 		}
 	}
 
@@ -186,7 +190,13 @@ export class WSServer extends Disposable {
 	 * @description handle the websocket successfully connecting.
 	 */
 	private handleWSListen(): void {
-		console.log(`Websocket server is running on port ${this._wsPort}`);
+		console.log(
+			localize(
+				'websocketRunningOnPort',
+				'Websocket server is running on port {0}',
+				this._wsPort
+			)
+		);
 		this._onConnected.fire();
 	}
 

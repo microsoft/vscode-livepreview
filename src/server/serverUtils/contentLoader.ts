@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as mime from 'mime';
+import * as nls from 'vscode-nls';
 import { Disposable } from '../../utils/dispose';
 import {
 	FormatFileSize,
@@ -16,6 +17,8 @@ import { EndpointManager } from '../../infoManagers/endpointManager';
 import { PathUtil } from '../../utils/pathUtil';
 import { INJECTED_ENDPOINT_NAME } from '../../utils/constants';
 import { ConnectionManager } from '../../infoManagers/connectionManager';
+
+const localize = nls.loadMessageBundle();
 
 /**
  * @description the response information to give back to the server object
@@ -106,15 +109,22 @@ export class ContentLoader extends Disposable {
 			"server.pageDoesNotExist" : {}
 		*/
 		this._reporter.sendTelemetryEvent('server.pageDoesNotExist');
+		const fileNotFound = localize('fileNotFound', 'File not found');
+		const relativePathFormatted = `<b>"${relativePath}"</b>`;
+		const fileNotFoundMsg = localize(
+			'fileNotFoundMsg',
+			'The file {0} cannot be found. It may have been moved, edited, or deleted.',
+			relativePathFormatted
+		);
 		const htmlString = `
 		<!DOCTYPE html>
 		<html>
 			<head>
-				<title>File not found</title>
+				<title>${fileNotFound}</title>
 			</head>
 			<body>
-				<h1>File not found</h1>
-				<p>The file <b>"${relativePath}"</b> cannot be found. It may have been moved, edited, or deleted.</p>
+				<h1>${fileNotFound}</h1>
+				<p>${fileNotFoundMsg}</p>
 			</body>
 			${this._scriptInjection}
 		</html>
@@ -132,10 +142,19 @@ export class ContentLoader extends Disposable {
 	 */
 	public createNoRootServer(): RespInfo {
 		let customMsg;
+		const noServerRoot = localize('noServerRoot', 'No Server Root');
 		if (this._workspaceManager.numPaths == 0) {
-			customMsg = `<p>You have no workspace open, so the index does not direct to anything.</p>`;
+			const noWorkspaceOpen = localize(
+				'noWorkspaceOpen',
+				'You have no workspace open, so the index does not direct to anything.'
+			);
+			customMsg = `<p>${noWorkspaceOpen}</p>`;
 		} else {
-			customMsg = `<p>You are in a multi-root workspace, so the index does not lead to one specific workspace. Access your workspaces using the links below:</p>
+			const multiRoot = localize(
+				'multiRootOpen',
+				'You are in a multi-root workspace, so the index does not lead to one specific workspace. Access your workspaces using the links below:'
+			);
+			customMsg = `<p>${multiRoot}</p>
 			<ul>
 			`;
 
@@ -155,10 +174,10 @@ export class ContentLoader extends Disposable {
 		<!DOCTYPE html>
 		<html>
 			<head>
-				<title>No Server Root</title>
+				<title>${noServerRoot}</title>
 			</head>
 			<body>
-				<h1>No Server Root</h1>
+				<h1>${noServerRoot}</h1>
 				${customMsg}
 			</body>
 			${this._scriptInjection}
@@ -243,6 +262,14 @@ export class ContentLoader extends Disposable {
 				</tr>\n`)
 		);
 
+		const indexOfTitlePath = localize(
+			'indexOfTitlePath',
+			'Index of {0}',
+			titlePath
+		);
+		const name = localize('name', 'Name');
+		const size = localize('size', 'Size');
+		const dateModified = localize('dateModified', 'Date Modified');
 		const htmlString = `
 		<!DOCTYPE html>
 		<html>
@@ -252,13 +279,13 @@ export class ContentLoader extends Disposable {
 						padding:4px;
 					}
 				</style>
-				<title>Index of ${titlePath}</title>
+				<title>${indexOfTitlePath}</title>
 			</head>
 			<body>
-			<h1>Index of ${titlePath}</h1>
+			<h1>${indexOfTitlePath}</h1>
 
 			<table>
-				<th>Name</th><th>Size</th><th>Date Modified</th>
+				<th>${name}</th><th>${size}</th><th>${dateModified}</th>
 				${directoryContents}
 			</table>
 			</body>

@@ -52,7 +52,11 @@
 
 		// set up key to dismiss find
 		document.getElementById('find-box').addEventListener('keydown', (e) => {
-			if (!document.getElementById('find-box').hidden && e.key == 'Escape' && !ctrlDown) {
+			if (
+				!document.getElementById('find-box').hidden &&
+				e.key == 'Escape' &&
+				!ctrlDown
+			) {
 				hideFind();
 			}
 		});
@@ -435,7 +439,7 @@
 		document.getElementById('reload').onclick = function () {
 			document
 				.getElementById('hostedContent')
-				.contentWindow.postMessage({ command: 'refresh-forced'}, '*');
+				.contentWindow.postMessage({ command: 'refresh-forced' }, '*');
 			document.getElementById('reload').blur();
 		};
 
