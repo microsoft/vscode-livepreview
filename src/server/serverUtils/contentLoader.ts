@@ -92,7 +92,7 @@ export class ContentLoader extends Disposable {
 
 		return {
 			Stream: Stream.Readable.from(fileString),
-			ContentType: 'text/javascript',
+			ContentType: 'text/javascript; charset=UTF-8',
 		};
 	}
 
@@ -122,7 +122,7 @@ export class ContentLoader extends Disposable {
 
 		return {
 			Stream: Stream.Readable.from(htmlString),
-			ContentType: 'text/html',
+			ContentType: 'text/html; charset=UTF-8',
 		};
 	}
 
@@ -167,7 +167,7 @@ export class ContentLoader extends Disposable {
 
 		return {
 			Stream: Stream.Readable.from(htmlString),
-			ContentType: 'text/html',
+			ContentType: 'text/html; charset=UTF-8',
 		};
 	}
 
@@ -262,14 +262,14 @@ export class ContentLoader extends Disposable {
 				${directoryContents}
 			</table>
 			</body>
-			
+
 			${this._scriptInjection}
 		</html>
 		`;
 
 		return {
 			Stream: Stream.Readable.from(htmlString),
-			ContentType: 'text/html',
+			ContentType: 'text/html; charset=UTF-8',
 		};
 	}
 
@@ -313,6 +313,10 @@ export class ContentLoader extends Disposable {
 			} else {
 				stream = fs.createReadStream(readPath);
 			}
+		}
+
+		if (contentType.startsWith('text/')) {
+			contentType = `${contentType}; charset=UTF-8`;
 		}
 
 		return {
