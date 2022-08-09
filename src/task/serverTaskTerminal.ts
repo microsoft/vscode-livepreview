@@ -152,13 +152,14 @@ export class ServerTaskTerminal
 		this.writeEmitter.fire(
 			localize(
 				'ctrlCToCloseServer',
-				'Type {0} to close the server.\r\n\r\n> ',
+				'Type {0} to close the server.',
 				TerminalStyleUtil.ColorTerminalString(
 					`CTRL+C`,
 					TerminalColor.red,
 					TerminalDeco.bold
 				)
-			)
+			) + '\r\n\r\n> '
+
 		);
 	}
 
