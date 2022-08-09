@@ -178,8 +178,9 @@ export class ServerTaskTerminal
 		this.writeEmitter.fire(
 			localize(
 				'taskFinished',
-				`This task will finish now, but the server will stay on since you've used the embedded preview recently.\r\n`
-			)
+				'This task will finish now, but the server will stay on since you've used the embedded preview recently.'
+			) + '\r\n'
+
 		);
 		this.writeEmitter.fire(
 			TerminalStyleUtil.ColorTerminalString(
