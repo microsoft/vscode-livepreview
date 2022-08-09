@@ -92,7 +92,7 @@ export class ServerTaskTerminal
 
 	public handleInput(data: string): void {
 		if (data.length > 0 && data.charCodeAt(0) == CHAR_CODE_CTRL_C) {
-			localize('serverClosing', `Closing the server...\r\n`);
+			this.writeEmitter.fire(localize('serverClosing', `Closing the server...\r\n`));
 			this._onRequestToCloseServerEmitter.fire();
 		}
 	}
