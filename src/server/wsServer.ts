@@ -27,7 +27,8 @@ export class WSServerWithOriginCheck extends WebSocket.Server {
 	public shouldHandle(req: http.IncomingMessage): boolean {
 		const origin = req.headers['origin'];
 		return <boolean>(
-			(super.shouldHandle(req) && origin &&
+			(super.shouldHandle(req) &&
+				origin &&
 				(origin.startsWith(UriSchemes.vscode_webview) ||
 					(this.externalHostName && origin === this.externalHostName)))
 		);
@@ -146,7 +147,7 @@ export class WSServer extends Disposable {
 		this._wss = new WSServerWithOriginCheck({
 			port: this._wsPort,
 			host: this._connectionManager.host,
-			path: this._wsPath
+			path: this._wsPath,
 		});
 		this._wss.on('connection', (ws: WebSocket) =>
 			this.handleWSConnection(basePath, ws)
@@ -169,7 +170,7 @@ export class WSServer extends Disposable {
 			this.startWSServer(basePath);
 		} else {
 			/* __GDPR__
-				"server.err" : { 
+				"server.err" : {
 					"type": {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
 					"err": {"classification": "CallstackOrException", "purpose": "PerformanceAndHealth"}
 				}

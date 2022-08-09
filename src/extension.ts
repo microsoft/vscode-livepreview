@@ -32,7 +32,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	);
 
 	/* __GDPR__
-		"extension.startUp" : { 
+		"extension.startUp" : {
 			"numWorkspaceFolders" : { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true }
 		}
 	*/
@@ -87,7 +87,10 @@ export function activate(context: vscode.ExtensionContext): void {
 		}
 
 		vscode.window.showErrorMessage(
-			localize('not part of workspace', 'This file is not a part of the workspace where the server has started. Cannot preview.')
+			localize(
+				'notPartOfWorkspaceCannotPreview',
+				'This file is not a part of the workspace where the server has started. Cannot preview.'
+			)
 		);
 		return;
 	};

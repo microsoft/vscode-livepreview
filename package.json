@@ -172,24 +172,24 @@
 					"default": 3000,
 					"minimum": 0,
 					"maximum": 65535,
-					"description": "Which local port the live preview's server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port."
+					"description": "%settings.portNumber%"
 				},
 				"livePreview.serverKeepAliveAfterEmbeddedPreviewClose": {
 					"type": "number",
 					"default": 3,
 					"minimum": 0,
 					"maximum": 20,
-					"description": "How many minutes after closing the embedded preview you want the server to shut off. Set to 0 to have server stay on indefinetely."
+					"description": "%settings.serverKeepAliveAfterEmbeddedPreviewClose%"
 				},
 				"livePreview.showStatusBarItem": {
 					"type": "boolean",
 					"default": true,
-					"description": "Whether to show the current hosting port when server is open on the status bar."
+					"description": "%settings.showStatusBarItem%"
 				},
 				"livePreview.showServerStatusNotifications": {
 					"type": "boolean",
 					"default": false,
-					"description": "Whether or not to show information messages on server on/off status change."
+					"description": "%settings.showServerStatusNotifications%"
 				},
 				"livePreview.autoRefreshPreview": {
 					"enum": [
@@ -198,7 +198,7 @@
 						"Never"
 					],
 					"default": "On All Changes in Editor",
-					"description": "How often to automatically refresh the preview."
+					"description": "%settings.autoRefreshPreview%"
 				},
 				"livePreview.openPreviewTarget": {
 					"enum": [
@@ -206,37 +206,37 @@
 						"External Browser"
 					],
 					"default": "Embedded Preview",
-					"description": "The preferred target for previews."
+					"description": "%settings.openPreviewTarget%"
 				},
 				"livePreview.tasks.browserPreviewLaunchServerLogging": {
 					"type": "boolean",
 					"default": true,
-					"description": "Whether the auto-generated task terminal has logging."
+					"description": "%settings.tasks.browserPreviewLaunchServerLogging%"
 				},
 				"livePreview.notifyOnOpenLooseFile": {
 					"type": "boolean",
 					"default": true,
-					"description": "Whether to notify the user when opening a preview for a file that is not part of the currently opened workspace (or the workspace where the server is hosted)."
+					"description": "%settings.notifyOnOpenLooseFile%"
 				},
 				"livePreview.tasks.runTaskWithExternalPreview": {
 					"type": "boolean",
 					"default": true,
-					"description": "Whether or not to pair external preview instances with the auto-generated server task. When disabled, the server will also not automatically close (until the window is closed)."
+					"description": "%settings.tasks.runTaskWithExternalPreview%"
 				},
 				"livePreview.defaultPreviewPath": {
 					"type": "string",
 					"default": "",
-					"description": "The file to automatically show upon starting the server. Leave blank to open at the index."
+					"description": "%settings.defaultPreviewPath%"
 				},
 				"livePreview.debugOnExternalPreview": {
 					"type": "boolean",
 					"default": false,
-					"description": "Whether or not to attach the JavaScript debugger on external preview launches."
+					"description": "%settings.debugOnExternalPreview%"
 				},
 				"livePreview.hostIP": {
 					"type": "string",
 					"default": "127.0.0.1",
-					"description": "The local IP host address to host your files on."
+					"description": "%settings.hostIP%"
 				}
 			}
 		},
@@ -249,7 +249,7 @@
 				"properties": {
 					"args": {
 						"type": "array",
-						"description": "Whether to show incoming server messages and status codes."
+						"description": "%tasks.desc%"
 					}
 				}
 			}

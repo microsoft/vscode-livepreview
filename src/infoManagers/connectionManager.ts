@@ -1,7 +1,10 @@
-import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
+import { Disposable } from '../utils/dispose';
 import { DEFAULT_HOST } from '../utils/constants';
 import { isIPv4 } from 'net';
+
+const localize = nls.loadMessageBundle();
 
 /**
  * @description the information that gets fired to emitter listeners on connection
@@ -40,9 +43,7 @@ export class ConnectionManager extends Disposable {
 		this._initWSPort = wsPort;
 
 		if (!this._validHost(host)) {
-			vscode.window.showErrorMessage(
-				`The local IP address "${host}" is not formatted correctly. Using default ${DEFAULT_HOST}.`
-			);
+			this.showIncorrectHostFormatError(host);
 			this._initHost = DEFAULT_HOST;
 		} else if (
 			vscode.env.remoteName &&
@@ -50,7 +51,12 @@ export class ConnectionManager extends Disposable {
 			host != DEFAULT_HOST
 		) {
 			vscode.window.showErrorMessage(
-				`Cannot use the host "${host}" when using a remote connection. Using default ${DEFAULT_HOST}.`
+				localize(
+					'hostCannotConnect',
+					'Cannot use the host "{0}" when using a remote connection. Using default {1}.',
+					host,
+					DEFAULT_HOST
+				)
 			);
 			this._initHost = DEFAULT_HOST;
 		} else {
@@ -110,9 +116,7 @@ export class ConnectionManager extends Disposable {
 		if (this._validHost(host)) {
 			this._initHost = host;
 		} else {
-			vscode.window.showErrorMessage(
-				`The local IP address "${host}" is not formatted correctly. Will use default host ${DEFAULT_HOST}.`
-			);
+			this.showIncorrectHostFormatError(host);
 			this._initHost = DEFAULT_HOST;
 		}
 	}
@@ -142,7 +146,12 @@ export class ConnectionManager extends Disposable {
 	public resetHostToDefault() {
 		if (this.host != DEFAULT_HOST) {
 			vscode.window.showErrorMessage(
-				`The IP address "${this.host}" cannot be used to host the server. Using default IP ${DEFAULT_HOST}.`
+				localize(
+					'ipCannotConnect',
+					'The IP address "{0}" cannot be used to host the server. Using default IP {1}.',
+					this.host,
+					DEFAULT_HOST
+				)
 			);
 			this._initHost = DEFAULT_HOST;
 			this.host = this._initHost;
@@ -157,5 +166,16 @@ export class ConnectionManager extends Disposable {
 	 */
 	private constructLocalUri(port: number, path?: string) {
 		return vscode.Uri.parse(`http://${this.host}:${port}${path ?? ''}`);
+	}
+
+	private showIncorrectHostFormatError(host: string) {
+		vscode.window.showErrorMessage(
+			localize(
+				'ipAddressIncorrectFormat',
+				'The local IP address "{0}" is not formatted correctly. Using default {1}.',
+				host,
+				DEFAULT_HOST
+			)
+		);
 	}
 }

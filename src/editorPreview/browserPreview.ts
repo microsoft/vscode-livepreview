@@ -9,6 +9,9 @@ import { WebviewComm } from './webviewComm';
 import { FormatDateTime } from '../utils/utils';
 import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
 import * as path from 'path';
+import * as nls from 'vscode-nls';
+
+const localize = nls.loadMessageBundle();
 
 /**
  * @description the embedded preview object, containing the webview panel showing the preview.
@@ -198,7 +201,11 @@ export class BrowserPreview extends Disposable {
 			const uri = vscode.Uri.parse(givenURL);
 			vscode.window
 				.showInformationMessage(
-					`Externally hosted links are not supported in the embedded preview. Do you want to open ${givenURL} in an external browser?`,
+					localize(
+						'unsupportedLink',
+						'Externally hosted links are not supported in the embedded preview. Do you want to open {0} in an external browser?',
+						givenURL
+					),
 					{ modal: true },
 					OPEN_EXTERNALLY
 				)

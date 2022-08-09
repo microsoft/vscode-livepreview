@@ -1,11 +1,14 @@
-import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
+import { URL } from 'url';
+import { Disposable } from '../utils/dispose';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { URL } from 'url';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { SETTINGS_SECTION_ID } from '../utils/settingsUtil';
 import { ConnectionManager } from '../infoManagers/connectionManager';
+
+const localize = nls.loadMessageBundle();
 
 /**
  * @description the link provider that runs on Live Preview's `Run Server` task
@@ -141,7 +144,7 @@ export class serverTaskLinkProvider
 						const tl = {
 							startIndex: fullURLMatches.index,
 							length: fullURLMatches[i].length,
-							tooltip: `Open in Preview `,
+							tooltip: localize('openInPreview', 'Open in Preview'),
 							data: url.pathname + url.search,
 							inEditor: false,
 						};
