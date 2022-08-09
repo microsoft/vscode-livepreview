@@ -184,8 +184,9 @@ export class ServerTaskTerminal
 							"Do not translate the 'Live Preview: Stop Server' part",
 						],
 					},
-					`Run 'Live Preview: Stop Server' in the command palette to close the server and close any previews.\r\n\r\n`
-				),
+					"Run 'Live Preview: Stop Server' in the command palette to close the server and close any previews."
+				) + '\r\n\r\n',
+
 				TerminalColor.yellow
 			)
 		);
