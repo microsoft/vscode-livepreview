@@ -97,13 +97,7 @@ export class HttpServer extends Disposable {
 		this._server = this.createServer();
 
 		this._server.on('listening', () => {
-			console.log(
-				localize(
-					'serverRunningOnPort',
-					'Server is running on port {0}',
-					this.port
-				)
-			);
+			console.log(`Server is running on port ${this.port}`);
 			this._onConnected.fire(this.port);
 		});
 
