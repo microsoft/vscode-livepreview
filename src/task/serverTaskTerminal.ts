@@ -66,15 +66,17 @@ export class ServerTaskTerminal
 		if (this._executeServer) {
 			this.running = true;
 			this.writeEmitter.fire(
-				localize('openingServer', 'Opening Server...\r\n')
+				localize('openingServer', 'Opening Server...') + '\r\n'
+
 			);
 			this._onRequestToOpenServerEmitter.fire();
 		} else {
 			this.writeEmitter.fire(
 				localize(
 					'serverAlreadyRunning',
-					`Server already running in another task. Closing now.\r\n`
-				)
+					'Server already running in another task. Closing now.'
+				) + '\r\n'
+
 			);
 			this.close();
 		}
@@ -92,7 +94,8 @@ export class ServerTaskTerminal
 
 	public handleInput(data: string): void {
 		if (data.length > 0 && data.charCodeAt(0) == CHAR_CODE_CTRL_C) {
-			this.writeEmitter.fire(localize('serverClosing', `Closing the server...\r\n`));
+			this.writeEmitter.fire(localize('serverClosing', 'Closing the server...') + '\r\n');
+
 			this._onRequestToCloseServerEmitter.fire();
 		}
 	}
@@ -117,8 +120,9 @@ export class ServerTaskTerminal
 							"Do not translate the '--verbose' part",
 						],
 					},
-					'This task does not have logging. To get logging, use the "--verbose" flag.\r\n'
-				)
+					'This task does not have logging. To get logging, use the "--verbose" flag.'
+				) + '\r\n'
+
 			);
 		}
 		switch (status) {
@@ -126,9 +130,10 @@ export class ServerTaskTerminal
 				this.writeEmitter.fire(
 					localize(
 						'startedServer',
-						'Started Server on {0}\r\n',
-						formattedAddress
+						'Started Server on {0}',
+						formattedAddress + '\r\n'
 					)
+
 				);
 				break;
 			}
@@ -136,9 +141,10 @@ export class ServerTaskTerminal
 				this.writeEmitter.fire(
 					localize(
 						'serverAlreadyStarted',
-						'Server already on at {0}\r\n> ',
-						formattedAddress
+						'Server already on at {0}',
+						formattedAddress + '\r\n> '
 					)
+
 				);
 				break;
 			}
