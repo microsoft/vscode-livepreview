@@ -67,7 +67,6 @@ export class ServerTaskTerminal
 			this.running = true;
 			this.writeEmitter.fire(
 				localize('openingServer', 'Opening Server...') + '\r\n'
-
 			);
 			this._onRequestToOpenServerEmitter.fire();
 		} else {
@@ -76,7 +75,6 @@ export class ServerTaskTerminal
 					'serverAlreadyRunning',
 					'Server already running in another task. Closing now.'
 				) + '\r\n'
-
 			);
 			this.close();
 		}
@@ -94,7 +92,9 @@ export class ServerTaskTerminal
 
 	public handleInput(data: string): void {
 		if (data.length > 0 && data.charCodeAt(0) == CHAR_CODE_CTRL_C) {
-			this.writeEmitter.fire(localize('serverClosing', 'Closing the server...') + '\r\n');
+			this.writeEmitter.fire(
+				localize('serverClosing', 'Closing the server...') + '\r\n'
+			);
 
 			this._onRequestToCloseServerEmitter.fire();
 		}
@@ -122,7 +122,6 @@ export class ServerTaskTerminal
 					},
 					'This task does not have logging. To get logging, use the "--verbose" flag.'
 				) + '\r\n'
-
 			);
 		}
 		switch (status) {
@@ -133,7 +132,6 @@ export class ServerTaskTerminal
 						'Started Server on {0}',
 						formattedAddress + '\r\n'
 					)
-
 				);
 				break;
 			}
@@ -144,7 +142,6 @@ export class ServerTaskTerminal
 						'Server already on at {0}',
 						formattedAddress + '\r\n> '
 					)
-
 				);
 				break;
 			}
@@ -159,7 +156,6 @@ export class ServerTaskTerminal
 					TerminalDeco.bold
 				)
 			) + '\r\n\r\n> '
-
 		);
 	}
 
@@ -178,20 +174,13 @@ export class ServerTaskTerminal
 		this.writeEmitter.fire(
 			localize(
 				'taskFinished',
-				'This task will finish now, but the server will stay on since you've used the embedded preview recently.'
+				`This task will finish now, but the server will stay on since you've used the embedded preview recently.`
 			) + '\r\n'
-
 		);
 		this.writeEmitter.fire(
 			TerminalStyleUtil.ColorTerminalString(
 				localize(
-					{
-						key: 'runToStopServer',
-						comment: [
-							"{Locked='Live Preview: Stop Server'}",
-							"Do not translate the 'Live Preview: Stop Server' part",
-						],
-					},
+					'runToStopServer',
 					"Run 'Live Preview: Stop Server' in the command palette to close the server and close any previews."
 				) + '\r\n\r\n',
 

@@ -150,7 +150,7 @@ export class WSServer extends Disposable {
 		this._wss = new WSServerWithOriginCheck({
 			port: this._wsPort,
 			host: this._connectionManager.host,
-			path: this._wsPath
+			path: this._wsPath,
 		});
 		this._wss.on('connection', (ws: WebSocket) =>
 			this.handleWSConnection(basePath, ws)
@@ -182,7 +182,7 @@ export class WSServer extends Disposable {
 				type: 'ws',
 				err: err,
 			});
-			console.log(localize('unknownError', 'Unknown error: {0}', err));
+			console.log(`Unknown error: ${err}`);
 		}
 	}
 
@@ -190,13 +190,7 @@ export class WSServer extends Disposable {
 	 * @description handle the websocket successfully connecting.
 	 */
 	private handleWSListen(): void {
-		console.log(
-			localize(
-				'websocketRunningOnPort',
-				'Websocket server is running on port {0}',
-				this._wsPort
-			)
-		);
+		console.log(`Websocket server is running on port ${this._wsPort}`);
 		this._onConnected.fire();
 	}
 

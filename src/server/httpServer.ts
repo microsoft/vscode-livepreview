@@ -125,7 +125,7 @@ export class HttpServer extends Disposable {
 					type: 'http',
 					err: err,
 				});
-				console.log(localize('unknownError', 'Unknown error: {0}', err));
+				console.log(`Unknown error: ${err}`);
 			}
 		});
 
