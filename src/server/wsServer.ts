@@ -3,7 +3,6 @@ import * as WebSocket from 'ws';
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as nls from 'vscode-nls';
 import { URL } from 'url';
 import { randomBytes } from 'crypto';
 import { Disposable } from '../utils/dispose';
@@ -13,8 +12,6 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { UriSchemes } from '../utils/constants';
 import { ConnectionManager } from '../infoManagers/connectionManager';
-
-const localize = nls.loadMessageBundle();
 
 /**
  * @description override the `Websocket.Server` class to check websocket connection origins;

@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as nls from 'vscode-nls';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { INJECTED_ENDPOINT_NAME } from '../utils/constants';
@@ -12,8 +11,6 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
 import { PathUtil } from '../utils/pathUtil';
-
-const localize = nls.loadMessageBundle();
 
 export class HttpServer extends Disposable {
 	private _server: any;
