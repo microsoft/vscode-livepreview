@@ -19,11 +19,11 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../infoManagers/connectionManager';
-import { serverMsg } from '../manager';
+import { serverMsg } from '../serverGrouping';
 import { PathUtil } from '../utils/pathUtil';
 
 const localize = nls.loadMessageBundle();
-export class Server extends Disposable {
+export class ServerManager extends Disposable {
 	private readonly _httpServer: HttpServer;
 	private readonly _wsServer: WSServer;
 	private readonly _statusBar: StatusBarNotifier;

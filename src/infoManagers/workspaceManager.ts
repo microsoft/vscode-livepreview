@@ -10,13 +10,10 @@ import { PathUtil } from '../utils/pathUtil';
  * This is because multi-root relies solely on endpoints to access files.
  */
 export class WorkspaceManager extends Disposable {
-	private _workspace: vscode.WorkspaceFolder | undefined;
 
-	constructor() {
+	constructor(
+		private readonly _workspace: vscode.WorkspaceFolder | undefined) {
 		super();
-		if (this.numPaths == 1) {
-			this._workspace = this.firstListedWorkspace;
-		}
 	}
 
 	public get workspace(): vscode.WorkspaceFolder | undefined {

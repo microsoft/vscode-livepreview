@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { serverMsg } from '../manager';
+import { serverMsg } from '../serverGrouping';
 import { Disposable } from '../utils/dispose';
 import {
 	TerminalColor,
