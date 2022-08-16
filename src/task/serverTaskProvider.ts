@@ -2,12 +2,11 @@ import * as vscode from 'vscode';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { serverMsg } from '../serverGrouping';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { Disposable } from '../utils/dispose';
 import { serverTaskLinkProvider } from './serverTaskLinkProvider';
 import { ServerTaskTerminal } from './serverTaskTerminal';
 import { TASK_TERMINAL_BASE_NAME } from '../utils/constants';
-import { ConnectionManager } from '../infoManagers/connectionManager';
+import { ConnectionManager } from '../connectionInfo/connectionManager';
 
 interface ServerTaskDefinition extends vscode.TaskDefinition {
 	args: string[];
@@ -63,7 +62,6 @@ export class ServerTaskProvider
 	constructor(
 		private readonly _reporter: TelemetryReporter,
 		endpointManager: EndpointManager,
-		private readonly _workspaceManager: WorkspaceManager,
 		_connectionManager: ConnectionManager
 	) {
 		super();
@@ -72,7 +70,6 @@ export class ServerTaskProvider
 				'',
 				_reporter,
 				endpointManager,
-				_workspaceManager,
 				_connectionManager
 			)
 		);
@@ -198,7 +195,7 @@ export class ServerTaskProvider
 		if (this._terminal && this._terminal.running) {
 			return new vscode.Task(
 				definition,
-				this._workspaceManager.workspace ?? vscode.TaskScope.Workspace,
+				vscode.TaskScope.Workspace,
 				taskName,
 				ServerTaskProvider.CustomBuildScriptType,
 				undefined

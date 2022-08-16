@@ -224,7 +224,7 @@
 				// if the file we went to is not injectable, make sure to add it to history manually
 				vscode.postMessage({
 					command: 'add-history',
-					text: parsedMessage.path,
+					text: { path: parsedMessage.path, port: parsedMessage.port },
 				});
 				return;
 		}

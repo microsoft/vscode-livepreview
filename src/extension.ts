@@ -12,10 +12,14 @@ import {
 	SettingUtil,
 } from './utils/settingsUtil';
 import { existsSync } from 'fs';
+import { ConnectionManager } from './connectionInfo/connectionManager';
+import { ServerPreview } from './serverPreview';
 
 let reporter: TelemetryReporter;
-let managers: Map<vscode.Uri, ServerGrouping>;
-let looseFileManager: ServerGrouping;
+let serverPreview: ServerPreview;
+// let serverGroupings: Map<vscode.Uri | undefined, ServerGrouping>;
+// let connectionManager: ConnectionManager;
+// let currentPanel: BrowserPreview | undefined;
 
 const localize = nls.loadMessageBundle();
 
@@ -27,23 +31,8 @@ export function activate(context: vscode.ExtensionContext): void {
 		extPackageJSON.aiKey
 	);
 
-		managers = new Map<vscode.Uri, ServerGrouping>();
-	// let manager = new HostedContent(
-	// 	context.extensionUri,
-	// 	reporter,
-	// 	PathUtil.GetUserDataDirFromStorageUri(context.storageUri?.fsPath)
-	// );
+	serverPreview = new ServerPreview(context.extensionUri, reporter);
 
-	const createHostedContentForWorkspace = (
-		workspace: vscode.WorkspaceFolder | undefined
-	) => {
-		return new ServerGrouping(
-				context.extensionUri,
-				reporter,
-				workspace,
-				PathUtil.GetUserDataDirFromStorageUri(context.storageUri?.fsPath)
-			);
-	};
 	/* __GDPR__
 		"extension.startUp" : {
 			"numWorkspaceFolders" : { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true }
@@ -55,162 +44,6 @@ export function activate(context: vscode.ExtensionContext): void {
 		{ numWorkspaceFolders: vscode.workspace.workspaceFolders?.length ?? 0 }
 	);
 
-	const openPreview = (
-		internal: boolean,
-		file: string,
-		hc: ServerGrouping,
-		isRelative: boolean,
-		debug = false,
-	) => {
-		if (internal) {
-			// for now, ignore debug or no debug for embedded preview
-			hc.createOrShowEmbeddedPreview(undefined, file, isRelative);
-		} else {
-			hc.showPreviewInBrowser(file, isRelative, debug);
-		}
-	};
-
-	const getHCFromWorkspace = (workspace: vscode.WorkspaceFolder) => {
-		const hcFromMap = managers.get(workspace.uri);
-					if (hcFromMap) {
-						return hcFromMap;
-					} else {
-						const hc = createHostedContentForWorkspace(workspace);
-						managers.set(workspace.uri, hc);
-						return hc;
-					}
-	};
-
-	const getLooseFileHC = () => {
-		if (!looseFileManager) {
-			looseFileManager = createHostedContentForWorkspace(undefined);
-		}
-		return looseFileManager;
-	};
-
-	const determineHCfromFile = (file: vscode.Uri | string, fileStringRelative: boolean) => {
-		if (fileStringRelative) {
-			getLooseFileHC();
-		} else {
-			let fileUri;
-			if (typeof file == 'string') {
-				fileUri = vscode.Uri.parse(file);
-			} else if (file instanceof vscode.Uri) {
-				fileUri = file;
-			} else {
-
-			getLooseFileHC();
-			}
-			if (fileUri) {
-				const workspace = vscode.workspace.getWorkspaceFolder(fileUri);
-				if (workspace) {
-					return getHCFromWorkspace(workspace);
-				}
-			}
-		}
-	};
-
-	const handleOpenFileCaller = (
-		internal: boolean,
-		file: vscode.Uri | string | undefined,
-		fileStringRelative = true,
-		debug = false,
-		workspace?: vscode.WorkspaceFolder,
-		port?: number,
-		hc?: ServerGrouping
-		) => {
-			if (!file) {
-				openNoTarget();
-				return;
-			}
-			if (!hc) {
-				if (workspace) {
-					hc = getHCFromWorkspace(workspace);
-				} else if (port) {
-					managers.forEach((potentialHC,key) => {
-						if (potentialHC.port === port) {
-							hc = potentialHC;
-							return;
-						}
-						hc = determineHCfromFile(file, fileStringRelative);
-					});
-				} else {
-					hc = determineHCfromFile(file, fileStringRelative);
-				}
-			}
-			if (hc) {
-				handleOpenFile(internal,file,hc,fileStringRelative,debug);
-			}
-
-	};
-
-	const openNoTarget = () => {
-		const workspaces = vscode.workspace.workspaceFolders;
-				if (workspaces && workspaces.length > 0) {
-					for (let i = 0; i < workspaces.length; i++) {
-						const currWorkspace = workspaces[i];
-						const manager = managers.get(currWorkspace.uri);
-						if (manager) {
-							vscode.commands.executeCommand(
-								`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-								'/',
-								true,
-								currWorkspace,
-								undefined,
-								manager
-							);
-							return;
-						}
-					}
-				} else {
-					vscode.commands.executeCommand(
-						`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-						'/',
-						false
-					);
-				}
-	};
-	const handleOpenFile = (
-		internal: boolean,
-		file: vscode.Uri | string,
-		hc: ServerGrouping,
-		fileStringRelative = true,
-		debug = false
-	) => {
-		if (typeof file == 'string') {
-			openPreview(internal, file, hc, fileStringRelative, debug);
-			return;
-		} else if (file instanceof vscode.Uri) {
-			console.log(vscode.workspace.getWorkspaceFolder(file));
-			const filePath = file?.fsPath;
-			if (filePath) {
-				openPreview(internal, filePath, hc, false, debug);
-				return;
-			} else {
-				const activeFilePath =
-					vscode.window.activeTextEditor?.document.fileName;
-				if (activeFilePath) {
-					openPreview(internal, activeFilePath, hc,false, debug);
-					return;
-				}
-			}
-		} else {
-			const activeFilePath = vscode.window.activeTextEditor?.document.fileName;
-			if (activeFilePath) {
-				openPreview(internal, activeFilePath, hc,false, debug);
-				return;
-			}
-		}
-
-		vscode.window.showErrorMessage(
-			localize(
-				'notPartOfWorkspaceCannotPreview',
-				'This file is not a part of the workspace where the server has started. Cannot preview.'
-			)
-		);
-		return;
-	};
-
 	context.subscriptions.push(reporter);
 
 	context.subscriptions.push(
@@ -219,18 +52,17 @@ export function activate(context: vscode.ExtensionContext): void {
 				context.extensionUri
 			).defaultPreviewPath;
 			if (filePath == '') {
-				openNoTarget();
-
+				serverPreview.openNoTarget();
 			} else {
-				managers.forEach((manager)=> {
-					if (manager.pathExistsRelativeToWorkspace(filePath)) {
+				serverGroupings.forEach((grouping) => {
+					if (grouping.pathExistsRelativeToWorkspace(filePath)) {
 						vscode.commands.executeCommand(
 							`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 							filePath,
 							true,
-							manager.workspace,
+							grouping.workspace,
 							undefined,
-							manager
+							grouping
 						);
 						return;
 					}
@@ -251,7 +83,14 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-			(file?: vscode.Uri | string, options?:any, relativeFileString = false, workspace?: vscode.WorkspaceFolder, port?: number, manager?: ServerGrouping) => {
+			(
+				file?: vscode.Uri | string,
+				options?: any,
+				relativeFileString = false,
+				workspace?: vscode.WorkspaceFolder,
+				port?: number,
+				manager?: ServerGrouping
+			) => {
 				const previewType = SettingUtil.GetPreviewType(context.extensionUri);
 				vscode.commands.executeCommand(
 					`${SETTINGS_SECTION_ID}.start.${previewType}.atFile`,
@@ -268,7 +107,13 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.debugPreview.atFile`,
-			(file?: vscode.Uri | string, relativeFileString = true, workspace?: vscode.WorkspaceFolder, port?: number, manager?: ServerGrouping) => {
+			(
+				file?: vscode.Uri | string,
+				relativeFileString = true,
+				workspace?: vscode.WorkspaceFolder,
+				port?: number,
+				manager?: ServerGrouping
+			) => {
 				// TODO: implement internalDebugPreview and use settings to choose which one to launch
 				vscode.commands.executeCommand(
 					`${SETTINGS_SECTION_ID}.start.externalDebugPreview.atFile`,
@@ -282,7 +127,13 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalPreview.atFile`,
-			(file?: vscode.Uri | string, relativeFileString = false, workspace?: vscode.WorkspaceFolder, port?: number, manager?: ServerGrouping) => {
+			(
+				file?: vscode.Uri | string,
+				relativeFileString = false,
+				workspace?: vscode.WorkspaceFolder,
+				port?: number,
+				manager?: ServerGrouping
+			) => {
 				/* __GDPR__
 					"preview" :{
 						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
@@ -294,7 +145,15 @@ export function activate(context: vscode.ExtensionContext): void {
 					location: 'atFile',
 					debug: 'false',
 				});
-				handleOpenFileCaller(false, file, relativeFileString, false, workspace,port, manager);
+				serverPreview.handleOpenFileCaller(
+					false,
+					file,
+					relativeFileString,
+					false,
+					workspace,
+					port,
+					manager
+				);
 			}
 		)
 	);
@@ -302,7 +161,13 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
-			(file?: vscode.Uri | string, relativeFileString = false, workspace?: vscode.WorkspaceFolder, port?: number, manager?: ServerGrouping) => {
+			(
+				file?: vscode.Uri | string,
+				relativeFileString = false,
+				workspace?: vscode.WorkspaceFolder,
+				port?: number,
+				manager?: ServerGrouping
+			) => {
 				/* __GDPR__
 					"preview" :{
 						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
@@ -313,7 +178,15 @@ export function activate(context: vscode.ExtensionContext): void {
 					type: 'internal',
 					location: 'atFile',
 				});
-				handleOpenFileCaller(true, file, relativeFileString, false, workspace,port, manager);
+				serverPreview.handleOpenFileCaller(
+					true,
+					file,
+					relativeFileString,
+					false,
+					workspace,
+					port,
+					manager
+				);
 			}
 		)
 	);
@@ -321,7 +194,13 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalDebugPreview.atFile`,
-			(file?: vscode.Uri | string, relativeFileString = false, workspace?: vscode.WorkspaceFolder, port?: number, manager?: ServerGrouping) => {
+			(
+				file?: vscode.Uri | string,
+				relativeFileString = false,
+				workspace?: vscode.WorkspaceFolder,
+				port?: number,
+				manager?: ServerGrouping
+			) => {
 				/* __GDPR__
 					"preview" :{
 						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
@@ -334,8 +213,15 @@ export function activate(context: vscode.ExtensionContext): void {
 					debug: 'true',
 				});
 
-
-				handleOpenFileCaller(false, file, relativeFileString, true, workspace, port, manager);
+				serverPreview.handleOpenFileCaller(
+					false,
+					file,
+					relativeFileString,
+					true,
+					workspace,
+					port,
+					manager
+				);
 			}
 		)
 	);
@@ -345,11 +231,12 @@ export function activate(context: vscode.ExtensionContext): void {
 			/* __GDPR__
 				"server.forceClose" : {}
 			*/
-			managers.forEach((manager: ServerGrouping, key: vscode.Uri) => {
-				manager.closeServer();
+			serverGroupings.forEach((manager: ServerGrouping | undefined) => {
+				if (manager) {
+					manager.closeServer();
+				}
 			});
 			reporter.sendTelemetryEvent('server.forceClose');
-
 		})
 	);
 
@@ -357,19 +244,19 @@ export function activate(context: vscode.ExtensionContext): void {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.setDefaultOpenFile`,
 			(file: vscode.Uri) => {
-
 				const workspace = vscode.workspace.getWorkspaceFolder(file);
 				if (workspace) {
 					const hc = new ServerGrouping(
 						context.extensionUri,
 						reporter,
 						workspace,
-						PathUtil.GetUserDataDirFromStorageUri(context.storageUri?.fsPath));
-					managers.set(workspace.uri,hc);
+						PathUtil.GetUserDataDirFromStorageUri(context.storageUri?.fsPath)
+					);
+					serverGroupings.set(workspace.uri, hc);
 
 					if (hc.absPathInDefaultWorkspace(file.fsPath)) {
 						const fileRelativeToWorkspace =
-						hc.getFileRelativeToDefaultWorkspace(file.fsPath) ?? '';
+							hc.getFileRelativeToDefaultWorkspace(file.fsPath) ?? '';
 						SettingUtil.UpdateSettings(
 							Settings.defaultPreviewPath,
 							fileRelativeToWorkspace,
@@ -383,8 +270,6 @@ export function activate(context: vscode.ExtensionContext): void {
 						);
 					}
 				}
-
-
 			}
 		)
 	);
@@ -418,7 +303,5 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {
 	reporter.dispose();
-	managers.forEach((manager) => {
-		manager.dispose();
-	});
+	serverPreview.dispose();
 }

@@ -12,11 +12,12 @@ import {
 } from '../../utils/utils';
 import { HTMLInjector } from './HTMLInjector';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { WorkspaceManager } from '../../infoManagers/workspaceManager';
+// import { WorkspaceManager } from '../../infoManagers/workspaceManager';
 import { EndpointManager } from '../../infoManagers/endpointManager';
 import { PathUtil } from '../../utils/pathUtil';
 import { INJECTED_ENDPOINT_NAME } from '../../utils/constants';
-import { ConnectionManager } from '../../infoManagers/connectionManager';
+import { ConnectionManager } from '../../connectionInfo/connectionManager';
+import { Connection } from '../../connectionInfo/connection';
 
 const localize = nls.loadMessageBundle();
 
@@ -59,11 +60,11 @@ export class ContentLoader extends Disposable {
 		_extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
-		private readonly _workspaceManager: WorkspaceManager,
-		_connectionManager: ConnectionManager
+		// private readonly _workspaceManager: WorkspaceManager,
+		private readonly _connection: Connection
 	) {
 		super();
-		this._scriptInjector = new HTMLInjector(_extensionUri, _connectionManager);
+		this._scriptInjector = new HTMLInjector(_extensionUri, _connection);
 	}
 
 	/**
@@ -141,35 +142,12 @@ export class ContentLoader extends Disposable {
 	 * @returns {RespInfo} the response info
 	 */
 	public createNoRootServer(): RespInfo {
-		let customMsg;
 		const noServerRoot = localize('noServerRoot', 'No Server Root');
-		if (this._workspaceManager.numPaths == 0) {
-			const noWorkspaceOpen = localize(
-				'noWorkspaceOpen',
-				'You have no workspace open, so the index does not direct to anything.'
-			);
-			customMsg = `<p>${noWorkspaceOpen}</p>`;
-		} else {
-			const multiRoot = localize(
-				'multiRootOpen',
-				'You are in a multi-root workspace, so the index does not lead to one specific workspace. Access your workspaces using the links below:'
-			);
-			customMsg = `<p>${multiRoot}</p>
-			<ul>
-			`;
-
-			const workspaces = this._workspaceManager.workspaces;
-			if (workspaces) {
-				for (const i in workspaces) {
-					const workspacePath = this._endpointManager.encodeLooseFileEndpoint(
-						workspaces[i].uri.fsPath
-					);
-					customMsg += `
-					<li><a href="${workspacePath}/">${workspaces[i].name}</a></li>`;
-				}
-			}
-			customMsg += `</ul>`;
-		}
+		const noWorkspaceOpen = localize(
+			'noWorkspaceOpen',
+			'You have no workspace open, so the index does not direct to anything.'
+		);
+		const customMsg = `<p>${noWorkspaceOpen}</p>`;
 		const htmlString = `
 		<!DOCTYPE html>
 		<html>

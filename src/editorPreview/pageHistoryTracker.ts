@@ -1,3 +1,4 @@
+import { Connection } from '../connectionInfo/connection';
 import { Disposable } from '../utils/dispose';
 import { PathUtil } from '../utils/pathUtil';
 
@@ -9,10 +10,16 @@ export enum NavEditCommands {
 }
 export interface NavResponse {
 	actions: Array<NavEditCommands>;
-	address?: string;
+	address?: Address;
 }
+
+export interface Address {
+	connection: Connection | undefined;
+	path: string;
+}
+
 export class PageHistory extends Disposable {
-	private _history = new Array<string>();
+	private _history = new Array<Address>();
 	private _backstep = 0;
 	private _current_back_enabled = false;
 	private _current_forward_enabled = false;
@@ -97,13 +104,18 @@ export class PageHistory extends Disposable {
 	 * @param {string} address the address to add.
 	 * @returns {NavResponse | undefined} the state of the back/fowards buttons after adding the item.
 	 */
-	public addHistory(address: string): NavResponse | undefined {
+	public addHistory(
+		address: string,
+		connection: Connection | undefined
+	): NavResponse | undefined {
 		address = PathUtil.ConvertToUnixPath(address);
 		address = PathUtil.EscapePathParts(address);
 		const action = new Array<NavEditCommands>();
+		const lastItem = this._history[this._backstep];
 		if (
 			this._backstep < this._history.length &&
-			address == this._history[this._backstep]
+			address === lastItem.path &&
+			connection === lastItem.connection
 		) {
 			// if this is the same as the last entry or is a
 			// redirect of the previous, don't add to history
@@ -116,7 +128,7 @@ export class PageHistory extends Disposable {
 			action.push(NavEditCommands.ENABLE_BACK);
 			this._current_back_enabled = true;
 		}
-		this._history.unshift(address);
+		this._history.unshift({ path: address, connection });
 		this._backstep = 0;
 		action.push(NavEditCommands.DISABLE_FORWARD);
 		this._current_forward_enabled = false;

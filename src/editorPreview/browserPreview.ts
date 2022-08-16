@@ -3,13 +3,16 @@ import * as vscode from 'vscode';
 import { Disposable } from '../utils/dispose';
 import { PathUtil } from '../utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { WorkspaceManager } from '../infoManagers/workspaceManager';
-import { ConnectionManager } from '../infoManagers/connectionManager';
+// import { WorkspaceManager } from '../infoManagers/workspaceManager';
+import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { WebviewComm } from './webviewComm';
 import { FormatDateTime } from '../utils/utils';
 import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
 import * as path from 'path';
 import * as nls from 'vscode-nls';
+import { decode } from 'querystring';
+import { URL } from 'url';
+import { Connection } from '../connectionInfo/connection';
 
 const localize = nls.loadMessageBundle();
 
@@ -19,6 +22,7 @@ const localize = nls.loadMessageBundle();
 export class BrowserPreview extends Disposable {
 	public static readonly viewType = 'browserPreview';
 	private readonly _webviewComm: WebviewComm;
+	// private currentConne
 	private readonly _onDisposeEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
@@ -27,6 +31,11 @@ export class BrowserPreview extends Disposable {
 	/**
 	 * @description close the embedded browser.
 	 */
+
+	public get currentConnection() {
+		return this._webviewComm.currentConnection;
+	}
+
 	public close(): void {
 		this._panel.dispose();
 	}
@@ -43,10 +52,10 @@ export class BrowserPreview extends Disposable {
 
 	constructor(
 		initialFile: string,
+		initialConnection: Connection,
 		private readonly _panel: vscode.WebviewPanel,
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
-		private readonly _workspaceManager: WorkspaceManager,
 		private readonly _connectionManager: ConnectionManager,
 		private readonly _outputChannel: vscode.OutputChannel
 	) {
@@ -65,7 +74,13 @@ export class BrowserPreview extends Disposable {
 		};
 
 		this._webviewComm = this._register(
-			new WebviewComm(initialFile, _panel, _extensionUri, _connectionManager)
+			new WebviewComm(
+				initialFile,
+				initialConnection,
+				_panel,
+				_extensionUri,
+				_connectionManager
+			)
 		);
 
 		// Listen for when the panel is disposed
@@ -73,12 +88,6 @@ export class BrowserPreview extends Disposable {
 		this._register(
 			this._panel.onDidDispose(() => {
 				this.dispose();
-			})
-		);
-
-		this._register(
-			this._connectionManager.onConnected((e) => {
-				this.reloadWebview();
 			})
 		);
 
@@ -123,7 +132,10 @@ export class BrowserPreview extends Disposable {
 				this.handleOpenBrowser(message.text);
 				return;
 			case 'add-history': {
-				this._webviewComm.setUrlBar(message.text);
+				const connection = this._connectionManager.getConnectionFromPort(
+					message.port
+				);
+				this._webviewComm.setUrlBar(message.text, connection);
 				return;
 			}
 			case 'refresh-back-forward-buttons':
@@ -170,13 +182,6 @@ export class BrowserPreview extends Disposable {
 
 	public get panel(): vscode.WebviewPanel {
 		return this._panel;
-	}
-
-	/**
-	 * @description extension-side reload of webivew.
-	 */
-	private reloadWebview() {
-		this._webviewComm.goToFile(this._webviewComm.currentAddress, false);
 	}
 
 	/**
@@ -230,15 +235,27 @@ export class BrowserPreview extends Disposable {
 	 * @param {string} address the (full) address to navigate to; will open in external browser if it is an external address.
 	 */
 	public async goToFullAddress(address: string) {
-		const host = await this._webviewComm.resolveHost();
-		let hostString = host.toString();
-		if (hostString.endsWith('/')) {
-			hostString = hostString.substr(0, hostString.length - 1);
-		}
-		if (address.startsWith(hostString)) {
+		try {
+			const port = new URL(address).port;
+			if (port === undefined) {
+				throw Error;
+			}
+			const connection = this._connectionManager.getConnectionFromPort(
+				parseInt(port)
+			);
+
+			if (!connection) {
+				throw Error;
+			}
+
+			const host = await this._webviewComm.resolveHost(connection);
+			let hostString = host.toString();
+			if (hostString.endsWith('/')) {
+				hostString = hostString.substr(0, hostString.length - 1);
+			}
 			const file = address.substr(host.toString().length);
-			this._webviewComm.goToFile(file);
-		} else {
+			this._webviewComm.goToFile(file, connection);
+		} catch (e) {
 			this.handleOpenBrowser(address);
 		}
 	}
@@ -252,9 +269,7 @@ export class BrowserPreview extends Disposable {
 		if (title == '') {
 			pathname = unescape(pathname);
 			if (pathname.length > 0 && pathname[0] == '/') {
-				if (
-					this._workspaceManager.pathExistsRelativeToDefaultWorkspace(pathname)
-				) {
+				if (PathUtil.PathExistsRelativeToAnyWorkspace(pathname)) {
 					this._panel.title = PathUtil.GetFileName(pathname);
 				} else {
 					this._panel.title = path.basename(pathname.substr(1));

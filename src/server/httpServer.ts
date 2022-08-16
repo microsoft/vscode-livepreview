@@ -8,9 +8,10 @@ import { INJECTED_ENDPOINT_NAME } from '../utils/constants';
 import { serverMsg } from '../serverGrouping';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { WorkspaceManager } from '../infoManagers/workspaceManager';
-import { ConnectionManager } from '../infoManagers/connectionManager';
+// import { WorkspaceManager } from '../infoManagers/workspaceManager';
+import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { PathUtil } from '../utils/pathUtil';
+import { Connection } from '../connectionInfo/connection';
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -21,8 +22,8 @@ export class HttpServer extends Disposable {
 		_extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
-		private readonly _workspaceManager: WorkspaceManager,
-		private readonly _connectionManager: ConnectionManager
+		// private readonly _workspaceManager: WorkspaceManager,
+		private readonly _connection: Connection
 	) {
 		super();
 		this._contentLoader = this._register(
@@ -30,8 +31,8 @@ export class HttpServer extends Disposable {
 				_extensionUri,
 				_reporter,
 				_endpointManager,
-				_workspaceManager,
-				_connectionManager
+				// _workspaceManager,
+				_connection
 			)
 		);
 	}
@@ -40,7 +41,7 @@ export class HttpServer extends Disposable {
 	 * @returns {string | undefined} the path where the server index is located.
 	 */
 	private get _basePath(): string | undefined {
-		return this._workspaceManager.workspacePath;
+		return this._connection.workspacePath;
 	}
 
 	private readonly _onConnected = this._register(
@@ -101,10 +102,10 @@ export class HttpServer extends Disposable {
 		this._server.on('error', (err: any) => {
 			if (err.code == 'EADDRINUSE') {
 				this.port++;
-				this._server.listen(this.port, this._connectionManager.host);
+				this._server.listen(this.port, this._connection.host);
 			} else if (err.code == 'EADDRNOTAVAIL') {
-				this._connectionManager.resetHostToDefault();
-				this._server.listen(this.port, this._connectionManager.host);
+				this._connection.resetHostToDefault();
+				this._server.listen(this.port, this._connection.host);
 			} else {
 				/* __GDPR__
 					"server.err" : {
@@ -120,7 +121,7 @@ export class HttpServer extends Disposable {
 			}
 		});
 
-		this._server.listen(this.port, this._connectionManager.host);
+		this._server.listen(this.port, this._connection.host);
 		return true;
 	}
 

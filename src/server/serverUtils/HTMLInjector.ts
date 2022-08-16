@@ -1,7 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { ConnectionManager } from '../../infoManagers/connectionManager';
+import { Connection } from '../../connectionInfo/connection';
+import { ConnectionManager } from '../../connectionInfo/connectionManager';
 import {
 	HTTP_URL_PLACEHOLDER,
 	WS_URL_PLACEHOLDER,
@@ -34,7 +35,7 @@ export class HTMLInjector extends Disposable {
 
 	constructor(
 		_extensionUri: vscode.Uri,
-		private readonly _connectionManager: ConnectionManager
+		private readonly _connection: Connection
 	) {
 		super();
 		const scriptPath = path.join(
@@ -46,7 +47,7 @@ export class HTMLInjector extends Disposable {
 		this.initScript(this.rawScript, undefined, undefined);
 
 		this._register(
-			this._connectionManager.onConnected((e) => {
+			this._connection.onConnected((e) => {
 				this.refresh(e.httpURI, e.wsURI);
 			})
 		);
@@ -62,10 +63,10 @@ export class HTMLInjector extends Disposable {
 		wsUri: vscode.Uri | undefined
 	) {
 		if (!httpUri) {
-			httpUri = await this._connectionManager.resolveExternalHTTPUri();
+			httpUri = await this._connection.resolveExternalHTTPUri();
 		}
 		if (!wsUri) {
-			wsUri = await this._connectionManager.resolveExternalWSUri();
+			wsUri = await this._connection.resolveExternalWSUri();
 		}
 		const wsURL = `ws://${wsUri.authority}${wsUri.path}`;
 		let httpURL = `${httpUri.scheme}://${httpUri.authority}`;

@@ -17,10 +17,11 @@ import {
 } from '../utils/constants';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { WorkspaceManager } from '../infoManagers/workspaceManager';
-import { ConnectionManager } from '../infoManagers/connectionManager';
+// import { WorkspaceManager } from '../infoManagers/workspaceManager';
+import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { serverMsg } from '../serverGrouping';
 import { PathUtil } from '../utils/pathUtil';
+import { Connection } from '../connectionInfo/connection';
 
 const localize = nls.loadMessageBundle();
 export class ServerManager extends Disposable {
@@ -36,30 +37,19 @@ export class ServerManager extends Disposable {
 		private readonly _extensionUri: vscode.Uri,
 		_reporter: TelemetryReporter,
 		_endpointManager: EndpointManager,
-		_workspaceManager: WorkspaceManager,
-		private readonly _connectionManager: ConnectionManager,
+		// _workspaceManager: WorkspaceManager,
+		private readonly _connection: Connection,
 		_userDataDir: string | undefined
 	) {
 		super();
 		this._httpServer = this._register(
-			new HttpServer(
-				_extensionUri,
-				_reporter,
-				_endpointManager,
-				_workspaceManager,
-				_connectionManager
-			)
+			new HttpServer(_extensionUri, _reporter, _endpointManager, _connection)
 		);
 
 		this._watcher = vscode.workspace.createFileSystemWatcher('**');
 
 		this._wsServer = this._register(
-			new WSServer(
-				_reporter,
-				_endpointManager,
-				_workspaceManager,
-				_connectionManager
-			)
+			new WSServer(_reporter, _endpointManager, _connection)
 		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 
@@ -224,7 +214,7 @@ export class ServerManager extends Disposable {
 	): void {
 		let port = startPort;
 		const sock = new net.Socket();
-		const host = this._connectionManager.host;
+		const host = this._connection.host;
 		sock.setTimeout(500);
 		sock.on('connect', function () {
 			sock.destroy();
@@ -254,7 +244,7 @@ export class ServerManager extends Disposable {
 				this._httpServer.port
 			)
 		);
-		this._connectionManager.connected(
+		this._connection.connected(
 			this._httpServer.port,
 			this._wsServer.wsPort,
 			this._wsServer.wsPath

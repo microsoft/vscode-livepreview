@@ -9,9 +9,9 @@ import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { UriSchemes } from '../utils/constants';
-import { ConnectionManager } from '../infoManagers/connectionManager';
+import { ConnectionManager } from '../connectionInfo/connectionManager';
+import { Connection } from '../connectionInfo/connection';
 
 /**
  * @description override the `Websocket.Server` class to check websocket connection origins;
@@ -72,13 +72,12 @@ export class WSServer extends Disposable {
 	constructor(
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
-		private readonly _workspaceManager: WorkspaceManager,
-		private readonly _connectionManager: ConnectionManager
+		private readonly _connection: Connection
 	) {
 		super();
 
 		this._register(
-			_connectionManager.onConnected((e) => {
+			_connection.onConnected((e) => {
 				this.externalHostName = `${e.httpURI.scheme}://${e.httpURI.authority}`;
 			})
 		);
@@ -88,7 +87,7 @@ export class WSServer extends Disposable {
 	 * @description the location of the workspace.
 	 */
 	private get _basePath(): string | undefined {
-		return this._workspaceManager.workspacePath;
+		return this._connection.workspacePath;
 	}
 
 	public get wsPath() {
@@ -146,7 +145,7 @@ export class WSServer extends Disposable {
 	private startWSServer(basePath: string): boolean {
 		this._wss = new WSServerWithOriginCheck({
 			port: this._wsPort,
-			host: this._connectionManager.host,
+			host: this._connection.host,
 			path: this._wsPath,
 		});
 		this._wss.on('connection', (ws: WebSocket) =>
@@ -166,7 +165,7 @@ export class WSServer extends Disposable {
 			this._wsPort++;
 			this.startWSServer(basePath);
 		} else if (err.code == 'EADDRNOTAVAIL') {
-			this._connectionManager.resetHostToDefault();
+			this._connection.resetHostToDefault();
 			this.startWSServer(basePath);
 		} else {
 			/* __GDPR__
@@ -206,6 +205,7 @@ export class WSServer extends Disposable {
 						basePath,
 						parsedMessage.url
 					);
+
 					if (!results.injectable) {
 						/* __GDPR__
 							"server.ws.foundNonInjectable" : {}
@@ -214,6 +214,7 @@ export class WSServer extends Disposable {
 						const sendData = {
 							command: 'foundNonInjectable',
 							path: results.pathname,
+							port: results.port,
 						};
 						ws.send(JSON.stringify(sendData));
 					}
@@ -232,15 +233,23 @@ export class WSServer extends Disposable {
 	private performTargetInjectableCheck(
 		basePath: string,
 		urlString: string
-	): { injectable: boolean; pathname: string } {
+	): { injectable: boolean; pathname: string; port: number } {
 		const url = new URL(urlString);
 		let absolutePath = path.join(basePath, url.pathname);
+
+		let port = 0;
+
+		try {
+			port = parseInt(url.port);
+		} catch {
+			// no op
+		}
 
 		if (!fs.existsSync(absolutePath)) {
 			const decodedLocation =
 				this._endpointManager.decodeLooseFileEndpoint(absolutePath);
 			if (!decodedLocation || !fs.existsSync(decodedLocation)) {
-				return { injectable: false, pathname: url.pathname };
+				return { injectable: false, pathname: url.pathname, port };
 			} else {
 				absolutePath = decodedLocation;
 			}
@@ -250,8 +259,9 @@ export class WSServer extends Disposable {
 			fs.statSync(absolutePath).isDirectory() ||
 			isFileInjectable(absolutePath)
 		) {
-			return { injectable: true, pathname: url.pathname };
+			return { injectable: true, pathname: url.pathname, port };
 		}
-		return { injectable: false, pathname: url.pathname };
+
+		return { injectable: false, pathname: url.pathname, port };
 	}
 }

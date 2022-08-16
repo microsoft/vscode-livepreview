@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as vscode from 'vscode';
 
 /**
  * A collection of functions to perform path operations
@@ -129,5 +130,41 @@ export class PathUtil {
 		}
 
 		return newParts.join('/');
+	}
+
+	/**
+	 * @description Similar to `absPathInDefaultWorkspace`, but checks all workspaces.
+	 * @param {string} path path to test.
+	 * @returns {boolean} whether the path is in any open workspace.
+	 */
+	public static AbsPathInAnyWorkspace(file: string): boolean {
+		const workspaces = vscode.workspace.workspaceFolders;
+		if (workspaces) {
+			for (const i in workspaces) {
+				if (PathUtil.PathBeginsWith(file, workspaces[i].uri.fsPath)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * @description Just like `pathExistsRelativeToDefaultWorkspace`, but tests all workspaces and returns the workspace
+	 * @param {string} path path to test.
+	 * @returns {vscode.WorkspaceFolder | undefined} the workspace it belongs to
+	 */
+	public static PathExistsRelativeToAnyWorkspace(
+		file: string
+	): vscode.WorkspaceFolder | undefined {
+		const workspaces = vscode.workspace.workspaceFolders;
+		if (workspaces) {
+			for (const i in workspaces) {
+				if (fs.existsSync(path.join(workspaces[i].uri.fsPath, file))) {
+					return workspaces[i];
+				}
+			}
+		}
+		return undefined;
 	}
 }

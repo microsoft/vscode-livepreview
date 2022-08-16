@@ -4,9 +4,9 @@ import { URL } from 'url';
 import { Disposable } from '../utils/dispose';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { SETTINGS_SECTION_ID } from '../utils/settingsUtil';
-import { ConnectionManager } from '../infoManagers/connectionManager';
+import { ConnectionManager } from '../connectionInfo/connectionManager';
+import { PathUtil } from '../utils/pathUtil';
 
 const localize = nls.loadMessageBundle();
 
@@ -30,7 +30,7 @@ export class serverTaskLinkProvider
 		public terminalName: string,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
-		private readonly _workspaceManager: WorkspaceManager,
+		// private readonly _workspaceManager: WorkspaceManager,
 		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
@@ -49,7 +49,10 @@ export class serverTaskLinkProvider
 			return links;
 		}
 
-		this._findFullLinkRegex(context.line, links);
+		this._connectionManager.connections.forEach((connection) => {
+			this._findFullLinkRegex(context.line, links, connection.httpPort);
+		});
+
 		this._findPathnameRegex(context.line, links);
 		return links;
 	}
@@ -128,9 +131,13 @@ export class serverTaskLinkProvider
 	 * @param {Array<vscode.TerminalLink>} links the array of links (pass-by-reference) that are added to.
 	 */
 
-	private _findFullLinkRegex(input: string, links: Array<vscode.TerminalLink>) {
+	private _findFullLinkRegex(
+		input: string,
+		links: Array<vscode.TerminalLink>,
+		host: number
+	) {
 		const fullLinkRegex = new RegExp(
-			`\\b\\w{2,20}:\\/\\/(?:localhost|${this._connectionManager.host}|:\\d{2,5})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
+			`\\b\\w{2,20}:\\/\\/(?:localhost|${host}|:\\d{2,5})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
 			'g'
 		);
 
@@ -165,17 +172,16 @@ export class serverTaskLinkProvider
 	 */
 	private _openRelativeLinkInWorkspace(file: string, isDir: boolean): void {
 		file = unescape(file);
-		const isWorkspaceFile =
-			this._workspaceManager.pathExistsRelativeToAnyWorkspace(file);
+		const workspace = PathUtil.PathExistsRelativeToAnyWorkspace(file);
 
-		const fullPath = isWorkspaceFile
-			? this._workspaceManager.workspace?.uri + file
+		const fullPath = workspace
+			? workspace?.uri + file
 			: 'file:///' + this._endpointManager.decodeLooseFileEndpoint(file);
 
 		const uri = vscode.Uri.parse(fullPath);
 
 		if (isDir) {
-			if (!this._workspaceManager.absPathInAnyWorkspace(uri.fsPath)) {
+			if (!PathUtil.AbsPathInAnyWorkspace(uri.fsPath)) {
 				vscode.window.showErrorMessage(
 					'Cannot reveal folder. It is not in the open workspace.'
 				);
