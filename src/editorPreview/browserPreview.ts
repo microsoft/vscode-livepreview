@@ -45,8 +45,8 @@ export class BrowserPreview extends Disposable {
 	 * @param column which column to show it in.
 	 * @param file the file (pathname) to go to.
 	 */
-	public reveal(column: number, file = '/'): void {
-		this._webviewComm.goToFile(file);
+	public reveal(column: number, file = '/', connection: Connection): void {
+		this._webviewComm.goToFile(file, true, connection);
 		this._panel.reveal(column);
 	}
 
@@ -118,6 +118,7 @@ export class BrowserPreview extends Disposable {
 				const msgJSON = JSON.parse(message.text);
 				this._webviewComm.handleNewPageLoad(
 					msgJSON.path.pathname,
+					this.currentConnection,
 					msgJSON.title
 				);
 				return;

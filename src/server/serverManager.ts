@@ -27,7 +27,6 @@ const localize = nls.loadMessageBundle();
 export class ServerManager extends Disposable {
 	private readonly _httpServer: HttpServer;
 	private readonly _wsServer: WSServer;
-	private readonly _statusBar: StatusBarNotifier;
 	private _isServerOn = false;
 	private _wsConnected = false;
 	private _httpConnected = false;
@@ -39,6 +38,7 @@ export class ServerManager extends Disposable {
 		_endpointManager: EndpointManager,
 		// _workspaceManager: WorkspaceManager,
 		private readonly _connection: Connection,
+		private readonly _statusBar: StatusBarNotifier,
 		_userDataDir: string | undefined
 	) {
 		super();
@@ -46,12 +46,17 @@ export class ServerManager extends Disposable {
 			new HttpServer(_extensionUri, _reporter, _endpointManager, _connection)
 		);
 
-		this._watcher = vscode.workspace.createFileSystemWatcher('**');
+		if (_connection.workspace) {
+
+			this._watcher = vscode.workspace.createFileSystemWatcher(`{_connection.workspace}**`);
+		} else {
+
+			this._watcher = vscode.workspace.createFileSystemWatcher('**');
+		}
 
 		this._wsServer = this._register(
 			new WSServer(_reporter, _endpointManager, _connection)
 		);
-		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 
 		const notUserDataDirChange = function (file: vscode.Uri) {
 			return (
@@ -152,15 +157,15 @@ export class ServerManager extends Disposable {
 	);
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
+
 	/**
 	 * @description close the server instances.
 	 */
 	public closeServer(): void {
+		this._statusBar.RemoveServer(this._connection.workspace?.uri);
 		this._httpServer.close();
 		this._wsServer.close();
 		this._isServerOn = false;
-		this._statusBar.ServerOff();
-
 		this.showServerStatusMessage('Server Stopped');
 		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, false);
 	}
@@ -235,7 +240,7 @@ export class ServerManager extends Disposable {
 	 */
 	private connected() {
 		this._isServerOn = true;
-		this._statusBar.ServerOn(this._httpServer.port);
+		this._statusBar.setServer(this._connection.workspace?.uri,this._httpServer.port);
 
 		this.showServerStatusMessage(
 			localize(

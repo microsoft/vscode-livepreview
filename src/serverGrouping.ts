@@ -24,8 +24,10 @@ import { ConnectionManager } from './connectionInfo/connectionManager';
 import { PathUtil } from './utils/pathUtil';
 import { Connection } from './connectionInfo/connection';
 import { PreviewManager } from './editorPreview/previewManager';
+import { StatusBarNotifier } from './server/serverUtils/statusBarNotifier';
 
 const localize = nls.loadMessageBundle();
+
 
 /**
  * @description the server log item that is sent from the HTTP server to the server logging task.
@@ -48,6 +50,12 @@ export interface launchInfo {
 	connection: Connection;
 }
 export class ServerGrouping extends Disposable {
+
+
+	private readonly _onClose = this._register(
+		new vscode.EventEmitter<void>()
+	);
+	public readonly onClose = this._onClose.event;
 	private readonly _server: ServerManager;
 	private _pendingLaunchInfo: launchInfo | undefined;
 
@@ -77,6 +85,7 @@ export class ServerGrouping extends Disposable {
 		private readonly _connection: Connection,
 		private readonly _endpointManager: EndpointManager,
 		private readonly _previewManager: PreviewManager,
+		private readonly _statusBar: StatusBarNotifier,
 
 		private readonly _serverTaskProvider: ServerTaskProvider,
 		userDataDir: string | undefined
@@ -89,6 +98,7 @@ export class ServerGrouping extends Disposable {
 				_reporter,
 				this._endpointManager,
 				this._connection,
+				this._statusBar,
 				userDataDir
 			)
 		);
@@ -230,7 +240,7 @@ export class ServerGrouping extends Disposable {
 	public closeServer(): boolean {
 		if (this._server.isRunning) {
 			this._server.closeServer();
-
+			this._onClose.fire();
 			if (
 				this._previewManager.currentPanel &&
 				this._previewManager.currentPanel.currentConnection === this._connection
@@ -261,13 +271,13 @@ export class ServerGrouping extends Disposable {
 	// 	return this._workspaceManager.absPathInDefaultWorkspace(file);
 	// }
 
-	// /**
-	//  * @param {string} file the path to test.
-	//  * @returns {boolean} whether the path exists when placed relative to the workspae root.
-	//  */
-	// public pathExistsRelativeToWorkspace(file: string): boolean {
-	// 	return this._workspaceManager.pathExistsRelativeToDefaultWorkspace(file);
-	// }
+	/**
+	 * @param {string} file the path to test.
+	 * @returns {boolean} whether the path exists when placed relative to the workspae root.
+	 */
+	public pathExistsRelativeToWorkspace(file: string): boolean {
+		return this._connection.pathExistsRelativeToWorkspace(file);
+	}
 
 	// /**
 	//  * @param {string} file the path to use

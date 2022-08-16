@@ -112,7 +112,12 @@ export class Connection extends Disposable {
 		this._wsPort = this._initWSPort;
 		this._wsPath = '';
 		this.host = this._initHost;
+		this.dispose();
+	}
+
+	override dispose(): void {
 		this._onDisconnected.fire();
+		super.dispose();
 	}
 
 	/**

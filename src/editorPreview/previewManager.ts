@@ -110,15 +110,11 @@ export class PreviewManager extends Disposable {
 		file: string,
 		connection: Connection | undefined
 	): string {
-		if (!relative && connection) {
-			if (!connection.absPathInWorkspace(file)) {
-				if (!PathUtil.AbsPathInAnyWorkspace(file)) {
-					this.notifyLooseFileOpen();
-				}
-				file = this.encodeEndpoint(file);
-			} else {
+		if (!connection?.workspace) {
+			this.notifyLooseFileOpen();
+			file = this.encodeEndpoint(file);
+		} else if (!relative && connection) {
 				file = connection.getFileRelativeToWorkspace(file) ?? '';
-			}
 		}
 		return file;
 	}
@@ -154,7 +150,7 @@ export class PreviewManager extends Disposable {
 		file = this.transformNonRelativeFile(relative, file, connection);
 		// If we already have a panel, show it.
 		if (this.currentPanel) {
-			this.currentPanel.reveal(vscode.ViewColumn.Beside, file);
+			this.currentPanel.reveal(vscode.ViewColumn.Beside, file, connection);
 			return;
 		}
 

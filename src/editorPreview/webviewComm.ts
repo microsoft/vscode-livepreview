@@ -99,7 +99,7 @@ export class WebviewComm extends Disposable {
 	public async goToFile(
 		URLExt: string,
 		updateHistory = true,
-		connection: Connection | undefined = this.currentConnection
+		connection: Connection = this.currentConnection
 	) {
 		this.setHtml(this._panel.webview, URLExt, updateHistory, connection);
 		this.currentAddress = URLExt;

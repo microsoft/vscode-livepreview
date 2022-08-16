@@ -14,6 +14,7 @@ export class StatusBarNotifier extends Disposable {
 	private _statusBar: vscode.StatusBarItem;
 	private _extensionUri: vscode.Uri;
 	private _on: boolean;
+	private _ports: Map<vscode.Uri | undefined,number>;
 
 	constructor(extensionUri: vscode.Uri) {
 		super();
@@ -23,23 +24,29 @@ export class StatusBarNotifier extends Disposable {
 		this._extensionUri = extensionUri;
 		this.ServerOff();
 		this._on = false;
+		this._ports = new Map<vscode.Uri,number>();
 	}
 
 	/**
 	 * @description called to notify that the server turned on.
 	 */
-	public ServerOn(port: number) {
+	public setServer(uri: vscode.Uri | undefined, port: number) {
 		this._on = true;
 		if (SettingUtil.GetConfig(this._extensionUri).showStatusBarItem) {
 			this._statusBar.show();
 		}
+		this._ports.set(uri, port);
+		this._refreshBar();
+	}
 
-		const portTitle = localize('port', 'Port: {0}', port);
-		this._statusBar.text = `$(radio-tower) ${portTitle}`;
+	private _refreshBar() {
+		const portStr = Array.from(this._ports.values()).join(', ');
+		const portsTitle = this._ports.size === 1 ? localize('port', 'Port') : localize('port', 'Ports');
+		const portsLabel = localize('port', '{0}: {1}', portsTitle, portStr);
+		this._statusBar.text = `$(radio-tower) ${portsLabel}`;
 		this._statusBar.tooltip = localize(
 			'livePreviewRunningOnPort',
 			'Live Preview running on port {0}',
-			port
 		);
 		this._statusBar.command = {
 			title: localize('openCommandPalette', 'Open Command Palette'),
@@ -49,11 +56,23 @@ export class StatusBarNotifier extends Disposable {
 	}
 
 	/**
-	 * @description called to notify that the server shut down.
+	 * @description called to notify that the servers shut down.
 	 */
 	public ServerOff(): void {
 		this._on = false;
 		this._statusBar.hide();
+	}
+
+	/**
+ * @description called to notify that a server shut down.
+ */
+	public RemoveServer(uri: vscode.Uri | undefined): void {
+		this._ports.delete(uri);
+		if (this._ports.size === 0 ) {
+			this.ServerOff();
+		} else {
+			this._refreshBar();
+		}
 	}
 
 	/**

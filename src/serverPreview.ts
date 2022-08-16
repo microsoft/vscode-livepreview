@@ -14,6 +14,8 @@ import {
 import { EndpointManager } from './infoManagers/endpointManager';
 import { PreviewManager } from './editorPreview/previewManager';
 import { Connection } from './connectionInfo/connection';
+import { existsSync } from 'fs';
+import { StatusBarNotifier } from './server/serverUtils/statusBarNotifier';
 
 const localize = nls.loadMessageBundle();
 
@@ -23,6 +25,7 @@ export class ServerPreview extends Disposable {
 	private readonly _serverTaskProvider: ServerTaskProvider;
 	private readonly _endpointManager: EndpointManager;
 	private readonly _previewManager: PreviewManager;
+	private readonly _statusBar: StatusBarNotifier;
 
 	private hasServerRunning() {
 		const isRunning = Array.from(this._serverGroupings.values()).filter(
@@ -95,24 +98,32 @@ export class ServerPreview extends Disposable {
 				}
 			})
 		);
+		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 	}
 
-	public openNewServer(workspace: vscode.WorkspaceFolder | undefined) {
-		let grouping = this._serverGroupings.get(workspace?.uri);
-		if (grouping) {
-			grouping.openServer();
-		} else {
-			const serverPort = SettingUtil.GetConfig(this._extensionUri).portNumber;
-			const serverWSPort = serverPort;
-			const serverHost = SettingUtil.GetConfig(this._extensionUri).hostIP;
-			const connection = this._connectionManager.createAndAddNewConnection(
-				serverPort,
-				serverWSPort,
-				serverHost,
-				workspace
-			);
-			grouping = this._createHostedContentForWorkspace(workspace, connection);
+	private _createNewConnection(workspace: vscode.WorkspaceFolder | undefined) {
 
+		const serverPort = SettingUtil.GetConfig(this._extensionUri).portNumber;
+		const serverWSPort = serverPort;
+		const serverHost = SettingUtil.GetConfig(this._extensionUri).hostIP;
+		return this._connectionManager.createAndAddNewConnection(
+			serverPort,
+			serverWSPort,
+			serverHost,
+			workspace
+		);
+	}
+	public createNewGrouping(workspace: vscode.WorkspaceFolder | undefined) {
+		let grouping = this._serverGroupings.get(workspace?.uri);
+		if (!grouping) {
+			const connection = this._createNewConnection(workspace);
+			grouping = this._createHostedContentForWorkspace(workspace, connection);
+			grouping.onClose(() => {
+				this._serverGroupings.delete(workspace?.uri);
+				if (this._serverGroupings.values.length == 0) {
+					this._statusBar.ServerOff();
+				}
+			});
 			this._serverGroupings.set(workspace?.uri, grouping);
 			grouping.openServer();
 		}
@@ -144,7 +155,7 @@ export class ServerPreview extends Disposable {
 		} else {
 			let fileUri;
 			if (typeof file == 'string') {
-				fileUri = vscode.Uri.parse(file);
+				fileUri = vscode.Uri.file(file);
 			} else if (file instanceof vscode.Uri) {
 				fileUri = file;
 			} else {
@@ -192,7 +203,7 @@ export class ServerPreview extends Disposable {
 		}
 	}
 
-	public openNoTarget() {
+	public openNoTarget() { // DOESNT DO THE RIGHT THING
 		const workspaces = vscode.workspace.workspaceFolders;
 		if (workspaces && workspaces.length > 0) {
 			for (let i = 0; i < workspaces.length; i++) {
@@ -210,6 +221,15 @@ export class ServerPreview extends Disposable {
 					return;
 				}
 			}
+
+			vscode.commands.executeCommand(
+				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
+				'/',
+				true,
+				workspaces[0],
+				undefined
+			);
+
 		} else {
 			vscode.commands.executeCommand(
 				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
@@ -273,6 +293,7 @@ export class ServerPreview extends Disposable {
 			connection,
 			this._endpointManager,
 			this._previewManager,
+			this._statusBar,
 			this._serverTaskProvider,
 			this._userDataDir
 		);
@@ -299,7 +320,33 @@ export class ServerPreview extends Disposable {
 				return hc;
 			}
 		} else {
-			return this.openNewServer(workspace);
+			return this.createNewGrouping(workspace);
+		}
+	}
+
+
+	public openTargetAtFile(filePath:string) {
+		this._serverGroupings.forEach((grouping) => {
+			if (grouping.pathExistsRelativeToWorkspace(filePath)) {
+				vscode.commands.executeCommand(
+					`${SETTINGS_SECTION_ID}.start.preview.atFile`,
+					filePath,
+					true,
+					grouping.workspace,
+					undefined,
+					grouping
+				);
+				return;
+			}
+		});
+		if (existsSync(filePath)) {
+			vscode.commands.executeCommand(
+				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
+				filePath,
+				false
+			);
+		} else {
+			throw Error();
 		}
 	}
 }

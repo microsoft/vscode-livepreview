@@ -14,7 +14,7 @@ export interface NavResponse {
 }
 
 export interface Address {
-	connection: Connection | undefined;
+	connection: Connection;
 	path: string;
 }
 
@@ -106,7 +106,7 @@ export class PageHistory extends Disposable {
 	 */
 	public addHistory(
 		address: string,
-		connection: Connection | undefined
+		connection: Connection
 	): NavResponse | undefined {
 		address = PathUtil.ConvertToUnixPath(address);
 		address = PathUtil.EscapePathParts(address);

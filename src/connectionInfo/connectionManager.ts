@@ -35,6 +35,7 @@ export class ConnectionManager extends Disposable {
 		});
 		return undefined;
 	}
+
 	createAndAddNewConnection(
 		serverPort: number,
 		serverWSPort: number,

@@ -31,7 +31,7 @@ export function activate(context: vscode.ExtensionContext): void {
 		extPackageJSON.aiKey
 	);
 
-	serverPreview = new ServerPreview(context.extensionUri, reporter);
+	serverPreview = new ServerPreview(context.extensionUri, reporter,PathUtil.GetUserDataDirFromStorageUri(context.storageUri?.fsPath));
 
 	/* __GDPR__
 		"extension.startUp" : {
@@ -54,28 +54,7 @@ export function activate(context: vscode.ExtensionContext): void {
 			if (filePath == '') {
 				serverPreview.openNoTarget();
 			} else {
-				serverGroupings.forEach((grouping) => {
-					if (grouping.pathExistsRelativeToWorkspace(filePath)) {
-						vscode.commands.executeCommand(
-							`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-							filePath,
-							true,
-							grouping.workspace,
-							undefined,
-							grouping
-						);
-						return;
-					}
-				});
-				if (existsSync(filePath)) {
-					vscode.commands.executeCommand(
-						`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-						filePath,
-						false
-					);
-				} else {
-					throw Error();
-				}
+				serverPreview.openTargetAtFile(filePath);
 			}
 		})
 	);
@@ -231,11 +210,7 @@ export function activate(context: vscode.ExtensionContext): void {
 			/* __GDPR__
 				"server.forceClose" : {}
 			*/
-			serverGroupings.forEach((manager: ServerGrouping | undefined) => {
-				if (manager) {
-					manager.closeServer();
-				}
-			});
+			serverPreview.closeServers();
 			reporter.sendTelemetryEvent('server.forceClose');
 		})
 	);
@@ -244,33 +219,13 @@ export function activate(context: vscode.ExtensionContext): void {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.setDefaultOpenFile`,
 			(file: vscode.Uri) => {
-				const workspace = vscode.workspace.getWorkspaceFolder(file);
-				if (workspace) {
-					const hc = new ServerGrouping(
-						context.extensionUri,
-						reporter,
-						workspace,
-						PathUtil.GetUserDataDirFromStorageUri(context.storageUri?.fsPath)
+					SettingUtil.UpdateSettings(
+						Settings.defaultPreviewPath,
+						file.fsPath,
+						false
 					);
-					serverGroupings.set(workspace.uri, hc);
-
-					if (hc.absPathInDefaultWorkspace(file.fsPath)) {
-						const fileRelativeToWorkspace =
-							hc.getFileRelativeToDefaultWorkspace(file.fsPath) ?? '';
-						SettingUtil.UpdateSettings(
-							Settings.defaultPreviewPath,
-							fileRelativeToWorkspace,
-							false
-						);
-					} else {
-						SettingUtil.UpdateSettings(
-							Settings.defaultPreviewPath,
-							file.fsPath,
-							false
-						);
-					}
 				}
-			}
+
 		)
 	);
 
