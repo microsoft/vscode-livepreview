@@ -22,7 +22,6 @@ const localize = nls.loadMessageBundle();
 export class ServerPreview extends Disposable {
 	private _serverGroupings: Map<vscode.Uri | undefined, ServerGrouping>;
 	private _connectionManager: ConnectionManager;
-	private readonly _serverTaskProvider: ServerTaskProvider;
 	private readonly _endpointManager: EndpointManager;
 	private readonly _previewManager: PreviewManager;
 	private readonly _statusBar: StatusBarNotifier;
@@ -33,11 +32,20 @@ export class ServerPreview extends Disposable {
 		);
 		return isRunning.length !== 0;
 	}
+
+	private hasRunningTasks() {
+		this._serverGroupings.forEach(grouping => {
+			if (grouping.taskRunning) {
+				return true;
+			}
+		});
+		return false;
+	}
 	private serverExpired(): void {
 		// set a delay to server shutdown to avoid bad performance from re-opening/closing server.
 		if (
 			this.hasServerRunning() &&
-			!this._serverTaskProvider.isRunning &&
+			!this.hasRunningTasks() &&
 			vscode.workspace.workspaceFolders &&
 			vscode.workspace.workspaceFolders?.length > 0 &&
 			this._previewManager.runTaskWithExternalPreview
@@ -58,11 +66,6 @@ export class ServerPreview extends Disposable {
 
 		this._endpointManager = this._register(new EndpointManager());
 
-		this._serverTaskProvider = new ServerTaskProvider(
-			this._reporter,
-			this._endpointManager,
-			this._connectionManager
-		);
 
 		this._previewManager = this._register(
 			new PreviewManager(
@@ -70,34 +73,11 @@ export class ServerPreview extends Disposable {
 				this._reporter,
 				this._connectionManager,
 				this._endpointManager,
-				this._serverTaskProvider,
 				this.serverExpired
 			)
 		);
 
-		this._register(
-			vscode.tasks.registerTaskProvider(
-				ServerTaskProvider.CustomBuildScriptType,
-				this._serverTaskProvider
-			)
-		);
 
-		this._register(
-			this._serverTaskProvider.onRequestToOpenServer(() => {
-				// open with non target
-			})
-		);
-
-		this._register(
-			this._serverTaskProvider.onRequestToCloseServer(() => {
-				if (this._previewManager.previewActive) {
-					this._serverTaskProvider.serverStop(false);
-				} else {
-					this.closeServers();
-					this._serverTaskProvider.serverStop(true);
-				}
-			})
-		);
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 	}
 
@@ -125,7 +105,6 @@ export class ServerPreview extends Disposable {
 				}
 			});
 			this._serverGroupings.set(workspace?.uri, grouping);
-			grouping.openServer();
 		}
 
 		return grouping;
@@ -294,7 +273,6 @@ export class ServerPreview extends Disposable {
 			this._endpointManager,
 			this._previewManager,
 			this._statusBar,
-			this._serverTaskProvider,
 			this._userDataDir
 		);
 	}

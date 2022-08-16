@@ -7,6 +7,7 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { SETTINGS_SECTION_ID } from '../utils/settingsUtil';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { PathUtil } from '../utils/pathUtil';
+import { Connection } from '../connectionInfo/connection';
 
 const localize = nls.loadMessageBundle();
 
@@ -31,7 +32,7 @@ export class serverTaskLinkProvider
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
 		// private readonly _workspaceManager: WorkspaceManager,
-		private readonly _connectionManager: ConnectionManager
+		private readonly _connection: Connection
 	) {
 		super();
 		vscode.window.registerTerminalLinkProvider(this);
@@ -49,9 +50,7 @@ export class serverTaskLinkProvider
 			return links;
 		}
 
-		this._connectionManager.connections.forEach((connection) => {
-			this._findFullLinkRegex(context.line, links, connection.httpPort);
-		});
+		this._findFullLinkRegex(context.line, links, this._connection.httpPort);
 
 		this._findPathnameRegex(context.line, links);
 		return links;

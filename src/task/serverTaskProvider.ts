@@ -7,6 +7,7 @@ import { serverTaskLinkProvider } from './serverTaskLinkProvider';
 import { ServerTaskTerminal } from './serverTaskTerminal';
 import { TASK_TERMINAL_BASE_NAME } from '../utils/constants';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
+import { Connection } from '../connectionInfo/connection';
 
 interface ServerTaskDefinition extends vscode.TaskDefinition {
 	args: string[];
@@ -62,7 +63,7 @@ export class ServerTaskProvider
 	constructor(
 		private readonly _reporter: TelemetryReporter,
 		endpointManager: EndpointManager,
-		_connectionManager: ConnectionManager
+		_connection: Connection
 	) {
 		super();
 		this._terminalLinkProvider = this._register(
@@ -70,7 +71,7 @@ export class ServerTaskProvider
 				'',
 				_reporter,
 				endpointManager,
-				_connectionManager
+				_connection
 			)
 		);
 		this._terminalLinkProvider.onRequestOpenEditorToSide((e) => {

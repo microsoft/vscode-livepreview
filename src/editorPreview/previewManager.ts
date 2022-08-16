@@ -31,28 +31,12 @@ export class PreviewManager extends Disposable {
 		private readonly _reporter: TelemetryReporter,
 		private readonly _connectionManager: ConnectionManager,
 		private readonly _endpointManager: EndpointManager,
-		private readonly _serverTaskProvider: ServerTaskProvider,
 		private readonly _serverExpired: () => void
 	) {
 		super();
 		this._outputChannel =
 			vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
 
-		this._serverTaskProvider.onRequestOpenEditorToSide((uri) => {
-			if (this.previewActive && this.currentPanel) {
-				const avoidColumn =
-					this.currentPanel.panel.viewColumn ?? vscode.ViewColumn.One;
-				const column: vscode.ViewColumn =
-					avoidColumn == vscode.ViewColumn.One
-						? avoidColumn + 1
-						: avoidColumn - 1;
-				vscode.commands.executeCommand('vscode.open', uri, {
-					viewColumn: column,
-				});
-			} else {
-				vscode.commands.executeCommand('vscode.open', uri);
-			}
-		});
 
 		this._runTaskWithExternalPreview =
 			SettingUtil.GetConfig(_extensionUri).runTaskWithExternalPreview;

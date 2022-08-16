@@ -228,9 +228,11 @@ export class ServerManager extends Disposable {
 		});
 		sock.on('error', function (e) {
 			callback(port);
+			return;
 		});
 		sock.on('timeout', function () {
 			callback(port);
+			return;
 		});
 		sock.connect(port, host);
 	}

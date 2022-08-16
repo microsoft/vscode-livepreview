@@ -50,6 +50,7 @@ export interface launchInfo {
 	connection: Connection;
 }
 export class ServerGrouping extends Disposable {
+	private readonly _serverTaskProvider: ServerTaskProvider;
 
 
 	private readonly _onClose = this._register(
@@ -79,6 +80,10 @@ export class ServerGrouping extends Disposable {
 
 	// public readonly onShouldOpenPreview = this._onShouldOpenPreview.event;
 
+	public get taskRunning() {
+		return this._serverTaskProvider.isRunning;
+	}
+
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
@@ -86,11 +91,54 @@ export class ServerGrouping extends Disposable {
 		private readonly _endpointManager: EndpointManager,
 		private readonly _previewManager: PreviewManager,
 		private readonly _statusBar: StatusBarNotifier,
-
-		private readonly _serverTaskProvider: ServerTaskProvider,
 		userDataDir: string | undefined
 	) {
 		super();
+
+		this._serverTaskProvider = new ServerTaskProvider(
+			this._reporter,
+			this._endpointManager,
+			this._connection
+		);
+
+		this._register(
+			vscode.tasks.registerTaskProvider(
+				ServerTaskProvider.CustomBuildScriptType,
+				this._serverTaskProvider
+			)
+		);
+
+		this._serverTaskProvider.onRequestOpenEditorToSide((uri) => {
+			if (this._previewManager.previewActive && this._previewManager.currentPanel) {
+				const avoidColumn =
+				this._previewManager.currentPanel.panel.viewColumn ?? vscode.ViewColumn.One;
+				const column: vscode.ViewColumn =
+					avoidColumn == vscode.ViewColumn.One
+						? avoidColumn + 1
+						: avoidColumn - 1;
+				vscode.commands.executeCommand('vscode.open', uri, {
+					viewColumn: column,
+				});
+			} else {
+				vscode.commands.executeCommand('vscode.open', uri);
+			}
+		});
+		this._register(
+			this._serverTaskProvider.onRequestToOpenServer(() => {
+				// open with non target
+			})
+		);
+
+		this._register(
+			this._serverTaskProvider.onRequestToCloseServer(() => {
+				if (this._previewManager.previewActive) {
+					this._serverTaskProvider.serverStop(false);
+				} else {
+					this.closeServer();
+					this._serverTaskProvider.serverStop(true);
+				}
+			})
+		);
 
 		this._server = this._register(
 			new ServerManager(
