@@ -12,11 +12,11 @@ import {
 } from './utils/settingsUtil';
 import { existsSync } from 'fs';
 import { ConnectionManager } from './connectionInfo/connectionManager';
-import { ServerPreview } from './serverPreview';
+import { Manager } from './manager';
 import { ServerManager } from './server/serverManager';
 
 let reporter: TelemetryReporter;
-let serverPreview: ServerPreview;
+let serverPreview: Manager;
 // let serverGroupings: Map<vscode.Uri | undefined, ServerGrouping>;
 // let connectionManager: ConnectionManager;
 // let currentPanel: BrowserPreview | undefined;
@@ -31,7 +31,7 @@ export function activate(context: vscode.ExtensionContext): void {
 		extPackageJSON.aiKey
 	);
 
-	serverPreview = new ServerPreview(context.extensionUri, reporter,PathUtil.GetUserDataDirFromStorageUri(context.storageUri?.fsPath));
+	serverPreview = new Manager(context.extensionUri, reporter,PathUtil.GetUserDataDirFromStorageUri(context.storageUri?.fsPath));
 
 	/* __GDPR__
 		"extension.startUp" : {
@@ -51,11 +51,7 @@ export function activate(context: vscode.ExtensionContext): void {
 			const filePath = SettingUtil.GetConfig(
 				context.extensionUri
 			).defaultPreviewPath;
-			if (filePath == '') {
-				serverPreview.openNoTarget();
-			} else {
-				serverPreview.openTargetAtFile(filePath);
-			}
+			serverPreview.openTargetAtFile(filePath);
 		})
 	);
 

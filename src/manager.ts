@@ -33,7 +33,7 @@ class PanelSerializer extends Disposable implements vscode.WebviewPanelSerialize
 	}
 }
 
-export class ServerPreview extends Disposable {
+export class Manager extends Disposable {
 	private _serverManagers: Map<vscode.Uri | undefined, ServerManager>;
 	private _connectionManager: ConnectionManager;
 	private readonly _endpointManager: EndpointManager;
@@ -238,7 +238,7 @@ export class ServerPreview extends Disposable {
 		serverManager?: ServerManager
 	) {
 		if (!file) {
-			this.openNoTarget();
+			this._openNoTarget();
 			return;
 		}
 		if (!serverManager) {
@@ -258,42 +258,6 @@ export class ServerPreview extends Disposable {
 		}
 		if (serverManager) {
 			this._handleOpenFile(internal, file, serverManager, fileStringRelative, debug);
-		}
-	}
-
-	public openNoTarget() { // DOESNT DO THE RIGHT THING
-		const workspaces = vscode.workspace.workspaceFolders;
-		if (workspaces && workspaces.length > 0) {
-			for (let i = 0; i < workspaces.length; i++) {
-				const currWorkspace = workspaces[i];
-				const manager = this._serverManagers.get(currWorkspace.uri);
-				if (manager) {
-					vscode.commands.executeCommand(
-						`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-						'/',
-						true,
-						currWorkspace,
-						undefined,
-						manager
-					);
-					return;
-				}
-			}
-
-			vscode.commands.executeCommand(
-				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-				'/',
-				true,
-				workspaces[0],
-				undefined
-			);
-
-		} else {
-			vscode.commands.executeCommand(
-				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-				'/',
-				false
-			);
 		}
 	}
 
@@ -364,6 +328,10 @@ export class ServerPreview extends Disposable {
 	}
 
 	public openTargetAtFile(filePath:string) {
+		if (filePath === '') {
+			this._openNoTarget();
+			return;
+		}
 		this._serverManagers.forEach((serverManager) => {
 			if (serverManager.pathExistsRelativeToWorkspace(filePath)) {
 				vscode.commands.executeCommand(
@@ -385,6 +353,43 @@ export class ServerPreview extends Disposable {
 			);
 		} else {
 			throw Error();
+		}
+	}
+
+
+	private _openNoTarget() {
+		const workspaces = vscode.workspace.workspaceFolders;
+		if (workspaces && workspaces.length > 0) {
+			for (let i = 0; i < workspaces.length; i++) {
+				const currWorkspace = workspaces[i];
+				const manager = this._serverManagers.get(currWorkspace.uri);
+				if (manager) {
+					vscode.commands.executeCommand(
+						`${SETTINGS_SECTION_ID}.start.preview.atFile`,
+						'/',
+						true,
+						currWorkspace,
+						undefined,
+						manager
+					);
+					return;
+				}
+			}
+
+			vscode.commands.executeCommand(
+				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
+				'/',
+				true,
+				workspaces[0],
+				undefined
+			);
+
+		} else {
+			vscode.commands.executeCommand(
+				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
+				'/',
+				false
+			);
 		}
 	}
 }
