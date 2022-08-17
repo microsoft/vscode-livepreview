@@ -32,7 +32,7 @@ export class serverTaskLinkProvider
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
 		// private readonly _workspaceManager: WorkspaceManager,
-		private readonly _connection: Connection
+		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
 		vscode.window.registerTerminalLinkProvider(this);
@@ -50,7 +50,9 @@ export class serverTaskLinkProvider
 			return links;
 		}
 
-		this._findFullLinkRegex(context.line, links, this._connection.httpPort);
+		this._connectionManager.connections.forEach((connection) => {
+			this._findFullLinkRegex(context.line, links, connection.httpPort);
+		});
 
 		this._findPathnameRegex(context.line, links);
 		return links;

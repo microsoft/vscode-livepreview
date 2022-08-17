@@ -242,17 +242,18 @@ export class ServerManager extends Disposable {
 	 */
 	private connected() {
 		this._isServerOn = true;
-		this._statusBar.setServer(this._connection.workspace?.uri,this._httpServer.port);
+		this._statusBar.setServer(this._connection.workspace?.uri,
+			this._connection.httpPort);
 
 		this.showServerStatusMessage(
 			localize(
 				'serverStartedOnPort',
 				'Server Started on Port {0}',
-				this._httpServer.port
+				this._connection.httpPort
 			)
 		);
 		this._connection.connected(
-			this._httpServer.port,
+			this._connection.httpPort,
 			this._wsServer.wsPort,
 			this._wsServer.wsPath
 		);

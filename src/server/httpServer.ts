@@ -16,7 +16,7 @@ import { Connection } from '../connectionInfo/connection';
 export class HttpServer extends Disposable {
 	private _server: any;
 	private _contentLoader: ContentLoader;
-	public port = 0;
+	// public port = 0;
 
 	constructor(
 		_extensionUri: vscode.Uri,
@@ -75,7 +75,7 @@ export class HttpServer extends Disposable {
 	 * @param {number} port port to try to start server on.
 	 */
 	public start(port: number): void {
-		this.port = port;
+		this._connection.httpPort = port;
 		this._contentLoader.resetServedFiles();
 		this.startHttpServer();
 	}
@@ -95,17 +95,17 @@ export class HttpServer extends Disposable {
 		this._server = this.createServer();
 
 		this._server.on('listening', () => {
-			console.log(`Server is running on port ${this.port}`);
-			this._onConnected.fire(this.port);
+			console.log(`Server is running on port ${this._connection.httpPort}`);
+			this._onConnected.fire(this._connection.httpPort);
 		});
 
 		this._server.on('error', (err: any) => {
 			if (err.code == 'EADDRINUSE') {
-				this.port++;
-				this._server.listen(this.port, this._connection.host);
+				this._connection.httpPort++;
+				this._server.listen(this._connection.httpPort, this._connection.host);
 			} else if (err.code == 'EADDRNOTAVAIL') {
 				this._connection.resetHostToDefault();
-				this._server.listen(this.port, this._connection.host);
+				this._server.listen(this._connection.httpPort, this._connection.host);
 			} else {
 				/* __GDPR__
 					"server.err" : {
@@ -121,7 +121,7 @@ export class HttpServer extends Disposable {
 			}
 		});
 
-		this._server.listen(this.port, this._connection.host);
+		this._server.listen(this._connection.httpPort, this._connection.host);
 		return true;
 	}
 

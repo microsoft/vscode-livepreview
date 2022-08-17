@@ -229,31 +229,7 @@ export function activate(context: vscode.ExtensionContext): void {
 		)
 	);
 
-	// if (vscode.window.registerWebviewPanelSerializer) {
-	// 	vscode.window.registerWebviewPanelSerializer(BrowserPreview.viewType, {
-	// 		async deserializeWebviewPanel(
-	// 			webviewPanel: vscode.WebviewPanel,
-	// 			state: any
-	// 		) {
-	// 			let relative = true;
-	// 			let file = state.currentAddress ?? '/';
 
-	// 			if (!manager.pathExistsRelativeToWorkspace(file)) {
-	// 				const absFile = manager.decodeEndpoint(file);
-	// 				file = absFile ?? '/';
-	// 				relative = false;
-	// 			}
-
-	// 			if (file == '/' && !manager.workspace) {
-	// 				// root will not show anything, so cannot revive content. Dispose.
-	// 				webviewPanel.dispose();
-	// 				return;
-	// 			}
-	// 			webviewPanel.webview.options = manager.getWebviewOptions();
-	// 			manager.createOrShowEmbeddedPreview(webviewPanel, file, relative);
-	// 		},
-	// 	});
-	// }
 }
 
 export function deactivate(): void {

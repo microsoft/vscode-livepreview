@@ -23,16 +23,17 @@ export class ServerTaskTerminal
 {
 	public running = false;
 
+
 	// This object will request to open and close the server, so its parent
 	// must listen for these requests and act accordingly.
 	private readonly _onRequestToOpenServerEmitter = this._register(
-		new vscode.EventEmitter<void>()
+		new vscode.EventEmitter<vscode.WorkspaceFolder | undefined>()
 	);
 	public readonly onRequestToOpenServer =
 		this._onRequestToOpenServerEmitter.event;
 
 	private readonly _onRequestToCloseServerEmitter = this._register(
-		new vscode.EventEmitter<void>()
+		new vscode.EventEmitter<vscode.WorkspaceFolder | undefined>()
 	);
 	public readonly onRequestToCloseServer =
 		this._onRequestToCloseServerEmitter.event;
@@ -49,6 +50,7 @@ export class ServerTaskTerminal
 	constructor(
 		args: string[],
 		private readonly _reporter: TelemetryReporter,
+		private _workspace: vscode.WorkspaceFolder | undefined,
 		private readonly _executeServer = true
 	) {
 		super();
@@ -68,7 +70,7 @@ export class ServerTaskTerminal
 			this.writeEmitter.fire(
 				localize('openingServer', 'Opening Server...') + '\r\n'
 			);
-			this._onRequestToOpenServerEmitter.fire();
+			this._onRequestToOpenServerEmitter.fire(this._workspace);
 		} else {
 			this.writeEmitter.fire(
 				localize(
@@ -83,7 +85,7 @@ export class ServerTaskTerminal
 	public close(): void {
 		this.running = false;
 		if (this._executeServer) {
-			this._onRequestToCloseServerEmitter.fire();
+			this._onRequestToCloseServerEmitter.fire(this._workspace);
 			this.closeEmitter.fire(0);
 		} else {
 			this.closeEmitter.fire(1);
@@ -96,7 +98,7 @@ export class ServerTaskTerminal
 				localize('serverClosing', 'Closing the server...') + '\r\n'
 			);
 
-			this._onRequestToCloseServerEmitter.fire();
+			this._onRequestToCloseServerEmitter.fire(this._workspace);
 		}
 	}
 

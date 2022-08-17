@@ -41,6 +41,10 @@ export class Connection extends Disposable {
 		return this._httpPort;
 	}
 
+	public set httpPort(port) {
+		this._httpPort = port;
+	}
+
 	constructor(
 		private readonly _workspace: vscode.WorkspaceFolder | undefined,
 		httpPort: number,
