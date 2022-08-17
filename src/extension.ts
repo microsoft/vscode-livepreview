@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { BrowserPreview } from './editorPreview/browserPreview';
-import { ServerGrouping } from './serverGrouping';
 import { EXTENSION_ID } from './utils/constants';
 import { PathUtil } from './utils/pathUtil';
 import {
@@ -14,6 +13,7 @@ import {
 import { existsSync } from 'fs';
 import { ConnectionManager } from './connectionInfo/connectionManager';
 import { ServerPreview } from './serverPreview';
+import { ServerManager } from './server/serverManager';
 
 let reporter: TelemetryReporter;
 let serverPreview: ServerPreview;
@@ -68,7 +68,7 @@ export function activate(context: vscode.ExtensionContext): void {
 				relativeFileString = false,
 				workspace?: vscode.WorkspaceFolder,
 				port?: number,
-				manager?: ServerGrouping
+				manager?: ServerManager
 			) => {
 				const previewType = SettingUtil.GetPreviewType(context.extensionUri);
 				vscode.commands.executeCommand(
@@ -91,7 +91,7 @@ export function activate(context: vscode.ExtensionContext): void {
 				relativeFileString = true,
 				workspace?: vscode.WorkspaceFolder,
 				port?: number,
-				manager?: ServerGrouping
+				manager?: ServerManager
 			) => {
 				// TODO: implement internalDebugPreview and use settings to choose which one to launch
 				vscode.commands.executeCommand(
@@ -111,7 +111,7 @@ export function activate(context: vscode.ExtensionContext): void {
 				relativeFileString = false,
 				workspace?: vscode.WorkspaceFolder,
 				port?: number,
-				manager?: ServerGrouping
+				manager?: ServerManager
 			) => {
 				/* __GDPR__
 					"preview" :{
@@ -145,7 +145,7 @@ export function activate(context: vscode.ExtensionContext): void {
 				relativeFileString = false,
 				workspace?: vscode.WorkspaceFolder,
 				port?: number,
-				manager?: ServerGrouping
+				manager?: ServerManager
 			) => {
 				/* __GDPR__
 					"preview" :{
@@ -178,7 +178,7 @@ export function activate(context: vscode.ExtensionContext): void {
 				relativeFileString = false,
 				workspace?: vscode.WorkspaceFolder,
 				port?: number,
-				manager?: ServerGrouping
+				manager?: ServerManager
 			) => {
 				/* __GDPR__
 					"preview" :{

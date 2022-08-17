@@ -1,6 +1,5 @@
 import { Disposable } from './utils/dispose';
 import * as vscode from 'vscode';
-import { ServerGrouping } from './serverGrouping';
 import { PathUtil } from './utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { ConnectionManager } from './connectionInfo/connectionManager';
@@ -8,7 +7,6 @@ import { BrowserPreview } from './editorPreview/browserPreview';
 import { SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
 import * as nls from 'vscode-nls';
 import {
-	ServerStartedStatus,
 	ServerTaskProvider,
 } from './task/serverTaskProvider';
 import { EndpointManager } from './infoManagers/endpointManager';
@@ -16,6 +14,8 @@ import { PreviewManager } from './editorPreview/previewManager';
 import { Connection } from './connectionInfo/connection';
 import { existsSync } from 'fs';
 import { StatusBarNotifier } from './server/serverUtils/statusBarNotifier';
+import { LIVE_PREVIEW_SERVER_ON } from './utils/constants';
+import { ServerManager } from './server/serverManager';
 
 const localize = nls.loadMessageBundle();
 
@@ -31,13 +31,10 @@ class PanelSerializer extends Disposable implements vscode.WebviewPanelSerialize
 		this._onShouldRevive.fire({webviewPanel,state});
 		return Promise.resolve();
 	}
-
 }
 
-
-
 export class ServerPreview extends Disposable {
-	private _serverGroupings: Map<vscode.Uri | undefined, ServerGrouping>;
+	private _serverManagers: Map<vscode.Uri | undefined, ServerManager>;
 	private _connectionManager: ConnectionManager;
 	private readonly _endpointManager: EndpointManager;
 	private readonly _previewManager: PreviewManager;
@@ -45,31 +42,19 @@ export class ServerPreview extends Disposable {
 	private readonly _serverTaskProvider: ServerTaskProvider;
 
 	private hasServerRunning() {
-		const isRunning = Array.from(this._serverGroupings.values()).filter(
+		const isRunning = Array.from(this._serverManagers.values()).filter(
 			(group) => group.running
 		);
 		return isRunning.length !== 0;
 	}
 
-	private serverExpired(): void {
-		// set a delay to server shutdown to avoid bad performance from re-opening/closing server.
-		if (
-			this.hasServerRunning() &&
-			!this._serverTaskProvider.isRunning &&
-			vscode.workspace.workspaceFolders &&
-			vscode.workspace.workspaceFolders?.length > 0 &&
-			this._previewManager.runTaskWithExternalPreview
-		) {
-			this.closeServers();
-		}
-	}
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _userDataDir: string | undefined
 	) {
 		super();
-		this._serverGroupings = new Map<vscode.Uri, ServerGrouping>();
+		this._serverManagers = new Map<vscode.Uri, ServerManager>();
 		this._connectionManager = this._register(
 			new ConnectionManager(_extensionUri)
 		);
@@ -83,7 +68,15 @@ export class ServerPreview extends Disposable {
 				this._reporter,
 				this._connectionManager,
 				this._endpointManager,
-				this.serverExpired
+				() => {if (
+					this.hasServerRunning() &&
+					!this._serverTaskProvider.isRunning &&
+					vscode.workspace.workspaceFolders &&
+					vscode.workspace.workspaceFolders?.length > 0 &&
+					this._previewManager.runTaskWithExternalPreview
+				) {
+					this.closeServers();
+				}}
 			)
 		);
 
@@ -121,9 +114,8 @@ export class ServerPreview extends Disposable {
 		});
 		this._register(
 			this._serverTaskProvider.onRequestToOpenServer((workspace) => {
-				const grouping = this.getGrouping(workspace);
-				grouping.openServer(true);
-				// open with non target
+				const serverManager = this._getServerManagerFromWorkspace(workspace);
+				serverManager.openServer(true);
 			})
 		);
 
@@ -132,8 +124,8 @@ export class ServerPreview extends Disposable {
 				if (this._previewManager.previewActive) {
 					this._serverTaskProvider.serverStop(false);
 				} else {
-					const grouping = this._serverGroupings.get(workspace?.uri);
-					grouping?.closeServer();
+					const serverManager = this._serverManagers.get(workspace?.uri);
+					serverManager?.closeServer();
 					this._serverTaskProvider.serverStop(true);
 				}
 			})
@@ -148,7 +140,7 @@ export class ServerPreview extends Disposable {
 
 		const workspace = PathUtil.PathExistsRelativeToAnyWorkspace(file);
 		if (workspace) {
-			const manager = this.getGrouping(workspace);
+			const manager = this._getServerManagerFromWorkspace(workspace);
 				if (!manager.pathExistsRelativeToWorkspace(file)) {
 					const absFile = this._previewManager.decodeEndpoint(file);
 					file = absFile ?? '/';
@@ -181,44 +173,45 @@ export class ServerPreview extends Disposable {
 			workspace
 		);
 	}
-	public getGrouping(workspace: vscode.WorkspaceFolder | undefined) {
-		let grouping = this._serverGroupings.get(workspace?.uri);
-		if (!grouping) {
+	private _getServerManagerFromWorkspace(workspace: vscode.WorkspaceFolder | undefined) {
+		let serverManager = this._serverManagers.get(workspace?.uri);
+		if (!serverManager) {
 			const connection = this._createNewConnection(workspace);
-			grouping = this._createHostedContentForWorkspace(workspace, connection);
-			grouping.onClose(() => {
-				this._serverGroupings.delete(workspace?.uri);
-				if (this._serverGroupings.values.length == 0) {
+			serverManager = this._createHostedContentForConnection(connection);
+			serverManager.onClose(() => {
+				this._serverManagers.delete(workspace?.uri);
+				if (this._serverManagers.values.length == 0) {
 					this._statusBar.ServerOff();
+					vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, false);
 				}
 			});
-			this._serverGroupings.set(workspace?.uri, grouping);
+			this._serverManagers.set(workspace?.uri, serverManager);
 		}
 
-		return grouping;
+		return serverManager;
 	}
 
-	public openPreview(
+	private _openPreview(
 		internal: boolean,
 		file: string,
-		hc: ServerGrouping,
+		serverManager: ServerManager,
 		isRelative: boolean,
 		debug = false
 	) {
 		if (internal) {
 			// for now, ignore debug or no debug for embedded preview
-			hc.createOrShowEmbeddedPreview(undefined, file, isRelative);
+			serverManager.createOrShowEmbeddedPreview(undefined, file, isRelative);
 		} else {
-			hc.showPreviewInBrowser(file, isRelative, debug);
+			serverManager.showPreviewInBrowser(file, isRelative, debug);
 		}
 	}
 
-	public determineHCfromFile(
+	private _getServerManagerFromFile(
 		file: vscode.Uri | string,
 		fileStringRelative: boolean
 	) {
 		if (fileStringRelative) {
-			this.getLooseFileHC();
+			return this._getServerManagerFromWorkspace(undefined);
 		} else {
 			let fileUri;
 			if (typeof file == 'string') {
@@ -226,11 +219,11 @@ export class ServerPreview extends Disposable {
 			} else if (file instanceof vscode.Uri) {
 				fileUri = file;
 			} else {
-				this.getLooseFileHC();
+				return this._getServerManagerFromWorkspace(undefined);
 			}
 			if (fileUri) {
 				const workspace = vscode.workspace.getWorkspaceFolder(fileUri);
-				return this.getGrouping(workspace);
+				return this._getServerManagerFromWorkspace(workspace);
 			}
 		}
 	}
@@ -242,29 +235,29 @@ export class ServerPreview extends Disposable {
 		debug = false,
 		workspace?: vscode.WorkspaceFolder,
 		port?: number,
-		hc?: ServerGrouping
+		serverManager?: ServerManager
 	) {
 		if (!file) {
 			this.openNoTarget();
 			return;
 		}
-		if (!hc) {
+		if (!serverManager) {
 			if (workspace) {
-				hc = this.getHCFromWorkspace(workspace);
+				serverManager = this._getServerManagerFromWorkspace(workspace);
 			} else if (port) {
-				this._serverGroupings.forEach((potentialHC, key) => {
-					if (potentialHC.port === port) {
-						hc = potentialHC;
+				this._serverManagers.forEach((potentialServerManager, key) => {
+					if (potentialServerManager.port === port) {
+						serverManager = potentialServerManager;
 						return;
 					}
-					hc = this.determineHCfromFile(file, fileStringRelative);
+					serverManager = this._getServerManagerFromFile(file, fileStringRelative);
 				});
 			} else {
-				hc = this.determineHCfromFile(file, fileStringRelative);
+				serverManager = this._getServerManagerFromFile(file, fileStringRelative);
 			}
 		}
-		if (hc) {
-			this.handleOpenFile(internal, file, hc, fileStringRelative, debug);
+		if (serverManager) {
+			this._handleOpenFile(internal, file, serverManager, fileStringRelative, debug);
 		}
 	}
 
@@ -273,7 +266,7 @@ export class ServerPreview extends Disposable {
 		if (workspaces && workspaces.length > 0) {
 			for (let i = 0; i < workspaces.length; i++) {
 				const currWorkspace = workspaces[i];
-				const manager = this._serverGroupings.get(currWorkspace.uri);
+				const manager = this._serverManagers.get(currWorkspace.uri);
 				if (manager) {
 					vscode.commands.executeCommand(
 						`${SETTINGS_SECTION_ID}.start.preview.atFile`,
@@ -304,33 +297,33 @@ export class ServerPreview extends Disposable {
 		}
 	}
 
-	public handleOpenFile(
+	private _handleOpenFile(
 		internal: boolean,
 		file: vscode.Uri | string,
-		hc: ServerGrouping,
+		serverManager: ServerManager,
 		fileStringRelative = true,
 		debug = false
 	) {
 		if (typeof file == 'string') {
-			this.openPreview(internal, file, hc, fileStringRelative, debug);
+			this._openPreview(internal, file, serverManager, fileStringRelative, debug);
 			return;
 		} else if (file instanceof vscode.Uri) {
 			const filePath = file?.fsPath;
 			if (filePath) {
-				this.openPreview(internal, filePath, hc, false, debug);
+				this._openPreview(internal, filePath, serverManager, false, debug);
 				return;
 			} else {
 				const activeFilePath =
 					vscode.window.activeTextEditor?.document.fileName;
 				if (activeFilePath) {
-					this.openPreview(internal, activeFilePath, hc, false, debug);
+					this._openPreview(internal, activeFilePath, serverManager, false, debug);
 					return;
 				}
 			}
 		} else {
 			const activeFilePath = vscode.window.activeTextEditor?.document.fileName;
 			if (activeFilePath) {
-				this.openPreview(internal, activeFilePath, hc, false, debug);
+				this._openPreview(internal, activeFilePath, serverManager, false, debug);
 				return;
 			}
 		}
@@ -344,62 +337,42 @@ export class ServerPreview extends Disposable {
 		return;
 	}
 
-	public getLooseFileHC() {
-		return this.getHCFromWorkspace(undefined);
-	}
-
-	private _createHostedContentForWorkspace(
-		workspace: vscode.WorkspaceFolder | undefined,
+	private _createHostedContentForConnection(
 		connection: Connection
 	) {
-		return new ServerGrouping(
+		return new ServerManager(
 			this._extensionUri,
 			this._reporter,
-			connection,
 			this._endpointManager,
-			this._previewManager,
+			connection,
 			this._statusBar,
+			this._previewManager,
 			this._serverTaskProvider,
 			this._userDataDir
 		);
 	}
+
 	public closeServers() {
 		this._connectionManager.connections.forEach((connection) => {
 			connection.dispose();
 		});
 
-		this._serverGroupings.forEach((grouping) => {
-			grouping.closeServer();
-			grouping.dispose();
+		this._serverManagers.forEach((serverManager) => {
+			serverManager.closeServer();
+			serverManager.dispose();
 		});
 	}
-	public getHCFromWorkspace(workspace: vscode.WorkspaceFolder | undefined) {
-		const connection = this._connectionManager.getConnection(workspace);
-		if (connection) {
-			const hcFromMap = this._serverGroupings.get(workspace?.uri);
-			if (hcFromMap) {
-				return hcFromMap;
-			} else {
-				const hc = this._createHostedContentForWorkspace(workspace, connection);
-				this._serverGroupings.set(workspace?.uri, hc);
-				return hc;
-			}
-		} else {
-			return this.getGrouping(workspace);
-		}
-	}
-
 
 	public openTargetAtFile(filePath:string) {
-		this._serverGroupings.forEach((grouping) => {
-			if (grouping.pathExistsRelativeToWorkspace(filePath)) {
+		this._serverManagers.forEach((serverManager) => {
+			if (serverManager.pathExistsRelativeToWorkspace(filePath)) {
 				vscode.commands.executeCommand(
 					`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 					filePath,
 					true,
-					grouping.workspace,
+					serverManager.workspace,
 					undefined,
-					grouping
+					serverManager
 				);
 				return;
 			}
