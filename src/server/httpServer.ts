@@ -5,13 +5,14 @@ import * as path from 'path';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { INJECTED_ENDPOINT_NAME } from '../utils/constants';
-import { serverMsg } from '../serverGrouping';
+// import { serverMsg } from '../serverGrouping';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 // import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
+import { serverMsg } from './serverManager';
 
 export class HttpServer extends Disposable {
 	private _server: any;

@@ -8,6 +8,8 @@ import { SETTINGS_SECTION_ID } from '../utils/settingsUtil';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
+import { ServerTaskProvider } from './serverTaskProvider';
+import { TASK_TERMINAL_BASE_NAME } from '../utils/constants';
 
 const localize = nls.loadMessageBundle();
 
@@ -28,7 +30,6 @@ export class serverTaskLinkProvider
 		this._onRequestOpenEditorToSide.event;
 
 	constructor(
-		public terminalName: string,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
 		// private readonly _workspaceManager: WorkspaceManager,
@@ -79,9 +80,7 @@ export class serverTaskLinkProvider
 	 * @returns Whether it is a task terminal from the `Live Preview - Run Server` task.
 	 */
 	private _isLivePreviewTerminal(terminalName: string): boolean {
-		return (
-			this.terminalName != '' && terminalName.indexOf(this.terminalName) != -1
-		); // there may be additional terminal text in a multi-root workspace
+		return terminalName.indexOf(TASK_TERMINAL_BASE_NAME) != -1; // there may be additional terminal text in a multi-root workspace
 	}
 
 	/**

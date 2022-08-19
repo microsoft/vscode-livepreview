@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { serverMsg } from '../serverGrouping';
 import { Disposable } from '../utils/dispose';
 import {
 	TerminalColor,
@@ -10,6 +9,7 @@ import {
 } from '../utils/terminalStyleUtil';
 import { FormatDateTime } from '../utils/utils';
 import { ServerStartedStatus, ServerArgs } from './serverTaskProvider';
+import { serverMsg } from '../server/serverManager';
 
 const localize = nls.loadMessageBundle();
 const CHAR_CODE_CTRL_C = 3;
@@ -22,7 +22,6 @@ export class ServerTaskTerminal
 	implements vscode.Pseudoterminal
 {
 	public running = false;
-
 
 	// This object will request to open and close the server, so its parent
 	// must listen for these requests and act accordingly.

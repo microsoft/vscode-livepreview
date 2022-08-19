@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { Disposable } from '../../utils/dispose';
-import { SettingUtil } from '../../utils/settingsUtil';
+import { SETTINGS_SECTION_ID, SettingUtil } from '../../utils/settingsUtil';
 
 const localize = nls.loadMessageBundle();
 
@@ -14,7 +14,7 @@ export class StatusBarNotifier extends Disposable {
 	private _statusBar: vscode.StatusBarItem;
 	private _extensionUri: vscode.Uri;
 	private _on: boolean;
-	private _ports: Map<vscode.Uri | undefined,number>;
+	private _ports: Map<vscode.Uri | undefined, number>;
 
 	constructor(extensionUri: vscode.Uri) {
 		super();
@@ -24,7 +24,13 @@ export class StatusBarNotifier extends Disposable {
 		this._extensionUri = extensionUri;
 		this.ServerOff();
 		this._on = false;
-		this._ports = new Map<vscode.Uri,number>();
+		this._ports = new Map<vscode.Uri, number>();
+
+		vscode.workspace.onDidChangeConfiguration((e) => {
+			if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
+				this.updateConfigurations();
+			}
+		});
 	}
 
 	/**
@@ -40,14 +46,34 @@ export class StatusBarNotifier extends Disposable {
 	}
 
 	private _refreshBar() {
-		const portStr = Array.from(this._ports.values()).join(', ');
-		const portsTitle = this._ports.size === 1 ? localize('port', 'Port') : localize('port', 'Ports');
-		const portsLabel = localize('port', '{0}: {1}', portsTitle, portStr);
-		this._statusBar.text = `$(radio-tower) ${portsLabel}`;
-		this._statusBar.tooltip = localize(
-			'livePreviewRunningOnPort',
-			'Live Preview running on port {0}',
+
+		let portsLabel;
+		let portsTooltip;
+
+		if (this._ports.size === 1) {
+			const port = this._ports.values().next().value;
+			portsLabel = localize('port', 'Port: {0}', port);
+			portsTooltip =localize(
+				'livePreviewRunningOnPort',
+				'Live Preview running on port {0}',
+				port
 		);
+		} else {
+			if (this._ports.size === 2) {
+				portsLabel = localize('port', 'Ports: {0}', Array.from(this._ports.values()).join(', '));
+
+			} else {
+				portsLabel = localize('port', '{0} Ports', this._ports.size);
+
+			}
+			portsTooltip = localize(
+				'livePreviewRunningOnPort',
+				'Live Preview running on ports: {0}',
+				`\n\t• ${Array.from(this._ports.values()).join('\n\t• ')}`);
+			}
+
+		this._statusBar.tooltip = portsTooltip;
+		this._statusBar.text = `$(radio-tower) ${portsLabel}`;
 		this._statusBar.command = {
 			title: localize('openCommandPalette', 'Open Command Palette'),
 			command: 'workbench.action.quickOpen',
@@ -64,11 +90,11 @@ export class StatusBarNotifier extends Disposable {
 	}
 
 	/**
- * @description called to notify that a server shut down.
- */
+	 * @description called to notify that a server shut down.
+	 */
 	public RemoveServer(uri: vscode.Uri | undefined): void {
 		this._ports.delete(uri);
-		if (this._ports.size === 0 ) {
+		if (this._ports.size === 0) {
 			this.ServerOff();
 		} else {
 			this._refreshBar();

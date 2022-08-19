@@ -249,7 +249,11 @@
 				"properties": {
 					"args": {
 						"type": "array",
-						"description": "%tasks.desc%"
+						"description": "%tasks.argsDesc%"
+					},
+					"workspaceUri": {
+						"type": "object",
+						"description": "%tasks.workspaceUriDesc%"
 					}
 				}
 			}

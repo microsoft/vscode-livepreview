@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { serverMsg } from '../serverGrouping';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { Disposable } from '../utils/dispose';
 import { serverTaskLinkProvider } from './serverTaskLinkProvider';
 import { ServerTaskTerminal } from './serverTaskTerminal';
 import { TASK_TERMINAL_BASE_NAME } from '../utils/constants';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
-import { Connection } from '../connectionInfo/connection';
+import { serverMsg } from '../server/serverManager';
 
 interface ServerTaskDefinition extends vscode.TaskDefinition {
 	args: string[];
+	workspacePath: string;
 }
 
 export const ServerArgs: any = {
@@ -34,8 +34,7 @@ export class ServerTaskProvider
 {
 	public static CustomBuildScriptType = 'Live Preview';
 	private _tasks: vscode.Task[] | undefined;
-	private _terminal: ServerTaskTerminal | undefined;
-	private _termName = '';
+	private _terminals: Map<vscode.Uri | undefined, ServerTaskTerminal>;
 	private _terminalLinkProvider: serverTaskLinkProvider;
 
 	// emitters to allow manager to communicate with the terminal.
@@ -63,39 +62,38 @@ export class ServerTaskProvider
 	constructor(
 		private readonly _reporter: TelemetryReporter,
 		endpointManager: EndpointManager,
-		_connectionManager: ConnectionManager
+		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
+
+		this._terminals = new Map<vscode.Uri, ServerTaskTerminal>();
 		this._terminalLinkProvider = this._register(
-			new serverTaskLinkProvider(
-				'',
-				_reporter,
-				endpointManager,
-				_connectionManager
-			)
+			new serverTaskLinkProvider(_reporter, endpointManager, _connectionManager)
 		);
 		this._terminalLinkProvider.onRequestOpenEditorToSide((e) => {
 			this._onRequestOpenEditorToSide.fire(e);
 		});
 	}
 
-	public get terminalName(): string {
-		return this._termName;
-	}
-
 	public get isRunning(): boolean {
-		if (this._terminal) {
-			return this._terminal.running;
-		}
+		this._terminals.forEach((term) => {
+			if (term.running) {
+				return true;
+			}
+		});
 		return false;
 	}
 
 	/**
 	 * @param {serverMsg} msg the log information to send to the terminal for server logging.
 	 */
-	public sendServerInfoToTerminal(msg: serverMsg): void {
-		if (this._terminal && this._terminal.running) {
-			this._terminal.showServerMsg(msg);
+	public sendServerInfoToTerminal(
+		msg: serverMsg,
+		workspace: vscode.WorkspaceFolder | undefined
+	): void {
+		const term = this._terminals.get(workspace?.uri);
+		if (term && term.running) {
+			term.showServerMsg(msg);
 		}
 	}
 
@@ -105,10 +103,12 @@ export class ServerTaskProvider
 	 */
 	public serverStarted(
 		externalUri: vscode.Uri,
-		status: ServerStartedStatus
+		status: ServerStartedStatus,
+		workspace: vscode.WorkspaceFolder | undefined
 	): void {
-		if (this._terminal && this._terminal.running) {
-			this._terminal.serverStarted(externalUri, status);
+		const term = this._terminals.get(workspace?.uri);
+		if (term && term.running) {
+			term.serverStarted(externalUri, status);
 		}
 	}
 
@@ -116,12 +116,16 @@ export class ServerTaskProvider
 	 * Used to notify the terminal the result of their `stop server` request.
 	 * @param {boolean} now whether or not the server stopped just now or whether it will continue to run
 	 */
-	public serverStop(now: boolean): void {
-		if (this._terminal && this._terminal.running) {
+	public serverStop(
+		now: boolean,
+		workspace: vscode.WorkspaceFolder | undefined
+	): void {
+		const term = this._terminals.get(workspace?.uri);
+		if (term && term.running) {
 			if (now) {
-				this._terminal.serverStopped();
+				term.serverStopped();
 			} else {
-				this._terminal.serverWillBeStopped();
+				term.serverWillBeStopped();
 			}
 		}
 	}
@@ -130,20 +134,25 @@ export class ServerTaskProvider
 	 * Run task manually from extension
 	 * @param {boolean} verbose whether to run with the `--verbose` flag.
 	 */
-	public extRunTask(verbose: boolean): void {
+	public extRunTask(verbose: boolean, workspace: vscode.WorkspaceFolder | undefined): void {
 		/* __GDPR__
 			"tasks.terminal.startFromExtension" : {}
 		*/
 		this._reporter.sendTelemetryEvent('tasks.terminal.startFromExtension');
+		// vscode.tasks
+		// 	.fetchTasks().then((e) =>{
+		// 	console.log(e);
+		// }
+			// );
 		vscode.tasks
 			.fetchTasks({ type: ServerTaskProvider.CustomBuildScriptType })
 			.then((tasks) => {
 				const selTasks = tasks.filter(
 					(x) =>
-						(verbose &&
+						((verbose &&
 							x.definition.args.length > 0 &&
 							x.definition.args[0] == ServerArgs.verbose) ||
-						(!verbose && x.definition.args.length == 0)
+						(!verbose && x.definition.args.length == 0)) && ((!workspace && x.definition.workspacePath === '') ||(workspace?.uri.fsPath == x.definition.workspacePath))
 				);
 				if (selTasks.length > 0) {
 					vscode.tasks.executeTask(selTasks[0]);
@@ -151,24 +160,19 @@ export class ServerTaskProvider
 			});
 	}
 
-	public async provideTasks(): Promise<vscode.Task[]> {
+	public provideTasks(token: vscode.CancellationToken): vscode.Task[] {
 		return this._getTasks();
 	}
 
 	public resolveTask(_task: vscode.Task): vscode.Task | undefined {
-		const flavor: string = _task.definition.flavor;
-		if (flavor) {
-			const definition: ServerTaskDefinition = <any>_task.definition;
-
-			let workspace;
-			try {
-				workspace = <vscode.WorkspaceFolder>_task.scope;
-			} catch(e) {
-				//no op
-			}
-			return this._getTask(definition.flavor, definition, workspace);
+		const definition: ServerTaskDefinition = <any>_task.definition;
+		let workspace;
+		try {
+			workspace = <vscode.WorkspaceFolder>_task.scope;
+		} catch (e) {
+			// no op
 		}
-		return undefined;
+		return this._getTask(definition, workspace);
 	}
 
 	private _getTasks(): vscode.Task[] {
@@ -182,35 +186,57 @@ export class ServerTaskProvider
 		if (vscode.workspace.workspaceFolders) {
 			vscode.workspace.workspaceFolders.forEach((workspace) => {
 				args.forEach((args) => {
-					this._tasks!.push(this._getTask(args, undefined, workspace));
+					this._tasks!.push(
+						this._getTask({
+							type: ServerTaskProvider.CustomBuildScriptType,
+							workspacePath: workspace?.uri.fsPath,
+							args: args,
+						})
+					);
 				});
 			});
 		} else {
 			args.forEach((args) => {
-				this._tasks!.push(this._getTask(args,undefined));
+				this._tasks!.push(
+					this._getTask({
+						type: ServerTaskProvider.CustomBuildScriptType,
+						workspacePath: '',
+						args: args,
+					})
+				);
 			});
 		}
 		return this._tasks;
 	}
 
 	private _getTask(
-		args: string[],
-		definition?: ServerTaskDefinition,
+		definition: ServerTaskDefinition,
 		workspace?: vscode.WorkspaceFolder
 	): vscode.Task {
-		if (definition === undefined) {
-			definition = {
-				type: ServerTaskProvider.CustomBuildScriptType,
-				args,
-				workspace: undefined
-			};
+		const args = definition.args;
+
+		if (!workspace) {
+			if (definition.workspacePath && definition.workspacePath.length > 0) {
+				try {
+					workspace = vscode.workspace.getWorkspaceFolder(
+						vscode.Uri.parse(definition.workspacePath)
+					);
+				} catch (e) {
+					// no op
+				}
+			}
+		} else {
+			definition.workspacePath = workspace.uri.fsPath;
 		}
 
 		let taskName = TASK_TERMINAL_BASE_NAME;
 		for (const i in args) {
 			taskName += ` ${args[i]}`;
 		}
-		if (this._terminal && this._terminal.running) {
+
+		const term = this._terminals.get(workspace?.uri);
+
+		if (term && term.running) {
 			return new vscode.Task(
 				definition,
 				vscode.TaskScope.Workspace,
@@ -223,22 +249,25 @@ export class ServerTaskProvider
 		const custExec = new vscode.CustomExecution(
 			async (): Promise<ServerTaskTerminal> => {
 				// When the task is executed, this callback will run. Here, we set up for running the task.
-				if (this._terminal && this._terminal.running) {
-					return new ServerTaskTerminal([], this._reporter,workspace, false);
+				const term = this._terminals.get(workspace?.uri);
+				if (term && term.running) {
+					return term;
 				}
 
-				this._terminal = new ServerTaskTerminal(args, this._reporter, workspace);
-				this._termName = taskName;
-				this._terminalLinkProvider.terminalName = taskName;
-				this._terminal.onRequestToOpenServer((e) => {
+				const newTerm = new ServerTaskTerminal(args, this._reporter, workspace);
+
+				newTerm.onRequestToOpenServer((e) => {
 					this._onRequestToOpenServerEmitter.fire(e);
 				});
 
-				this._terminal.onRequestToCloseServer((e) => {
+				newTerm.onRequestToCloseServer((e) => {
 					this._onRequestToCloseServerEmitter.fire(e);
+					this._terminals.delete(workspace?.uri);
 				});
 
-				return this._terminal;
+				this._terminals.set(workspace?.uri, newTerm);
+
+				return newTerm;
 			}
 		);
 		const task = new vscode.Task(

@@ -10,18 +10,11 @@ import {
 	SETTINGS_SECTION_ID,
 	SettingUtil,
 } from './utils/settingsUtil';
-import { existsSync } from 'fs';
-import { ConnectionManager } from './connectionInfo/connectionManager';
 import { Manager } from './manager';
 import { ServerManager } from './server/serverManager';
 
 let reporter: TelemetryReporter;
 let serverPreview: Manager;
-// let serverGroupings: Map<vscode.Uri | undefined, ServerGrouping>;
-// let connectionManager: ConnectionManager;
-// let currentPanel: BrowserPreview | undefined;
-
-const localize = nls.loadMessageBundle();
 
 export function activate(context: vscode.ExtensionContext): void {
 	const extPackageJSON = context.extension.packageJSON;
@@ -31,7 +24,11 @@ export function activate(context: vscode.ExtensionContext): void {
 		extPackageJSON.aiKey
 	);
 
-	serverPreview = new Manager(context.extensionUri, reporter,PathUtil.GetUserDataDirFromStorageUri(context.storageUri?.fsPath));
+	serverPreview = new Manager(
+		context.extensionUri,
+		reporter,
+		PathUtil.GetUserDataDirFromStorageUri(context.storageUri?.fsPath)
+	);
 
 	/* __GDPR__
 		"extension.startUp" : {
@@ -93,7 +90,10 @@ export function activate(context: vscode.ExtensionContext): void {
 				vscode.commands.executeCommand(
 					`${SETTINGS_SECTION_ID}.start.externalDebugPreview.atFile`,
 					file,
-					relativeFileString
+					relativeFileString,
+					workspace,
+					port,
+					manager
 				);
 			}
 		)
@@ -215,17 +215,14 @@ export function activate(context: vscode.ExtensionContext): void {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.setDefaultOpenFile`,
 			(file: vscode.Uri) => {
-					SettingUtil.UpdateSettings(
-						Settings.defaultPreviewPath,
-						file.fsPath,
-						false
-					);
-				}
-
+				SettingUtil.UpdateSettings(
+					Settings.defaultPreviewPath,
+					file.fsPath,
+					false
+				);
+			}
 		)
 	);
-
-
 }
 
 export function deactivate(): void {

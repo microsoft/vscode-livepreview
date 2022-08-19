@@ -135,18 +135,20 @@ export class PathUtil {
 	/**
 	 * @description Similar to `absPathInDefaultWorkspace`, but checks all workspaces.
 	 * @param {string} path path to test.
-	 * @returns {boolean} whether the path is in any open workspace.
+	 * @returns {vscode.WorkspaceFolder | undefined} the workspace it belongs to
 	 */
-	public static AbsPathInAnyWorkspace(file: string): boolean {
+	public static AbsPathInAnyWorkspace(
+		file: string
+	): vscode.WorkspaceFolder | undefined {
 		const workspaces = vscode.workspace.workspaceFolders;
 		if (workspaces) {
 			for (const i in workspaces) {
 				if (PathUtil.PathBeginsWith(file, workspaces[i].uri.fsPath)) {
-					return true;
+					return workspaces[i];
 				}
 			}
 		}
-		return false;
+		return undefined;
 	}
 
 	/**

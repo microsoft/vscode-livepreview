@@ -4,11 +4,9 @@ import { PathUtil } from './utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { ConnectionManager } from './connectionInfo/connectionManager';
 import { BrowserPreview } from './editorPreview/browserPreview';
-import { SETTINGS_SECTION_ID, SettingUtil } from './utils/settingsUtil';
+import { SETTINGS_SECTION_ID } from './utils/settingsUtil';
 import * as nls from 'vscode-nls';
-import {
-	ServerTaskProvider,
-} from './task/serverTaskProvider';
+import { ServerTaskProvider } from './task/serverTaskProvider';
 import { EndpointManager } from './infoManagers/endpointManager';
 import { PreviewManager } from './editorPreview/previewManager';
 import { Connection } from './connectionInfo/connection';
@@ -16,19 +14,25 @@ import { existsSync } from 'fs';
 import { StatusBarNotifier } from './server/serverUtils/statusBarNotifier';
 import { LIVE_PREVIEW_SERVER_ON } from './utils/constants';
 import { ServerManager } from './server/serverManager';
+import * as fs from 'fs';
 
 const localize = nls.loadMessageBundle();
 
-class PanelSerializer extends Disposable implements vscode.WebviewPanelSerializer  {
-
+class PanelSerializer
+	extends Disposable
+	implements vscode.WebviewPanelSerializer
+{
 	private readonly _onShouldRevive = this._register(
-		new vscode.EventEmitter<{webviewPanel: vscode.WebviewPanel, state: any}>()
+		new vscode.EventEmitter<{ webviewPanel: vscode.WebviewPanel; state: any }>()
 	);
 
 	public readonly onShouldRevive = this._onShouldRevive.event;
 
-	deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any): Thenable<void> {
-		this._onShouldRevive.fire({webviewPanel,state});
+	deserializeWebviewPanel(
+		webviewPanel: vscode.WebviewPanel,
+		state: any
+	): Thenable<void> {
+		this._onShouldRevive.fire({ webviewPanel, state });
 		return Promise.resolve();
 	}
 }
@@ -61,33 +65,34 @@ export class Manager extends Disposable {
 
 		this._endpointManager = this._register(new EndpointManager());
 
-
 		this._previewManager = this._register(
 			new PreviewManager(
 				this._extensionUri,
 				this._reporter,
 				this._connectionManager,
 				this._endpointManager,
-				() => {if (
-					this.hasServerRunning() &&
-					!this._serverTaskProvider.isRunning &&
-					vscode.workspace.workspaceFolders &&
-					vscode.workspace.workspaceFolders?.length > 0 &&
-					this._previewManager.runTaskWithExternalPreview
-				) {
-					this.closeServers();
-				}}
+				() => {
+					if (
+						this.hasServerRunning() &&
+						!this._serverTaskProvider.isRunning &&
+						vscode.workspace.workspaceFolders &&
+						vscode.workspace.workspaceFolders?.length > 0 &&
+						this._previewManager.runTaskWithExternalPreview
+					) {
+						this.closeServers();
+					}
+				}
 			)
 		);
 
-
 		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
 
-
-		this._serverTaskProvider = new ServerTaskProvider(
-			this._reporter,
-			this._endpointManager,
-			this._connectionManager
+		this._serverTaskProvider = this._register(
+			new ServerTaskProvider(
+				this._reporter,
+				this._endpointManager,
+				this._connectionManager
+			)
 		);
 
 		this._register(
@@ -98,9 +103,13 @@ export class Manager extends Disposable {
 		);
 
 		this._serverTaskProvider.onRequestOpenEditorToSide((uri) => {
-			if (this._previewManager.previewActive && this._previewManager.currentPanel) {
+			if (
+				this._previewManager.previewActive &&
+				this._previewManager.currentPanel
+			) {
 				const avoidColumn =
-				this._previewManager.currentPanel.panel.viewColumn ?? vscode.ViewColumn.One;
+					this._previewManager.currentPanel.panel.viewColumn ??
+					vscode.ViewColumn.One;
 				const column: vscode.ViewColumn =
 					avoidColumn == vscode.ViewColumn.One
 						? avoidColumn + 1
@@ -122,58 +131,68 @@ export class Manager extends Disposable {
 		this._register(
 			this._serverTaskProvider.onRequestToCloseServer((workspace) => {
 				if (this._previewManager.previewActive) {
-					this._serverTaskProvider.serverStop(false);
+					this._serverTaskProvider.serverStop(false, workspace);
 				} else {
 					const serverManager = this._serverManagers.get(workspace?.uri);
 					serverManager?.closeServer();
-					this._serverTaskProvider.serverStop(true);
+					this._serverTaskProvider.serverStop(true, workspace);
 				}
 			})
 		);
 
-
 		const serializer = new PanelSerializer();
-		this._register(serializer.onShouldRevive(e => {
-			let relative = true;
-		let file = e.state.currentAddress ?? '/';
+		this._register(
+			serializer.onShouldRevive((e) => {
+				let relative = true;
+				let file = e.state.currentAddress ?? '/';
 
+				let workspace;
 
-		const workspace = PathUtil.PathExistsRelativeToAnyWorkspace(file);
-		if (workspace) {
-			const manager = this._getServerManagerFromWorkspace(workspace);
-				if (!manager.pathExistsRelativeToWorkspace(file)) {
-					const absFile = this._previewManager.decodeEndpoint(file);
-					file = absFile ?? '/';
-					relative = false;
+				if (PathUtil.AbsPathInAnyWorkspace(file)) {
+					workspace = vscode.workspace.getWorkspaceFolder(file);
+				} else {
+					workspace = PathUtil.PathExistsRelativeToAnyWorkspace(file);
 				}
 
-				e.webviewPanel.webview.options = this._previewManager.getWebviewOptions();
-				manager.createOrShowEmbeddedPreview(e.webviewPanel, file, relative);
+				if (workspace) {
+					const manager = this._getServerManagerFromWorkspace(workspace);
+					if (!manager.pathExistsRelativeToWorkspace(file)) {
+						const absFile = this._previewManager.decodeEndpoint(file);
+						file = absFile ?? '/';
+						relative = false;
+					}
 
-		} else {
-			// root will not show anything, so cannot revive content. Dispose.
-			e.webviewPanel.dispose();
-
-		}
-		}));
+					e.webviewPanel.webview.options =
+						this._previewManager.getWebviewOptions();
+					manager.createOrShowEmbeddedPreview(e.webviewPanel, file, relative);
+				} else {
+					const uri = vscode.Uri.parse(file);
+					if (fs.existsSync(uri.fsPath)){
+						const manager = this._getServerManagerFromWorkspace(undefined);
+						e.webviewPanel.webview.options =
+							this._previewManager.getWebviewOptions();
+						manager.createOrShowEmbeddedPreview(e.webviewPanel, file, relative);
+					} else {
+						// root will not show anything, so cannot revive content. Dispose.
+						e.webviewPanel.dispose();
+					}
+				}
+			})
+		);
 		if (vscode.window.registerWebviewPanelSerializer) {
-			vscode.window.registerWebviewPanelSerializer(BrowserPreview.viewType, serializer);
+			vscode.window.registerWebviewPanelSerializer(
+				BrowserPreview.viewType,
+				serializer
+			);
 		}
 	}
 
 	private _createNewConnection(workspace: vscode.WorkspaceFolder | undefined) {
-
-		const serverPort = SettingUtil.GetConfig(this._extensionUri).portNumber;
-		const serverWSPort = serverPort;
-		const serverHost = SettingUtil.GetConfig(this._extensionUri).hostIP;
-		return this._connectionManager.createAndAddNewConnection(
-			serverPort,
-			serverWSPort,
-			serverHost,
-			workspace
-		);
+		return this._connectionManager.createAndAddNewConnection(workspace);
 	}
-	private _getServerManagerFromWorkspace(workspace: vscode.WorkspaceFolder | undefined) {
+	private _getServerManagerFromWorkspace(
+		workspace: vscode.WorkspaceFolder | undefined
+	) {
 		let serverManager = this._serverManagers.get(workspace?.uri);
 		if (!serverManager) {
 			const connection = this._createNewConnection(workspace);
@@ -182,8 +201,13 @@ export class Manager extends Disposable {
 				this._serverManagers.delete(workspace?.uri);
 				if (this._serverManagers.values.length == 0) {
 					this._statusBar.ServerOff();
-					vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, false);
+					vscode.commands.executeCommand(
+						'setContext',
+						LIVE_PREVIEW_SERVER_ON,
+						false
+					);
 				}
+				this._connectionManager.removeConnection(workspace);
 			});
 			this._serverManagers.set(workspace?.uri, serverManager);
 		}
@@ -228,6 +252,36 @@ export class Manager extends Disposable {
 		}
 	}
 
+	private _getFileInfo(
+		file: vscode.Uri | string | undefined,
+		fileStringRelative = true
+	): { filePath: string; isRelative: boolean } {
+		if (typeof file == 'string') {
+			return { filePath: file, isRelative: fileStringRelative };
+		} else if (file instanceof vscode.Uri) {
+			let filePath = file?.fsPath ?? file?.path;
+
+			if (!filePath) {
+				const activeFilePath =
+					vscode.window.activeTextEditor?.document.fileName;
+				if (activeFilePath) {
+					filePath = activeFilePath;
+					fileStringRelative = false;
+				}
+			}
+
+			return { filePath, isRelative: fileStringRelative };
+		} else {
+			const activeFilePath = vscode.window.activeTextEditor?.document.fileName;
+			if (activeFilePath) {
+				return { filePath: activeFilePath, isRelative: false };
+			}
+		}
+
+		// todo: double-check this case
+		return { filePath: '/', isRelative: fileStringRelative };
+	}
+
 	public handleOpenFileCaller(
 		internal: boolean,
 		file: vscode.Uri | string | undefined,
@@ -237,10 +291,8 @@ export class Manager extends Disposable {
 		port?: number,
 		serverManager?: ServerManager
 	) {
-		if (!file) {
-			this._openNoTarget();
-			return;
-		}
+		const fileInfo = this._getFileInfo(file, fileStringRelative);
+
 		if (!serverManager) {
 			if (workspace) {
 				serverManager = this._getServerManagerFromWorkspace(workspace);
@@ -250,46 +302,35 @@ export class Manager extends Disposable {
 						serverManager = potentialServerManager;
 						return;
 					}
-					serverManager = this._getServerManagerFromFile(file, fileStringRelative);
+					serverManager = this._getServerManagerFromFile(
+						fileInfo.filePath,
+						fileInfo.isRelative
+					);
 				});
 			} else {
-				serverManager = this._getServerManagerFromFile(file, fileStringRelative);
+				if (fileInfo.isRelative) {
+					workspace = PathUtil.PathExistsRelativeToAnyWorkspace(
+						fileInfo.filePath
+					);
+				} else {
+					workspace = PathUtil.AbsPathInAnyWorkspace(fileInfo.filePath);
+				}
+
+				serverManager = this._getServerManagerFromFile(
+					fileInfo.filePath,
+					fileInfo.isRelative
+				);
 			}
 		}
 		if (serverManager) {
-			this._handleOpenFile(internal, file, serverManager, fileStringRelative, debug);
-		}
-	}
-
-	private _handleOpenFile(
-		internal: boolean,
-		file: vscode.Uri | string,
-		serverManager: ServerManager,
-		fileStringRelative = true,
-		debug = false
-	) {
-		if (typeof file == 'string') {
-			this._openPreview(internal, file, serverManager, fileStringRelative, debug);
+			this._openPreview(
+				internal,
+				fileInfo.filePath,
+				serverManager,
+				fileInfo.isRelative,
+				debug
+			);
 			return;
-		} else if (file instanceof vscode.Uri) {
-			const filePath = file?.fsPath;
-			if (filePath) {
-				this._openPreview(internal, filePath, serverManager, false, debug);
-				return;
-			} else {
-				const activeFilePath =
-					vscode.window.activeTextEditor?.document.fileName;
-				if (activeFilePath) {
-					this._openPreview(internal, activeFilePath, serverManager, false, debug);
-					return;
-				}
-			}
-		} else {
-			const activeFilePath = vscode.window.activeTextEditor?.document.fileName;
-			if (activeFilePath) {
-				this._openPreview(internal, activeFilePath, serverManager, false, debug);
-				return;
-			}
 		}
 
 		vscode.window.showErrorMessage(
@@ -298,12 +339,10 @@ export class Manager extends Disposable {
 				'This file is not a part of the workspace where the server has started. Cannot preview.'
 			)
 		);
-		return;
+		return; // TODO: show better error
 	}
 
-	private _createHostedContentForConnection(
-		connection: Connection
-	) {
+	private _createHostedContentForConnection(connection: Connection) {
 		return new ServerManager(
 			this._extensionUri,
 			this._reporter,
@@ -317,17 +356,13 @@ export class Manager extends Disposable {
 	}
 
 	public closeServers() {
-		this._connectionManager.connections.forEach((connection) => {
-			connection.dispose();
-		});
-
 		this._serverManagers.forEach((serverManager) => {
 			serverManager.closeServer();
 			serverManager.dispose();
 		});
 	}
 
-	public openTargetAtFile(filePath:string) {
+	public openTargetAtFile(filePath: string) {
 		if (filePath === '') {
 			this._openNoTarget();
 			return;
@@ -356,7 +391,6 @@ export class Manager extends Disposable {
 		}
 	}
 
-
 	private _openNoTarget() {
 		const workspaces = vscode.workspace.workspaceFolders;
 		if (workspaces && workspaces.length > 0) {
@@ -383,7 +417,6 @@ export class Manager extends Disposable {
 				workspaces[0],
 				undefined
 			);
-
 		} else {
 			vscode.commands.executeCommand(
 				`${SETTINGS_SECTION_ID}.start.preview.atFile`,

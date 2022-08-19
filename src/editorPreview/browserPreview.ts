@@ -3,14 +3,12 @@ import * as vscode from 'vscode';
 import { Disposable } from '../utils/dispose';
 import { PathUtil } from '../utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
-// import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { WebviewComm } from './webviewComm';
 import { FormatDateTime } from '../utils/utils';
 import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
 import * as path from 'path';
 import * as nls from 'vscode-nls';
-import { decode } from 'querystring';
 import { URL } from 'url';
 import { Connection } from '../connectionInfo/connection';
 
@@ -22,7 +20,6 @@ const localize = nls.loadMessageBundle();
 export class BrowserPreview extends Disposable {
 	public static readonly viewType = 'browserPreview';
 	private readonly _webviewComm: WebviewComm;
-	// private currentConne
 	private readonly _onDisposeEmitter = this._register(
 		new vscode.EventEmitter<void>()
 	);
@@ -196,13 +193,28 @@ export class BrowserPreview extends Disposable {
 				this._webviewComm.currentAddress
 			);
 			const uri = vscode.Uri.parse(givenURI.toString());
-			vscode.commands.executeCommand(
-				`${SETTINGS_SECTION_ID}.start.${SettingUtil.GetExternalPreviewType(
-					this._extensionUri
-				)}.atFile`,
-				uri,
-				false
-			);
+
+			const command = `${SETTINGS_SECTION_ID}.start.${SettingUtil.GetExternalPreviewType(
+				this._extensionUri
+			)}.atFile`;
+
+			if (this._webviewComm.currentConnection.workspace) {
+				vscode.commands.executeCommand(
+					command,
+					uri,
+					true,
+					this._webviewComm.currentConnection.workspace,
+					this._webviewComm.currentConnection.httpPort
+				);
+			} else {
+				vscode.commands.executeCommand(
+					command,
+					uri,
+					false,
+					undefined,
+					this._webviewComm.currentConnection.httpPort
+				);
+			}
 		} else {
 			const uri = vscode.Uri.parse(givenURL);
 			vscode.window
@@ -255,7 +267,7 @@ export class BrowserPreview extends Disposable {
 				hostString = hostString.substr(0, hostString.length - 1);
 			}
 			const file = address.substr(host.toString().length);
-			this._webviewComm.goToFile(file, connection);
+			this._webviewComm.goToFile(file, true, connection);
 		} catch (e) {
 			this.handleOpenBrowser(address);
 		}

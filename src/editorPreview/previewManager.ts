@@ -7,14 +7,14 @@ import {
 	OUTPUT_CHANNEL_NAME,
 } from '../utils/constants';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { localize } from 'vscode-nls';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { PathUtil } from '../utils/pathUtil';
 import { BrowserPreview } from './browserPreview';
 import { Connection } from '../connectionInfo/connection';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { ServerTaskProvider } from '../task/serverTaskProvider';
+import * as nls from 'vscode-nls';
 
+const localize = nls.loadMessageBundle();
 export class PreviewManager extends Disposable {
 	private readonly _outputChannel: vscode.OutputChannel;
 	public previewActive = false;
@@ -36,7 +36,6 @@ export class PreviewManager extends Disposable {
 		super();
 		this._outputChannel =
 			vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
-
 
 		this._runTaskWithExternalPreview =
 			SettingUtil.GetConfig(_extensionUri).runTaskWithExternalPreview;
@@ -98,7 +97,7 @@ export class PreviewManager extends Disposable {
 			this.notifyLooseFileOpen();
 			file = this.encodeEndpoint(file);
 		} else if (!relative && connection) {
-				file = connection.getFileRelativeToWorkspace(file) ?? '';
+			file = connection.getFileRelativeToWorkspace(file) ?? '';
 		}
 		return file;
 	}

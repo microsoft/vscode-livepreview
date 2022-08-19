@@ -9,7 +9,6 @@ import {
 	AutoRefreshPreview,
 	SettingUtil,
 	Settings,
-	SETTINGS_SECTION_ID,
 } from '../utils/settingsUtil';
 import {
 	DONT_SHOW_AGAIN,
@@ -18,17 +17,18 @@ import {
 } from '../utils/constants';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
-// import { WorkspaceManager } from '../infoManagers/workspaceManager';
-import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
 import { PreviewManager } from '../editorPreview/previewManager';
-import { ServerStartedStatus, ServerTaskProvider } from '../task/serverTaskProvider';
+import {
+	ServerStartedStatus,
+	ServerTaskProvider,
+} from '../task/serverTaskProvider';
 
 /**
  * @description the server log item that is sent from the HTTP server to the server logging task.
  */
- export interface serverMsg {
+export interface serverMsg {
 	method: string;
 	url: string;
 	status: number;
@@ -48,9 +48,7 @@ export interface launchInfo {
 
 const localize = nls.loadMessageBundle();
 export class ServerManager extends Disposable {
-	private readonly _onClose = this._register(
-		new vscode.EventEmitter<void>()
-	);
+	private readonly _onClose = this._register(new vscode.EventEmitter<void>());
 	public readonly onClose = this._onClose.event;
 	private _pendingLaunchInfo: launchInfo | undefined;
 	private readonly _httpServer: HttpServer;
@@ -71,7 +69,7 @@ export class ServerManager extends Disposable {
 		private readonly _connection: Connection,
 		private readonly _statusBar: StatusBarNotifier,
 		private readonly _previewManager: PreviewManager,
-				private readonly _serverTaskProvider: ServerTaskProvider,
+		private readonly _serverTaskProvider: ServerTaskProvider,
 		_userDataDir: string | undefined
 	) {
 		super();
@@ -80,10 +78,10 @@ export class ServerManager extends Disposable {
 		);
 
 		if (_connection.workspace) {
-
-			this._watcher = vscode.workspace.createFileSystemWatcher(`{_connection.workspace}**`);
+			this._watcher = vscode.workspace.createFileSystemWatcher(
+				`{_connection.workspace}**`
+			);
 		} else {
-
 			this._watcher = vscode.workspace.createFileSystemWatcher('**');
 		}
 
@@ -97,6 +95,15 @@ export class ServerManager extends Disposable {
 				(!_userDataDir || !PathUtil.PathBeginsWith(file.fsPath, _userDataDir))
 			);
 		};
+
+		this._register(
+			this._httpServer.onNewReqProcessed((e) => {
+				this._serverTaskProvider.sendServerInfoToTerminal(
+					e,
+					this._connection.workspace
+				);
+			})
+		);
 
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
@@ -168,7 +175,8 @@ export class ServerManager extends Disposable {
 		this._connection.onConnected((e) => {
 			this._serverTaskProvider.serverStarted(
 				e.httpURI,
-				ServerStartedStatus.JUST_STARTED
+				ServerStartedStatus.JUST_STARTED,
+				this._connection.workspace
 			);
 
 			if (this._pendingLaunchInfo) {
@@ -192,22 +200,11 @@ export class ServerManager extends Disposable {
 			}
 		});
 
-		vscode.workspace.onDidChangeConfiguration((e) => {
-			if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
-				this.updateConfigurations();
-				this._connection.pendingPort = SettingUtil.GetConfig(
-					this._extensionUri
-				).portNumber;
-				this._connection.pendingHost = SettingUtil.GetConfig(
-					this._extensionUri
-				).hostIP;
-			}
-		});
-
 		this._connection.onConnected((e) => {
 			this._serverTaskProvider.serverStarted(
 				e.httpURI,
-				ServerStartedStatus.JUST_STARTED
+				ServerStartedStatus.JUST_STARTED,
+				this._connection.workspace
 			);
 		});
 		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, false);
@@ -223,20 +220,12 @@ export class ServerManager extends Disposable {
 		return this._isServerOn;
 	}
 
-	/**
-	 * @description update fields to address config changes.
-	 */
-	public updateConfigurations(): void {
-		this._statusBar.updateConfigurations();
-	}
-
 	// on each new request processed by the HTTP server, we should
 	// relay the information to the task terminal for logging.
 	private readonly _onNewReqProcessed = this._register(
 		new vscode.EventEmitter<serverMsg>()
 	);
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
-
 
 	/**
 	 * @description close the server instances.
@@ -257,10 +246,10 @@ export class ServerManager extends Disposable {
 			}
 
 			if (this._serverTaskProvider.isRunning) {
-				this._serverTaskProvider.serverStop(true);
+				this._serverTaskProvider.serverStop(true, this._connection.workspace);
 			}
 
-			this._connection.disconnected();
+			this._connection.dispose();
 			return true;
 		}
 		return false;
@@ -272,25 +261,24 @@ export class ServerManager extends Disposable {
 	 * @returns {boolean} whether the server has been started correctly.
 	 */
 	public openServer(fromTask = false): boolean {
-
 		const port = this._connection.httpPort;
 		if (!this.isRunning) {
-
-		this._httpConnected = false;
-		this._wsConnected = false;
-		if (this._extensionUri) {
-			this.findFreePort(port, (freePort: number) => {
-				this._httpServer.start(freePort);
-				this._wsServer.start(freePort + 1);
-			});
-			return true;
-		}
-		return false;
+			this._httpConnected = false;
+			this._wsConnected = false;
+			if (this._extensionUri) {
+				this.findFreePort(port, (freePort: number) => {
+					this._httpServer.start(freePort);
+					this._wsServer.start(freePort + 1);
+				});
+				return true;
+			}
+			return false;
 		} else if (fromTask) {
 			this._connection.resolveExternalHTTPUri().then((uri) => {
 				this._serverTaskProvider.serverStarted(
 					uri,
-					ServerStartedStatus.STARTED_BY_EMBEDDED_PREV
+					ServerStartedStatus.STARTED_BY_EMBEDDED_PREV,
+					this._connection.workspace
 				);
 			});
 		}
@@ -352,8 +340,10 @@ export class ServerManager extends Disposable {
 	 */
 	private connected() {
 		this._isServerOn = true;
-		this._statusBar.setServer(this._connection.workspace?.uri,
-			this._connection.httpPort);
+		this._statusBar.setServer(
+			this._connection.workspace?.uri,
+			this._connection.httpPort
+		);
 
 		this.showServerStatusMessage(
 			localize(
@@ -390,8 +380,6 @@ export class ServerManager extends Disposable {
 				});
 		}
 	}
-
-
 
 	dispose() {
 		this.closeServer();
@@ -433,7 +421,8 @@ export class ServerManager extends Disposable {
 			) {
 				this._serverTaskProvider.extRunTask(
 					SettingUtil.GetConfig(this._extensionUri)
-						.browserPreviewLaunchServerLogging
+						.browserPreviewLaunchServerLogging,
+						this._connection.workspace
 				);
 			} else {
 				// global tasks are currently not supported, just turn on server in this case.
@@ -452,7 +441,6 @@ export class ServerManager extends Disposable {
 			);
 		}
 	}
-
 
 	public get running() {
 		return this.isRunning;
