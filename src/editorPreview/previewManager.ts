@@ -95,27 +95,11 @@ export class PreviewManager extends Disposable {
 	): string {
 		if (!connection?.workspace) {
 			this.notifyLooseFileOpen();
-			file = this.encodeEndpoint(file);
+			file = this._endpointManager.encodeLooseFileEndpoint(file);
 		} else if (!relative && connection) {
 			file = connection.getFileRelativeToWorkspace(file) ?? '';
 		}
 		return file;
-	}
-
-	/**
-	 * @param {string} file filesystem path to encode an endpoint for.
-	 * @returns {string} the endpoint name to get this file from the server.
-	 */
-	public encodeEndpoint(file: string): string {
-		return this._endpointManager.encodeLooseFileEndpoint(file);
-	}
-
-	/**
-	 * @param {string} endpoint the endpoint to decode into a file path
-	 * @returns {string | undefined} the file path served from the endpoint or undefined if the endpoint does not serve anything.
-	 */
-	public decodeEndpoint(endpoint: string): string | undefined {
-		return this._endpointManager.decodeLooseFileEndpoint(endpoint);
 	}
 
 	/**
@@ -153,12 +137,6 @@ export class PreviewManager extends Disposable {
 		this.startEmbeddedPreview(panel, file, connection);
 	}
 
-	private getConnectionFromFile(file: string) {
-		const workspace = vscode.workspace.getWorkspaceFolder(
-			vscode.Uri.parse(file)
-		);
-		return this._connectionManager.getConnection(workspace);
-	}
 	/**
 	 * Actually launch the external browser preview (caller guarantees that the server has started.)
 	 * @param {string} file the filesystem path to preview.
@@ -191,7 +169,7 @@ export class PreviewManager extends Disposable {
 	 * @param {vscode.WebviewPanel} panel the panel to use to open the preview.
 	 * @param {string} file the path to preview relative to index (should already be encoded).
 	 */
-	public startEmbeddedPreview(
+	private startEmbeddedPreview(
 		panel: vscode.WebviewPanel,
 		file: string,
 		connection: Connection
@@ -253,7 +231,7 @@ export class PreviewManager extends Disposable {
 	/**
 	 * @returns {vscode.WebviewPanelOptions} the webview panel options to allow it to always retain context.
 	 */
-	public getWebviewPanelOptions(): vscode.WebviewPanelOptions {
+	private getWebviewPanelOptions(): vscode.WebviewPanelOptions {
 		return {
 			retainContextWhenHidden: true,
 		};

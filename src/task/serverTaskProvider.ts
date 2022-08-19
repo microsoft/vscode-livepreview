@@ -10,7 +10,6 @@ import { serverMsg } from '../server/serverManager';
 
 interface ServerTaskDefinition extends vscode.TaskDefinition {
 	args: string[];
-	workspacePath: string;
 }
 
 export const ServerArgs: any = {
@@ -76,12 +75,15 @@ export class ServerTaskProvider
 	}
 
 	public get isRunning(): boolean {
-		this._terminals.forEach((term) => {
-			if (term.running) {
-				return true;
-			}
-		});
-		return false;
+		return (
+			Array.from(this._terminals.values()).find((term) => term.running) !==
+			undefined
+		);
+	}
+
+	public isTaskRunning(workspace: vscode.WorkspaceFolder | undefined): boolean {
+		const term = this._terminals.get(workspace?.uri);
+		return term?.running ?? false;
 	}
 
 	/**
@@ -134,16 +136,14 @@ export class ServerTaskProvider
 	 * Run task manually from extension
 	 * @param {boolean} verbose whether to run with the `--verbose` flag.
 	 */
-	public extRunTask(verbose: boolean, workspace: vscode.WorkspaceFolder | undefined): void {
+	public extRunTask(
+		verbose: boolean,
+		workspace: vscode.WorkspaceFolder | undefined
+	): void {
 		/* __GDPR__
 			"tasks.terminal.startFromExtension" : {}
 		*/
 		this._reporter.sendTelemetryEvent('tasks.terminal.startFromExtension');
-		// vscode.tasks
-		// 	.fetchTasks().then((e) =>{
-		// 	console.log(e);
-		// }
-			// );
 		vscode.tasks
 			.fetchTasks({ type: ServerTaskProvider.CustomBuildScriptType })
 			.then((tasks) => {
@@ -152,15 +152,17 @@ export class ServerTaskProvider
 						((verbose &&
 							x.definition.args.length > 0 &&
 							x.definition.args[0] == ServerArgs.verbose) ||
-						(!verbose && x.definition.args.length == 0)) && ((!workspace && x.definition.workspacePath === '') ||(workspace?.uri.fsPath == x.definition.workspacePath))
+							(!verbose && x.definition.args.length == 0)) &&
+						workspace === x.scope
 				);
+
 				if (selTasks.length > 0) {
 					vscode.tasks.executeTask(selTasks[0]);
 				}
 			});
 	}
 
-	public provideTasks(token: vscode.CancellationToken): vscode.Task[] {
+	public provideTasks(): vscode.Task[] {
 		return this._getTasks();
 	}
 
@@ -187,22 +189,26 @@ export class ServerTaskProvider
 			vscode.workspace.workspaceFolders.forEach((workspace) => {
 				args.forEach((args) => {
 					this._tasks!.push(
-						this._getTask({
-							type: ServerTaskProvider.CustomBuildScriptType,
-							workspacePath: workspace?.uri.fsPath,
-							args: args,
-						})
+						this._getTask(
+							{
+								type: ServerTaskProvider.CustomBuildScriptType,
+								args: args,
+							},
+							workspace
+						)
 					);
 				});
 			});
 		} else {
 			args.forEach((args) => {
 				this._tasks!.push(
-					this._getTask({
-						type: ServerTaskProvider.CustomBuildScriptType,
-						workspacePath: '',
-						args: args,
-					})
+					this._getTask(
+						{
+							type: ServerTaskProvider.CustomBuildScriptType,
+							args: args,
+						},
+						undefined
+					)
 				);
 			});
 		}
@@ -211,23 +217,11 @@ export class ServerTaskProvider
 
 	private _getTask(
 		definition: ServerTaskDefinition,
-		workspace?: vscode.WorkspaceFolder
+		workspace: vscode.WorkspaceFolder | undefined
 	): vscode.Task {
 		const args = definition.args;
 
-		if (!workspace) {
-			if (definition.workspacePath && definition.workspacePath.length > 0) {
-				try {
-					workspace = vscode.workspace.getWorkspaceFolder(
-						vscode.Uri.parse(definition.workspacePath)
-					);
-				} catch (e) {
-					// no op
-				}
-			}
-		} else {
-			definition.workspacePath = workspace.uri.fsPath;
-		}
+		definition.workspacePath = workspace?.uri.fsPath;
 
 		let taskName = TASK_TERMINAL_BASE_NAME;
 		for (const i in args) {
@@ -239,7 +233,7 @@ export class ServerTaskProvider
 		if (term && term.running) {
 			return new vscode.Task(
 				definition,
-				vscode.TaskScope.Workspace,
+				workspace ?? vscode.TaskScope.Global,
 				taskName,
 				ServerTaskProvider.CustomBuildScriptType,
 				undefined

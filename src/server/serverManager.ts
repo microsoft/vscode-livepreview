@@ -79,7 +79,7 @@ export class ServerManager extends Disposable {
 
 		if (_connection.workspace) {
 			this._watcher = vscode.workspace.createFileSystemWatcher(
-				`{_connection.workspace}**`
+				`${_connection.workspace}**`
 			);
 		} else {
 			this._watcher = vscode.workspace.createFileSystemWatcher('**');
@@ -199,14 +199,6 @@ export class ServerManager extends Disposable {
 				this._pendingLaunchInfo = undefined;
 			}
 		});
-
-		this._connection.onConnected((e) => {
-			this._serverTaskProvider.serverStarted(
-				e.httpURI,
-				ServerStartedStatus.JUST_STARTED,
-				this._connection.workspace
-			);
-		});
 		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, false);
 	}
 
@@ -236,6 +228,9 @@ export class ServerManager extends Disposable {
 			this._httpServer.close();
 			this._wsServer.close();
 			this._isServerOn = false;
+
+			this._serverTaskProvider.serverStop(true, this._connection.workspace);
+
 			this.showServerStatusMessage('Server Stopped');
 			this._onClose.fire();
 			if (
@@ -245,7 +240,7 @@ export class ServerManager extends Disposable {
 				this._previewManager.currentPanel?.close();
 			}
 
-			if (this._serverTaskProvider.isRunning) {
+			if (this._serverTaskProvider.isTaskRunning(this._connection.workspace)) {
 				this._serverTaskProvider.serverStop(true, this._connection.workspace);
 			}
 
@@ -391,12 +386,11 @@ export class ServerManager extends Disposable {
 	 * @param {boolean} relative whether the path was absolute or relative to the current workspace.
 	 * @param {boolean} debug whether or not to run in debug mode.
 	 */
-	public showPreviewInBrowser(
-		file = '/',
-		relative = true,
-		debug = false
+	public showPreviewInBrowser(file: string,
+		relative: boolean,
+		debug: boolean
 	): void {
-		if (!this._serverTaskProvider.isRunning) {
+		if (!this._serverTaskProvider.isTaskRunning(this._connection.workspace)) {
 			if (!this.isRunning) {
 				// set the pending launch info, which will trigger once the server starts in `launchFileInExternalPreview`
 				this._pendingLaunchInfo = {
@@ -422,7 +416,7 @@ export class ServerManager extends Disposable {
 				this._serverTaskProvider.extRunTask(
 					SettingUtil.GetConfig(this._extensionUri)
 						.browserPreviewLaunchServerLogging,
-						this._connection.workspace
+					this._connection.workspace
 				);
 			} else {
 				// global tasks are currently not supported, just turn on server in this case.

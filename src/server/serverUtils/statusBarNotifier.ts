@@ -46,31 +46,33 @@ export class StatusBarNotifier extends Disposable {
 	}
 
 	private _refreshBar() {
-
 		let portsLabel;
 		let portsTooltip;
 
 		if (this._ports.size === 1) {
 			const port = this._ports.values().next().value;
 			portsLabel = localize('port', 'Port: {0}', port);
-			portsTooltip =localize(
+			portsTooltip = localize(
 				'livePreviewRunningOnPort',
 				'Live Preview running on port {0}',
 				port
-		);
+			);
 		} else {
 			if (this._ports.size === 2) {
-				portsLabel = localize('port', 'Ports: {0}', Array.from(this._ports.values()).join(', '));
-
+				portsLabel = localize(
+					'port',
+					'Ports: {0}',
+					Array.from(this._ports.values()).join(', ')
+				);
 			} else {
 				portsLabel = localize('port', '{0} Ports', this._ports.size);
-
 			}
 			portsTooltip = localize(
 				'livePreviewRunningOnPort',
 				'Live Preview running on ports: {0}',
-				`\n\t• ${Array.from(this._ports.values()).join('\n\t• ')}`);
-			}
+				`\n\t• ${Array.from(this._ports.values()).join('\n\t• ')}`
+			);
+		}
 
 		this._statusBar.tooltip = portsTooltip;
 		this._statusBar.text = `$(radio-tower) ${portsLabel}`;

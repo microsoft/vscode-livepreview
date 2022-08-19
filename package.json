@@ -250,9 +250,10 @@
 					"args": {
 						"type": "array",
 						"description": "%tasks.argsDesc%"
-					},
-					"workspaceUri": {
-						"type": "object",
+					}
+          ,
+					"workspacePath": {
+						"type": "string",
 						"description": "%tasks.workspaceUriDesc%"
 					}
 				}

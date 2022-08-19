@@ -99,7 +99,7 @@ export class ConnectionManager extends Disposable {
 		return this.connections.find((e) => e && e.httpPort === port);
 	}
 
-	createAndAddNewConnection(
+	public createAndAddNewConnection(
 		workspaceFolder: vscode.WorkspaceFolder | undefined
 	) {
 		const connection = new Connection(
@@ -115,16 +115,16 @@ export class ConnectionManager extends Disposable {
 		return connection;
 	}
 
-	removeConnection(workspaceFolder: vscode.WorkspaceFolder | undefined) {
+	public removeConnection(workspaceFolder: vscode.WorkspaceFolder | undefined) {
 		this._connections.get(workspaceFolder?.uri)?.dispose;
 		this._connections.delete(workspaceFolder?.uri);
 	}
 
-	getConnection(workspaceFolder: vscode.WorkspaceFolder | undefined) {
+	public getConnection(workspaceFolder: vscode.WorkspaceFolder | undefined) {
 		return this._connections.get(workspaceFolder?.uri);
 	}
 
-	get connections() {
+	public get connections() {
 		return Array.from(this._connections.values());
 	}
 }

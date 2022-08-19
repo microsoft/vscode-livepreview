@@ -135,7 +135,6 @@ export class Manager extends Disposable {
 				} else {
 					const serverManager = this._serverManagers.get(workspace?.uri);
 					serverManager?.closeServer();
-					this._serverTaskProvider.serverStop(true, workspace);
 				}
 			})
 		);
@@ -150,6 +149,7 @@ export class Manager extends Disposable {
 
 				if (PathUtil.AbsPathInAnyWorkspace(file)) {
 					workspace = vscode.workspace.getWorkspaceFolder(file);
+					relative = false;
 				} else {
 					workspace = PathUtil.PathExistsRelativeToAnyWorkspace(file);
 				}
@@ -157,7 +157,7 @@ export class Manager extends Disposable {
 				if (workspace) {
 					const manager = this._getServerManagerFromWorkspace(workspace);
 					if (!manager.pathExistsRelativeToWorkspace(file)) {
-						const absFile = this._previewManager.decodeEndpoint(file);
+						const absFile = this._endpointManager.decodeLooseFileEndpoint(file);
 						file = absFile ?? '/';
 						relative = false;
 					}
@@ -167,7 +167,7 @@ export class Manager extends Disposable {
 					manager.createOrShowEmbeddedPreview(e.webviewPanel, file, relative);
 				} else {
 					const uri = vscode.Uri.parse(file);
-					if (fs.existsSync(uri.fsPath)){
+					if (fs.existsSync(uri.fsPath)) {
 						const manager = this._getServerManagerFromWorkspace(undefined);
 						e.webviewPanel.webview.options =
 							this._previewManager.getWebviewOptions();
@@ -230,31 +230,9 @@ export class Manager extends Disposable {
 		}
 	}
 
-	private _getServerManagerFromFile(
-		file: vscode.Uri | string,
-		fileStringRelative: boolean
-	) {
-		if (fileStringRelative) {
-			return this._getServerManagerFromWorkspace(undefined);
-		} else {
-			let fileUri;
-			if (typeof file == 'string') {
-				fileUri = vscode.Uri.file(file);
-			} else if (file instanceof vscode.Uri) {
-				fileUri = file;
-			} else {
-				return this._getServerManagerFromWorkspace(undefined);
-			}
-			if (fileUri) {
-				const workspace = vscode.workspace.getWorkspaceFolder(fileUri);
-				return this._getServerManagerFromWorkspace(workspace);
-			}
-		}
-	}
-
 	private _getFileInfo(
 		file: vscode.Uri | string | undefined,
-		fileStringRelative = true
+		fileStringRelative: boolean
 	): { filePath: string; isRelative: boolean } {
 		if (typeof file == 'string') {
 			return { filePath: file, isRelative: fileStringRelative };
@@ -278,15 +256,14 @@ export class Manager extends Disposable {
 			}
 		}
 
-		// todo: double-check this case
 		return { filePath: '/', isRelative: fileStringRelative };
 	}
 
-	public handleOpenFileCaller(
+	public handleOpenFile(
 		internal: boolean,
 		file: vscode.Uri | string | undefined,
-		fileStringRelative = true,
-		debug = false,
+		fileStringRelative: boolean,
+		debug: boolean,
 		workspace?: vscode.WorkspaceFolder,
 		port?: number,
 		serverManager?: ServerManager
@@ -302,10 +279,6 @@ export class Manager extends Disposable {
 						serverManager = potentialServerManager;
 						return;
 					}
-					serverManager = this._getServerManagerFromFile(
-						fileInfo.filePath,
-						fileInfo.isRelative
-					);
 				});
 			} else {
 				if (fileInfo.isRelative) {
@@ -315,31 +288,23 @@ export class Manager extends Disposable {
 				} else {
 					workspace = PathUtil.AbsPathInAnyWorkspace(fileInfo.filePath);
 				}
-
-				serverManager = this._getServerManagerFromFile(
-					fileInfo.filePath,
-					fileInfo.isRelative
-				);
+				serverManager = this._getServerManagerFromWorkspace(workspace);
 			}
 		}
-		if (serverManager) {
-			this._openPreview(
-				internal,
-				fileInfo.filePath,
-				serverManager,
-				fileInfo.isRelative,
-				debug
-			);
-			return;
+
+		if (!serverManager) {
+			// last-resort: use loose workspace server.
+			serverManager = this._getServerManagerFromWorkspace(undefined);
 		}
 
-		vscode.window.showErrorMessage(
-			localize(
-				'notPartOfWorkspaceCannotPreview',
-				'This file is not a part of the workspace where the server has started. Cannot preview.'
-			)
+		this._openPreview(
+			internal,
+			fileInfo.filePath,
+			serverManager,
+			fileInfo.isRelative,
+			debug
 		);
-		return; // TODO: show better error
+		return;
 	}
 
 	private _createHostedContentForConnection(connection: Connection) {
@@ -372,10 +337,11 @@ export class Manager extends Disposable {
 				vscode.commands.executeCommand(
 					`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 					filePath,
-					true,
-					serverManager.workspace,
-					undefined,
-					serverManager
+					{
+						relativeFileString: true,
+						workspaceFolder: serverManager.workspace,
+						manager: serverManager,
+					}
 				);
 				return;
 			}
@@ -384,7 +350,7 @@ export class Manager extends Disposable {
 			vscode.commands.executeCommand(
 				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 				filePath,
-				false
+				{ relativeFileString: false }
 			);
 		} else {
 			throw Error();
@@ -401,10 +367,12 @@ export class Manager extends Disposable {
 					vscode.commands.executeCommand(
 						`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 						'/',
-						true,
-						currWorkspace,
-						undefined,
-						manager
+
+						{
+							relativeFileString: true,
+							workspaceFolder: currWorkspace,
+							manager: manager,
+						}
 					);
 					return;
 				}
@@ -413,15 +381,13 @@ export class Manager extends Disposable {
 			vscode.commands.executeCommand(
 				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 				'/',
-				true,
-				workspaces[0],
-				undefined
+				{ relativeFileString: true, workspaceFolder: workspaces[0] }
 			);
 		} else {
 			vscode.commands.executeCommand(
 				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 				'/',
-				false
+				{ relativeFileString: false }
 			);
 		}
 	}

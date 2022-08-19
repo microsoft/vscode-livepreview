@@ -199,21 +199,16 @@ export class BrowserPreview extends Disposable {
 			)}.atFile`;
 
 			if (this._webviewComm.currentConnection.workspace) {
-				vscode.commands.executeCommand(
-					command,
-					uri,
-					true,
-					this._webviewComm.currentConnection.workspace,
-					this._webviewComm.currentConnection.httpPort
-				);
+				vscode.commands.executeCommand(command, uri, {
+					relativeFileString: true,
+					workspaceFolder: this._webviewComm.currentConnection.workspace,
+					port: this._webviewComm.currentConnection.httpPort,
+				});
 			} else {
-				vscode.commands.executeCommand(
-					command,
-					uri,
-					false,
-					undefined,
-					this._webviewComm.currentConnection.httpPort
-				);
+				vscode.commands.executeCommand(command, uri, {
+					relativeFileString: false,
+					port: this._webviewComm.currentConnection.httpPort,
+				});
 			}
 		} else {
 			const uri = vscode.Uri.parse(givenURL);
