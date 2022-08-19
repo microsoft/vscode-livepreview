@@ -26,25 +26,17 @@ export class BrowserPreview extends Disposable {
 	public readonly onDispose = this._onDisposeEmitter.event;
 
 	/**
-	 * @description close the embedded browser.
+	 * get the connection that the webview is currently using
 	 */
-
 	public get currentConnection() {
 		return this._webviewComm.currentConnection;
 	}
 
-	public close(): void {
-		this._panel.dispose();
-	}
-
 	/**
-	 * Show the existing embedded preview.
-	 * @param column which column to show it in.
-	 * @param file the file (pathname) to go to.
+	 * get the webview panel
 	 */
-	public reveal(column: number, file = '/', connection: Connection): void {
-		this._webviewComm.goToFile(file, true, connection);
-		this._panel.reveal(column);
+	public get panel(): vscode.WebviewPanel {
+		return this._panel;
 	}
 
 	constructor(
@@ -90,23 +82,41 @@ export class BrowserPreview extends Disposable {
 
 		this._register(
 			this._webviewComm.onPanelTitleChange((e) => {
-				this.setPanelTitle(e.title, e.pathname);
+				this._setPanelTitle(e.title, e.pathname);
 			})
 		);
 
 		// Handle messages from the webview
 		this._register(
 			this._panel.webview.onDidReceiveMessage((message) =>
-				this.handleWebviewMessage(message)
+				this._handleWebviewMessage(message)
 			)
 		);
+	}
+
+	/**
+	 * @description close the embedded browser.
+	 */
+	public close(): void {
+		this._panel.dispose();
+	}
+
+	/**
+	 * Show the existing embedded preview.
+	 * @param column which column to show it in.
+	 * @param file the file (pathname) to go to.
+	 * @param connection the connection to connect using
+	 */
+	public reveal(column: number, file = '/', connection: Connection): void {
+		this._webviewComm.goToFile(file, true, connection);
+		this._panel.reveal(column);
 	}
 
 	/**
 	 * @description handle messages from the webview (see messages sent from `media/main.js`).
 	 * @param {any} message the message from webview
 	 */
-	private handleWebviewMessage(message: any): void {
+	private _handleWebviewMessage(message: any): void {
 		switch (message.command) {
 			case 'alert':
 				vscode.window.showErrorMessage(message.text);
@@ -127,7 +137,7 @@ export class BrowserPreview extends Disposable {
 				this._webviewComm.goForwards();
 				return;
 			case 'open-browser':
-				this.handleOpenBrowser(message.text);
+				this._handleOpenBrowser(message.text);
 				return;
 			case 'add-history': {
 				const connection = this._connectionManager.getConnectionFromPort(
@@ -140,12 +150,12 @@ export class BrowserPreview extends Disposable {
 				this._webviewComm.updateForwardBackArrows();
 				return;
 			case 'go-to-file':
-				this.goToFullAddress(message.text);
+				this._goToFullAddress(message.text);
 				return;
 
 			case 'console': {
 				const msgJSON = JSON.parse(message.text);
-				this.handleConsole(msgJSON.type, msgJSON.data);
+				this._handleConsole(msgJSON.type, msgJSON.data);
 				return;
 			}
 			case 'devtools-open':
@@ -161,7 +171,7 @@ export class BrowserPreview extends Disposable {
 	 * @param {string} type the type of log
 	 * @param {string} log the log contents
 	 */
-	private handleConsole(type: string, log: string) {
+	private _handleConsole(type: string, log: string) {
 		if (type == 'CLEAR') {
 			this._outputChannel.clear();
 		} else {
@@ -178,15 +188,11 @@ export class BrowserPreview extends Disposable {
 		super.dispose();
 	}
 
-	public get panel(): vscode.WebviewPanel {
-		return this._panel;
-	}
-
 	/**
 	 * Open in external browser. This also warns the user in the case where the URL is external to the hosted content.
 	 * @param {string} givenURL the (full) URL to open up in the external browser.
 	 */
-	private async handleOpenBrowser(givenURL: string) {
+	private async _handleOpenBrowser(givenURL: string) {
 		if (givenURL == '') {
 			// open at current address, needs task start
 			const givenURI = await this._webviewComm.constructAddress(
@@ -242,7 +248,7 @@ export class BrowserPreview extends Disposable {
 	/**
 	 * @param {string} address the (full) address to navigate to; will open in external browser if it is an external address.
 	 */
-	public async goToFullAddress(address: string) {
+	private async _goToFullAddress(address: string) {
 		try {
 			const port = new URL(address).port;
 			if (port === undefined) {
@@ -264,7 +270,7 @@ export class BrowserPreview extends Disposable {
 			const file = address.substr(host.toString().length);
 			this._webviewComm.goToFile(file, true, connection);
 		} catch (e) {
-			this.handleOpenBrowser(address);
+			this._handleOpenBrowser(address);
 		}
 	}
 
@@ -273,7 +279,7 @@ export class BrowserPreview extends Disposable {
 	 * @param {string} title the page title of the page being hosted.
 	 * @param {string} pathname the pathname of the path being hosted.
 	 */
-	private setPanelTitle(title = '', pathname = 'Preview'): void {
+	private _setPanelTitle(title = '', pathname = 'Preview'): void {
 		if (title == '') {
 			pathname = unescape(pathname);
 			if (pathname.length > 0 && pathname[0] == '/') {

@@ -34,7 +34,7 @@ export class WebviewComm extends Disposable {
 		this._register(
 			this._connectionManager.onConnected((e) => {
 				if (e.workspace === this.currentConnection?.workspace) {
-					this.reloadWebview();
+					this._reloadWebview();
 				}
 			})
 		);
@@ -51,7 +51,7 @@ export class WebviewComm extends Disposable {
 	/**
 	 * @description extension-side reload of webivew.
 	 */
-	private reloadWebview() {
+	private _reloadWebview() {
 		this.goToFile(this.currentAddress, false);
 	}
 
@@ -65,7 +65,7 @@ export class WebviewComm extends Disposable {
 	/**
 	 * @returns {Promise<vscode.Uri>} the promise containing the WebSocket URI.
 	 */
-	private async resolveWsHost(connection: Connection): Promise<vscode.Uri> {
+	private async _resolveWsHost(connection: Connection): Promise<vscode.Uri> {
 		return connection.resolveExternalWSUri();
 	}
 
@@ -101,7 +101,7 @@ export class WebviewComm extends Disposable {
 		updateHistory = true,
 		connection: Connection = this.currentConnection
 	) {
-		this.setHtml(this._panel.webview, URLExt, updateHistory, connection);
+		this._setHtml(this._panel.webview, URLExt, updateHistory, connection);
 		this.currentAddress = URLExt;
 	}
 
@@ -111,7 +111,7 @@ export class WebviewComm extends Disposable {
 	 * @param {string} URLExt the pathname appended to the host to navigate the preview to.
 	 * @param {boolean} updateHistory whether or not to update the history from this call.
 	 */
-	private async setHtml(
+	private async _setHtml(
 		webview: vscode.Webview,
 		URLExt: string,
 		updateHistory: boolean,
@@ -120,8 +120,8 @@ export class WebviewComm extends Disposable {
 		this.currentConnection = connection;
 		const httpHost = await this.resolveHost(connection);
 		const url = await this.constructAddress(URLExt, connection, httpHost);
-		const wsURI = await this.resolveWsHost(connection);
-		this._panel.webview.html = this.getHtmlForWebview(
+		const wsURI = await this._resolveWsHost(connection);
+		this._panel.webview.html = this._getHtmlForWebview(
 			webview,
 			url,
 			`ws://${wsURI.authority}${wsURI.path}`,
@@ -151,7 +151,7 @@ export class WebviewComm extends Disposable {
 	 * @param {string} httpServerAddr the address of the HTTP server.
 	 * @returns {string} the html to load in the webview.
 	 */
-	private getHtmlForWebview(
+	private _getHtmlForWebview(
 		webview: vscode.Webview,
 		httpURL: string,
 		wsServerAddr: string,

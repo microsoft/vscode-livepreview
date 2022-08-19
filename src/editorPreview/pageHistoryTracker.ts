@@ -102,6 +102,7 @@ export class PageHistory extends Disposable {
 	 * Stores all directory pathnames without `/` at the end, as allowing for a mix of both
 	 * causes redirection that makes history tracking tricky.
 	 * @param {string} address the address to add.
+	 * @param {Connection} connection the connection to connect using
 	 * @returns {NavResponse | undefined} the state of the back/fowards buttons after adding the item.
 	 */
 	public addHistory(

@@ -81,6 +81,10 @@ export class ServerTaskProvider
 		);
 	}
 
+	/**
+	 * given a workspace, check if there is a task for that workspace that is running
+	 * @param workspace
+	 */
 	public isTaskRunning(workspace: vscode.WorkspaceFolder | undefined): boolean {
 		const term = this._terminals.get(workspace?.uri);
 		return term?.running ?? false;
@@ -102,6 +106,7 @@ export class ServerTaskProvider
 	/**
 	 * @param {vscode.Uri} externalUri the address where the server was started.
 	 * @param {ServerStartedStatus} status information about whether or not the task started the server.
+	 * @param {vscode.WorkspaceFolder | undefined} workspace the workspace associated with this action.
 	 */
 	public serverStarted(
 		externalUri: vscode.Uri,
@@ -117,6 +122,7 @@ export class ServerTaskProvider
 	/**
 	 * Used to notify the terminal the result of their `stop server` request.
 	 * @param {boolean} now whether or not the server stopped just now or whether it will continue to run
+	 * @param {vscode.WorkspaceFolder | undefined} workspace the workspace associated with this action.
 	 */
 	public serverStop(
 		now: boolean,
@@ -135,6 +141,7 @@ export class ServerTaskProvider
 	/**
 	 * Run task manually from extension
 	 * @param {boolean} verbose whether to run with the `--verbose` flag.
+	 * @param {vscode.WorkspaceFolder | undefined} workspace the workspace associated with this action.
 	 */
 	public extRunTask(
 		verbose: boolean,
@@ -166,6 +173,11 @@ export class ServerTaskProvider
 		return this._getTasks();
 	}
 
+	/**
+	 * The function called to create a task from a task definition in tasks.json
+	 * @param _task the task from tasks.json
+	 * @returns
+	 */
 	public resolveTask(_task: vscode.Task): vscode.Task | undefined {
 		const definition: ServerTaskDefinition = <any>_task.definition;
 		let workspace;
@@ -177,6 +189,9 @@ export class ServerTaskProvider
 		return this._getTask(definition, workspace);
 	}
 
+	/**
+	 * @returns the array of all possible tasks
+	 */
 	private _getTasks(): vscode.Task[] {
 		if (this._tasks !== undefined) {
 			return this._tasks;
@@ -215,6 +230,12 @@ export class ServerTaskProvider
 		return this._tasks;
 	}
 
+	/**
+	 * make a task for this configuration
+	 * @param definition
+	 * @param workspace
+	 * @returns the task with the proper details and callback
+	 */
 	private _getTask(
 		definition: ServerTaskDefinition,
 		workspace: vscode.WorkspaceFolder | undefined

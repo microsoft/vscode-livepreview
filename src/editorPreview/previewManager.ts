@@ -15,6 +15,10 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import * as nls from 'vscode-nls';
 
 const localize = nls.loadMessageBundle();
+
+/**
+ * PreviewManager` is a singleton that handles the logic of opening the embedded preview.
+ */
 export class PreviewManager extends Disposable {
 	private readonly _outputChannel: vscode.OutputChannel;
 	public previewActive = false;
@@ -23,9 +27,6 @@ export class PreviewManager extends Disposable {
 	private _currentTimeout: NodeJS.Timeout | undefined;
 	private _runTaskWithExternalPreview;
 
-	public get runTaskWithExternalPreview() {
-		return this._runTaskWithExternalPreview;
-	}
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
@@ -53,10 +54,100 @@ export class PreviewManager extends Disposable {
 
 	public readonly onConnected = this._onShouldCloseServer.event;
 
+	public get runTaskWithExternalPreview() {
+		return this._runTaskWithExternalPreview;
+	}
+
+	/**
+	 * Actually launch the embedded browser preview (caller guarantees that the server has started.)
+	 * @param {string} file the filesystem path to preview.
+	 * @param {boolean} relative whether the path is relative.
+	 * @param {vscode.WebviewPanel | undefined} panel the webview panel to reuse if defined.
+	 * @param {Connection} connection the connection to connect using
+	 */
+	public launchFileInEmbeddedPreview(
+		file: string,
+		relative: boolean,
+		panel: vscode.WebviewPanel | undefined,
+		connection: Connection
+	) {
+		file = relative ? file : this._transformNonRelativeFile(file, connection);
+		// If we already have a panel, show it.
+		if (this.currentPanel) {
+			this.currentPanel.reveal(vscode.ViewColumn.Beside, file, connection);
+			return;
+		}
+
+		if (!panel) {
+			// Otherwise, create a new panel.
+			panel = vscode.window.createWebviewPanel(
+				BrowserPreview.viewType,
+				INIT_PANEL_TITLE,
+				vscode.ViewColumn.Beside,
+				{
+					...this.getWebviewOptions(),
+					...this._getWebviewPanelOptions(),
+				}
+			);
+		}
+
+		this._startEmbeddedPreview(panel, file, connection);
+	}
+
+	/**
+	 * Actually launch the external browser preview (caller guarantees that the server has started.)
+	 * @param {string} file the filesystem path to preview.
+	 * @param {boolean} relative whether the path is relative.
+	 * @param {boolean} debug whether we are opening in a debug session.
+	 * @param {Connection} connection the connection to connect using
+	 */
+	public launchFileInExternalBrowser(
+		file: string,
+		relative: boolean,
+		debug: boolean,
+		connection: Connection
+	) {
+		const relFile = relative
+			? file
+			: PathUtil.ConvertToUnixPath(
+					this._transformNonRelativeFile(file, connection)
+			  );
+
+		const url = `http://${connection.host}:${connection.httpPort}${relFile}`;
+		if (debug) {
+			vscode.commands.executeCommand('extension.js-debug.debugLink', url);
+		} else {
+			// will already resolve to local address
+			vscode.env.openExternal(vscode.Uri.parse(url));
+		}
+	}
+
+	/**
+	 * @returns {WebviewOptions} the webview options to allow us to load the files we need in the webivew.
+	 */
+	public getWebviewOptions(): vscode.WebviewOptions {
+		const options = {
+			// Enable javascript in the webview
+			enableScripts: true,
+
+			localResourceRoots: [
+				vscode.Uri.joinPath(this._extensionUri, 'media'),
+				vscode.Uri.joinPath(
+					this._extensionUri,
+					'node_modules',
+					'@vscode',
+					'codicons',
+					'dist'
+				),
+			],
+		};
+		return options;
+	}
+
 	/**
 	 * @description notify the user that they are opening a file outside the current workspace(s).
 	 */
-	private notifyLooseFileOpen(): void {
+	private _notifyLooseFileOpen(): void {
 		/* __GDPR__
 			"preview.fileOutOfWorkspace" : {}
 		*/
@@ -86,80 +177,20 @@ export class PreviewManager extends Disposable {
 	 * Transforms non-relative files into a path that can be used by the server.
 	 * @param {boolean} relative whether the path is relative (if not relative, returns `file`).
 	 * @param {string} file the path to potentially transform.
+	 * @param {Connection} connection the connection to connect using
 	 * @returns {string} the transformed path if the original `file` was realtive.
 	 */
-	private transformNonRelativeFile(
-		relative: boolean,
+	private _transformNonRelativeFile(
 		file: string,
-		connection: Connection | undefined
+		connection: Connection
 	): string {
 		if (!connection?.workspace) {
-			this.notifyLooseFileOpen();
+			this._notifyLooseFileOpen();
 			file = this._endpointManager.encodeLooseFileEndpoint(file);
-		} else if (!relative && connection) {
+		} else if (connection) {
 			file = connection.getFileRelativeToWorkspace(file) ?? '';
 		}
 		return file;
-	}
-
-	/**
-	 * Actually launch the embedded browser preview (caller guarantees that the server has started.)
-	 * @param {string} file the filesystem path to preview.
-	 * @param {boolean} relative whether the path is relative.
-	 * @param {vscode.WebviewPanel | undefined} panel the webview panel to reuse if defined.
-	 */
-	public launchFileInEmbeddedPreview(
-		file: string,
-		relative: boolean,
-		panel: vscode.WebviewPanel | undefined,
-		connection: Connection
-	) {
-		file = this.transformNonRelativeFile(relative, file, connection);
-		// If we already have a panel, show it.
-		if (this.currentPanel) {
-			this.currentPanel.reveal(vscode.ViewColumn.Beside, file, connection);
-			return;
-		}
-
-		if (!panel) {
-			// Otherwise, create a new panel.
-			panel = vscode.window.createWebviewPanel(
-				BrowserPreview.viewType,
-				INIT_PANEL_TITLE,
-				vscode.ViewColumn.Beside,
-				{
-					...this.getWebviewOptions(),
-					...this.getWebviewPanelOptions(),
-				}
-			);
-		}
-
-		this.startEmbeddedPreview(panel, file, connection);
-	}
-
-	/**
-	 * Actually launch the external browser preview (caller guarantees that the server has started.)
-	 * @param {string} file the filesystem path to preview.
-	 * @param {boolean} relative whether the path is relative.
-	 * @param {boolean} debug whether we are opening in a debug session.
-	 */
-	public launchFileInExternalBrowser(
-		file: string,
-		relative: boolean,
-		debug: boolean,
-		connection: Connection
-	) {
-		const relFile = PathUtil.ConvertToUnixPath(
-			this.transformNonRelativeFile(relative, file, connection)
-		);
-
-		const url = `http://${connection.host}:${connection.httpPort}${relFile}`;
-		if (debug) {
-			vscode.commands.executeCommand('extension.js-debug.debugLink', url);
-		} else {
-			// will already resolve to local address
-			vscode.env.openExternal(vscode.Uri.parse(url));
-		}
 	}
 
 	/**
@@ -168,8 +199,9 @@ export class PreviewManager extends Disposable {
 	 * or if a task is not runnning. Because of this, a timer is triggerred upon webview (embedded preview) disposal/closing.
 	 * @param {vscode.WebviewPanel} panel the panel to use to open the preview.
 	 * @param {string} file the path to preview relative to index (should already be encoded).
+	 * @param {Connection} connection the connection to connect using
 	 */
-	private startEmbeddedPreview(
+	private _startEmbeddedPreview(
 		panel: vscode.WebviewPanel,
 		file: string,
 		connection: Connection
@@ -206,32 +238,10 @@ export class PreviewManager extends Disposable {
 			})
 		);
 	}
-
-	/**
-	 * @returns {WebviewOptions} the webview options to allow us to load the files we need in the webivew.
-	 */
-	public getWebviewOptions(): vscode.WebviewOptions {
-		const options = {
-			// Enable javascript in the webview
-			enableScripts: true,
-
-			localResourceRoots: [
-				vscode.Uri.joinPath(this._extensionUri, 'media'),
-				vscode.Uri.joinPath(
-					this._extensionUri,
-					'node_modules',
-					'@vscode',
-					'codicons',
-					'dist'
-				),
-			],
-		};
-		return options;
-	}
 	/**
 	 * @returns {vscode.WebviewPanelOptions} the webview panel options to allow it to always retain context.
 	 */
-	private getWebviewPanelOptions(): vscode.WebviewPanelOptions {
+	private _getWebviewPanelOptions(): vscode.WebviewPanelOptions {
 		return {
 			retainContextWhenHidden: true,
 		};

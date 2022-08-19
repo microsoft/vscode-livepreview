@@ -32,7 +32,6 @@ export class serverTaskLinkProvider
 	constructor(
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
-		// private readonly _workspaceManager: WorkspaceManager,
 		private readonly _connectionManager: ConnectionManager
 	) {
 		super();

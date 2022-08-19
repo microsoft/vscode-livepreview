@@ -5,11 +5,8 @@ import * as path from 'path';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { INJECTED_ENDPOINT_NAME } from '../utils/constants';
-// import { serverMsg } from '../serverGrouping';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
-// import { WorkspaceManager } from '../infoManagers/workspaceManager';
-import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
 import { serverMsg } from './serverManager';
@@ -17,24 +14,16 @@ import { serverMsg } from './serverManager';
 export class HttpServer extends Disposable {
 	private _server: any;
 	private _contentLoader: ContentLoader;
-	// public port = 0;
 
 	constructor(
 		_extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
-		// private readonly _workspaceManager: WorkspaceManager,
 		private readonly _connection: Connection
 	) {
 		super();
 		this._contentLoader = this._register(
-			new ContentLoader(
-				_extensionUri,
-				_reporter,
-				_endpointManager,
-				// _workspaceManager,
-				_connection
-			)
+			new ContentLoader(_extensionUri, _reporter, _endpointManager, _connection)
 		);
 	}
 
@@ -78,7 +67,7 @@ export class HttpServer extends Disposable {
 	public start(port: number): void {
 		this._connection.httpPort = port;
 		this._contentLoader.resetServedFiles();
-		this.startHttpServer();
+		this._startHttpServer();
 	}
 
 	/**
@@ -92,8 +81,8 @@ export class HttpServer extends Disposable {
 	 * @description contains all of the listeners required to start the server and recover on port collision.
 	 * @returns {boolean} whether the HTTP server started successfully (currently only returns true)
 	 */
-	private startHttpServer(): boolean {
-		this._server = this.createServer();
+	private _startHttpServer(): boolean {
+		this._server = this._createServer();
 
 		this._server.on('listening', () => {
 			console.log(`Server is running on port ${this._connection.httpPort}`);
@@ -132,13 +121,13 @@ export class HttpServer extends Disposable {
 	 * @param {http.IncomingMessage} req the request received
 	 * @param {http.ServerResponse} res the response to be loaded
 	 */
-	private serveStream(
+	private _serveStream(
 		basePath: string | undefined,
 		req: http.IncomingMessage,
 		res: http.ServerResponse
 	): void {
 		if (!req || !req.url) {
-			this.reportAndReturn(500, req, res);
+			this._reportAndReturn(500, req, res);
 			return;
 		}
 
@@ -164,7 +153,7 @@ export class HttpServer extends Disposable {
 				'Accept-Ranges': 'bytes',
 				'Content-Type': respInfo.ContentType,
 			});
-			this.reportStatus(req, res);
+			this._reportStatus(req, res);
 			stream = respInfo.Stream;
 
 			stream?.pipe(res);
@@ -210,7 +199,7 @@ export class HttpServer extends Disposable {
 					'Accept-Ranges': 'bytes',
 					'Content-Type': respInfo.ContentType,
 				});
-				this.reportStatus(req, res);
+				this._reportStatus(req, res);
 				stream = respInfo.Stream;
 				stream?.pipe(res);
 				return;
@@ -224,7 +213,7 @@ export class HttpServer extends Disposable {
 
 				URLPathName = encodeURI(URLPathName);
 				res.setHeader('Location', `${URLPathName}/${queries}`);
-				this.reportAndReturn(302, req, res); // redirect
+				this._reportAndReturn(302, req, res); // redirect
 				return;
 			}
 
@@ -254,7 +243,7 @@ export class HttpServer extends Disposable {
 
 		if (stream) {
 			stream.on('error', () => {
-				this.reportAndReturn(500, req, res);
+				this._reportAndReturn(500, req, res);
 				return;
 			});
 			res.writeHead(200, {
@@ -263,20 +252,20 @@ export class HttpServer extends Disposable {
 			});
 			stream.pipe(res);
 		} else {
-			this.reportAndReturn(500, req, res);
+			this._reportAndReturn(500, req, res);
 			return;
 		}
 
-		this.reportStatus(req, res);
+		this._reportStatus(req, res);
 		return;
 	}
 
 	/**
 	 * @returns the created HTTP server with the serving logic.
 	 */
-	private createServer(): http.Server {
+	private _createServer(): http.Server {
 		return http.createServer((req, res) =>
-			this.serveStream(this._basePath, req, res)
+			this._serveStream(this._basePath, req, res)
 		);
 	}
 
@@ -286,13 +275,13 @@ export class HttpServer extends Disposable {
 	 * @param {http.IncomingMessage} req the request object
 	 * @param {http.ServerResponse} res the response object
 	 */
-	private reportAndReturn(
+	private _reportAndReturn(
 		status: number,
 		req: http.IncomingMessage,
 		res: http.ServerResponse
 	): void {
 		res.writeHead(status);
-		this.reportStatus(req, res);
+		this._reportStatus(req, res);
 		res.end();
 	}
 
@@ -301,7 +290,7 @@ export class HttpServer extends Disposable {
 	 * @param {http.IncomingMessage} req the request object
 	 * @param {http.ServerResponse} res the response object
 	 */
-	private reportStatus(req: http.IncomingMessage, res: http.ServerResponse) {
+	private _reportStatus(req: http.IncomingMessage, res: http.ServerResponse) {
 		this._onNewReqProcessed.fire({
 			method: req.method ?? '',
 			url: req.url ?? '',

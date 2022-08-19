@@ -59,9 +59,9 @@ export class WSServerWithOriginCheck extends WebSocket.Server {
  *	 the embedded preview to provide the appropriate information and refresh the history.
  */
 export class WSServer extends Disposable {
+	public wsPort = 0;
 	private _wss: WSServerWithOriginCheck | undefined;
 	private _wsPath!: string;
-	private _wsPort = 0;
 
 	public set externalHostName(hostName: string) {
 		if (this._wss) {
@@ -94,14 +94,6 @@ export class WSServer extends Disposable {
 		return this._wsPath;
 	}
 
-	public get wsPort() {
-		return this._wsPort;
-	}
-
-	public set wsPort(portNum: number) {
-		this._wsPort = portNum;
-	}
-
 	// once connected, we must let the server manager know, as it needs to know when both servers are ready.
 	private readonly _onConnected = this._register(
 		new vscode.EventEmitter<void>()
@@ -113,9 +105,9 @@ export class WSServer extends Disposable {
 	 * @param {number} wsPort the port to try to connect to.
 	 */
 	public start(wsPort: number): void {
-		this._wsPort = wsPort;
+		this.wsPort = wsPort;
 		this._wsPath = `/${randomBytes(20).toString('hex')}`;
-		this.startWSServer(this._basePath ?? '');
+		this._startWSServer(this._basePath ?? '');
 	}
 
 	/**
@@ -142,17 +134,17 @@ export class WSServer extends Disposable {
 	 * @param {string} basePath the path where the server index is hosted.
 	 * @returns {boolean} whether the server has successfully started.
 	 */
-	private startWSServer(basePath: string): boolean {
+	private _startWSServer(basePath: string): boolean {
 		this._wss = new WSServerWithOriginCheck({
-			port: this._wsPort,
+			port: this.wsPort,
 			host: this._connection.host,
 			path: this._wsPath,
 		});
 		this._wss.on('connection', (ws: WebSocket) =>
-			this.handleWSConnection(basePath, ws)
+			this._handleWSConnection(basePath, ws)
 		);
-		this._wss.on('error', (err: Error) => this.handleWSError(basePath, err));
-		this._wss.on('listening', () => this.handleWSListen());
+		this._wss.on('error', (err: Error) => this._handleWSError(basePath, err));
+		this._wss.on('listening', () => this._handleWSListen());
 		return true;
 	}
 
@@ -160,13 +152,13 @@ export class WSServer extends Disposable {
 	 * @param {string} basePath the path where the server index is hosted.
 	 * @param {any} err the error received.
 	 */
-	private handleWSError(basePath: string, err: any): void {
+	private _handleWSError(basePath: string, err: any): void {
 		if (err.code == 'EADDRINUSE') {
-			this._wsPort++;
-			this.startWSServer(basePath);
+			this.wsPort++;
+			this._startWSServer(basePath);
 		} else if (err.code == 'EADDRNOTAVAIL') {
 			this._connection.resetHostToDefault();
-			this.startWSServer(basePath);
+			this._startWSServer(basePath);
 		} else {
 			/* __GDPR__
 				"server.err" : {
@@ -185,8 +177,8 @@ export class WSServer extends Disposable {
 	/**
 	 * @description handle the websocket successfully connecting.
 	 */
-	private handleWSListen(): void {
-		console.log(`Websocket server is running on port ${this._wsPort}`);
+	private _handleWSListen(): void {
+		console.log(`Websocket server is running on port ${this.wsPort}`);
 		this._onConnected.fire();
 	}
 
@@ -195,13 +187,13 @@ export class WSServer extends Disposable {
 	 * @param {string} basePath the path where the server index is hosted.
 	 * @param {WebSocket} ws the websocket server instance.
 	 */
-	private handleWSConnection(basePath: string, ws: WebSocket): void {
+	private _handleWSConnection(basePath: string, ws: WebSocket): void {
 		ws.on('message', (message: string) => {
 			const parsedMessage = JSON.parse(message);
 			switch (parsedMessage.command) {
 				// perform the url check
 				case 'urlCheck': {
-					const results = this.performTargetInjectableCheck(
+					const results = this._performTargetInjectableCheck(
 						basePath,
 						parsedMessage.url
 					);
@@ -230,7 +222,7 @@ export class WSServer extends Disposable {
 	 * @returns {boolean,string} info on injectability, in addition to the pathname
 	 * 	in case it needs to be forwarded to the webview.
 	 */
-	private performTargetInjectableCheck(
+	private _performTargetInjectableCheck(
 		basePath: string,
 		urlString: string
 	): { injectable: boolean; pathname: string; port: number } {

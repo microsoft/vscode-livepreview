@@ -58,10 +58,6 @@ export class ServerManager extends Disposable {
 	private _httpConnected = false;
 	private readonly _watcher;
 
-	public get port(): number | undefined {
-		return this._connection.httpPort;
-	}
-
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		_reporter: TelemetryReporter,
@@ -77,13 +73,7 @@ export class ServerManager extends Disposable {
 			new HttpServer(_extensionUri, _reporter, _endpointManager, _connection)
 		);
 
-		if (_connection.workspace) {
-			this._watcher = vscode.workspace.createFileSystemWatcher(
-				`${_connection.workspace}**`
-			);
-		} else {
-			this._watcher = vscode.workspace.createFileSystemWatcher('**');
-		}
+		this._watcher = vscode.workspace.createFileSystemWatcher('**');
 
 		this._wsServer = this._register(
 			new WSServer(_reporter, _endpointManager, _connection)
@@ -159,7 +149,7 @@ export class ServerManager extends Disposable {
 			this._wsServer.onConnected(() => {
 				this._wsConnected = true;
 				if (this._wsConnected && this._httpConnected) {
-					this.connected();
+					this._connected();
 				}
 			})
 		);
@@ -168,7 +158,7 @@ export class ServerManager extends Disposable {
 			this._httpServer.onConnected((e) => {
 				this._httpConnected = true;
 				if (this._wsConnected && this._httpConnected) {
-					this.connected();
+					this._connected();
 				}
 			})
 		);
@@ -202,11 +192,15 @@ export class ServerManager extends Disposable {
 		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, false);
 	}
 
+	public get port(): number | undefined {
+		return this._connection.httpPort;
+	}
+
 	public get workspace(): vscode.WorkspaceFolder | undefined {
 		return this._connection.workspace;
 	}
 	/**
-	 * @returns {boolean} whether the HTTP server is on.
+	 * @returns {boolean} whether the servers are on.
 	 */
 	public get isRunning(): boolean {
 		return this._isServerOn;
@@ -231,16 +225,18 @@ export class ServerManager extends Disposable {
 
 			this._serverTaskProvider.serverStop(true, this._connection.workspace);
 
-			this.showServerStatusMessage('Server Stopped');
+			this._showServerStatusMessage('Server Stopped');
 			this._onClose.fire();
 			if (
 				this._previewManager.currentPanel &&
 				this._previewManager.currentPanel.currentConnection === this._connection
 			) {
+				// close the preview if it is showing this server's content
 				this._previewManager.currentPanel?.close();
 			}
 
 			if (this._serverTaskProvider.isTaskRunning(this._connection.workspace)) {
+				// stop the associated task
 				this._serverTaskProvider.serverStop(true, this._connection.workspace);
 			}
 
@@ -261,7 +257,7 @@ export class ServerManager extends Disposable {
 			this._httpConnected = false;
 			this._wsConnected = false;
 			if (this._extensionUri) {
-				this.findFreePort(port, (freePort: number) => {
+				this._findFreePort(port, (freePort: number) => {
 					this._httpServer.start(freePort);
 					this._wsServer.start(freePort + 1);
 				});
@@ -292,101 +288,13 @@ export class ServerManager extends Disposable {
 	}
 
 	/**
-	 * @description whether to reload on file save.
-	 */
-	private get _reloadOnSave(): boolean {
-		return (
-			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
-			AutoRefreshPreview.onSave
-		);
-	}
-
-	/**
-	 * Find the first free port following (or on) the initial port configured in settings
-	 * @param startPort the port to start the check on
-	 * @param callback the callback triggerred when a free port has been found.
-	 */
-	private findFreePort(
-		startPort: number,
-		callback: (port: number) => void
-	): void {
-		let port = startPort;
-		const sock = new net.Socket();
-		const host = this._connection.host;
-		sock.setTimeout(500);
-		sock.on('connect', function () {
-			sock.destroy();
-			port++;
-			sock.connect(port, host);
-		});
-		sock.on('error', function (e) {
-			callback(port);
-			return;
-		});
-		sock.on('timeout', function () {
-			callback(port);
-			return;
-		});
-		sock.connect(port, host);
-	}
-
-	/**
-	 * @description called when both servers are connected. Performs operations to update server status.
-	 */
-	private connected() {
-		this._isServerOn = true;
-		this._statusBar.setServer(
-			this._connection.workspace?.uri,
-			this._connection.httpPort
-		);
-
-		this.showServerStatusMessage(
-			localize(
-				'serverStartedOnPort',
-				'Server Started on Port {0}',
-				this._connection.httpPort
-			)
-		);
-		this._connection.connected(
-			this._connection.httpPort,
-			this._wsServer.wsPort,
-			this._wsServer.wsPath
-		);
-		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, true);
-	}
-
-	/**
-	 * @description show messages related to server status updates if configured to do so in settings.
-	 * @param messsage message to show.
-	 */
-	private showServerStatusMessage(messsage: string) {
-		if (
-			SettingUtil.GetConfig(this._extensionUri).showServerStatusNotifications
-		) {
-			vscode.window
-				.showInformationMessage(messsage, DONT_SHOW_AGAIN)
-				.then((selection: vscode.MessageItem | undefined) => {
-					if (selection == DONT_SHOW_AGAIN) {
-						SettingUtil.UpdateSettings(
-							Settings.showServerStatusNotifications,
-							false
-						);
-					}
-				});
-		}
-	}
-
-	dispose() {
-		this.closeServer();
-	}
-
-	/**
 	 * Opens the preview in an external browser.
 	 * @param {string} file the filesystem path to open in the preview.
 	 * @param {boolean} relative whether the path was absolute or relative to the current workspace.
 	 * @param {boolean} debug whether or not to run in debug mode.
 	 */
-	public showPreviewInBrowser(file: string,
+	public showPreviewInBrowser(
+		file: string,
 		relative: boolean,
 		debug: boolean
 	): void {
@@ -480,5 +388,94 @@ export class ServerManager extends Disposable {
 	 */
 	public pathExistsRelativeToWorkspace(file: string): boolean {
 		return this._connection.pathExistsRelativeToWorkspace(file);
+	}
+
+	/**
+	 * @description whether to reload on file save.
+	 */
+	private get _reloadOnSave(): boolean {
+		return (
+			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
+			AutoRefreshPreview.onSave
+		);
+	}
+
+	/**
+	 * Find the first free port following (or on) the initial port configured in settings
+	 * @param startPort the port to start the check on
+	 * @param callback the callback triggerred when a free port has been found.
+	 */
+	private _findFreePort(
+		startPort: number,
+		callback: (port: number) => void
+	): void {
+		let port = startPort;
+		const sock = new net.Socket();
+		const host = this._connection.host;
+		sock.setTimeout(500);
+		sock.on('connect', function () {
+			sock.destroy();
+			port++;
+			sock.connect(port, host);
+		});
+		sock.on('error', function (e) {
+			callback(port);
+			return;
+		});
+		sock.on('timeout', function () {
+			callback(port);
+			return;
+		});
+		sock.connect(port, host);
+	}
+
+	/**
+	 * @description called when both servers are connected. Performs operations to update server status.
+	 */
+	private _connected() {
+		this._isServerOn = true;
+		this._statusBar.setServer(
+			this._connection.workspace?.uri,
+			this._connection.httpPort
+		);
+
+		this._showServerStatusMessage(
+			localize(
+				'serverStartedOnPort',
+				'Server Started on Port {0}',
+				this._connection.httpPort
+			)
+		);
+		this._connection.connected(
+			this._connection.httpPort,
+			this._wsServer.wsPort,
+			this._wsServer.wsPath
+		);
+		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, true);
+	}
+
+	/**
+	 * @description show messages related to server status updates if configured to do so in settings.
+	 * @param messsage message to show.
+	 */
+	private _showServerStatusMessage(messsage: string) {
+		if (
+			SettingUtil.GetConfig(this._extensionUri).showServerStatusNotifications
+		) {
+			vscode.window
+				.showInformationMessage(messsage, DONT_SHOW_AGAIN)
+				.then((selection: vscode.MessageItem | undefined) => {
+					if (selection == DONT_SHOW_AGAIN) {
+						SettingUtil.UpdateSettings(
+							Settings.showServerStatusNotifications,
+							false
+						);
+					}
+				});
+		}
+	}
+
+	dispose() {
+		this.closeServer();
 	}
 }

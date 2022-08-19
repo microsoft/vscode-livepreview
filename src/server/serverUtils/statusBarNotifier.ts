@@ -84,7 +84,7 @@ export class StatusBarNotifier extends Disposable {
 	}
 
 	/**
-	 * @description called to notify that the servers shut down.
+	 * @description called to notify that all of the servers are off
 	 */
 	public ServerOff(): void {
 		this._on = false;

@@ -133,7 +133,7 @@ export class PathUtil {
 	}
 
 	/**
-	 * @description Similar to `absPathInDefaultWorkspace`, but checks all workspaces.
+	 * @description Similar to `_absPathInWorkspace`, but checks all workspaces and returns the matching workspace.
 	 * @param {string} path path to test.
 	 * @returns {vscode.WorkspaceFolder | undefined} the workspace it belongs to
 	 */
@@ -152,8 +152,8 @@ export class PathUtil {
 	}
 
 	/**
-	 * @description Just like `pathExistsRelativeToDefaultWorkspace`, but tests all workspaces and returns the workspace
-	 * @param {string} path path to test.
+	 * @description Just like `pathExistsRelativeToDefaultWorkspace`, but tests all workspaces and returns the matching workspace.
+	 * @param {string} file path to test.
 	 * @returns {vscode.WorkspaceFolder | undefined} the workspace it belongs to
 	 */
 	public static PathExistsRelativeToAnyWorkspace(

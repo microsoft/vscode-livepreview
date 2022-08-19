@@ -40,11 +40,11 @@ export class ServerTaskTerminal
 	private readonly _verbose;
 
 	// `writeEmitter` and `closeEmitter` are inherited from the pseudoterminal.
-	private writeEmitter = new vscode.EventEmitter<string>();
-	onDidWrite: vscode.Event<string> = this.writeEmitter.event;
+	private _onDidWrite = new vscode.EventEmitter<string>();
+	onDidWrite: vscode.Event<string> = this._onDidWrite.event;
 
-	public closeEmitter = new vscode.EventEmitter<number>();
-	onDidClose?: vscode.Event<number> = this.closeEmitter.event;
+	public _onDidClose = new vscode.EventEmitter<number>();
+	onDidClose?: vscode.Event<number> = this._onDidClose.event;
 
 	constructor(
 		args: string[],
@@ -66,12 +66,12 @@ export class ServerTaskTerminal
 		// At this point we can start using the terminal.
 		if (this._executeServer) {
 			this.running = true;
-			this.writeEmitter.fire(
+			this._onDidWrite.fire(
 				localize('openingServer', 'Opening Server...') + '\r\n'
 			);
 			this._onRequestToOpenServerEmitter.fire(this._workspace);
 		} else {
-			this.writeEmitter.fire(
+			this._onDidWrite.fire(
 				localize(
 					'serverAlreadyRunning',
 					'Server already running in another task. Closing now.'
@@ -85,15 +85,15 @@ export class ServerTaskTerminal
 		this.running = false;
 		if (this._executeServer) {
 			this._onRequestToCloseServerEmitter.fire(this._workspace);
-			this.closeEmitter.fire(0);
+			this._onDidClose.fire(0);
 		} else {
-			this.closeEmitter.fire(1);
+			this._onDidClose.fire(1);
 		}
 	}
 
 	public handleInput(data: string): void {
 		if (data.length > 0 && data.charCodeAt(0) == CHAR_CODE_CTRL_C) {
-			this.writeEmitter.fire(
+			this._onDidWrite.fire(
 				localize('serverClosing', 'Closing the server...') + '\r\n'
 			);
 
@@ -112,7 +112,7 @@ export class ServerTaskTerminal
 	): void {
 		const formattedAddress = this._formatAddr(externalUri.toString());
 		if (!this._verbose) {
-			this.writeEmitter.fire(
+			this._onDidWrite.fire(
 				localize(
 					{
 						key: 'noLoggerWarning',
@@ -127,7 +127,7 @@ export class ServerTaskTerminal
 		}
 		switch (status) {
 			case ServerStartedStatus.JUST_STARTED: {
-				this.writeEmitter.fire(
+				this._onDidWrite.fire(
 					localize(
 						'startedServer',
 						'Started Server on {0}',
@@ -137,7 +137,7 @@ export class ServerTaskTerminal
 				break;
 			}
 			case ServerStartedStatus.STARTED_BY_EMBEDDED_PREV: {
-				this.writeEmitter.fire(
+				this._onDidWrite.fire(
 					localize(
 						'serverAlreadyStarted',
 						'Server already on at {0}',
@@ -147,7 +147,7 @@ export class ServerTaskTerminal
 				break;
 			}
 		}
-		this.writeEmitter.fire(
+		this._onDidWrite.fire(
 			localize(
 				'ctrlCToCloseServer',
 				'Type {0} to close the server.',
@@ -164,7 +164,7 @@ export class ServerTaskTerminal
 	 * @description Called by the parent to tell the terminal that the server has stopped. May have been a result of the task ending or the result of a manual server shutdown.
 	 */
 	public serverStopped(): void {
-		this.writeEmitter.fire(localize('serverStopped', 'Server stopped. Bye!'));
+		this._onDidWrite.fire(localize('serverStopped', 'Server stopped. Bye!'));
 		this.close();
 	}
 
@@ -172,13 +172,13 @@ export class ServerTaskTerminal
 	 * Called the parent to tell the terminal that is it safe to end the task, but the server will continue to be on to support the embedded preview. This will end the task.
 	 */
 	public serverWillBeStopped(): void {
-		this.writeEmitter.fire(
+		this._onDidWrite.fire(
 			localize(
 				'taskFinished',
 				`This task will finish now, but the server will stay on since you've used the embedded preview recently.`
 			) + '\r\n'
 		);
-		this.writeEmitter.fire(
+		this._onDidWrite.fire(
 			TerminalStyleUtil.ColorTerminalString(
 				localize(
 					'runToStopServer',
@@ -198,7 +198,7 @@ export class ServerTaskTerminal
 		if (this._verbose) {
 			const date = new Date();
 
-			this.writeEmitter.fire(
+			this._onDidWrite.fire(
 				`[${FormatDateTime(date, ' ')}] ${
 					msg.method
 				}: ${TerminalStyleUtil.ColorTerminalString(

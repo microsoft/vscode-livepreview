@@ -1,8 +1,6 @@
 import './setupNls';
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { BrowserPreview } from './editorPreview/browserPreview';
 import { EXTENSION_ID } from './utils/constants';
 import { PathUtil } from './utils/pathUtil';
 import {

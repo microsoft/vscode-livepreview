@@ -20,6 +20,8 @@ export interface ConnectionInfo {
 /**
  * @description the instance that keeps track of the host and port information for the http and websocket servers.
  * Upon requesting the host, it will resolve its external URI before returning it.
+ * There is one `Connection` per `ServerManager`, but connections are kept within the ConnectionManager because this info
+ * is also needed from the `PreviewManager`.
  */
 export class Connection extends Disposable {
 	public httpServerBase: string | undefined;
@@ -50,8 +52,8 @@ export class Connection extends Disposable {
 		this._wsPort = wsPort;
 		this._wsPath = wsPath;
 
-		const httpPortUri = this.constructLocalUri(this.httpPort);
-		const wsPortUri = this.constructLocalUri(this._wsPort, this._wsPath);
+		const httpPortUri = this._constructLocalUri(this.httpPort);
+		const wsPortUri = this._constructLocalUri(this._wsPort, this._wsPath);
 
 		vscode.env.asExternalUri(httpPortUri).then((externalHTTPUri) => {
 			vscode.env.asExternalUri(wsPortUri).then((externalWSUri) => {
@@ -79,7 +81,7 @@ export class Connection extends Disposable {
 	 * @returns {Promise<vscode.Uri>} a promise for the HTTP URI
 	 */
 	public async resolveExternalHTTPUri(): Promise<vscode.Uri> {
-		const httpPortUri = this.constructLocalUri(this.httpPort);
+		const httpPortUri = this._constructLocalUri(this.httpPort);
 		return vscode.env.asExternalUri(httpPortUri);
 	}
 	/**
@@ -87,14 +89,16 @@ export class Connection extends Disposable {
 	 * @returns {Promise<vscode.Uri>} a promise for the WS URI
 	 */
 	public async resolveExternalWSUri(): Promise<vscode.Uri> {
-		const wsPortUri = this.constructLocalUri(this._wsPort, this._wsPath);
+		const wsPortUri = this._constructLocalUri(this._wsPort, this._wsPath);
 		return vscode.env.asExternalUri(wsPortUri);
 	}
+
 	/**
-	 * @param {number} port
-	 * @returns the local address URI.
+	 * @param port the local port
+	 * @param path the path to use
+	 * @returns the vscode Uri of this address
 	 */
-	private constructLocalUri(port: number, path?: string) {
+	private _constructLocalUri(port: number, path?: string): vscode.Uri {
 		return vscode.Uri.parse(`http://${this.host}:${port}${path ?? ''}`);
 	}
 
@@ -106,6 +110,9 @@ export class Connection extends Disposable {
 		return this._workspace?.uri.fsPath;
 	}
 
+	/**
+	 * Reset to the default host in the settings. Used if the address that the user chose is busy.
+	 */
 	public resetHostToDefault() {
 		if (this.host != DEFAULT_HOST) {
 			vscode.window.showErrorMessage(
@@ -122,21 +129,8 @@ export class Connection extends Disposable {
 	}
 
 	/**
-	 * @description Checks if a file is a child of the workspace given its **absolute** file
-	 *  (always returns false in multi-root or no workspace open).
-	 *  e.g. with workspace `c:/a/file/path/`, and path `c:/a/file/path/continued/index.html`, this returns true.
-	 * @param {string} path path to test.
-	 * @returns whether the path is in the workspace
-	 */
-	private _absPathInWorkspace(path: string): boolean {
-		return this.workspacePath
-			? PathUtil.PathBeginsWith(path, this.workspacePath)
-			: false;
-	}
-
-	/**
-	 * @description Checks if a file exists given its **relative** file to the "default" workspace.
-	 *  (always returns false in multi-root or no workspace open).
+	 * @description Checks if a file exists given its **relative** file to the workspace.
+	 *  (always returns false if undefined workspace).
 	 *  e.g. with workspace `c:/a/file/path/`, and there exists `c:/a/file/path/continued/index.html`,
 	 *  passing `path` as `/continued/index.html` will return true.
 	 * @param {string} file file to test.
@@ -151,8 +145,8 @@ export class Connection extends Disposable {
 	}
 
 	/**
-	 * @description Given an absolute file, get the file relative to the "default" workspace.
-	 *  Will return empty string if `!absPathInDefaultWorkspace(path)`.
+	 * @description Given an absolute file, get the file relative to the workspace.
+	 *  Will return empty string if `!_absPathInWorkspace(path)`.
 	 * @param {string} path the absolute path to convert.
 	 * @returns {string} the equivalent relative path.
 	 */
@@ -164,5 +158,18 @@ export class Connection extends Disposable {
 		} else {
 			return undefined;
 		}
+	}
+
+	/**
+	 * @description Checks if a file is a child of the workspace given its **absolute** file
+	 *  (always returns false if undefined workspace).
+	 *  e.g. with workspace `c:/a/file/path/`, and path `c:/a/file/path/continued/index.html`, this returns true.
+	 * @param {string} path path to test.
+	 * @returns whether the path is in the workspace
+	 */
+	private _absPathInWorkspace(path: string): boolean {
+		return this.workspacePath
+			? PathUtil.PathBeginsWith(path, this.workspacePath)
+			: false;
 	}
 }

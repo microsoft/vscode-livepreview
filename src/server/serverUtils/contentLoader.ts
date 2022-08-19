@@ -60,7 +60,6 @@ export class ContentLoader extends Disposable {
 		_extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
-		// private readonly _workspaceManager: WorkspaceManager,
 		private readonly _connection: Connection
 	) {
 		super();
@@ -300,7 +299,7 @@ export class ContentLoader extends Disposable {
 				let fileContents = workspaceDocuments[i].getText();
 
 				if (workspaceDocuments[i].languageId == 'html') {
-					fileContents = this.injectIntoFile(fileContents);
+					fileContents = this._injectIntoFile(fileContents);
 					contentType = 'text/html';
 				}
 
@@ -313,7 +312,7 @@ export class ContentLoader extends Disposable {
 		if (inFilesystem && i == workspaceDocuments.length) {
 			if (isFileInjectable(readPath)) {
 				const buffer = fs.readFileSync(readPath, 'utf8');
-				const injectedFileContents = this.injectIntoFile(buffer.toString());
+				const injectedFileContents = this._injectIntoFile(buffer.toString());
 				stream = Stream.Readable.from(injectedFileContents);
 			} else {
 				stream = fs.createReadStream(readPath);
@@ -338,7 +337,7 @@ export class ContentLoader extends Disposable {
 	 * @param {string} contents the contents to inject.
 	 * @returns {string} the injected string.
 	 */
-	private injectIntoFile(contents: string): string {
+	private _injectIntoFile(contents: string): string {
 		// order of preference for script placement:
 		// 1. after <head>
 		// 2. after <body>

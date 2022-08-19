@@ -44,11 +44,11 @@ export class HTMLInjector extends Disposable {
 			'injectScript.js'
 		);
 		this.rawScript = fs.readFileSync(scriptPath, 'utf8').toString();
-		this.initScript(this.rawScript, undefined, undefined);
+		this._initScript(this.rawScript, undefined, undefined);
 
 		this._register(
 			this._connection.onConnected((e) => {
-				this.refresh(e.httpURI, e.wsURI);
+				this._refresh(e.httpURI, e.wsURI);
 			})
 		);
 	}
@@ -57,7 +57,7 @@ export class HTMLInjector extends Disposable {
 	 * @description populate `this._script` with the script containing replacements for the server addresses.
 	 * @param {string} fileString the raw loaded script with no replacements yet.
 	 */
-	private async initScript(
+	private async _initScript(
 		fileString: string,
 		httpUri: vscode.Uri | undefined,
 		wsUri: vscode.Uri | undefined
@@ -78,7 +78,7 @@ export class HTMLInjector extends Disposable {
 			{ original: WS_URL_PLACEHOLDER, replacement: wsURL },
 			{ original: HTTP_URL_PLACEHOLDER, replacement: httpURL },
 		];
-		this._script = this.replace(fileString, replacements);
+		this._script = this._replace(fileString, replacements);
 	}
 
 	/**
@@ -86,7 +86,7 @@ export class HTMLInjector extends Disposable {
 	 * @param {replaceObj[]} replaces array replacements to make
 	 * @returns {string} string with all replacements performed on.
 	 */
-	private replace(script: string, replaces: replaceObj[]): string {
+	private _replace(script: string, replaces: replaceObj[]): string {
 		replaces.forEach((replace) => {
 			const placeHolderIndex = script.indexOf(replace.original);
 			script =
@@ -100,7 +100,7 @@ export class HTMLInjector extends Disposable {
 	/**
 	 * @description re-populate the script field with replacements. Will re-query the connection manager for the port and host.
 	 */
-	private refresh(httpUri: vscode.Uri, wsUri: vscode.Uri) {
-		this.initScript(this.rawScript, httpUri, wsUri);
+	private _refresh(httpUri: vscode.Uri, wsUri: vscode.Uri) {
+		this._initScript(this.rawScript, httpUri, wsUri);
 	}
 }
