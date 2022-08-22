@@ -9,7 +9,7 @@ import {
 } from '../utils/terminalStyleUtil';
 import { FormatDateTime } from '../utils/utils';
 import { ServerStartedStatus, ServerArgs } from './serverTaskProvider';
-import { serverMsg } from '../server/serverManager';
+import { IServerMsg } from '../server/serverGrouping';
 
 const localize = nls.loadMessageBundle();
 const CHAR_CODE_CTRL_C = 3;
@@ -192,9 +192,9 @@ export class ServerTaskTerminal
 	}
 
 	/**
-	 * @param {serverMsg} msg the log message data from the HTTP server to show in the terminal
+	 * @param {IServerMsg} msg the log message data from the HTTP server to show in the terminal
 	 */
-	public showServerMsg(msg: serverMsg): void {
+	public showServerMsg(msg: IServerMsg): void {
 		if (this._verbose) {
 			const date = new Date();
 

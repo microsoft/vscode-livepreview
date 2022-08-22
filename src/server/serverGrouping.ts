@@ -28,7 +28,7 @@ import {
 /**
  * @description the server log item that is sent from the HTTP server to the server logging task.
  */
-export interface serverMsg {
+export interface IServerMsg {
 	method: string;
 	url: string;
 	status: number;
@@ -37,7 +37,7 @@ export interface serverMsg {
 /**
  * @description the info for launching a preview, used after a server is launched.
  */
-export interface launchInfo {
+export interface ILaunchInfo {
 	external: boolean;
 	file: string;
 	relative: boolean;
@@ -47,10 +47,10 @@ export interface launchInfo {
 }
 
 const localize = nls.loadMessageBundle();
-export class ServerManager extends Disposable {
+export class ServerGrouping extends Disposable {
 	private readonly _onClose = this._register(new vscode.EventEmitter<void>());
 	public readonly onClose = this._onClose.event;
-	private _pendingLaunchInfo: launchInfo | undefined;
+	private _pendingLaunchInfo: ILaunchInfo | undefined;
 	private readonly _httpServer: HttpServer;
 	private readonly _wsServer: WSServer;
 	private _isServerOn = false;
@@ -61,7 +61,7 @@ export class ServerManager extends Disposable {
 	// on each new request processed by the HTTP server, we should
 	// relay the information to the task terminal for logging.
 	private readonly _onNewReqProcessed = this._register(
-		new vscode.EventEmitter<serverMsg>()
+		new vscode.EventEmitter<IServerMsg>()
 	);
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
@@ -70,7 +70,6 @@ export class ServerManager extends Disposable {
 		_reporter: TelemetryReporter,
 		_endpointManager: EndpointManager,
 		private readonly _connection: Connection,
-		private readonly _statusBar: StatusBarNotifier,
 		private readonly _previewManager: PreviewManager,
 		private readonly _serverTaskProvider: ServerTaskProvider,
 		_userDataDir: string | undefined
@@ -218,7 +217,6 @@ export class ServerManager extends Disposable {
 	 */
 	public closeServer(): boolean {
 		if (this.isRunning) {
-			this._statusBar.RemoveServer(this._connection.workspace?.uri);
 			this._httpServer.close();
 			this._wsServer.close();
 			this._isServerOn = false;
@@ -430,10 +428,6 @@ export class ServerManager extends Disposable {
 	 */
 	private async _connected() {
 		this._isServerOn = true;
-		this._statusBar.setServer(
-			this._connection.workspace?.uri,
-			this._connection.httpPort
-		);
 
 		this._showServerStatusMessage(
 			localize(

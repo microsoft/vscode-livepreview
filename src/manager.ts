@@ -13,7 +13,7 @@ import { Connection } from './connectionInfo/connection';
 import { existsSync } from 'fs';
 import { StatusBarNotifier } from './server/serverUtils/statusBarNotifier';
 import { LIVE_PREVIEW_SERVER_ON } from './utils/constants';
-import { ServerManager } from './server/serverManager';
+import { ServerGrouping } from './server/serverGrouping';
 
 const localize = nls.loadMessageBundle();
 
@@ -45,7 +45,7 @@ class PanelSerializer
  * It also facilitates opening files (sometimes by calling `PreviewManager`) and starting the associated servers.
  */
 export class Manager extends Disposable {
-	private _serverManagers: Map<string | undefined, ServerManager>;
+	private _serverGroupings: Map<string | undefined, ServerGrouping>;
 	private _connectionManager: ConnectionManager;
 	private readonly _endpointManager: EndpointManager;
 	private readonly _previewManager: PreviewManager;
@@ -58,10 +58,17 @@ export class Manager extends Disposable {
 		private readonly _userDataDir: string | undefined
 	) {
 		super();
-		this._serverManagers = new Map<string, ServerManager>();
+		this._serverGroupings = new Map<string, ServerGrouping>();
 		this._connectionManager = this._register(
 			new ConnectionManager()
 		);
+
+		this._register(this._connectionManager.onConnected((e) => {
+			this._statusBar.setServer(
+				e.workspace?.uri,
+				e.httpPort
+			);
+		}));
 
 		this._endpointManager = this._register(new EndpointManager());
 
@@ -124,9 +131,9 @@ export class Manager extends Disposable {
 
 		this._register(
 			this._serverTaskProvider.onRequestToOpenServer(async (workspace) => {
-				const serverManager = this._getServerManagerFromWorkspace(workspace);
+				const serverGrouping = this._getServerGroupingFromWorkspace(workspace);
 				// running this with `fromTask = true` will still inform the task if the server is already open
-				await serverManager.openServer(true);
+				await serverGrouping.openServer(true);
 			})
 		);
 
@@ -135,11 +142,11 @@ export class Manager extends Disposable {
 				if (this._previewManager.previewActive) {
 					this._serverTaskProvider.serverStop(false, workspace);
 				} else {
-					const serverManager = this._serverManagers.get(
+					const serverGrouping = this._serverGroupings.get(
 						workspace?.uri.toString()
 					);
 					// closeServer will call `this._serverTaskProvider.serverStop(true, workspace);`
-					serverManager?.closeServer();
+					serverGrouping?.closeServer();
 				}
 			})
 		);
@@ -169,8 +176,8 @@ export class Manager extends Disposable {
 				}
 
 				// loose file workspace will be fetched if workspace is still undefined
-				const manager = this._getServerManagerFromWorkspace(workspace);
-				manager.createOrShowEmbeddedPreview(e.webviewPanel, file, relative);
+				const grouping = this._getServerGroupingFromWorkspace(workspace);
+				grouping.createOrShowEmbeddedPreview(e.webviewPanel, file, relative);
 				e.webviewPanel.webview.options =
 					this._previewManager.getWebviewOptions();
 			})
@@ -192,7 +199,7 @@ export class Manager extends Disposable {
 	 * @param debug whether to launch in debug
 	 * @param workspace the workspace to launch the file from
 	 * @param port the port to derive the workspace from
-	 * @param serverManager the serverManager that manages the server workspace
+	 * @param serverGrouping the serverGrouping that manages the server workspace
 	 */
 	public async handleOpenFile(
 		internal: boolean,
@@ -201,17 +208,17 @@ export class Manager extends Disposable {
 		debug: boolean,
 		workspace?: vscode.WorkspaceFolder,
 		port?: number,
-		serverManager?: ServerManager
+		serverGrouping?: ServerGrouping
 	): Promise<void> {
 		const fileInfo = this._getFileInfo(file, fileStringRelative);
 
-		if (!serverManager) {
+		if (!serverGrouping) {
 			if (workspace) {
-				serverManager = this._getServerManagerFromWorkspace(workspace);
+				serverGrouping = this._getServerGroupingFromWorkspace(workspace);
 			} else if (port) {
-				this._serverManagers.forEach((potentialServerManager, key) => {
-					if (potentialServerManager.port === port) {
-						serverManager = potentialServerManager;
+				this._serverGroupings.forEach((potentialServerGrouping, key) => {
+					if (potentialServerGrouping.port === port) {
+						serverGrouping = potentialServerGrouping;
 						return;
 					}
 				});
@@ -223,19 +230,19 @@ export class Manager extends Disposable {
 				} else {
 					workspace = PathUtil.AbsPathInAnyWorkspace(fileInfo.filePath);
 				}
-				serverManager = this._getServerManagerFromWorkspace(workspace);
+				serverGrouping = this._getServerGroupingFromWorkspace(workspace);
 			}
 		}
 
-		if (!serverManager) {
+		if (!serverGrouping) {
 			// last-resort: use loose workspace server.
-			serverManager = this._getServerManagerFromWorkspace(undefined);
+			serverGrouping = this._getServerGroupingFromWorkspace(undefined);
 		}
 
 		return this._openPreview(
 			internal,
 			fileInfo.filePath,
-			serverManager,
+			serverGrouping,
 			fileInfo.isRelative,
 			debug
 		);
@@ -245,9 +252,9 @@ export class Manager extends Disposable {
 	 * Close all servers
 	 */
 	public closeServers() {
-		this._serverManagers.forEach((serverManager) => {
-			serverManager.closeServer();
-			serverManager.dispose();
+		this._serverGroupings.forEach((serverGrouping) => {
+			serverGrouping.closeServer();
+			serverGrouping.dispose();
 		});
 	}
 
@@ -262,15 +269,15 @@ export class Manager extends Disposable {
 			return;
 		}
 		let foundPath = false;
-		this._serverManagers.forEach((serverManager) => {
-			if (serverManager.pathExistsRelativeToWorkspace(filePath)) {
+		this._serverGroupings.forEach((serverGrouping) => {
+			if (serverGrouping.pathExistsRelativeToWorkspace(filePath)) {
 				vscode.commands.executeCommand(
 					`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 					filePath,
 					{
 						relativeFileString: true,
-						workspaceFolder: serverManager.workspace,
-						manager: serverManager,
+						workspaceFolder: serverGrouping.workspace,
+						manager: serverGrouping,
 					}
 				);
 				foundPath = true;
@@ -301,34 +308,34 @@ export class Manager extends Disposable {
 	}
 
 	/**
-	 * Creates a serverManager and connection object for a workspace if it doesn't already have an existing one.
-	 * Otherwise, return the existing serverManager.
+	 * Creates a serverGrouping and connection object for a workspace if it doesn't already have an existing one.
+	 * Otherwise, return the existing serverGrouping.
 	 * @param workspace
-	 * @returns serverManager for this workspace (or, when `workspace == undefined`, the serverManager for the loose file workspace)
+	 * @returns serverGrouping for this workspace (or, when `workspace == undefined`, the serverGrouping for the loose file workspace)
 	 */
-	private _getServerManagerFromWorkspace(
+	private _getServerGroupingFromWorkspace(
 		workspace: vscode.WorkspaceFolder | undefined
 	) {
-		let serverManager = this._serverManagers.get(workspace?.uri.toString());
-		if (!serverManager) {
+		let serverGrouping = this._serverGroupings.get(workspace?.uri.toString());
+		if (!serverGrouping) {
 			const connection =
 				this._connectionManager.createAndAddNewConnection(workspace);
-			serverManager = this._register(
-				new ServerManager(
+			serverGrouping = this._register(
+				new ServerGrouping(
 					this._extensionUri,
 					this._reporter,
 					this._endpointManager,
 					connection,
-					this._statusBar,
 					this._previewManager,
 					this._serverTaskProvider,
 					this._userDataDir
 				)
 			);
 			this._register(
-				serverManager.onClose(() => {
-					this._serverManagers.delete(workspace?.uri.toString());
-					if (this._serverManagers.size === 0) {
+				serverGrouping.onClose(() => {
+					this._statusBar.RemoveServer(workspace?.uri);
+					this._serverGroupings.delete(workspace?.uri.toString());
+					if (this._serverGroupings.size === 0) {
 						this._statusBar.ServerOff();
 						vscode.commands.executeCommand(
 							'setContext',
@@ -339,24 +346,24 @@ export class Manager extends Disposable {
 					this._connectionManager.removeConnection(workspace);
 				})
 			);
-			this._serverManagers.set(workspace?.uri.toString(), serverManager);
+			this._serverGroupings.set(workspace?.uri.toString(), serverGrouping);
 		}
 
-		return serverManager;
+		return serverGrouping;
 	}
 
 	private async _openPreview(
 		internal: boolean,
 		file: string,
-		serverManager: ServerManager,
+		serverGrouping: ServerGrouping,
 		isRelative: boolean,
 		debug = false
 	): Promise<void> {
 		if (internal) {
 			// for now, ignore debug or no debug for embedded preview
-			serverManager.createOrShowEmbeddedPreview(undefined, file, isRelative);
+			serverGrouping.createOrShowEmbeddedPreview(undefined, file, isRelative);
 		} else {
-			await serverManager.showPreviewInBrowser(file, isRelative, debug);
+			await serverGrouping.showPreviewInBrowser(file, isRelative, debug);
 		}
 	}
 
@@ -390,7 +397,7 @@ export class Manager extends Disposable {
 	}
 
 	private _hasServerRunning() {
-		const isRunning = Array.from(this._serverManagers.values()).filter(
+		const isRunning = Array.from(this._serverGroupings.values()).filter(
 			(group) => group.running
 		);
 		return isRunning.length !== 0;
@@ -402,7 +409,7 @@ export class Manager extends Disposable {
 		if (workspaces && workspaces.length > 0) {
 			for (let i = 0; i < workspaces.length; i++) {
 				const currWorkspace = workspaces[i];
-				const manager = this._serverManagers.get(currWorkspace.uri.toString());
+				const manager = this._serverGroupings.get(currWorkspace.uri.toString());
 				if (manager) {
 					vscode.commands.executeCommand(
 						`${SETTINGS_SECTION_ID}.start.preview.atFile`,

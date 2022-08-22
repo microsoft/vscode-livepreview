@@ -8,18 +8,18 @@ export enum NavEditCommands {
 	DISABLE_FORWARD,
 	ENABLE_FORWARD,
 }
-export interface NavResponse {
+export interface INavResponse {
 	actions: Array<NavEditCommands>;
-	address?: Address;
+	address?: IAddress;
 }
 
-export interface Address {
+export interface IAddress {
 	connection: Connection;
 	path: string;
 }
 
 export class PageHistory extends Disposable {
-	private _history = new Array<Address>();
+	private _history = new Array<IAddress>();
 	private _backstep = 0;
 	private _current_back_enabled = false;
 	private _current_forward_enabled = false;
@@ -47,9 +47,9 @@ export class PageHistory extends Disposable {
 
 	/**
 	 * @description manipulates the history to adjust for going forwards.
-	 * @returns {NavResponse} the state of the back/foward buttons as a result of going forwards.
+	 * @returns {INavResponse} the state of the back/foward buttons as a result of going forwards.
 	 */
-	public goForward(): NavResponse {
+	public goForward(): INavResponse {
 		const action = new Array<NavEditCommands>();
 		if (this._backstep > 0) {
 			const path = this._history[this._backstep - 1];
@@ -73,9 +73,9 @@ export class PageHistory extends Disposable {
 	}
 	/**
 	 * @description manipulates the history to adjust for going backwards.
-	 * @returns {NavResponse} the state of the back/foward buttons as a result of going backwards.
+	 * @returns {INavResponse} the state of the back/foward buttons as a result of going backwards.
 	 */
-	public goBackward(): NavResponse {
+	public goBackward(): INavResponse {
 		const action = new Array<NavEditCommands>();
 		if (this._backstep < this._history.length - 1) {
 			const path = this._history[this._backstep + 1];
@@ -103,12 +103,12 @@ export class PageHistory extends Disposable {
 	 * causes redirection that makes history tracking tricky.
 	 * @param {string} address the address to add.
 	 * @param {Connection} connection the connection to connect using
-	 * @returns {NavResponse | undefined} the state of the back/fowards buttons after adding the item.
+	 * @returns {INavResponse | undefined} the state of the back/fowards buttons after adding the item.
 	 */
 	public addHistory(
 		address: string,
 		connection: Connection
-	): NavResponse | undefined {
+	): INavResponse | undefined {
 		address = PathUtil.ConvertToUnixPath(address);
 		address = PathUtil.EscapePathParts(address);
 		const action = new Array<NavEditCommands>();

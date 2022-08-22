@@ -15,12 +15,13 @@ export interface ConnectionInfo {
 	httpURI: vscode.Uri;
 	wsURI: vscode.Uri;
 	workspace: vscode.WorkspaceFolder | undefined;
+	httpPort: number;
 }
 
 /**
  * @description the instance that keeps track of the host and port information for the http and websocket servers.
  * Upon requesting the host, it will resolve its external URI before returning it.
- * There is one `Connection` per `ServerManager`, but connections are kept within the ConnectionManager because this info
+ * There is one `Connection` per `ServerGrouping`, but connections are kept within the ConnectionManager because this info
  * is also needed from the `PreviewManager`.
  */
 export class Connection extends Disposable {
@@ -75,6 +76,7 @@ export class Connection extends Disposable {
 			httpURI: externalHTTPUri,
 			wsURI: externalWSUri,
 			workspace: this._workspace,
+			httpPort: httpPort
 		});
 	}
 

@@ -9,16 +9,16 @@ import {
 	SettingUtil,
 } from './utils/settingsUtil';
 import { Manager } from './manager';
-import { ServerManager } from './server/serverManager';
+import { ServerGrouping } from './server/serverGrouping';
 
 let reporter: TelemetryReporter;
 let serverPreview: Manager;
 
-interface openFileOptions {
+interface IOpenFileOptions {
 	relativeFileString?: boolean;
 	workspace?: vscode.WorkspaceFolder;
 	port?: number;
-	manager?: ServerManager;
+	manager?: ServerGrouping;
 }
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -60,7 +60,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-			(file?: vscode.Uri | string, options?: openFileOptions) => {
+			(file?: vscode.Uri | string, options?: IOpenFileOptions) => {
 				const previewType = SettingUtil.GetPreviewType();
 				vscode.commands.executeCommand(
 					`${SETTINGS_SECTION_ID}.start.${previewType}.atFile`,
@@ -74,7 +74,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.debugPreview.atFile`,
-			(file?: vscode.Uri | string, options?: openFileOptions) => {
+			(file?: vscode.Uri | string, options?: IOpenFileOptions) => {
 				// TODO: implement internalDebugPreview and use settings to choose which one to launch
 				vscode.commands.executeCommand(
 					`${SETTINGS_SECTION_ID}.start.externalDebugPreview.atFile`,
@@ -88,7 +88,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalPreview.atFile`,
-			async (file?: vscode.Uri | string, options?: openFileOptions) => {
+			async (file?: vscode.Uri | string, options?: IOpenFileOptions) => {
 				/* __GDPR__
 					"preview" :{
 						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
@@ -116,7 +116,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
-			async (file?: vscode.Uri | string, options?: openFileOptions) => {
+			async (file?: vscode.Uri | string, options?: IOpenFileOptions) => {
 				/* __GDPR__
 					"preview" :{
 						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
@@ -143,7 +143,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalDebugPreview.atFile`,
-			async (file?: vscode.Uri | string, options?: openFileOptions) => {
+			async (file?: vscode.Uri | string, options?: IOpenFileOptions) => {
 				/* __GDPR__
 					"preview" :{
 						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},

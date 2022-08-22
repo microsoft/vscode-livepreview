@@ -6,9 +6,9 @@ import { serverTaskLinkProvider } from './serverTaskLinkProvider';
 import { ServerTaskTerminal } from './serverTaskTerminal';
 import { TASK_TERMINAL_BASE_NAME } from '../utils/constants';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
-import { serverMsg } from '../server/serverManager';
+import { IServerMsg } from '../server/serverGrouping';
 
-interface ServerTaskDefinition extends vscode.TaskDefinition {
+interface IServerTaskDefinition extends vscode.TaskDefinition {
 	args: string[];
 }
 
@@ -91,10 +91,10 @@ export class ServerTaskProvider
 	}
 
 	/**
-	 * @param {serverMsg} msg the log information to send to the terminal for server logging.
+	 * @param {IServerMsg} msg the log information to send to the terminal for server logging.
 	 */
 	public sendServerInfoToTerminal(
-		msg: serverMsg,
+		msg: IServerMsg,
 		workspace: vscode.WorkspaceFolder | undefined
 	): void {
 		const term = this._terminals.get(workspace?.uri.toString());
@@ -178,7 +178,7 @@ export class ServerTaskProvider
 	 * @returns
 	 */
 	public resolveTask(_task: vscode.Task): vscode.Task | undefined {
-		const definition: ServerTaskDefinition = <any>_task.definition;
+		const definition: IServerTaskDefinition = <any>_task.definition;
 		let workspace;
 		try {
 			workspace = <vscode.WorkspaceFolder>_task.scope;
@@ -236,7 +236,7 @@ export class ServerTaskProvider
 	 * @returns the task with the proper details and callback
 	 */
 	private _getTask(
-		definition: ServerTaskDefinition,
+		definition: IServerTaskDefinition,
 		workspace: vscode.WorkspaceFolder | undefined
 	): vscode.Task {
 		const args = definition.args;

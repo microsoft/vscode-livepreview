@@ -3,14 +3,14 @@ import * as vscode from 'vscode';
 /**
  * @description the object representation of the extension settings.
  */
-export interface LiveServerConfigItem {
+export interface ILivePreviewConfigItem {
 	portNumber: number;
 	showStatusBarItem: boolean;
 	showServerStatusNotifications: boolean;
 	autoRefreshPreview: AutoRefreshPreview;
 	browserPreviewLaunchServerLogging: boolean;
 	openPreviewTarget: OpenPreviewTarget;
-	serverKeepAliveAfterEmbeddedPreviewClose: number;
+serverKeepAliveAfterEmbeddedPreviewClose: number;
 	notifyOnOpenLooseFile: boolean;
 	runTaskWithExternalPreview: boolean;
 	defaultPreviewPath: string;
@@ -71,9 +71,9 @@ export const PreviewType: any = {
 export class SettingUtil {
 	/**
 	 * @description Get the current settings JSON.
-	 * @returns {LiveServerConfigItem} the LiveServerConfigItem, which is a JSON object with all of the settings for Live Preview.
+	 * @returns {ILivePreviewConfigItem} the LiveServerConfigItem, which is a JSON object with all of the settings for Live Preview.
 	 */
-	public static GetConfig(): LiveServerConfigItem {
+	public static GetConfig(): ILivePreviewConfigItem {
 		const config = vscode.workspace.getConfiguration(
 			SETTINGS_SECTION_ID
 		);

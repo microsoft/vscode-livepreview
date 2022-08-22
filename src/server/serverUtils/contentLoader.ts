@@ -24,7 +24,7 @@ const localize = nls.loadMessageBundle();
 /**
  * @description the response information to give back to the server object
  */
-export interface RespInfo {
+interface IRespInfo {
 	ContentType: string | undefined;
 	Stream: Stream.Readable | fs.ReadStream | undefined;
 }
@@ -32,7 +32,7 @@ export interface RespInfo {
 /**
  * @description table entry for a file in the auto-generated index.
  */
-export interface IndexFileEntry {
+interface IIndexFileEntry {
 	LinkSrc: string;
 	LinkName: string;
 	FileSize: string;
@@ -42,7 +42,7 @@ export interface IndexFileEntry {
 /**
  * @description table entry for a directory in the auto-generated index.
  */
-export interface IndexDirEntry {
+interface IIndexDirEntry {
 	LinkSrc: string;
 	LinkName: string;
 	DateTime: string;
@@ -88,9 +88,9 @@ export class ContentLoader extends Disposable {
 	}
 
 	/**
-	 * @returns {RespInfo} the injected script and its content type.
+	 * @returns {IRespInfo} the injected script and its content type.
 	 */
-	public loadInjectedJS(): RespInfo {
+	public loadInjectedJS(): IRespInfo {
 		const fileString = this._scriptInjector?.script ?? '';
 
 		return {
@@ -102,9 +102,9 @@ export class ContentLoader extends Disposable {
 	/**
 	 * @description create a "page does not exist" page to pair with the 404 error.
 	 * @param relativePath the path that does not exist
-	 * @returns {RespInfo} the response information
+	 * @returns {IRespInfo} the response information
 	 */
-	public createPageDoesNotExist(relativePath: string): RespInfo {
+	public createPageDoesNotExist(relativePath: string): IRespInfo {
 		/* __GDPR__
 			"server.pageDoesNotExist" : {}
 		*/
@@ -138,9 +138,9 @@ export class ContentLoader extends Disposable {
 
 	/**
 	 * @description In a multi-root case, the index will not lead to anything. Create this page to list all possible indices to visit.
-	 * @returns {RespInfo} the response info
+	 * @returns {IRespInfo} the response info
 	 */
-	public createNoRootServer(): RespInfo {
+	public createNoRootServer(): IRespInfo {
 		const noServerRoot = localize('noServerRoot', 'No Server Root');
 		const noWorkspaceOpen = localize(
 			'noWorkspaceOpen',
@@ -172,13 +172,13 @@ export class ContentLoader extends Disposable {
 	 * @param {string} readPath the absolute path visited.
 	 * @param {string} relativePath the relative path (from workspace root).
 	 * @param {string} titlePath the path shown in the title.
-	 * @returns {RespInfo} the response info.
+	 * @returns {IRespInfo} the response info.
 	 */
 	public createIndexPage(
 		readPath: string,
 		relativePath: string,
 		titlePath = relativePath
-	): RespInfo {
+	): IRespInfo {
 		/* __GDPR__
 			"server.indexPage" : {}
 		*/
@@ -186,8 +186,8 @@ export class ContentLoader extends Disposable {
 
 		const childFiles = fs.readdirSync(readPath);
 
-		const fileEntries = new Array<IndexFileEntry>();
-		const dirEntries = new Array<IndexDirEntry>();
+		const fileEntries = new Array<IIndexFileEntry>();
+		const dirEntries = new Array<IIndexDirEntry>();
 
 		if (relativePath != '/') {
 			dirEntries.push({ LinkSrc: '..', LinkName: '..', DateTime: '' });
@@ -220,7 +220,7 @@ export class ContentLoader extends Disposable {
 		let directoryContents = '';
 
 		dirEntries.forEach(
-			(elem: IndexDirEntry) =>
+			(elem: IIndexDirEntry) =>
 				(directoryContents += `
 				<tr>
 				<td><a href="${elem.LinkSrc}/">${elem.LinkName}/</a></td>
@@ -230,7 +230,7 @@ export class ContentLoader extends Disposable {
 		);
 
 		fileEntries.forEach(
-			(elem: IndexFileEntry) =>
+			(elem: IIndexFileEntry) =>
 				(directoryContents += `
 				<tr>
 				<td><a href="${elem.LinkSrc}">${elem.LinkName}</a></td>
@@ -281,9 +281,9 @@ export class ContentLoader extends Disposable {
 	 * @description get the file contents and load it into a form that can be served.
 	 * @param {string} readPath the absolute file path to read from
 	 * @param {boolean} inFilesystem whether the path is in the filesystem (false for untitled files in editor)
-	 * @returns {RespInfo} the response info
+	 * @returns {IRespInfo} the response info
 	 */
-	public getFileStream(readPath: string, inFilesystem = true): RespInfo {
+	public getFileStream(readPath: string, inFilesystem = true): IRespInfo {
 		this._servedFiles.add(readPath);
 		const workspaceDocuments = vscode.workspace.textDocuments;
 		let i = 0;

@@ -12,7 +12,7 @@ import { Disposable } from '../../utils/dispose';
 /**
  * @description the string replacement information for the `replace()` function
  */
-interface replaceObj {
+interface IReplaceObj {
 	original: string;
 	replacement: string;
 }
@@ -83,10 +83,10 @@ export class HTMLInjector extends Disposable {
 
 	/**
 	 * @param {string} script the main string to perform replacements on
-	 * @param {replaceObj[]} replaces array replacements to make
+	 * @param {IReplaceObj[]} replaces array replacements to make
 	 * @returns {string} string with all replacements performed on.
 	 */
-	private _replace(script: string, replaces: replaceObj[]): string {
+	private _replace(script: string, replaces: IReplaceObj[]): string {
 		replaces.forEach((replace) => {
 			const placeHolderIndex = script.indexOf(replace.original);
 			script =

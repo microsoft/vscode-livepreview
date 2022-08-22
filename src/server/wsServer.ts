@@ -39,7 +39,7 @@ export class WSServerWithOriginCheck extends WebSocket.Server {
  * @description the websocket server, usually hosted on the port following the HTTP server port.
  * It serves two purposes:
  * - Messages from the server to the clients tell it to refresh when there are changes.
- *   The requests occur in `ServerManager`, but use this websocket server.
+ *   The requests occur in `ServerGrouping`, but use this websocket server.
  * - Messages from the client to the server check the "injectability" of the file that is being navigated to.
  *   This only occurs in the webview (embedded preview).
  *

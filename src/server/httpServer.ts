@@ -9,7 +9,7 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
-import { serverMsg } from './serverManager';
+import { IServerMsg } from './serverGrouping';
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -22,7 +22,7 @@ export class HttpServer extends Disposable {
 	public readonly onConnected = this._onConnected.event;
 
 	private readonly _onNewReqProcessed = this._register(
-		new vscode.EventEmitter<serverMsg>()
+		new vscode.EventEmitter<IServerMsg>()
 	);
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
