@@ -4,22 +4,16 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { EXTENSION_ID } from './utils/constants';
 import { PathUtil } from './utils/pathUtil';
 import {
+	PreviewType,
 	Settings,
 	SETTINGS_SECTION_ID,
 	SettingUtil,
 } from './utils/settingsUtil';
-import { Manager } from './manager';
+import { IOpenFileOptions, Manager } from './manager';
 import { ServerGrouping } from './server/serverGrouping';
 
 let reporter: TelemetryReporter;
 let serverPreview: Manager;
-
-interface IOpenFileOptions {
-	relativeFileString?: boolean;
-	workspace?: vscode.WorkspaceFolder;
-	port?: number;
-	manager?: ServerGrouping;
-}
 
 export function activate(context: vscode.ExtensionContext): void {
 	const extPackageJSON = context.extension.packageJSON;
@@ -61,12 +55,7 @@ export function activate(context: vscode.ExtensionContext): void {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 			(file?: vscode.Uri | string, options?: IOpenFileOptions) => {
-				const previewType = SettingUtil.GetPreviewType();
-				vscode.commands.executeCommand(
-					`${SETTINGS_SECTION_ID}.start.${previewType}.atFile`,
-					file,
-					options
-				);
+				serverPreview.openPreviewAtFile(file, options);
 			}
 		)
 	);
@@ -74,12 +63,12 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.debugPreview.atFile`,
-			(file?: vscode.Uri | string, options?: IOpenFileOptions) => {
+			async (file?: vscode.Uri | string, options?: IOpenFileOptions) => {
 				// TODO: implement internalDebugPreview and use settings to choose which one to launch
-				vscode.commands.executeCommand(
-					`${SETTINGS_SECTION_ID}.start.externalDebugPreview.atFile`,
+				await serverPreview.openPreviewAtFile(
 					file,
-					options
+					options,
+					PreviewType.externalDebugPreview
 				);
 			}
 		)
@@ -100,14 +89,10 @@ export function activate(context: vscode.ExtensionContext): void {
 					location: 'atFile',
 					debug: 'false',
 				});
-				await serverPreview.handleOpenFile(
-					false,
+				await serverPreview.openPreviewAtFile(
 					file,
-					options?.relativeFileString ?? false,
-					false,
-					options?.workspace,
-					options?.port,
-					options?.manager
+					options,
+					PreviewType.externalPreview
 				);
 			}
 		)
@@ -127,14 +112,10 @@ export function activate(context: vscode.ExtensionContext): void {
 					type: 'internal',
 					location: 'atFile',
 				});
-				await serverPreview.handleOpenFile(
-					true,
+				await serverPreview.openPreviewAtFile(
 					file,
-					options?.relativeFileString ?? false,
-					false,
-					options?.workspace,
-					options?.port,
-					options?.manager
+					options,
+					PreviewType.internalPreview
 				);
 			}
 		)
@@ -155,15 +136,10 @@ export function activate(context: vscode.ExtensionContext): void {
 					location: 'atFile',
 					debug: 'true',
 				});
-
-				await serverPreview.handleOpenFile(
-					false,
+				await serverPreview.openPreviewAtFile(
 					file,
-					options?.relativeFileString ?? false,
-					true,
-					options?.workspace,
-					options?.port,
-					options?.manager
+					options,
+					PreviewType.externalDebugPreview
 				);
 			}
 		)

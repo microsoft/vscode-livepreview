@@ -8,6 +8,7 @@ import { TASK_TERMINAL_BASE_NAME } from '../utils/constants';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { IServerMsg } from '../server/serverGrouping';
 import { SettingUtil } from '../utils/settingsUtil';
+import { IOpenFileOptions } from '../manager';
 
 interface IServerTaskDefinition extends vscode.TaskDefinition {
 	args: string[];
@@ -60,6 +61,15 @@ export class ServerTaskProvider
 	public readonly onRequestToCloseServer =
 		this._onRequestToCloseServerEmitter.event;
 
+	private readonly _onShouldLaunchPreview = this._register(
+		new vscode.EventEmitter<{
+			file?: vscode.Uri | string;
+			options?: IOpenFileOptions;
+			previewType?: string;
+		}>()
+	);
+	public readonly onShouldLaunchPreview = this._onShouldLaunchPreview.event;
+
 	constructor(
 		private readonly _reporter: TelemetryReporter,
 		endpointManager: EndpointManager,
@@ -70,6 +80,12 @@ export class ServerTaskProvider
 		this._terminals = new Map<string, ServerTaskTerminal>();
 		this._terminalLinkProvider = this._register(
 			new serverTaskLinkProvider(_reporter, endpointManager, _connectionManager)
+		);
+
+		this._register(
+			this._terminalLinkProvider.onShouldLaunchPreview((e) =>
+				this._onShouldLaunchPreview.fire(e)
+			)
 		);
 		this._terminalLinkProvider.onRequestOpenEditorToSide((e) => {
 			this._onRequestOpenEditorToSide.fire(e);

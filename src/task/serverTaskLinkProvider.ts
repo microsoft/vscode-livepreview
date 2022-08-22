@@ -10,6 +10,7 @@ import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
 import { ServerTaskProvider } from './serverTaskProvider';
 import { TASK_TERMINAL_BASE_NAME } from '../utils/constants';
+import { IOpenFileOptions } from '../manager';
 
 const localize = nls.loadMessageBundle();
 
@@ -28,6 +29,15 @@ export class serverTaskLinkProvider
 	);
 	public readonly onRequestOpenEditorToSide =
 		this._onRequestOpenEditorToSide.event;
+
+	private readonly _onShouldLaunchPreview = this._register(
+		new vscode.EventEmitter<{
+			file?: vscode.Uri | string;
+			options?: IOpenFileOptions;
+			previewType?: string;
+		}>()
+	);
+	public readonly onShouldLaunchPreview = this._onShouldLaunchPreview.event;
 
 	constructor(
 		private readonly _reporter: TelemetryReporter,
@@ -67,10 +77,7 @@ export class serverTaskLinkProvider
 		if (link.inEditor) {
 			this._openRelativeLinkInWorkspace(link.data, link.isDir);
 		} else {
-			vscode.commands.executeCommand(
-				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-				link.data
-			);
+			this._onShouldLaunchPreview.fire({ file: link.data });
 		}
 	}
 

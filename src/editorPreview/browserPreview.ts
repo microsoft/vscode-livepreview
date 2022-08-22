@@ -11,6 +11,7 @@ import * as path from 'path';
 import * as nls from 'vscode-nls';
 import { URL } from 'url';
 import { Connection } from '../connectionInfo/connection';
+import { IOpenFileOptions } from '../manager';
 
 const localize = nls.loadMessageBundle();
 
@@ -24,6 +25,15 @@ export class BrowserPreview extends Disposable {
 		new vscode.EventEmitter<void>()
 	);
 	public readonly onDispose = this._onDisposeEmitter.event;
+
+	private readonly _onShouldLaunchPreview = this._register(
+		new vscode.EventEmitter<{
+			file?: vscode.Uri | string;
+			options?: IOpenFileOptions;
+			previewType?: string;
+		}>()
+	);
+	public readonly onShouldLaunchPreview = this._onShouldLaunchPreview.event;
 
 	constructor(
 		initialFile: string,
@@ -204,18 +214,25 @@ export class BrowserPreview extends Disposable {
 			);
 			const uri = vscode.Uri.parse(givenURI.toString());
 
-			const command = `${SETTINGS_SECTION_ID}.start.${SettingUtil.GetExternalPreviewType()}.atFile`;
-
+			const previewType = SettingUtil.GetExternalPreviewType();
 			if (this._webviewComm.currentConnection.workspace) {
-				vscode.commands.executeCommand(command, uri, {
-					relativeFileString: true,
-					workspaceFolder: this._webviewComm.currentConnection.workspace,
-					port: this._webviewComm.currentConnection.httpPort,
+				this._onShouldLaunchPreview.fire({
+					file: uri,
+					options: {
+						relativeFileString: true,
+						workspace: this._webviewComm.currentConnection.workspace,
+						port: this._webviewComm.currentConnection.httpPort,
+					},
+					previewType,
 				});
 			} else {
-				vscode.commands.executeCommand(command, uri, {
-					relativeFileString: false,
-					port: this._webviewComm.currentConnection.httpPort,
+				this._onShouldLaunchPreview.fire({
+					file: uri,
+					options: {
+						relativeFileString: false,
+						port: this._webviewComm.currentConnection.httpPort,
+					},
+					previewType,
 				});
 			}
 		} else {

@@ -4,7 +4,11 @@ import { PathUtil } from './utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { ConnectionManager } from './connectionInfo/connectionManager';
 import { BrowserPreview } from './editorPreview/browserPreview';
-import { SETTINGS_SECTION_ID } from './utils/settingsUtil';
+import {
+	PreviewType,
+	SETTINGS_SECTION_ID,
+	SettingUtil,
+} from './utils/settingsUtil';
 import * as nls from 'vscode-nls';
 import { ServerTaskProvider } from './task/serverTaskProvider';
 import { EndpointManager } from './infoManagers/endpointManager';
@@ -16,6 +20,13 @@ import { LIVE_PREVIEW_SERVER_ON } from './utils/constants';
 import { ServerGrouping } from './server/serverGrouping';
 
 const localize = nls.loadMessageBundle();
+
+export interface IOpenFileOptions {
+	relativeFileString?: boolean;
+	workspace?: vscode.WorkspaceFolder;
+	port?: number;
+	manager?: ServerGrouping;
+}
 
 /**
  * This object re-serializes the webview after a reload
@@ -111,25 +122,27 @@ export class Manager extends Disposable {
 			)
 		);
 
-		this._register(this._serverTaskProvider.onRequestOpenEditorToSide((uri) => {
-			if (
-				this._previewManager.previewActive &&
-				this._previewManager.currentPanel
-			) {
-				const avoidColumn =
-					this._previewManager.currentPanel.panel.viewColumn ??
-					vscode.ViewColumn.One;
-				const column: vscode.ViewColumn =
-					avoidColumn == vscode.ViewColumn.One
-						? avoidColumn + 1
-						: avoidColumn - 1;
-				vscode.commands.executeCommand('vscode.open', uri, {
-					viewColumn: column,
-				});
-			} else {
-				vscode.commands.executeCommand('vscode.open', uri);
-			}
-		}));
+		this._register(
+			this._serverTaskProvider.onRequestOpenEditorToSide((uri) => {
+				if (
+					this._previewManager.previewActive &&
+					this._previewManager.currentPanel
+				) {
+					const avoidColumn =
+						this._previewManager.currentPanel.panel.viewColumn ??
+						vscode.ViewColumn.One;
+					const column: vscode.ViewColumn =
+						avoidColumn == vscode.ViewColumn.One
+							? avoidColumn + 1
+							: avoidColumn - 1;
+					vscode.commands.executeCommand('vscode.open', uri, {
+						viewColumn: column,
+					});
+				} else {
+					vscode.commands.executeCommand('vscode.open', uri);
+				}
+			})
+		);
 
 		this._register(
 			this._serverTaskProvider.onRequestToOpenServer(async (workspace) => {
@@ -194,8 +207,10 @@ export class Manager extends Disposable {
 
 		vscode.workspace.onDidChangeWorkspaceFolders((e) => {
 			if (e.removed) {
-				e.removed.forEach(workspace => {
-					const potentialGrouping = this._serverGroupings.get(workspace.uri.toString());
+				e.removed.forEach((workspace) => {
+					const potentialGrouping = this._serverGroupings.get(
+						workspace.uri.toString()
+					);
 					if (potentialGrouping) {
 						potentialGrouping.closeServer();
 					}
@@ -203,6 +218,18 @@ export class Manager extends Disposable {
 			}
 			// known bug: transitioning between 1 and 2 workspaces: https://github.com/microsoft/vscode/issues/128138
 		});
+
+		this._register(
+			this._serverTaskProvider.onShouldLaunchPreview((e) =>
+				this.openPreviewAtFile(e.file, e.options, e.previewType)
+			)
+		);
+
+		this._register(
+			this._previewManager.onShouldLaunchPreview((e) =>
+				this.openPreviewAtFile(e.file, e.options, e.previewType)
+			)
+		);
 	}
 
 	/**
@@ -294,15 +321,11 @@ export class Manager extends Disposable {
 		let foundPath = false;
 		this._serverGroupings.forEach((serverGrouping) => {
 			if (serverGrouping.pathExistsRelativeToWorkspace(filePath)) {
-				vscode.commands.executeCommand(
-					`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-					filePath,
-					{
-						relativeFileString: true,
-						workspaceFolder: serverGrouping.workspace,
-						manager: serverGrouping,
-					}
-				);
+				this.openPreviewAtFile(filePath, {
+					relativeFileString: true,
+					manager: serverGrouping,
+					workspace: serverGrouping.workspace,
+				});
 				foundPath = true;
 				return;
 			}
@@ -313,21 +336,36 @@ export class Manager extends Disposable {
 		}
 
 		if (existsSync(filePath)) {
-			vscode.commands.executeCommand(
-				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-				filePath,
-				{ relativeFileString: false }
-			);
+			this.openPreviewAtFile(filePath, { relativeFileString: false });
 		} else {
 			vscode.window.showWarningMessage(
 				localize('fileDNE', "The file '{0}' does not exist.", filePath)
 			);
-			vscode.commands.executeCommand(
-				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-				'/',
-				{ relativeFileString: true }
-			);
+			this.openPreviewAtFile('/', { relativeFileString: true });
 		}
+	}
+
+	public async openPreviewAtFile(
+		file?: vscode.Uri | string,
+		options?: IOpenFileOptions,
+		previewType?: string
+	): Promise<void> {
+		if (!previewType) {
+			previewType = SettingUtil.GetPreviewType();
+		}
+
+		const internal = previewType === PreviewType.internalPreview;
+		const debug = previewType === PreviewType.debugOnExternalPreview;
+
+		return this.handleOpenFile(
+			internal,
+			file,
+			options?.relativeFileString ?? false,
+			debug,
+			options?.workspace,
+			options?.port,
+			options?.manager
+		);
 	}
 
 	/**
@@ -461,31 +499,21 @@ export class Manager extends Disposable {
 				const currWorkspace = workspaces[i];
 				const manager = this._serverGroupings.get(currWorkspace.uri.toString());
 				if (manager) {
-					vscode.commands.executeCommand(
-						`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-						'/',
-
-						{
-							relativeFileString: true,
-							workspaceFolder: currWorkspace,
-							manager: manager,
-						}
-					);
+					this.openPreviewAtFile('/', {
+						relativeFileString: true,
+						workspace: currWorkspace,
+						manager: manager,
+					});
 					return;
 				}
 			}
 
-			vscode.commands.executeCommand(
-				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-				'/',
-				{ relativeFileString: true, workspaceFolder: workspaces[0] }
-			);
+			this.openPreviewAtFile('/', {
+				relativeFileString: true,
+				workspace: workspaces[0],
+			});
 		} else {
-			vscode.commands.executeCommand(
-				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-				'/',
-				{ relativeFileString: false }
-			);
+			this.openPreviewAtFile('/', { relativeFileString: false });
 		}
 	}
 }

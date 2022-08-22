@@ -13,6 +13,7 @@ import { BrowserPreview } from './browserPreview';
 import { Connection } from '../connectionInfo/connection';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import * as nls from 'vscode-nls';
+import { IOpenFileOptions } from '../manager';
 
 const localize = nls.loadMessageBundle();
 
@@ -26,11 +27,14 @@ export class PreviewManager extends Disposable {
 	private _notifiedAboutLooseFiles = false;
 	private _currentTimeout: NodeJS.Timeout | undefined;
 
-	private readonly _onShouldCloseServer = this._register(
-		new vscode.EventEmitter<void>()
+	private readonly _onShouldLaunchPreview = this._register(
+		new vscode.EventEmitter<{
+			file?: vscode.Uri | string;
+			options?: IOpenFileOptions;
+			previewType?: string;
+		}>()
 	);
-
-	public readonly onConnected = this._onShouldCloseServer.event;
+	public readonly onShouldLaunchPreview = this._onShouldLaunchPreview.event;
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
@@ -210,6 +214,10 @@ export class PreviewManager extends Disposable {
 			)
 		);
 
+		const listener = this.currentPanel.onShouldLaunchPreview((e) =>
+			this._onShouldLaunchPreview.fire(e)
+		);
+
 		this.previewActive = true;
 
 		this._register(
@@ -222,6 +230,7 @@ export class PreviewManager extends Disposable {
 
 					this.previewActive = false;
 				}, Math.floor(closeServerDelay * 1000 * 60));
+				listener.dispose();
 			})
 		);
 	}

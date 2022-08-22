@@ -14,7 +14,6 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
-import { PreviewManager } from '../editorPreview/previewManager';
 import {
 	ServerStartedStatus,
 	ServerTaskProvider,
