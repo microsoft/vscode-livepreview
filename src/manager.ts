@@ -199,13 +199,13 @@ export class Manager extends Disposable {
 		);
 
 		if (vscode.window.registerWebviewPanelSerializer) {
-			vscode.window.registerWebviewPanelSerializer(
+			this._register(vscode.window.registerWebviewPanelSerializer(
 				BrowserPreview.viewType,
 				serializer
-			);
+			));
 		}
 
-		vscode.workspace.onDidChangeWorkspaceFolders((e) => {
+		this._register(vscode.workspace.onDidChangeWorkspaceFolders((e) => {
 			if (e.removed) {
 				e.removed.forEach((workspace) => {
 					const potentialGrouping = this._serverGroupings.get(
@@ -217,7 +217,7 @@ export class Manager extends Disposable {
 				});
 			}
 			// known bug: transitioning between 1 and 2 workspaces: https://github.com/microsoft/vscode/issues/128138
-		});
+		}));
 
 		this._register(
 			this._serverTaskProvider.onShouldLaunchPreview((e) =>
