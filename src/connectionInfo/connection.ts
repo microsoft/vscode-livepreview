@@ -28,9 +28,15 @@ export class Connection extends Disposable {
 	public wsServerBase: string | undefined;
 	private _wsPath = '';
 
-	public get wsPort() {
-		return this._wsPort;
-	}
+	private readonly _onConnected = this._register(
+		new vscode.EventEmitter<ConnectionInfo>()
+	);
+	public readonly onConnected = this._onConnected.event;
+
+	private readonly _onShouldResetInitHost = this._register(
+		new vscode.EventEmitter<string>()
+	);
+	public readonly onShouldResetInitHost = this._onShouldResetInitHost.event;
 
 	constructor(
 		private readonly _workspace: vscode.WorkspaceFolder | undefined,
@@ -41,13 +47,21 @@ export class Connection extends Disposable {
 		super();
 	}
 
+	public get wsPort() {
+		return this._wsPort;
+	}
+
 	/**
 	 * Called by the server manager to inform this object that a connection has been successful.
 	 * @param httpPort HTTP server port number
 	 * @param wsPort WS server port number
 	 * @param wsPath WS server path
 	 */
-	public connected(httpPort: number, wsPort: number, wsPath: string): void {
+	public async connected(
+		httpPort: number,
+		wsPort: number,
+		wsPath: string
+	): Promise<void> {
 		this.httpPort = httpPort;
 		this._wsPort = wsPort;
 		this._wsPath = wsPath;
@@ -55,26 +69,14 @@ export class Connection extends Disposable {
 		const httpPortUri = this._constructLocalUri(this.httpPort);
 		const wsPortUri = this._constructLocalUri(this._wsPort, this._wsPath);
 
-		vscode.env.asExternalUri(httpPortUri).then((externalHTTPUri) => {
-			vscode.env.asExternalUri(wsPortUri).then((externalWSUri) => {
-				this._onConnected.fire({
-					httpURI: externalHTTPUri,
-					wsURI: externalWSUri,
-					workspace: this._workspace,
-				});
-			});
+		const externalHTTPUri = await vscode.env.asExternalUri(httpPortUri);
+		const externalWSUri = await vscode.env.asExternalUri(wsPortUri);
+		this._onConnected.fire({
+			httpURI: externalHTTPUri,
+			wsURI: externalWSUri,
+			workspace: this._workspace,
 		});
 	}
-
-	private readonly _onConnected = this._register(
-		new vscode.EventEmitter<ConnectionInfo>()
-	);
-	public readonly onConnected = this._onConnected.event;
-
-	private readonly _onShouldResetInitHost = this._register(
-		new vscode.EventEmitter<string>()
-	);
-	public readonly onShouldResetInitHost = this._onShouldResetInitHost.event;
 
 	/**
 	 * Use `vscode.env.asExternalUri` to determine the HTTP host and port on the user's machine.

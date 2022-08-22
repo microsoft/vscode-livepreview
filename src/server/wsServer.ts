@@ -63,11 +63,11 @@ export class WSServer extends Disposable {
 	private _wss: WSServerWithOriginCheck | undefined;
 	private _wsPath!: string;
 
-	public set externalHostName(hostName: string) {
-		if (this._wss) {
-			this._wss.externalHostName = hostName;
-		}
-	}
+	// once connected, we must let the server manager know, as it needs to know when both servers are ready.
+	private readonly _onConnected = this._register(
+		new vscode.EventEmitter<void>()
+	);
+	public readonly onConnected = this._onConnected.event;
 
 	constructor(
 		private readonly _reporter: TelemetryReporter,
@@ -83,6 +83,12 @@ export class WSServer extends Disposable {
 		);
 	}
 
+	public set externalHostName(hostName: string) {
+		if (this._wss) {
+			this._wss.externalHostName = hostName;
+		}
+	}
+
 	/**
 	 * @description the location of the workspace.
 	 */
@@ -93,12 +99,6 @@ export class WSServer extends Disposable {
 	public get wsPath() {
 		return this._wsPath;
 	}
-
-	// once connected, we must let the server manager know, as it needs to know when both servers are ready.
-	private readonly _onConnected = this._register(
-		new vscode.EventEmitter<void>()
-	);
-	public readonly onConnected = this._onConnected.event;
 
 	/**
 	 * @description Start the websocket server.

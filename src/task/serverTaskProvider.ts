@@ -33,7 +33,7 @@ export class ServerTaskProvider
 {
 	public static CustomBuildScriptType = 'Live Preview';
 	private _tasks: vscode.Task[] | undefined;
-	private _terminals: Map<vscode.Uri | undefined, ServerTaskTerminal>;
+	private _terminals: Map<string | undefined, ServerTaskTerminal>;
 	private _terminalLinkProvider: serverTaskLinkProvider;
 
 	// emitters to allow manager to communicate with the terminal.
@@ -65,7 +65,7 @@ export class ServerTaskProvider
 	) {
 		super();
 
-		this._terminals = new Map<vscode.Uri, ServerTaskTerminal>();
+		this._terminals = new Map<string, ServerTaskTerminal>();
 		this._terminalLinkProvider = this._register(
 			new serverTaskLinkProvider(_reporter, endpointManager, _connectionManager)
 		);
@@ -86,7 +86,7 @@ export class ServerTaskProvider
 	 * @param workspace
 	 */
 	public isTaskRunning(workspace: vscode.WorkspaceFolder | undefined): boolean {
-		const term = this._terminals.get(workspace?.uri);
+		const term = this._terminals.get(workspace?.uri.toString());
 		return term?.running ?? false;
 	}
 
@@ -97,7 +97,7 @@ export class ServerTaskProvider
 		msg: serverMsg,
 		workspace: vscode.WorkspaceFolder | undefined
 	): void {
-		const term = this._terminals.get(workspace?.uri);
+		const term = this._terminals.get(workspace?.uri.toString());
 		if (term && term.running) {
 			term.showServerMsg(msg);
 		}
@@ -113,7 +113,7 @@ export class ServerTaskProvider
 		status: ServerStartedStatus,
 		workspace: vscode.WorkspaceFolder | undefined
 	): void {
-		const term = this._terminals.get(workspace?.uri);
+		const term = this._terminals.get(workspace?.uri.toString());
 		if (term && term.running) {
 			term.serverStarted(externalUri, status);
 		}
@@ -128,7 +128,7 @@ export class ServerTaskProvider
 		now: boolean,
 		workspace: vscode.WorkspaceFolder | undefined
 	): void {
-		const term = this._terminals.get(workspace?.uri);
+		const term = this._terminals.get(workspace?.uri.toString());
 		if (term && term.running) {
 			if (now) {
 				term.serverStopped();
@@ -143,30 +143,29 @@ export class ServerTaskProvider
 	 * @param {boolean} verbose whether to run with the `--verbose` flag.
 	 * @param {vscode.WorkspaceFolder | undefined} workspace the workspace associated with this action.
 	 */
-	public extRunTask(
+	public async extRunTask(
 		verbose: boolean,
 		workspace: vscode.WorkspaceFolder | undefined
-	): void {
+	): Promise<void> {
 		/* __GDPR__
 			"tasks.terminal.startFromExtension" : {}
 		*/
 		this._reporter.sendTelemetryEvent('tasks.terminal.startFromExtension');
-		vscode.tasks
-			.fetchTasks({ type: ServerTaskProvider.CustomBuildScriptType })
-			.then((tasks) => {
-				const selTasks = tasks.filter(
-					(x) =>
-						((verbose &&
-							x.definition.args.length > 0 &&
-							x.definition.args[0] == ServerArgs.verbose) ||
-							(!verbose && x.definition.args.length == 0)) &&
-						workspace === x.scope
-				);
+		const tasks = await vscode.tasks.fetchTasks({
+			type: ServerTaskProvider.CustomBuildScriptType,
+		});
+		const selTasks = tasks.filter(
+			(x) =>
+				((verbose &&
+					x.definition.args.length > 0 &&
+					x.definition.args[0] == ServerArgs.verbose) ||
+					(!verbose && x.definition.args.length == 0)) &&
+				workspace === x.scope
+		);
 
-				if (selTasks.length > 0) {
-					vscode.tasks.executeTask(selTasks[0]);
-				}
-			});
+		if (selTasks.length > 0) {
+			vscode.tasks.executeTask(selTasks[0]);
+		}
 	}
 
 	public provideTasks(): vscode.Task[] {
@@ -249,7 +248,7 @@ export class ServerTaskProvider
 			taskName += ` ${args[i]}`;
 		}
 
-		const term = this._terminals.get(workspace?.uri);
+		const term = this._terminals.get(workspace?.uri.toString());
 
 		if (term && term.running) {
 			return new vscode.Task(
@@ -264,7 +263,7 @@ export class ServerTaskProvider
 		const custExec = new vscode.CustomExecution(
 			async (): Promise<ServerTaskTerminal> => {
 				// When the task is executed, this callback will run. Here, we set up for running the task.
-				const term = this._terminals.get(workspace?.uri);
+				const term = this._terminals.get(workspace?.uri.toString());
 				if (term && term.running) {
 					return term;
 				}
@@ -277,10 +276,10 @@ export class ServerTaskProvider
 
 				newTerm.onRequestToCloseServer((e) => {
 					this._onRequestToCloseServerEmitter.fire(e);
-					this._terminals.delete(workspace?.uri);
+					this._terminals.delete(workspace?.uri.toString());
 				});
 
-				this._terminals.set(workspace?.uri, newTerm);
+				this._terminals.set(workspace?.uri.toString(), newTerm);
 
 				return newTerm;
 			}

@@ -25,20 +25,6 @@ export class BrowserPreview extends Disposable {
 	);
 	public readonly onDispose = this._onDisposeEmitter.event;
 
-	/**
-	 * get the connection that the webview is currently using
-	 */
-	public get currentConnection() {
-		return this._webviewComm.currentConnection;
-	}
-
-	/**
-	 * get the webview panel
-	 */
-	public get panel(): vscode.WebviewPanel {
-		return this._panel;
-	}
-
 	constructor(
 		initialFile: string,
 		initialConnection: Connection,
@@ -92,6 +78,20 @@ export class BrowserPreview extends Disposable {
 				this._handleWebviewMessage(message)
 			)
 		);
+	}
+
+	/**
+	 * get the connection that the webview is currently using
+	 */
+	public get currentConnection() {
+		return this._webviewComm.currentConnection;
+	}
+
+	/**
+	 * get the webview panel
+	 */
+	public get panel(): vscode.WebviewPanel {
+		return this._panel;
 	}
 
 	/**

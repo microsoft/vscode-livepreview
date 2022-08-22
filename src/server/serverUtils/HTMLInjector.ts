@@ -25,14 +25,6 @@ export class HTMLInjector extends Disposable {
 	private _script: string | undefined;
 	public rawScript: string;
 
-	/**
-	 * @description get the injected script (already has replacements).
-	 * For debugging, to serve non-injected files, just change this to always return the empty string.
-	 */
-	public get script(): string | undefined {
-		return this._script;
-	}
-
 	constructor(
 		_extensionUri: vscode.Uri,
 		private readonly _connection: Connection
@@ -51,6 +43,14 @@ export class HTMLInjector extends Disposable {
 				this._refresh(e.httpURI, e.wsURI);
 			})
 		);
+	}
+
+	/**
+	 * @description get the injected script (already has replacements).
+	 * For debugging, to serve non-injected files, just change this to always return the empty string.
+	 */
+	public get script(): string | undefined {
+		return this._script;
 	}
 
 	/**

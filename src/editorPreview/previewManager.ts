@@ -27,6 +27,12 @@ export class PreviewManager extends Disposable {
 	private _currentTimeout: NodeJS.Timeout | undefined;
 	private _runTaskWithExternalPreview;
 
+	private readonly _onShouldCloseServer = this._register(
+		new vscode.EventEmitter<void>()
+	);
+
+	public readonly onConnected = this._onShouldCloseServer.event;
+
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
@@ -41,18 +47,14 @@ export class PreviewManager extends Disposable {
 		this._runTaskWithExternalPreview =
 			SettingUtil.GetConfig(_extensionUri).runTaskWithExternalPreview;
 
-		vscode.workspace.onDidChangeConfiguration((e) => {
-			this._runTaskWithExternalPreview = SettingUtil.GetConfig(
-				this._extensionUri
-			).runTaskWithExternalPreview;
-		});
+		this._register(
+			vscode.workspace.onDidChangeConfiguration((e) => {
+				this._runTaskWithExternalPreview = SettingUtil.GetConfig(
+					this._extensionUri
+				).runTaskWithExternalPreview;
+			})
+		);
 	}
-
-	private readonly _onShouldCloseServer = this._register(
-		new vscode.EventEmitter<void>()
-	);
-
-	public readonly onConnected = this._onShouldCloseServer.event;
 
 	public get runTaskWithExternalPreview() {
 		return this._runTaskWithExternalPreview;
@@ -107,11 +109,9 @@ export class PreviewManager extends Disposable {
 		debug: boolean,
 		connection: Connection
 	) {
-		const relFile = relative
-			? file
-			: PathUtil.ConvertToUnixPath(
-					this._transformNonRelativeFile(file, connection)
-			  );
+		const relFile = PathUtil.ConvertToUnixPath(
+			relative ? file : this._transformNonRelativeFile(file, connection)
+		);
 
 		const url = `http://${connection.host}:${connection.httpPort}${relFile}`;
 		if (debug) {

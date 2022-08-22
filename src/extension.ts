@@ -35,6 +35,8 @@ export function activate(context: vscode.ExtensionContext): void {
 		PathUtil.GetUserDataDirFromStorageUri(context.storageUri?.fsPath)
 	);
 
+	context.subscriptions.push(serverPreview);
+
 	/* __GDPR__
 		"extension.startUp" : {
 			"numWorkspaceFolders" : { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true }
@@ -88,7 +90,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalPreview.atFile`,
-			(file?: vscode.Uri | string, options?: openFileOptions) => {
+			async (file?: vscode.Uri | string, options?: openFileOptions) => {
 				/* __GDPR__
 					"preview" :{
 						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
@@ -100,7 +102,7 @@ export function activate(context: vscode.ExtensionContext): void {
 					location: 'atFile',
 					debug: 'false',
 				});
-				serverPreview.handleOpenFile(
+				await serverPreview.handleOpenFile(
 					false,
 					file,
 					options?.relativeFileString ?? false,
@@ -116,7 +118,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
-			(file?: vscode.Uri | string, options?: openFileOptions) => {
+			async (file?: vscode.Uri | string, options?: openFileOptions) => {
 				/* __GDPR__
 					"preview" :{
 						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
@@ -127,7 +129,7 @@ export function activate(context: vscode.ExtensionContext): void {
 					type: 'internal',
 					location: 'atFile',
 				});
-				serverPreview.handleOpenFile(
+				await serverPreview.handleOpenFile(
 					true,
 					file,
 					options?.relativeFileString ?? false,
@@ -143,7 +145,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalDebugPreview.atFile`,
-			(file?: vscode.Uri | string, options?: openFileOptions) => {
+			async (file?: vscode.Uri | string, options?: openFileOptions) => {
 				/* __GDPR__
 					"preview" :{
 						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
@@ -156,7 +158,7 @@ export function activate(context: vscode.ExtensionContext): void {
 					debug: 'true',
 				});
 
-				serverPreview.handleOpenFile(
+				await serverPreview.handleOpenFile(
 					false,
 					file,
 					options?.relativeFileString ?? false,
@@ -191,9 +193,4 @@ export function activate(context: vscode.ExtensionContext): void {
 			}
 		)
 	);
-}
-
-export function deactivate(): void {
-	reporter.dispose();
-	serverPreview.dispose();
 }

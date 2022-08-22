@@ -58,6 +58,13 @@ export class ServerManager extends Disposable {
 	private _httpConnected = false;
 	private readonly _watcher;
 
+	// on each new request processed by the HTTP server, we should
+	// relay the information to the task terminal for logging.
+	private readonly _onNewReqProcessed = this._register(
+		new vscode.EventEmitter<serverMsg>()
+	);
+	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
+
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		_reporter: TelemetryReporter,
@@ -206,13 +213,6 @@ export class ServerManager extends Disposable {
 		return this._isServerOn;
 	}
 
-	// on each new request processed by the HTTP server, we should
-	// relay the information to the task terminal for logging.
-	private readonly _onNewReqProcessed = this._register(
-		new vscode.EventEmitter<serverMsg>()
-	);
-	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
-
 	/**
 	 * @description close the server instances.
 	 */
@@ -251,7 +251,7 @@ export class ServerManager extends Disposable {
 	 * @param {number} port the port to try to start the HTTP server on.
 	 * @returns {boolean} whether the server has been started correctly.
 	 */
-	public openServer(fromTask = false): boolean {
+	public async openServer(fromTask = false): Promise<boolean> {
 		const port = this._connection.httpPort;
 		if (!this.isRunning) {
 			this._httpConnected = false;
@@ -265,13 +265,12 @@ export class ServerManager extends Disposable {
 			}
 			return false;
 		} else if (fromTask) {
-			this._connection.resolveExternalHTTPUri().then((uri) => {
-				this._serverTaskProvider.serverStarted(
-					uri,
-					ServerStartedStatus.STARTED_BY_EMBEDDED_PREV,
-					this._connection.workspace
-				);
-			});
+			const uri = await this._connection.resolveExternalHTTPUri();
+			this._serverTaskProvider.serverStarted(
+				uri,
+				ServerStartedStatus.STARTED_BY_EMBEDDED_PREV,
+				this._connection.workspace
+			);
 		}
 
 		return true;
@@ -293,11 +292,11 @@ export class ServerManager extends Disposable {
 	 * @param {boolean} relative whether the path was absolute or relative to the current workspace.
 	 * @param {boolean} debug whether or not to run in debug mode.
 	 */
-	public showPreviewInBrowser(
+	public async showPreviewInBrowser(
 		file: string,
 		relative: boolean,
 		debug: boolean
-	): void {
+	): Promise<void> {
 		if (!this._serverTaskProvider.isTaskRunning(this._connection.workspace)) {
 			if (!this.isRunning) {
 				// set the pending launch info, which will trigger once the server starts in `launchFileInExternalPreview`
@@ -328,7 +327,7 @@ export class ServerManager extends Disposable {
 				);
 			} else {
 				// global tasks are currently not supported, just turn on server in this case.
-				const serverOn = this.openServer();
+				const serverOn = await this.openServer();
 
 				if (!serverOn) {
 					return;
@@ -432,7 +431,7 @@ export class ServerManager extends Disposable {
 	/**
 	 * @description called when both servers are connected. Performs operations to update server status.
 	 */
-	private _connected() {
+	private async _connected() {
 		this._isServerOn = true;
 		this._statusBar.setServer(
 			this._connection.workspace?.uri,
@@ -446,7 +445,7 @@ export class ServerManager extends Disposable {
 				this._connection.httpPort
 			)
 		);
-		this._connection.connected(
+		await this._connection.connected(
 			this._connection.httpPort,
 			this._wsServer.wsPort,
 			this._wsServer.wsPath

@@ -15,6 +15,17 @@ export class HttpServer extends Disposable {
 	private _server: any;
 	private _contentLoader: ContentLoader;
 
+	private readonly _onConnected = this._register(
+		new vscode.EventEmitter<number>()
+	);
+
+	public readonly onConnected = this._onConnected.event;
+
+	private readonly _onNewReqProcessed = this._register(
+		new vscode.EventEmitter<serverMsg>()
+	);
+	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
+
 	constructor(
 		_extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
@@ -33,17 +44,6 @@ export class HttpServer extends Disposable {
 	private get _basePath(): string | undefined {
 		return this._connection.workspacePath;
 	}
-
-	private readonly _onConnected = this._register(
-		new vscode.EventEmitter<number>()
-	);
-
-	public readonly onConnected = this._onConnected.event;
-
-	private readonly _onNewReqProcessed = this._register(
-		new vscode.EventEmitter<serverMsg>()
-	);
-	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
 	/**
 	 * @param {string} file file to check

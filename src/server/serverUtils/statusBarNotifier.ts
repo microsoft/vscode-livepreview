@@ -14,7 +14,7 @@ export class StatusBarNotifier extends Disposable {
 	private _statusBar: vscode.StatusBarItem;
 	private _extensionUri: vscode.Uri;
 	private _on: boolean;
-	private _ports: Map<vscode.Uri | undefined, number>;
+	private _ports: Map<string | undefined, number>;
 
 	constructor(extensionUri: vscode.Uri) {
 		super();
@@ -24,7 +24,7 @@ export class StatusBarNotifier extends Disposable {
 		this._extensionUri = extensionUri;
 		this.ServerOff();
 		this._on = false;
-		this._ports = new Map<vscode.Uri, number>();
+		this._ports = new Map<string, number>();
 
 		vscode.workspace.onDidChangeConfiguration((e) => {
 			if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
@@ -41,7 +41,7 @@ export class StatusBarNotifier extends Disposable {
 		if (SettingUtil.GetConfig(this._extensionUri).showStatusBarItem) {
 			this._statusBar.show();
 		}
-		this._ports.set(uri, port);
+		this._ports.set(uri?.toString(), port);
 		this._refreshBar();
 	}
 
@@ -95,7 +95,7 @@ export class StatusBarNotifier extends Disposable {
 	 * @description called to notify that a server shut down.
 	 */
 	public RemoveServer(uri: vscode.Uri | undefined): void {
-		this._ports.delete(uri);
+		this._ports.delete(uri?.toString());
 		if (this._ports.size === 0) {
 			this.ServerOff();
 		} else {

@@ -45,7 +45,7 @@ class PanelSerializer
  * It also facilitates opening files (sometimes by calling `PreviewManager`) and starting the associated servers.
  */
 export class Manager extends Disposable {
-	private _serverManagers: Map<vscode.Uri | undefined, ServerManager>;
+	private _serverManagers: Map<string | undefined, ServerManager>;
 	private _connectionManager: ConnectionManager;
 	private readonly _endpointManager: EndpointManager;
 	private readonly _previewManager: PreviewManager;
@@ -58,7 +58,7 @@ export class Manager extends Disposable {
 		private readonly _userDataDir: string | undefined
 	) {
 		super();
-		this._serverManagers = new Map<vscode.Uri, ServerManager>();
+		this._serverManagers = new Map<string, ServerManager>();
 		this._connectionManager = this._register(
 			new ConnectionManager(_extensionUri)
 		);
@@ -123,10 +123,10 @@ export class Manager extends Disposable {
 		});
 
 		this._register(
-			this._serverTaskProvider.onRequestToOpenServer((workspace) => {
+			this._serverTaskProvider.onRequestToOpenServer(async (workspace) => {
 				const serverManager = this._getServerManagerFromWorkspace(workspace);
 				// running this with `fromTask = true` will still inform the task if the server is already open
-				serverManager.openServer(true);
+				await serverManager.openServer(true);
 			})
 		);
 
@@ -135,7 +135,9 @@ export class Manager extends Disposable {
 				if (this._previewManager.previewActive) {
 					this._serverTaskProvider.serverStop(false, workspace);
 				} else {
-					const serverManager = this._serverManagers.get(workspace?.uri);
+					const serverManager = this._serverManagers.get(
+						workspace?.uri.toString()
+					);
 					// closeServer will call `this._serverTaskProvider.serverStop(true, workspace);`
 					serverManager?.closeServer();
 				}
@@ -192,7 +194,7 @@ export class Manager extends Disposable {
 	 * @param port the port to derive the workspace from
 	 * @param serverManager the serverManager that manages the server workspace
 	 */
-	public handleOpenFile(
+	public async handleOpenFile(
 		internal: boolean,
 		file: vscode.Uri | string | undefined,
 		fileStringRelative: boolean,
@@ -200,7 +202,7 @@ export class Manager extends Disposable {
 		workspace?: vscode.WorkspaceFolder,
 		port?: number,
 		serverManager?: ServerManager
-	): void {
+	): Promise<void> {
 		const fileInfo = this._getFileInfo(file, fileStringRelative);
 
 		if (!serverManager) {
@@ -230,14 +232,13 @@ export class Manager extends Disposable {
 			serverManager = this._getServerManagerFromWorkspace(undefined);
 		}
 
-		this._openPreview(
+		return this._openPreview(
 			internal,
 			fileInfo.filePath,
 			serverManager,
 			fileInfo.isRelative,
 			debug
 		);
-		return;
 	}
 
 	/**
@@ -301,7 +302,7 @@ export class Manager extends Disposable {
 	private _getServerManagerFromWorkspace(
 		workspace: vscode.WorkspaceFolder | undefined
 	) {
-		let serverManager = this._serverManagers.get(workspace?.uri);
+		let serverManager = this._serverManagers.get(workspace?.uri.toString());
 		if (!serverManager) {
 			const connection =
 				this._connectionManager.createAndAddNewConnection(workspace);
@@ -319,7 +320,7 @@ export class Manager extends Disposable {
 			);
 			this._register(
 				serverManager.onClose(() => {
-					this._serverManagers.delete(workspace?.uri);
+					this._serverManagers.delete(workspace?.uri.toString());
 					if (this._serverManagers.size === 0) {
 						this._statusBar.ServerOff();
 						vscode.commands.executeCommand(
@@ -331,24 +332,24 @@ export class Manager extends Disposable {
 					this._connectionManager.removeConnection(workspace);
 				})
 			);
-			this._serverManagers.set(workspace?.uri, serverManager);
+			this._serverManagers.set(workspace?.uri.toString(), serverManager);
 		}
 
 		return serverManager;
 	}
 
-	private _openPreview(
+	private async _openPreview(
 		internal: boolean,
 		file: string,
 		serverManager: ServerManager,
 		isRelative: boolean,
 		debug = false
-	) {
+	): Promise<void> {
 		if (internal) {
 			// for now, ignore debug or no debug for embedded preview
 			serverManager.createOrShowEmbeddedPreview(undefined, file, isRelative);
 		} else {
-			serverManager.showPreviewInBrowser(file, isRelative, debug);
+			await serverManager.showPreviewInBrowser(file, isRelative, debug);
 		}
 	}
 
@@ -394,7 +395,7 @@ export class Manager extends Disposable {
 		if (workspaces && workspaces.length > 0) {
 			for (let i = 0; i < workspaces.length; i++) {
 				const currWorkspace = workspaces[i];
-				const manager = this._serverManagers.get(currWorkspace.uri);
+				const manager = this._serverManagers.get(currWorkspace.uri.toString());
 				if (manager) {
 					vscode.commands.executeCommand(
 						`${SETTINGS_SECTION_ID}.start.preview.atFile`,

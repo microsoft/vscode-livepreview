@@ -11,10 +11,19 @@ import { Connection, ConnectionInfo } from './connection';
  */
 const localize = nls.loadMessageBundle();
 export class ConnectionManager extends Disposable {
-	private _initHttpPort;
-	private _initWSPort;
+	private _initHttpPort: number;
+	private _initWSPort: number;
 	private _initHost: string;
-	private _connections: Map<vscode.Uri | undefined, Connection>; // undefined key means no workspace root
+	private _connections: Map<string | undefined, Connection>; // undefined key means no workspace root
+
+	private readonly _onConnected = this._register(
+		new vscode.EventEmitter<ConnectionInfo>()
+	);
+
+	/**
+	 * Fires when a new connection connects
+	 */
+	public readonly onConnected = this._onConnected.event;
 
 	constructor(private readonly _extensionUri: vscode.Uri) {
 		super();
@@ -26,11 +35,7 @@ export class ConnectionManager extends Disposable {
 		if (!this._validHost(this._initHost)) {
 			this._showIncorrectHostFormatError(this._initHost);
 			this._initHost = DEFAULT_HOST;
-		} else if (
-			vscode.env.remoteName &&
-			vscode.env.remoteName != '' &&
-			this._initHost != DEFAULT_HOST
-		) {
+		} else if (vscode.env.remoteName && this._initHost != DEFAULT_HOST) {
 			vscode.window.showErrorMessage(
 				localize(
 					'hostCannotConnect',
@@ -42,7 +47,7 @@ export class ConnectionManager extends Disposable {
 			this._initHost = DEFAULT_HOST;
 		}
 
-		this._connections = new Map<vscode.Uri, Connection>();
+		this._connections = new Map<string, Connection>();
 
 		this._register(
 			vscode.workspace.onDidChangeConfiguration((e) => {
@@ -76,14 +81,6 @@ export class ConnectionManager extends Disposable {
 	private _validHost(host: string) {
 		return isIPv4(host);
 	}
-	private readonly _onConnected = this._register(
-		new vscode.EventEmitter<ConnectionInfo>()
-	);
-
-	/**
-	 * Fires when a new connection connects
-	 */
-	public readonly onConnected = this._onConnected.event;
 
 	/**
 	 * get connection by workspaceFolder
@@ -93,7 +90,7 @@ export class ConnectionManager extends Disposable {
 	public getConnection(
 		workspaceFolder: vscode.WorkspaceFolder | undefined
 	): Connection | undefined {
-		return this._connections.get(workspaceFolder?.uri);
+		return this._connections.get(workspaceFolder?.uri.toString());
 	}
 
 	/**
@@ -126,7 +123,7 @@ export class ConnectionManager extends Disposable {
 		this._register(
 			connection.onShouldResetInitHost((host) => (this._initHost = host))
 		);
-		this._connections.set(workspaceFolder?.uri, connection);
+		this._connections.set(workspaceFolder?.uri.toString(), connection);
 		return connection;
 	}
 
@@ -135,8 +132,8 @@ export class ConnectionManager extends Disposable {
 	 * @param workspaceFolder
 	 */
 	public removeConnection(workspaceFolder: vscode.WorkspaceFolder | undefined) {
-		this._connections.get(workspaceFolder?.uri)?.dispose;
-		this._connections.delete(workspaceFolder?.uri);
+		this._connections.get(workspaceFolder?.uri.toString())?.dispose;
+		this._connections.delete(workspaceFolder?.uri.toString());
 	}
 
 	/**
