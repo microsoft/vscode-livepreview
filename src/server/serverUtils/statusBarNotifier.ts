@@ -44,8 +44,8 @@ export class StatusBarNotifier extends Disposable {
 	}
 
 	private _refreshBar(): void {
-		let portsLabel;
-		let portsTooltip;
+		let portsLabel: string;
+		let portsTooltip: string;
 
 		if (this._ports.size === 1) {
 			const port = this._ports.values().next().value;

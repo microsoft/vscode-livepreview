@@ -96,7 +96,7 @@ export class serverTaskLinkProvider
 			`(?<=\\s)\\/([:/(\\w%\\-.:@)]*)\\?*[\\w=]*`,
 			'g'
 		);
-		let partialLinkMatches;
+		let partialLinkMatches: RegExpExecArray | null;
 		do {
 			partialLinkMatches = partialLinkRegex.exec(input);
 			if (partialLinkMatches) {
@@ -140,7 +140,7 @@ export class serverTaskLinkProvider
 			'g'
 		);
 
-		let fullURLMatches;
+		let fullURLMatches: RegExpExecArray | null;
 		do {
 			fullURLMatches = fullLinkRegex.exec(input);
 			if (fullURLMatches) {

@@ -12,11 +12,9 @@ import {
 } from '../../utils/utils';
 import { HTMLInjector } from './HTMLInjector';
 import TelemetryReporter from 'vscode-extension-telemetry';
-// import { WorkspaceManager } from '../../infoManagers/workspaceManager';
 import { EndpointManager } from '../../infoManagers/endpointManager';
 import { PathUtil } from '../../utils/pathUtil';
 import { INJECTED_ENDPOINT_NAME } from '../../utils/constants';
-import { ConnectionManager } from '../../connectionInfo/connectionManager';
 import { Connection } from '../../connectionInfo/connection';
 
 const localize = nls.loadMessageBundle();
@@ -287,7 +285,7 @@ export class ContentLoader extends Disposable {
 		this._servedFiles.add(readPath);
 		const workspaceDocuments = vscode.workspace.textDocuments;
 		let i = 0;
-		let stream;
+		let stream: Stream.Readable | fs.ReadStream | undefined;
 
 		let contentType = mime.getType(readPath) ?? 'text/plain';
 
@@ -345,7 +343,7 @@ export class ContentLoader extends Disposable {
 		// 4. after <!DOCTYPE >
 		// 5. at the very beginning
 
-		let re;
+		let re: RegExp;
 		let tagEnd = 0;
 		for (const i in this._insertionTags) {
 			re = new RegExp(`<${this._insertionTags[i]}[^>]*>`, 'g');

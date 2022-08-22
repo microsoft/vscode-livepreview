@@ -50,7 +50,7 @@ export class EndpointManager extends Disposable {
 		return path.join(endpoint_prefix, child);
 	}
 
-	public getEndpointParent(urlPath: string) {
+	public getEndpointParent(urlPath: string): string {
 		let endpoint: string | undefined = urlPath.endsWith('/')
 			? urlPath.substr(0, urlPath.length - 1)
 			: urlPath;

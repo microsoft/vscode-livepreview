@@ -179,7 +179,7 @@ export class ServerTaskProvider
 	 */
 	public resolveTask(_task: vscode.Task): vscode.Task | undefined {
 		const definition: IServerTaskDefinition = <any>_task.definition;
-		let workspace;
+		let workspace: vscode.WorkspaceFolder | undefined;
 		try {
 			workspace = <vscode.WorkspaceFolder>_task.scope;
 		} catch (e) {

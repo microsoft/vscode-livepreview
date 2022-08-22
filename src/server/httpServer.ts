@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as Stream from 'stream';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { INJECTED_ENDPOINT_NAME } from '../utils/constants';
@@ -131,7 +132,7 @@ export class HttpServer extends Disposable {
 			return;
 		}
 
-		let stream;
+		let stream: Stream.Readable | fs.ReadStream | undefined;
 		if (req.url == INJECTED_ENDPOINT_NAME) {
 			const respInfo = this._contentLoader.loadInjectedJS();
 			const contentType = respInfo.ContentType ?? '';
