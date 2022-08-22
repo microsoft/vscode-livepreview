@@ -182,7 +182,7 @@ export class ServerGrouping extends Disposable {
 		);
 
 		this._register(
-			this._httpServer.onConnected((e) => {
+			this._httpServer.onConnected(() => {
 				this._httpConnected = true;
 				if (this._wsConnected && this._httpConnected) {
 					this._connected();

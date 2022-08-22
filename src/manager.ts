@@ -111,7 +111,7 @@ export class Manager extends Disposable {
 			)
 		);
 
-		this._serverTaskProvider.onRequestOpenEditorToSide((uri) => {
+		this._register(this._serverTaskProvider.onRequestOpenEditorToSide((uri) => {
 			if (
 				this._previewManager.previewActive &&
 				this._previewManager.currentPanel
@@ -129,7 +129,7 @@ export class Manager extends Disposable {
 			} else {
 				vscode.commands.executeCommand('vscode.open', uri);
 			}
-		});
+		}));
 
 		this._register(
 			this._serverTaskProvider.onRequestToOpenServer(async (workspace) => {
@@ -191,6 +191,18 @@ export class Manager extends Disposable {
 				serializer
 			);
 		}
+
+		vscode.workspace.onDidChangeWorkspaceFolders((e) => {
+			if (e.removed) {
+				e.removed.forEach(workspace => {
+					const potentialGrouping = this._serverGroupings.get(workspace.uri.toString());
+					if (potentialGrouping) {
+						potentialGrouping.closeServer();
+					}
+				});
+			}
+			// known bug: transitioning between 1 and 2 workspaces: https://github.com/microsoft/vscode/issues/128138
+		});
 	}
 
 	/**
@@ -258,6 +270,15 @@ export class Manager extends Disposable {
 			serverGrouping.closeServer();
 			serverGrouping.dispose();
 		});
+	}
+
+	public dispose(): void {
+		this.closeServers();
+		super.dispose();
+	}
+
+	public closePanel(): void {
+		this._previewManager.currentPanel?.close();
 	}
 
 	/**
@@ -403,7 +424,7 @@ export class Manager extends Disposable {
 		if (typeof file == 'string') {
 			return { filePath: file, isRelative: fileStringRelative };
 		} else if (file instanceof vscode.Uri) {
-			let filePath = file?.fsPath ?? file?.path;
+			let filePath = file?.fsPath;
 
 			if (!filePath) {
 				const activeFilePath =

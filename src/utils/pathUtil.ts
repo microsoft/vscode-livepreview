@@ -94,7 +94,7 @@ export class PathUtil {
 	 * @returns {boolean} whether `file1` is a child of `file2`.
 	 */
 	public static PathBeginsWith(file1: string, file2: string): boolean {
-		return path.normalize(file1).startsWith(path.normalize(file2));
+		return path.normalize(file1).startsWith(path.normalize(file2 + '/'));
 	}
 
 	/**
