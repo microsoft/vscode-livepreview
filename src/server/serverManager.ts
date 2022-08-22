@@ -256,14 +256,11 @@ export class ServerManager extends Disposable {
 		if (!this.isRunning) {
 			this._httpConnected = false;
 			this._wsConnected = false;
-			if (this._extensionUri) {
-				this._findFreePort(port, (freePort: number) => {
-					this._httpServer.start(freePort);
-					this._wsServer.start(freePort + 1);
-				});
-				return true;
-			}
-			return false;
+			this._findFreePort(port, (freePort: number) => {
+				this._httpServer.start(freePort);
+				this._wsServer.start(freePort + 1);
+			});
+			return true;
 		} else if (fromTask) {
 			const uri = await this._connection.resolveExternalHTTPUri();
 			this._serverTaskProvider.serverStarted(
@@ -281,7 +278,7 @@ export class ServerManager extends Disposable {
 	 */
 	private get _reloadOnAnyChange(): boolean {
 		return (
-			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
+			SettingUtil.GetConfig().autoRefreshPreview ==
 			AutoRefreshPreview.onAnyChange
 		);
 	}
@@ -321,7 +318,7 @@ export class ServerManager extends Disposable {
 				this._previewManager.runTaskWithExternalPreview
 			) {
 				this._serverTaskProvider.extRunTask(
-					SettingUtil.GetConfig(this._extensionUri)
+					SettingUtil.GetConfig()
 						.browserPreviewLaunchServerLogging,
 					this._connection.workspace
 				);
@@ -394,7 +391,7 @@ export class ServerManager extends Disposable {
 	 */
 	private get _reloadOnSave(): boolean {
 		return (
-			SettingUtil.GetConfig(this._extensionUri).autoRefreshPreview ==
+			SettingUtil.GetConfig().autoRefreshPreview ==
 			AutoRefreshPreview.onSave
 		);
 	}
@@ -459,7 +456,7 @@ export class ServerManager extends Disposable {
 	 */
 	private _showServerStatusMessage(messsage: string) {
 		if (
-			SettingUtil.GetConfig(this._extensionUri).showServerStatusNotifications
+			SettingUtil.GetConfig().showServerStatusNotifications
 		) {
 			vscode.window
 				.showInformationMessage(messsage, DONT_SHOW_AGAIN)

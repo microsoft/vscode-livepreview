@@ -12,16 +12,14 @@ const localize = nls.loadMessageBundle();
  */
 export class StatusBarNotifier extends Disposable {
 	private _statusBar: vscode.StatusBarItem;
-	private _extensionUri: vscode.Uri;
 	private _on: boolean;
 	private _ports: Map<string | undefined, number>;
 
-	constructor(extensionUri: vscode.Uri) {
+	constructor() {
 		super();
 		this._statusBar = this._register(
 			vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100)
 		);
-		this._extensionUri = extensionUri;
 		this.ServerOff();
 		this._on = false;
 		this._ports = new Map<string, number>();
@@ -38,7 +36,7 @@ export class StatusBarNotifier extends Disposable {
 	 */
 	public setServer(uri: vscode.Uri | undefined, port: number) {
 		this._on = true;
-		if (SettingUtil.GetConfig(this._extensionUri).showStatusBarItem) {
+		if (SettingUtil.GetConfig().showStatusBarItem) {
 			this._statusBar.show();
 		}
 		this._ports.set(uri?.toString(), port);
@@ -107,7 +105,7 @@ export class StatusBarNotifier extends Disposable {
 	 * @description update fields to address config changes.
 	 */
 	public updateConfigurations() {
-		if (SettingUtil.GetConfig(this._extensionUri).showStatusBarItem) {
+		if (SettingUtil.GetConfig().showStatusBarItem) {
 			if (this._on) {
 				this._statusBar.show();
 			}

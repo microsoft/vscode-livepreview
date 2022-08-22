@@ -71,13 +71,11 @@ export const PreviewType: any = {
 export class SettingUtil {
 	/**
 	 * @description Get the current settings JSON.
-	 * @param {vscode.Uri} extensionUri the extension URI
 	 * @returns {LiveServerConfigItem} the LiveServerConfigItem, which is a JSON object with all of the settings for Live Preview.
 	 */
-	public static GetConfig(extensionUri: vscode.Uri): LiveServerConfigItem {
+	public static GetConfig(): LiveServerConfigItem {
 		const config = vscode.workspace.getConfiguration(
-			SETTINGS_SECTION_ID,
-			extensionUri
+			SETTINGS_SECTION_ID
 		);
 		return {
 			portNumber: config.get<number>(Settings.portNumber, 3000),
@@ -121,22 +119,21 @@ export class SettingUtil {
 
 	/**
 	 * @description Get the preferred preview target from settings.
-	 * @param {vscode.Uri} extensionUri the extension URI.
 	 * @returns {string} the constant in the command string indicating internal or external preview.
 	 */
-	public static GetPreviewType(extensionUri: vscode.Uri): string {
+	public static GetPreviewType(): string {
 		if (
-			SettingUtil.GetConfig(extensionUri).openPreviewTarget ==
+			SettingUtil.GetConfig().openPreviewTarget ==
 			OpenPreviewTarget.embeddedPreview
 		) {
 			return PreviewType.internalPreview;
 		} else {
-			return SettingUtil.GetExternalPreviewType(extensionUri);
+			return SettingUtil.GetExternalPreviewType();
 		}
 	}
 
-	public static GetExternalPreviewType(extensionUri: vscode.Uri): string {
-		if (SettingUtil.GetConfig(extensionUri).debugOnExternalPreview) {
+	public static GetExternalPreviewType(): string {
+		if (SettingUtil.GetConfig().debugOnExternalPreview) {
 			return PreviewType.externalDebugPreview;
 		} else {
 			return PreviewType.externalPreview;

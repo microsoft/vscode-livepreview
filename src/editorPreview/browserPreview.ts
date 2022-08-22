@@ -200,9 +200,7 @@ export class BrowserPreview extends Disposable {
 			);
 			const uri = vscode.Uri.parse(givenURI.toString());
 
-			const command = `${SETTINGS_SECTION_ID}.start.${SettingUtil.GetExternalPreviewType(
-				this._extensionUri
-			)}.atFile`;
+			const command = `${SETTINGS_SECTION_ID}.start.${SettingUtil.GetExternalPreviewType()}.atFile`;
 
 			if (this._webviewComm.currentConnection.workspace) {
 				vscode.commands.executeCommand(command, uri, {

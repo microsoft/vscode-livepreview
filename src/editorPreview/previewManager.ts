@@ -45,12 +45,11 @@ export class PreviewManager extends Disposable {
 			vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
 
 		this._runTaskWithExternalPreview =
-			SettingUtil.GetConfig(_extensionUri).runTaskWithExternalPreview;
+			SettingUtil.GetConfig().runTaskWithExternalPreview;
 
 		this._register(
 			vscode.workspace.onDidChangeConfiguration((e) => {
 				this._runTaskWithExternalPreview = SettingUtil.GetConfig(
-					this._extensionUri
 				).runTaskWithExternalPreview;
 			})
 		);
@@ -154,7 +153,7 @@ export class PreviewManager extends Disposable {
 		this._reporter.sendTelemetryEvent('preview.fileOutOfWorkspace');
 		if (
 			!this._notifiedAboutLooseFiles &&
-			SettingUtil.GetConfig(this._extensionUri).notifyOnOpenLooseFile
+			SettingUtil.GetConfig().notifyOnOpenLooseFile
 		) {
 			vscode.window
 				.showWarningMessage(
@@ -228,7 +227,6 @@ export class PreviewManager extends Disposable {
 			this.currentPanel.onDispose(() => {
 				this.currentPanel = undefined;
 				const closeServerDelay = SettingUtil.GetConfig(
-					this._extensionUri
 				).serverKeepAliveAfterEmbeddedPreviewClose;
 				this._currentTimeout = setTimeout(() => {
 					this._serverExpired();

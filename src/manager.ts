@@ -60,7 +60,7 @@ export class Manager extends Disposable {
 		super();
 		this._serverManagers = new Map<string, ServerManager>();
 		this._connectionManager = this._register(
-			new ConnectionManager(_extensionUri)
+			new ConnectionManager()
 		);
 
 		this._endpointManager = this._register(new EndpointManager());
@@ -85,7 +85,7 @@ export class Manager extends Disposable {
 			)
 		);
 
-		this._statusBar = this._register(new StatusBarNotifier(_extensionUri));
+		this._statusBar = this._register(new StatusBarNotifier());
 
 		this._serverTaskProvider = this._register(
 			new ServerTaskProvider(
@@ -261,6 +261,7 @@ export class Manager extends Disposable {
 			this._openNoTarget();
 			return;
 		}
+		let foundPath = false;
 		this._serverManagers.forEach((serverManager) => {
 			if (serverManager.pathExistsRelativeToWorkspace(filePath)) {
 				vscode.commands.executeCommand(
@@ -272,9 +273,15 @@ export class Manager extends Disposable {
 						manager: serverManager,
 					}
 				);
+				foundPath = true;
 				return;
 			}
 		});
+
+		if (foundPath) {
+			return;
+		}
+
 		if (existsSync(filePath)) {
 			vscode.commands.executeCommand(
 				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
@@ -288,7 +295,7 @@ export class Manager extends Disposable {
 			vscode.commands.executeCommand(
 				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 				'/',
-				{ relativeFileString: false }
+				{ relativeFileString: true }
 			);
 		}
 	}

@@ -25,12 +25,12 @@ export class ConnectionManager extends Disposable {
 	 */
 	public readonly onConnected = this._onConnected.event;
 
-	constructor(private readonly _extensionUri: vscode.Uri) {
+	constructor() {
 		super();
 
-		this._initHttpPort = SettingUtil.GetConfig(this._extensionUri).portNumber;
+		this._initHttpPort = SettingUtil.GetConfig().portNumber;
 		this._initWSPort = this._initHttpPort + 1;
-		this._initHost = SettingUtil.GetConfig(this._extensionUri).hostIP;
+		this._initHost = SettingUtil.GetConfig().hostIP;
 
 		if (!this._validHost(this._initHost)) {
 			this._showIncorrectHostFormatError(this._initHost);
@@ -53,9 +53,8 @@ export class ConnectionManager extends Disposable {
 			vscode.workspace.onDidChangeConfiguration((e) => {
 				if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
 					this._pendingPort = SettingUtil.GetConfig(
-						this._extensionUri
 					).portNumber;
-					this._pendingHost = SettingUtil.GetConfig(this._extensionUri).hostIP;
+					this._pendingHost = SettingUtil.GetConfig().hostIP;
 				}
 			})
 		);

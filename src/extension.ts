@@ -52,9 +52,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start`, () => {
-			const filePath = SettingUtil.GetConfig(
-				context.extensionUri
-			).defaultPreviewPath;
+			const filePath = SettingUtil.GetConfig().defaultPreviewPath;
 			serverPreview.openTargetAtFile(filePath);
 		})
 	);
@@ -63,7 +61,7 @@ export function activate(context: vscode.ExtensionContext): void {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
 			(file?: vscode.Uri | string, options?: openFileOptions) => {
-				const previewType = SettingUtil.GetPreviewType(context.extensionUri);
+				const previewType = SettingUtil.GetPreviewType();
 				vscode.commands.executeCommand(
 					`${SETTINGS_SECTION_ID}.start.${previewType}.atFile`,
 					file,
