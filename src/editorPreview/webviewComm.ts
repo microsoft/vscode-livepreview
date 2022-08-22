@@ -51,8 +51,8 @@ export class WebviewComm extends Disposable {
 	/**
 	 * @description extension-side reload of webivew.
 	 */
-	private _reloadWebview(): void {
-		this.goToFile(this.currentAddress, false);
+	private async _reloadWebview(): Promise<void> {
+		await this.goToFile(this.currentAddress, false);
 	}
 
 	/**
@@ -101,7 +101,7 @@ export class WebviewComm extends Disposable {
 		updateHistory = true,
 		connection: Connection = this.currentConnection
 	): Promise<void> {
-		this._setHtml(this._panel.webview, URLExt, updateHistory, connection);
+		await this._setHtml(this._panel.webview, URLExt, updateHistory, connection);
 		this.currentAddress = URLExt;
 	}
 
@@ -392,12 +392,12 @@ export class WebviewComm extends Disposable {
 	/**
 	 * @description go forwards in page history.
 	 */
-	public goForwards(): void {
+	public async goForwards(): Promise<void> {
 		const response = this._pageHistory.goForward();
 
 		const page = response.address;
 		if (page != undefined) {
-			this.goToFile(page.path, false, page.connection);
+			await this.goToFile(page.path, false, page.connection);
 		}
 
 		for (const i in response.actions) {
@@ -408,12 +408,12 @@ export class WebviewComm extends Disposable {
 	/**
 	 * @description go backwards in page history.
 	 */
-	public goBack(): void {
+	public async goBack(): Promise<void> {
 		const response = this._pageHistory.goBackward();
 
 		const page = response.address;
 		if (page != undefined) {
-			this.goToFile(page.path, false, page.connection);
+			await this.goToFile(page.path, false, page.connection);
 		}
 
 		for (const i in response.actions) {

@@ -25,7 +25,6 @@ export class PreviewManager extends Disposable {
 	public currentPanel: BrowserPreview | undefined;
 	private _notifiedAboutLooseFiles = false;
 	private _currentTimeout: NodeJS.Timeout | undefined;
-	private _runTaskWithExternalPreview;
 
 	private readonly _onShouldCloseServer = this._register(
 		new vscode.EventEmitter<void>()
@@ -43,20 +42,6 @@ export class PreviewManager extends Disposable {
 		super();
 		this._outputChannel =
 			vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
-
-		this._runTaskWithExternalPreview =
-			SettingUtil.GetConfig().runTaskWithExternalPreview;
-
-		this._register(
-			vscode.workspace.onDidChangeConfiguration((e) => {
-				this._runTaskWithExternalPreview =
-					SettingUtil.GetConfig().runTaskWithExternalPreview;
-			})
-		);
-	}
-
-	public get runTaskWithExternalPreview(): boolean {
-		return this._runTaskWithExternalPreview;
 	}
 
 	/**
@@ -66,16 +51,20 @@ export class PreviewManager extends Disposable {
 	 * @param {vscode.WebviewPanel | undefined} panel the webview panel to reuse if defined.
 	 * @param {Connection} connection the connection to connect using
 	 */
-	public launchFileInEmbeddedPreview(
+	public async launchFileInEmbeddedPreview(
 		file: string,
 		relative: boolean,
 		panel: vscode.WebviewPanel | undefined,
 		connection: Connection
-	): void {
+	): Promise<void> {
 		file = relative ? file : this._transformNonRelativeFile(file, connection);
 		// If we already have a panel, show it.
 		if (this.currentPanel) {
-			this.currentPanel.reveal(vscode.ViewColumn.Beside, file, connection);
+			await this.currentPanel.reveal(
+				vscode.ViewColumn.Beside,
+				file,
+				connection
+			);
 			return;
 		}
 

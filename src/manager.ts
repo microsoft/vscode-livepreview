@@ -64,6 +64,11 @@ export class Manager extends Disposable {
 		this._register(
 			this._connectionManager.onConnected((e) => {
 				this._statusBar.setServer(e.workspace?.uri, e.httpPort);
+				vscode.commands.executeCommand(
+					'setContext',
+					LIVE_PREVIEW_SERVER_ON,
+					true
+				);
 			})
 		);
 
@@ -81,7 +86,7 @@ export class Manager extends Disposable {
 						!this._serverTaskProvider.isRunning &&
 						vscode.workspace.workspaceFolders &&
 						vscode.workspace.workspaceFolders?.length > 0 &&
-						this._previewManager.runTaskWithExternalPreview
+						this._serverTaskProvider.runTaskWithExternalPreview
 					) {
 						this.closeServers();
 					}
@@ -236,7 +241,7 @@ export class Manager extends Disposable {
 			serverGrouping = this._getServerGroupingFromWorkspace(undefined);
 		}
 
-		return this._openPreview(
+		return await this._openPreview(
 			internal,
 			fileInfo.filePath,
 			serverGrouping,
@@ -323,13 +328,20 @@ export class Manager extends Disposable {
 					this._reporter,
 					this._endpointManager,
 					connection,
-					this._previewManager,
 					this._serverTaskProvider,
 					this._userDataDir
 				)
 			);
 			this._register(
 				serverGrouping.onClose(() => {
+					if (
+						this._previewManager.currentPanel &&
+						this._previewManager.currentPanel.currentConnection === connection
+					) {
+						// close the preview if it is showing this server's content
+						this._previewManager.currentPanel?.close();
+					}
+
 					this._statusBar.removeServer(workspace?.uri);
 					this._serverGroupings.delete(workspace?.uri.toString());
 					if (this._serverGroupings.size === 0) {
@@ -342,6 +354,26 @@ export class Manager extends Disposable {
 					}
 					this._connectionManager.removeConnection(workspace);
 				})
+			);
+			this._register(
+				serverGrouping.onShouldLaunchEmbeddedPreview((e) =>
+					this._previewManager.launchFileInEmbeddedPreview(
+						e.file,
+						e.relative,
+						e.panel,
+						e.connection
+					)
+				)
+			);
+			this._register(
+				serverGrouping.onShouldLaunchExternalPreview((e) =>
+					this._previewManager.launchFileInExternalBrowser(
+						e.file,
+						e.relative,
+						e.debug,
+						e.connection
+					)
+				)
 			);
 			this._serverGroupings.set(workspace?.uri.toString(), serverGrouping);
 		}

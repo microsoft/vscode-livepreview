@@ -7,6 +7,7 @@ import { ServerTaskTerminal } from './serverTaskTerminal';
 import { TASK_TERMINAL_BASE_NAME } from '../utils/constants';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { IServerMsg } from '../server/serverGrouping';
+import { SettingUtil } from '../utils/settingsUtil';
 
 interface IServerTaskDefinition extends vscode.TaskDefinition {
 	args: string[];
@@ -35,6 +36,7 @@ export class ServerTaskProvider
 	private _tasks: vscode.Task[] | undefined;
 	private _terminals: Map<string | undefined, ServerTaskTerminal>;
 	private _terminalLinkProvider: serverTaskLinkProvider;
+	private _runTaskWithExternalPreview;
 
 	// emitters to allow manager to communicate with the terminal.
 	private readonly _onRequestToOpenServerEmitter = this._register(
@@ -72,6 +74,16 @@ export class ServerTaskProvider
 		this._terminalLinkProvider.onRequestOpenEditorToSide((e) => {
 			this._onRequestOpenEditorToSide.fire(e);
 		});
+
+		this._runTaskWithExternalPreview =
+			SettingUtil.GetConfig().runTaskWithExternalPreview;
+
+		this._register(
+			vscode.workspace.onDidChangeConfiguration((e) => {
+				this._runTaskWithExternalPreview =
+					SettingUtil.GetConfig().runTaskWithExternalPreview;
+			})
+		);
 	}
 
 	public get isRunning(): boolean {
@@ -147,6 +159,9 @@ export class ServerTaskProvider
 		verbose: boolean,
 		workspace: vscode.WorkspaceFolder | undefined
 	): Promise<void> {
+		if (!this.runTaskWithExternalPreview) {
+			return;
+		}
 		/* __GDPR__
 			"tasks.terminal.startFromExtension" : {}
 		*/
@@ -186,6 +201,10 @@ export class ServerTaskProvider
 			// no op
 		}
 		return this._getTask(definition, workspace);
+	}
+
+	public get runTaskWithExternalPreview(): boolean {
+		return this._runTaskWithExternalPreview;
 	}
 
 	/**

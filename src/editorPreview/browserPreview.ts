@@ -107,8 +107,12 @@ export class BrowserPreview extends Disposable {
 	 * @param file the file (pathname) to go to.
 	 * @param connection the connection to connect using
 	 */
-	public reveal(column: number, file = '/', connection: Connection): void {
-		this._webviewComm.goToFile(file, true, connection);
+	public async reveal(
+		column: number,
+		file = '/',
+		connection: Connection
+	): Promise<void> {
+		await this._webviewComm.goToFile(file, true, connection);
 		this._panel.reveal(column);
 	}
 
@@ -116,7 +120,7 @@ export class BrowserPreview extends Disposable {
 	 * @description handle messages from the webview (see messages sent from `media/main.js`).
 	 * @param {any} message the message from webview
 	 */
-	private _handleWebviewMessage(message: any): void {
+	private async _handleWebviewMessage(message: any): Promise<void> {
 		switch (message.command) {
 			case 'alert':
 				vscode.window.showErrorMessage(message.text);
@@ -131,26 +135,26 @@ export class BrowserPreview extends Disposable {
 				return;
 			}
 			case 'go-back':
-				this._webviewComm.goBack();
+				await this._webviewComm.goBack();
 				return;
 			case 'go-forward':
-				this._webviewComm.goForwards();
+				await this._webviewComm.goForwards();
 				return;
 			case 'open-browser':
-				this._handleOpenBrowser(message.text);
+				await this._handleOpenBrowser(message.text);
 				return;
 			case 'add-history': {
 				const connection = this._connectionManager.getConnectionFromPort(
 					message.port
 				);
-				this._webviewComm.setUrlBar(message.text, connection);
+				await this._webviewComm.setUrlBar(message.text, connection);
 				return;
 			}
 			case 'refresh-back-forward-buttons':
 				this._webviewComm.updateForwardBackArrows();
 				return;
 			case 'go-to-file':
-				this._goToFullAddress(message.text);
+				await this._goToFullAddress(message.text);
 				return;
 
 			case 'console': {
@@ -239,7 +243,7 @@ export class BrowserPreview extends Disposable {
 			"preview.openExternalBrowser" : {}
 		*/
 		this._reporter.sendTelemetryEvent('preview.openExternalBrowser');
-		this._webviewComm.goToFile(this._webviewComm.currentAddress, false);
+		await this._webviewComm.goToFile(this._webviewComm.currentAddress, false);
 		this._webviewComm.updateForwardBackArrows();
 	}
 
@@ -266,9 +270,9 @@ export class BrowserPreview extends Disposable {
 				hostString = hostString.substr(0, hostString.length - 1);
 			}
 			const file = address.substr(host.toString().length);
-			this._webviewComm.goToFile(file, true, connection);
+			await this._webviewComm.goToFile(file, true, connection);
 		} catch (e) {
-			this._handleOpenBrowser(address);
+			await this._handleOpenBrowser(address);
 		}
 	}
 

@@ -4,17 +4,12 @@ import * as nls from 'vscode-nls';
 import { Disposable } from '../utils/dispose';
 import { WSServer } from './wsServer';
 import { HttpServer } from './httpServer';
-import { StatusBarNotifier } from './serverUtils/statusBarNotifier';
 import {
 	AutoRefreshPreview,
 	SettingUtil,
 	Settings,
 } from '../utils/settingsUtil';
-import {
-	DONT_SHOW_AGAIN,
-	LIVE_PREVIEW_SERVER_ON,
-	UriSchemes,
-} from '../utils/constants';
+import { DONT_SHOW_AGAIN, UriSchemes } from '../utils/constants';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { PathUtil } from '../utils/pathUtil';
@@ -46,10 +41,22 @@ export interface ILaunchInfo {
 	connection: Connection;
 }
 
+interface IExternalPreviewArgs {
+	file: string;
+	relative: boolean;
+	debug: boolean;
+	connection: Connection;
+}
+
+interface IEmbeddedPreviewArgs {
+	file: string;
+	relative: boolean;
+	panel: vscode.WebviewPanel | undefined;
+	connection: Connection;
+}
+
 const localize = nls.loadMessageBundle();
 export class ServerGrouping extends Disposable {
-	private readonly _onClose = this._register(new vscode.EventEmitter<void>());
-	public readonly onClose = this._onClose.event;
 	private _pendingLaunchInfo: ILaunchInfo | undefined;
 	private readonly _httpServer: HttpServer;
 	private readonly _wsServer: WSServer;
@@ -65,12 +72,26 @@ export class ServerGrouping extends Disposable {
 	);
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
 
+	private readonly _onClose = this._register(new vscode.EventEmitter<void>());
+	public readonly onClose = this._onClose.event;
+
+	private readonly _onShouldLaunchExternalPreview = this._register(
+		new vscode.EventEmitter<IExternalPreviewArgs>()
+	);
+	public readonly onShouldLaunchExternalPreview =
+		this._onShouldLaunchExternalPreview.event;
+
+	private readonly _onShouldLaunchEmbeddedPreview = this._register(
+		new vscode.EventEmitter<IEmbeddedPreviewArgs>()
+	);
+	public readonly onShouldLaunchEmbeddedPreview =
+		this._onShouldLaunchEmbeddedPreview.event;
+
 	constructor(
-		private readonly _extensionUri: vscode.Uri,
+		_extensionUri: vscode.Uri,
 		_reporter: TelemetryReporter,
 		_endpointManager: EndpointManager,
 		private readonly _connection: Connection,
-		private readonly _previewManager: PreviewManager,
 		private readonly _serverTaskProvider: ServerTaskProvider,
 		_userDataDir: string | undefined
 	) {
@@ -177,25 +198,24 @@ export class ServerGrouping extends Disposable {
 
 			if (this._pendingLaunchInfo) {
 				if (this._pendingLaunchInfo.external) {
-					this._previewManager.launchFileInExternalBrowser(
-						this._pendingLaunchInfo.file,
-						this._pendingLaunchInfo.relative,
-						this._pendingLaunchInfo.debug,
-						this._connection
-					);
+					this._onShouldLaunchExternalPreview.fire({
+						file: this._pendingLaunchInfo.file,
+						relative: this._pendingLaunchInfo.relative,
+						debug: this._pendingLaunchInfo.debug,
+						connection: this._connection,
+					});
 				} else {
-					this._previewManager.launchFileInEmbeddedPreview(
-						this._pendingLaunchInfo.file,
-						this._pendingLaunchInfo.relative,
-						this._pendingLaunchInfo.panel,
-						this._connection
-					);
+					this._onShouldLaunchEmbeddedPreview.fire({
+						file: this._pendingLaunchInfo.file,
+						relative: this._pendingLaunchInfo.relative,
+						panel: this._pendingLaunchInfo.panel,
+						connection: this._connection,
+					});
 				}
 
 				this._pendingLaunchInfo = undefined;
 			}
 		});
-		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, false);
 	}
 
 	public get port(): number | undefined {
@@ -225,13 +245,6 @@ export class ServerGrouping extends Disposable {
 
 			this._showServerStatusMessage('Server Stopped');
 			this._onClose.fire();
-			if (
-				this._previewManager.currentPanel &&
-				this._previewManager.currentPanel.currentConnection === this._connection
-			) {
-				// close the preview if it is showing this server's content
-				this._previewManager.currentPanel?.close();
-			}
 
 			if (this._serverTaskProvider.isTaskRunning(this._connection.workspace)) {
 				// stop the associated task
@@ -303,19 +316,18 @@ export class ServerGrouping extends Disposable {
 					connection: this._connection,
 				};
 			} else {
-				this._previewManager.launchFileInExternalBrowser(
+				this._onShouldLaunchExternalPreview.fire({
 					file,
 					relative,
 					debug,
-					this._connection
-				);
+					connection: this._connection,
+				});
 			}
 			if (
 				vscode.workspace.workspaceFolders &&
-				vscode.workspace.workspaceFolders.length > 0 &&
-				this._previewManager.runTaskWithExternalPreview
+				vscode.workspace.workspaceFolders.length > 0
 			) {
-				this._serverTaskProvider.extRunTask(
+				await this._serverTaskProvider.extRunTask(
 					SettingUtil.GetConfig().browserPreviewLaunchServerLogging,
 					this._connection.workspace
 				);
@@ -328,12 +340,12 @@ export class ServerGrouping extends Disposable {
 				}
 			}
 		} else {
-			this._previewManager.launchFileInExternalBrowser(
+			this._onShouldLaunchExternalPreview.fire({
 				file,
 				relative,
 				debug,
-				this._connection
-			);
+				connection: this._connection,
+			});
 		}
 	}
 
@@ -366,12 +378,12 @@ export class ServerGrouping extends Disposable {
 			};
 			this.openServer();
 		} else {
-			this._previewManager.launchFileInEmbeddedPreview(
+			this._onShouldLaunchEmbeddedPreview.fire({
 				file,
 				relative,
 				panel,
-				this._connection
-			);
+				connection: this._connection,
+			});
 		}
 	}
 
@@ -439,7 +451,6 @@ export class ServerGrouping extends Disposable {
 			this._wsServer.wsPort,
 			this._wsServer.wsPath
 		);
-		vscode.commands.executeCommand('setContext', LIVE_PREVIEW_SERVER_ON, true);
 	}
 
 	/**
