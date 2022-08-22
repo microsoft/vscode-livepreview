@@ -20,7 +20,7 @@ export class StatusBarNotifier extends Disposable {
 		this._statusBar = this._register(
 			vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100)
 		);
-		this.ServerOff();
+		this.serverOff();
 		this._on = false;
 		this._ports = new Map<string, number>();
 
@@ -34,7 +34,7 @@ export class StatusBarNotifier extends Disposable {
 	/**
 	 * @description called to notify that the server turned on.
 	 */
-	public setServer(uri: vscode.Uri | undefined, port: number) {
+	public setServer(uri: vscode.Uri | undefined, port: number): void {
 		this._on = true;
 		if (SettingUtil.GetConfig().showStatusBarItem) {
 			this._statusBar.show();
@@ -43,7 +43,7 @@ export class StatusBarNotifier extends Disposable {
 		this._refreshBar();
 	}
 
-	private _refreshBar() {
+	private _refreshBar(): void {
 		let portsLabel;
 		let portsTooltip;
 
@@ -84,7 +84,7 @@ export class StatusBarNotifier extends Disposable {
 	/**
 	 * @description called to notify that all of the servers are off
 	 */
-	public ServerOff(): void {
+	public serverOff(): void {
 		this._on = false;
 		this._statusBar.hide();
 	}
@@ -92,10 +92,10 @@ export class StatusBarNotifier extends Disposable {
 	/**
 	 * @description called to notify that a server shut down.
 	 */
-	public RemoveServer(uri: vscode.Uri | undefined): void {
+	public removeServer(uri: vscode.Uri | undefined): void {
 		this._ports.delete(uri?.toString());
 		if (this._ports.size === 0) {
-			this.ServerOff();
+			this.serverOff();
 		} else {
 			this._refreshBar();
 		}
@@ -104,7 +104,7 @@ export class StatusBarNotifier extends Disposable {
 	/**
 	 * @description update fields to address config changes.
 	 */
-	public updateConfigurations() {
+	public updateConfigurations(): void {
 		if (SettingUtil.GetConfig().showStatusBarItem) {
 			if (this._on) {
 				this._statusBar.show();

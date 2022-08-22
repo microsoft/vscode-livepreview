@@ -49,13 +49,13 @@ export class PreviewManager extends Disposable {
 
 		this._register(
 			vscode.workspace.onDidChangeConfiguration((e) => {
-				this._runTaskWithExternalPreview = SettingUtil.GetConfig(
-				).runTaskWithExternalPreview;
+				this._runTaskWithExternalPreview =
+					SettingUtil.GetConfig().runTaskWithExternalPreview;
 			})
 		);
 	}
 
-	public get runTaskWithExternalPreview() {
+	public get runTaskWithExternalPreview(): boolean {
 		return this._runTaskWithExternalPreview;
 	}
 
@@ -71,7 +71,7 @@ export class PreviewManager extends Disposable {
 		relative: boolean,
 		panel: vscode.WebviewPanel | undefined,
 		connection: Connection
-	) {
+	): void {
 		file = relative ? file : this._transformNonRelativeFile(file, connection);
 		// If we already have a panel, show it.
 		if (this.currentPanel) {
@@ -107,7 +107,7 @@ export class PreviewManager extends Disposable {
 		relative: boolean,
 		debug: boolean,
 		connection: Connection
-	) {
+	): void {
 		const relFile = PathUtil.ConvertToUnixPath(
 			relative ? file : this._transformNonRelativeFile(file, connection)
 		);
@@ -204,7 +204,7 @@ export class PreviewManager extends Disposable {
 		panel: vscode.WebviewPanel,
 		file: string,
 		connection: Connection
-	) {
+	): void {
 		if (this._currentTimeout) {
 			clearTimeout(this._currentTimeout);
 		}
@@ -226,8 +226,8 @@ export class PreviewManager extends Disposable {
 		this._register(
 			this.currentPanel.onDispose(() => {
 				this.currentPanel = undefined;
-				const closeServerDelay = SettingUtil.GetConfig(
-				).serverKeepAliveAfterEmbeddedPreviewClose;
+				const closeServerDelay =
+					SettingUtil.GetConfig().serverKeepAliveAfterEmbeddedPreviewClose;
 				this._currentTimeout = setTimeout(() => {
 					this._serverExpired();
 

@@ -49,7 +49,7 @@ export class HttpServer extends Disposable {
 	 * @param {string} file file to check
 	 * @returns {boolean} whether the HTTP server has served `file` since last reset or beginning of extension activation.
 	 */
-	public hasServedFile(file: string) {
+	public hasServedFile(file: string): boolean {
 		if (this._contentLoader.servedFiles) {
 			for (const item of this._contentLoader.servedFiles.values()) {
 				if (PathUtil.PathEquals(file, item)) {
@@ -73,7 +73,7 @@ export class HttpServer extends Disposable {
 	/**
 	 * @description stop the HTTP server.
 	 */
-	public close() {
+	public close(): void {
 		this._server.close();
 	}
 
@@ -290,7 +290,10 @@ export class HttpServer extends Disposable {
 	 * @param {http.IncomingMessage} req the request object
 	 * @param {http.ServerResponse} res the response object
 	 */
-	private _reportStatus(req: http.IncomingMessage, res: http.ServerResponse) {
+	private _reportStatus(
+		req: http.IncomingMessage,
+		res: http.ServerResponse
+	): void {
 		this._onNewReqProcessed.fire({
 			method: req.method ?? '',
 			url: req.url ?? '',

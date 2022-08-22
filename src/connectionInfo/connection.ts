@@ -48,7 +48,7 @@ export class Connection extends Disposable {
 		super();
 	}
 
-	public get wsPort() {
+	public get wsPort(): number {
 		return this._wsPort;
 	}
 
@@ -76,7 +76,7 @@ export class Connection extends Disposable {
 			httpURI: externalHTTPUri,
 			wsURI: externalWSUri,
 			workspace: this._workspace,
-			httpPort: httpPort
+			httpPort: httpPort,
 		});
 	}
 
@@ -117,7 +117,7 @@ export class Connection extends Disposable {
 	/**
 	 * Reset to the default host in the settings. Used if the address that the user chose is busy.
 	 */
-	public resetHostToDefault() {
+	public resetHostToDefault(): void {
 		if (this.host != DEFAULT_HOST) {
 			vscode.window.showErrorMessage(
 				localize(

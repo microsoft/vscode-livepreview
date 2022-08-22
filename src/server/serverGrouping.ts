@@ -85,7 +85,7 @@ export class ServerGrouping extends Disposable {
 			new WSServer(_reporter, _endpointManager, _connection)
 		);
 
-		const notUserDataDirChange = function (file: vscode.Uri) {
+		const notUserDataDirChange = function (file: vscode.Uri): boolean {
 			return (
 				file.scheme != UriSchemes.vscode_userdata &&
 				(!_userDataDir || !PathUtil.PathBeginsWith(file.fsPath, _userDataDir))
@@ -316,8 +316,7 @@ export class ServerGrouping extends Disposable {
 				this._previewManager.runTaskWithExternalPreview
 			) {
 				this._serverTaskProvider.extRunTask(
-					SettingUtil.GetConfig()
-						.browserPreviewLaunchServerLogging,
+					SettingUtil.GetConfig().browserPreviewLaunchServerLogging,
 					this._connection.workspace
 				);
 			} else {
@@ -338,7 +337,7 @@ export class ServerGrouping extends Disposable {
 		}
 	}
 
-	public get running() {
+	public get running(): boolean {
 		return this.isRunning;
 	}
 
@@ -389,8 +388,7 @@ export class ServerGrouping extends Disposable {
 	 */
 	private get _reloadOnSave(): boolean {
 		return (
-			SettingUtil.GetConfig().autoRefreshPreview ==
-			AutoRefreshPreview.onSave
+			SettingUtil.GetConfig().autoRefreshPreview == AutoRefreshPreview.onSave
 		);
 	}
 
@@ -426,7 +424,7 @@ export class ServerGrouping extends Disposable {
 	/**
 	 * @description called when both servers are connected. Performs operations to update server status.
 	 */
-	private async _connected() {
+	private async _connected(): Promise<void> {
 		this._isServerOn = true;
 
 		this._showServerStatusMessage(
@@ -448,10 +446,8 @@ export class ServerGrouping extends Disposable {
 	 * @description show messages related to server status updates if configured to do so in settings.
 	 * @param messsage message to show.
 	 */
-	private _showServerStatusMessage(messsage: string) {
-		if (
-			SettingUtil.GetConfig().showServerStatusNotifications
-		) {
+	private _showServerStatusMessage(messsage: string): void {
+		if (SettingUtil.GetConfig().showServerStatusNotifications) {
 			vscode.window
 				.showInformationMessage(messsage, DONT_SHOW_AGAIN)
 				.then((selection: vscode.MessageItem | undefined) => {
@@ -465,7 +461,7 @@ export class ServerGrouping extends Disposable {
 		}
 	}
 
-	dispose() {
+	dispose(): void {
 		this.closeServer();
 	}
 }

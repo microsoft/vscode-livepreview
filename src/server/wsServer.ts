@@ -96,7 +96,7 @@ export class WSServer extends Disposable {
 		return this._connection.workspacePath;
 	}
 
-	public get wsPath() {
+	public get wsPath(): string {
 		return this._wsPath;
 	}
 

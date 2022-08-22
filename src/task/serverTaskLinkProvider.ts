@@ -134,7 +134,7 @@ export class serverTaskLinkProvider
 		input: string,
 		links: Array<vscode.TerminalLink>,
 		host: number
-	) {
+	): void {
 		const fullLinkRegex = new RegExp(
 			`\\b\\w{2,20}:\\/\\/(?:localhost|${host}|:\\d{2,5})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
 			'g'

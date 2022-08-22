@@ -241,7 +241,7 @@ export class ServerTaskTerminal
 	 * @param {string} addr web address to format
 	 * @returns {string} `addr` with base address colored blue and port number colored purple.
 	 */
-	private _formatAddr(addr: string) {
+	private _formatAddr(addr: string): string {
 		const indexSecondColon = this._getSecondColonPos(addr);
 		const firstHalfOfString = addr.substr(0, indexSecondColon);
 		const lastHalfOfString = addr.substr(indexSecondColon);

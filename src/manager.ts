@@ -59,16 +59,13 @@ export class Manager extends Disposable {
 	) {
 		super();
 		this._serverGroupings = new Map<string, ServerGrouping>();
-		this._connectionManager = this._register(
-			new ConnectionManager()
-		);
+		this._connectionManager = this._register(new ConnectionManager());
 
-		this._register(this._connectionManager.onConnected((e) => {
-			this._statusBar.setServer(
-				e.workspace?.uri,
-				e.httpPort
-			);
-		}));
+		this._register(
+			this._connectionManager.onConnected((e) => {
+				this._statusBar.setServer(e.workspace?.uri, e.httpPort);
+			})
+		);
 
 		this._endpointManager = this._register(new EndpointManager());
 
@@ -251,7 +248,7 @@ export class Manager extends Disposable {
 	/**
 	 * Close all servers
 	 */
-	public closeServers() {
+	public closeServers(): void {
 		this._serverGroupings.forEach((serverGrouping) => {
 			serverGrouping.closeServer();
 			serverGrouping.dispose();
@@ -263,7 +260,7 @@ export class Manager extends Disposable {
 	 * This is usually used for when the user configures a setting for initial filepath
 	 * @param filePath the string fsPath to use
 	 */
-	public openTargetAtFile(filePath: string) {
+	public openTargetAtFile(filePath: string): void {
 		if (filePath === '') {
 			this._openNoTarget();
 			return;
@@ -315,7 +312,7 @@ export class Manager extends Disposable {
 	 */
 	private _getServerGroupingFromWorkspace(
 		workspace: vscode.WorkspaceFolder | undefined
-	) {
+	): ServerGrouping {
 		let serverGrouping = this._serverGroupings.get(workspace?.uri.toString());
 		if (!serverGrouping) {
 			const connection =
@@ -333,10 +330,10 @@ export class Manager extends Disposable {
 			);
 			this._register(
 				serverGrouping.onClose(() => {
-					this._statusBar.RemoveServer(workspace?.uri);
+					this._statusBar.removeServer(workspace?.uri);
 					this._serverGroupings.delete(workspace?.uri.toString());
 					if (this._serverGroupings.size === 0) {
-						this._statusBar.ServerOff();
+						this._statusBar.serverOff();
 						vscode.commands.executeCommand(
 							'setContext',
 							LIVE_PREVIEW_SERVER_ON,
@@ -396,14 +393,14 @@ export class Manager extends Disposable {
 		return { filePath: '/', isRelative: fileStringRelative };
 	}
 
-	private _hasServerRunning() {
+	private _hasServerRunning(): boolean {
 		const isRunning = Array.from(this._serverGroupings.values()).filter(
 			(group) => group.running
 		);
 		return isRunning.length !== 0;
 	}
 
-	private _openNoTarget() {
+	private _openNoTarget(): void {
 		// opens index at first open server or opens a loose workspace at root
 		const workspaces = vscode.workspace.workspaceFolders;
 		if (workspaces && workspaces.length > 0) {

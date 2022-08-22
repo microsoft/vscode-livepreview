@@ -61,7 +61,7 @@ export class HTMLInjector extends Disposable {
 		fileString: string,
 		httpUri: vscode.Uri | undefined,
 		wsUri: vscode.Uri | undefined
-	) {
+	): Promise<void> {
 		if (!httpUri) {
 			httpUri = await this._connection.resolveExternalHTTPUri();
 		}
@@ -100,7 +100,10 @@ export class HTMLInjector extends Disposable {
 	/**
 	 * @description re-populate the script field with replacements. Will re-query the connection manager for the port and host.
 	 */
-	private _refresh(httpUri: vscode.Uri, wsUri: vscode.Uri) {
-		this._initScript(this.rawScript, httpUri, wsUri);
+	private async _refresh(
+		httpUri: vscode.Uri,
+		wsUri: vscode.Uri
+	): Promise<void> {
+		await this._initScript(this.rawScript, httpUri, wsUri);
 	}
 }

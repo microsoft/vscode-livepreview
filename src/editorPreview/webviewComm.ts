@@ -51,7 +51,7 @@ export class WebviewComm extends Disposable {
 	/**
 	 * @description extension-side reload of webivew.
 	 */
-	private _reloadWebview() {
+	private _reloadWebview(): void {
 		this.goToFile(this.currentAddress, false);
 	}
 
@@ -100,7 +100,7 @@ export class WebviewComm extends Disposable {
 		URLExt: string,
 		updateHistory = true,
 		connection: Connection = this.currentConnection
-	) {
+	): Promise<void> {
 		this._setHtml(this._panel.webview, URLExt, updateHistory, connection);
 		this.currentAddress = URLExt;
 	}
@@ -116,7 +116,7 @@ export class WebviewComm extends Disposable {
 		URLExt: string,
 		updateHistory: boolean,
 		connection: Connection
-	) {
+	): Promise<void> {
 		this.currentConnection = connection;
 		const httpHost = await this.resolveHost(connection);
 		const url = await this.constructAddress(URLExt, connection, httpHost);
@@ -316,7 +316,7 @@ export class WebviewComm extends Disposable {
 	public async setUrlBar(
 		pathname: string,
 		connection: Connection = this.currentConnection
-	) {
+	): Promise<void> {
 		this._panel.webview.postMessage({
 			command: 'set-url',
 			text: JSON.stringify({

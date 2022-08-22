@@ -83,7 +83,7 @@ export class BrowserPreview extends Disposable {
 	/**
 	 * get the connection that the webview is currently using
 	 */
-	public get currentConnection() {
+	public get currentConnection(): Connection {
 		return this._webviewComm.currentConnection;
 	}
 
@@ -171,7 +171,7 @@ export class BrowserPreview extends Disposable {
 	 * @param {string} type the type of log
 	 * @param {string} log the log contents
 	 */
-	private _handleConsole(type: string, log: string) {
+	private _handleConsole(type: string, log: string): void {
 		if (type == 'CLEAR') {
 			this._outputChannel.clear();
 		} else {
@@ -182,7 +182,7 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	dispose() {
+	dispose(): void {
 		this._onDisposeEmitter.fire();
 		this._panel.dispose();
 		super.dispose();
@@ -192,7 +192,7 @@ export class BrowserPreview extends Disposable {
 	 * Open in external browser. This also warns the user in the case where the URL is external to the hosted content.
 	 * @param {string} givenURL the (full) URL to open up in the external browser.
 	 */
-	private async _handleOpenBrowser(givenURL: string) {
+	private async _handleOpenBrowser(givenURL: string): Promise<void> {
 		if (givenURL == '') {
 			// open at current address, needs task start
 			const givenURI = await this._webviewComm.constructAddress(
@@ -246,7 +246,7 @@ export class BrowserPreview extends Disposable {
 	/**
 	 * @param {string} address the (full) address to navigate to; will open in external browser if it is an external address.
 	 */
-	private async _goToFullAddress(address: string) {
+	private async _goToFullAddress(address: string): Promise<void> {
 		try {
 			const port = new URL(address).port;
 			if (port === undefined) {

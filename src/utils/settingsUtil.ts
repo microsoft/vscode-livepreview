@@ -10,7 +10,7 @@ export interface ILivePreviewConfigItem {
 	autoRefreshPreview: AutoRefreshPreview;
 	browserPreviewLaunchServerLogging: boolean;
 	openPreviewTarget: OpenPreviewTarget;
-serverKeepAliveAfterEmbeddedPreviewClose: number;
+	serverKeepAliveAfterEmbeddedPreviewClose: number;
 	notifyOnOpenLooseFile: boolean;
 	runTaskWithExternalPreview: boolean;
 	defaultPreviewPath: string;
@@ -74,9 +74,7 @@ export class SettingUtil {
 	 * @returns {ILivePreviewConfigItem} the LiveServerConfigItem, which is a JSON object with all of the settings for Live Preview.
 	 */
 	public static GetConfig(): ILivePreviewConfigItem {
-		const config = vscode.workspace.getConfiguration(
-			SETTINGS_SECTION_ID
-		);
+		const config = vscode.workspace.getConfiguration(SETTINGS_SECTION_ID);
 		return {
 			portNumber: config.get<number>(Settings.portNumber, 3000),
 			showStatusBarItem: config.get<boolean>(Settings.showStatusBarItem, true),

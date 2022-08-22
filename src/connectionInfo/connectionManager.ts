@@ -52,8 +52,7 @@ export class ConnectionManager extends Disposable {
 		this._register(
 			vscode.workspace.onDidChangeConfiguration((e) => {
 				if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
-					this._pendingPort = SettingUtil.GetConfig(
-					).portNumber;
+					this._pendingPort = SettingUtil.GetConfig().portNumber;
 					this._pendingHost = SettingUtil.GetConfig().hostIP;
 				}
 			})
@@ -77,7 +76,7 @@ export class ConnectionManager extends Disposable {
 		}
 	}
 
-	private _validHost(host: string) {
+	private _validHost(host: string): boolean {
 		return isIPv4(host);
 	}
 
@@ -130,7 +129,9 @@ export class ConnectionManager extends Disposable {
 	 * remove a connection by workspaceFolder
 	 * @param workspaceFolder
 	 */
-	public removeConnection(workspaceFolder: vscode.WorkspaceFolder | undefined) {
+	public removeConnection(
+		workspaceFolder: vscode.WorkspaceFolder | undefined
+	): void {
 		this._connections.get(workspaceFolder?.uri.toString())?.dispose;
 		this._connections.delete(workspaceFolder?.uri.toString());
 	}
@@ -142,7 +143,7 @@ export class ConnectionManager extends Disposable {
 		return Array.from(this._connections.values());
 	}
 
-	private _showIncorrectHostFormatError(host: string) {
+	private _showIncorrectHostFormatError(host: string): void {
 		vscode.window.showErrorMessage(
 			localize(
 				'ipAddressIncorrectFormat',
