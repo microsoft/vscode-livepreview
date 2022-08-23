@@ -1,10 +1,10 @@
 # Live Preview - VS Code Extension 📡
 
-⚠️ WARNING: this extension is still under development! ⚠️
+⚠️ WARNING: This extension is still under development! ⚠️
 
-An extension that hosts a local server for you to preview your web projects on! 
+An extension that hosts a local server for you to preview your web projects on!
 
-Note: this extension is intended for projects where a server is not already created (e.g. not for apps using React, Angular, etc.). To work with these, feel free to run the `Simple Browser: Show` command that is already built-in with VS Code.
+This extension is most useful for projects where a server is not already created (e.g. not for apps using React, Angular, etc.). To work with these, feel free to run the `Simple Browser: Show` command that is already built-in with VS Code.
 
 ## Table of Contents
 - [Features](#features)
@@ -88,7 +88,7 @@ To use this extension, you must have [Node JS v14+](https://nodejs.org/en/downlo
 ## Running the extension
 You can install the extension [in the marketplace here](https://marketplace.visualstudio.com/items?itemName=ms-vscode.live-server). To contribute, see the [contributing page](https://github.com/microsoft/vscode-livepreview/blob/main/CONTRIBUTING.md).
 ## FAQ
-Q. What does the `"Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root."` message mean?
+**Q. What does the `"Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root."` message mean?**
 
 A. Either:
 - You have no workspace open and opened a preview.
@@ -98,7 +98,7 @@ Why does this happen?
 
 The server is hosted from the root of the workspace that the user opens. Files outside of this can be previewed, but some file paths (such as a link to the root) may not go to the right place. **If you are working on a web project, it is advised that you open a workspace at the root of the project.**
 
-Q. I'm trying to use Live Preview in Codespaces and the embedded preview isn't working.
+**Q. I'm trying to use Live Preview in Codespaces and the embedded preview isn't working.**
 
 A. Currently, you will need to manually navigate to the links host the forwarded port content before it works
 
@@ -110,6 +110,7 @@ Allow the browser to perform the necessary redirects, then close the windows. Re
 Special thanks to the following extensions for inspiring Live Preview! 💡
 - [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer)
 - [Five Server](https://marketplace.visualstudio.com/items?itemName=yandeu.five-server)
+
 ## Issue Tracking
 Please file issues against the [VS Code Live Preview repository](https://github.com/microsoft/vscode-livepreview/issues).
 
