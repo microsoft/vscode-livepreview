@@ -1,3 +1,4 @@
+import { Connection } from '../connectionInfo/connection';
 import { Disposable } from '../utils/dispose';
 import { PathUtil } from '../utils/pathUtil';
 
@@ -7,12 +8,18 @@ export enum NavEditCommands {
 	DISABLE_FORWARD,
 	ENABLE_FORWARD,
 }
-export interface NavResponse {
+export interface INavResponse {
 	actions: Array<NavEditCommands>;
-	address?: string;
+	address?: IAddress;
 }
+
+export interface IAddress {
+	connection: Connection;
+	path: string;
+}
+
 export class PageHistory extends Disposable {
-	private _history = new Array<string>();
+	private _history = new Array<IAddress>();
 	private _backstep = 0;
 	private _current_back_enabled = false;
 	private _current_forward_enabled = false;
@@ -40,9 +47,9 @@ export class PageHistory extends Disposable {
 
 	/**
 	 * @description manipulates the history to adjust for going forwards.
-	 * @returns {NavResponse} the state of the back/foward buttons as a result of going forwards.
+	 * @returns {INavResponse} the state of the back/foward buttons as a result of going forwards.
 	 */
-	public goForward(): NavResponse {
+	public goForward(): INavResponse {
 		const action = new Array<NavEditCommands>();
 		if (this._backstep > 0) {
 			const path = this._history[this._backstep - 1];
@@ -66,9 +73,9 @@ export class PageHistory extends Disposable {
 	}
 	/**
 	 * @description manipulates the history to adjust for going backwards.
-	 * @returns {NavResponse} the state of the back/foward buttons as a result of going backwards.
+	 * @returns {INavResponse} the state of the back/foward buttons as a result of going backwards.
 	 */
-	public goBackward(): NavResponse {
+	public goBackward(): INavResponse {
 		const action = new Array<NavEditCommands>();
 		if (this._backstep < this._history.length - 1) {
 			const path = this._history[this._backstep + 1];
@@ -95,15 +102,21 @@ export class PageHistory extends Disposable {
 	 * Stores all directory pathnames without `/` at the end, as allowing for a mix of both
 	 * causes redirection that makes history tracking tricky.
 	 * @param {string} address the address to add.
-	 * @returns {NavResponse | undefined} the state of the back/fowards buttons after adding the item.
+	 * @param {Connection} connection the connection to connect using
+	 * @returns {INavResponse | undefined} the state of the back/fowards buttons after adding the item.
 	 */
-	public addHistory(address: string): NavResponse | undefined {
+	public addHistory(
+		address: string,
+		connection: Connection
+	): INavResponse | undefined {
 		address = PathUtil.ConvertToUnixPath(address);
 		address = PathUtil.EscapePathParts(address);
 		const action = new Array<NavEditCommands>();
+		const lastItem = this._history[this._backstep];
 		if (
 			this._backstep < this._history.length &&
-			address == this._history[this._backstep]
+			address === lastItem.path &&
+			connection === lastItem.connection
 		) {
 			// if this is the same as the last entry or is a
 			// redirect of the previous, don't add to history
@@ -116,7 +129,7 @@ export class PageHistory extends Disposable {
 			action.push(NavEditCommands.ENABLE_BACK);
 			this._current_back_enabled = true;
 		}
-		this._history.unshift(address);
+		this._history.unshift({ path: address, connection });
 		this._backstep = 0;
 		action.push(NavEditCommands.DISABLE_FORWARD);
 		this._current_forward_enabled = false;

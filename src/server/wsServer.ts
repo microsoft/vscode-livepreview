@@ -9,9 +9,9 @@ import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { UriSchemes } from '../utils/constants';
-import { ConnectionManager } from '../infoManagers/connectionManager';
+import { ConnectionManager } from '../connectionInfo/connectionManager';
+import { Connection } from '../connectionInfo/connection';
 
 /**
  * @description override the `Websocket.Server` class to check websocket connection origins;
@@ -39,7 +39,7 @@ export class WSServerWithOriginCheck extends WebSocket.Server {
  * @description the websocket server, usually hosted on the port following the HTTP server port.
  * It serves two purposes:
  * - Messages from the server to the clients tell it to refresh when there are changes.
- *   The requests occur in `ServerManager`, but use this websocket server.
+ *   The requests occur in `ServerGrouping`, but use this websocket server.
  * - Messages from the client to the server check the "injectability" of the file that is being navigated to.
  *   This only occurs in the webview (embedded preview).
  *
@@ -59,49 +59,9 @@ export class WSServerWithOriginCheck extends WebSocket.Server {
  *	 the embedded preview to provide the appropriate information and refresh the history.
  */
 export class WSServer extends Disposable {
+	public wsPort = 0;
 	private _wss: WSServerWithOriginCheck | undefined;
 	private _wsPath!: string;
-	private _wsPort = 0;
-
-	public set externalHostName(hostName: string) {
-		if (this._wss) {
-			this._wss.externalHostName = hostName;
-		}
-	}
-
-	constructor(
-		private readonly _reporter: TelemetryReporter,
-		private readonly _endpointManager: EndpointManager,
-		private readonly _workspaceManager: WorkspaceManager,
-		private readonly _connectionManager: ConnectionManager
-	) {
-		super();
-
-		this._register(
-			_connectionManager.onConnected((e) => {
-				this.externalHostName = `${e.httpURI.scheme}://${e.httpURI.authority}`;
-			})
-		);
-	}
-
-	/**
-	 * @description the location of the workspace.
-	 */
-	private get _basePath(): string | undefined {
-		return this._workspaceManager.workspacePath;
-	}
-
-	public get wsPath() {
-		return this._wsPath;
-	}
-
-	public get wsPort() {
-		return this._wsPort;
-	}
-
-	public set wsPort(portNum: number) {
-		this._wsPort = portNum;
-	}
 
 	// once connected, we must let the server manager know, as it needs to know when both servers are ready.
 	private readonly _onConnected = this._register(
@@ -109,14 +69,45 @@ export class WSServer extends Disposable {
 	);
 	public readonly onConnected = this._onConnected.event;
 
+	constructor(
+		private readonly _reporter: TelemetryReporter,
+		private readonly _endpointManager: EndpointManager,
+		private readonly _connection: Connection
+	) {
+		super();
+
+		this._register(
+			_connection.onConnected((e) => {
+				this.externalHostName = `${e.httpURI.scheme}://${e.httpURI.authority}`;
+			})
+		);
+	}
+
+	public set externalHostName(hostName: string) {
+		if (this._wss) {
+			this._wss.externalHostName = hostName;
+		}
+	}
+
+	/**
+	 * @description the location of the workspace.
+	 */
+	private get _basePath(): string | undefined {
+		return this._connection.workspacePath;
+	}
+
+	public get wsPath(): string {
+		return this._wsPath;
+	}
+
 	/**
 	 * @description Start the websocket server.
 	 * @param {number} wsPort the port to try to connect to.
 	 */
 	public start(wsPort: number): void {
-		this._wsPort = wsPort;
+		this.wsPort = wsPort;
 		this._wsPath = `/${randomBytes(20).toString('hex')}`;
-		this.startWSServer(this._basePath ?? '');
+		this._startWSServer(this._basePath ?? '');
 	}
 
 	/**
@@ -143,17 +134,17 @@ export class WSServer extends Disposable {
 	 * @param {string} basePath the path where the server index is hosted.
 	 * @returns {boolean} whether the server has successfully started.
 	 */
-	private startWSServer(basePath: string): boolean {
+	private _startWSServer(basePath: string): boolean {
 		this._wss = new WSServerWithOriginCheck({
-			port: this._wsPort,
-			host: this._connectionManager.host,
+			port: this.wsPort,
+			host: this._connection.host,
 			path: this._wsPath,
 		});
 		this._wss.on('connection', (ws: WebSocket) =>
-			this.handleWSConnection(basePath, ws)
+			this._handleWSConnection(basePath, ws)
 		);
-		this._wss.on('error', (err: Error) => this.handleWSError(basePath, err));
-		this._wss.on('listening', () => this.handleWSListen());
+		this._wss.on('error', (err: Error) => this._handleWSError(basePath, err));
+		this._wss.on('listening', () => this._handleWSListen());
 		return true;
 	}
 
@@ -161,13 +152,13 @@ export class WSServer extends Disposable {
 	 * @param {string} basePath the path where the server index is hosted.
 	 * @param {any} err the error received.
 	 */
-	private handleWSError(basePath: string, err: any): void {
+	private _handleWSError(basePath: string, err: any): void {
 		if (err.code == 'EADDRINUSE') {
-			this._wsPort++;
-			this.startWSServer(basePath);
+			this.wsPort++;
+			this._startWSServer(basePath);
 		} else if (err.code == 'EADDRNOTAVAIL') {
-			this._connectionManager.resetHostToDefault();
-			this.startWSServer(basePath);
+			this._connection.resetHostToDefault();
+			this._startWSServer(basePath);
 		} else {
 			/* __GDPR__
 				"server.err" : {
@@ -186,8 +177,8 @@ export class WSServer extends Disposable {
 	/**
 	 * @description handle the websocket successfully connecting.
 	 */
-	private handleWSListen(): void {
-		console.log(`Websocket server is running on port ${this._wsPort}`);
+	private _handleWSListen(): void {
+		console.log(`Websocket server is running on port ${this.wsPort}`);
 		this._onConnected.fire();
 	}
 
@@ -196,16 +187,17 @@ export class WSServer extends Disposable {
 	 * @param {string} basePath the path where the server index is hosted.
 	 * @param {WebSocket} ws the websocket server instance.
 	 */
-	private handleWSConnection(basePath: string, ws: WebSocket): void {
+	private _handleWSConnection(basePath: string, ws: WebSocket): void {
 		ws.on('message', (message: string) => {
 			const parsedMessage = JSON.parse(message);
 			switch (parsedMessage.command) {
 				// perform the url check
 				case 'urlCheck': {
-					const results = this.performTargetInjectableCheck(
+					const results = this._performTargetInjectableCheck(
 						basePath,
 						parsedMessage.url
 					);
+
 					if (!results.injectable) {
 						/* __GDPR__
 							"server.ws.foundNonInjectable" : {}
@@ -214,6 +206,7 @@ export class WSServer extends Disposable {
 						const sendData = {
 							command: 'foundNonInjectable',
 							path: results.pathname,
+							port: results.port,
 						};
 						ws.send(JSON.stringify(sendData));
 					}
@@ -229,18 +222,26 @@ export class WSServer extends Disposable {
 	 * @returns {boolean,string} info on injectability, in addition to the pathname
 	 * 	in case it needs to be forwarded to the webview.
 	 */
-	private performTargetInjectableCheck(
+	private _performTargetInjectableCheck(
 		basePath: string,
 		urlString: string
-	): { injectable: boolean; pathname: string } {
+	): { injectable: boolean; pathname: string; port: number } {
 		const url = new URL(urlString);
 		let absolutePath = path.join(basePath, url.pathname);
+
+		let port = 0;
+
+		try {
+			port = parseInt(url.port);
+		} catch {
+			// no op
+		}
 
 		if (!fs.existsSync(absolutePath)) {
 			const decodedLocation =
 				this._endpointManager.decodeLooseFileEndpoint(absolutePath);
 			if (!decodedLocation || !fs.existsSync(decodedLocation)) {
-				return { injectable: false, pathname: url.pathname };
+				return { injectable: false, pathname: url.pathname, port };
 			} else {
 				absolutePath = decodedLocation;
 			}
@@ -250,8 +251,9 @@ export class WSServer extends Disposable {
 			fs.statSync(absolutePath).isDirectory() ||
 			isFileInjectable(absolutePath)
 		) {
-			return { injectable: true, pathname: url.pathname };
+			return { injectable: true, pathname: url.pathname, port };
 		}
-		return { injectable: false, pathname: url.pathname };
+
+		return { injectable: false, pathname: url.pathname, port };
 	}
 }

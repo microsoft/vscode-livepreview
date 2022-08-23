@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as vscode from 'vscode';
 
 /**
  * A collection of functions to perform path operations
@@ -93,7 +94,7 @@ export class PathUtil {
 	 * @returns {boolean} whether `file1` is a child of `file2`.
 	 */
 	public static PathBeginsWith(file1: string, file2: string): boolean {
-		return path.normalize(file1).startsWith(path.normalize(file2));
+		return path.normalize(file1).startsWith(path.normalize(file2 + '/'));
 	}
 
 	/**
@@ -129,5 +130,43 @@ export class PathUtil {
 		}
 
 		return newParts.join('/');
+	}
+
+	/**
+	 * @description Similar to `_absPathInWorkspace`, but checks all workspaces and returns the matching workspace.
+	 * @param {string} path path to test.
+	 * @returns {vscode.WorkspaceFolder | undefined} the workspace it belongs to
+	 */
+	public static AbsPathInAnyWorkspace(
+		file: string
+	): vscode.WorkspaceFolder | undefined {
+		const workspaces = vscode.workspace.workspaceFolders;
+		if (workspaces) {
+			for (const i in workspaces) {
+				if (PathUtil.PathBeginsWith(file, workspaces[i].uri.fsPath)) {
+					return workspaces[i];
+				}
+			}
+		}
+		return undefined;
+	}
+
+	/**
+	 * @description Just like `pathExistsRelativeToDefaultWorkspace`, but tests all workspaces and returns the matching workspace.
+	 * @param {string} file path to test.
+	 * @returns {vscode.WorkspaceFolder | undefined} the workspace it belongs to
+	 */
+	public static PathExistsRelativeToAnyWorkspace(
+		file: string
+	): vscode.WorkspaceFolder | undefined {
+		const workspaces = vscode.workspace.workspaceFolders;
+		if (workspaces) {
+			for (const i in workspaces) {
+				if (fs.existsSync(path.join(workspaces[i].uri.fsPath, file))) {
+					return workspaces[i];
+				}
+			}
+		}
+		return undefined;
 	}
 }

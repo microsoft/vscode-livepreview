@@ -1,113 +1,119 @@
-import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
-import { BrowserPreview } from './editorPreview/browserPreview';
 import { Disposable } from './utils/dispose';
-import { Server } from './server/serverManager';
+import * as vscode from 'vscode';
+import { PathUtil } from './utils/pathUtil';
+import TelemetryReporter from 'vscode-extension-telemetry';
+import { ConnectionManager } from './connectionInfo/connectionManager';
+import { BrowserPreview } from './editorPreview/browserPreview';
 import {
-	INIT_PANEL_TITLE,
-	DONT_SHOW_AGAIN,
-	OUTPUT_CHANNEL_NAME,
-} from './utils/constants';
-import {
-	ServerStartedStatus,
-	ServerTaskProvider,
-} from './task/serverTaskProvider';
-import {
-	Settings,
+	PreviewType,
 	SETTINGS_SECTION_ID,
 	SettingUtil,
 } from './utils/settingsUtil';
-import TelemetryReporter from 'vscode-extension-telemetry';
+import * as nls from 'vscode-nls';
+import { ServerTaskProvider } from './task/serverTaskProvider';
 import { EndpointManager } from './infoManagers/endpointManager';
-import { WorkspaceManager } from './infoManagers/workspaceManager';
-import { ConnectionManager } from './infoManagers/connectionManager';
-import { PathUtil } from './utils/pathUtil';
+import { PreviewManager } from './editorPreview/previewManager';
+import { Connection } from './connectionInfo/connection';
+import { existsSync } from 'fs';
+import { StatusBarNotifier } from './server/serverUtils/statusBarNotifier';
+import { LIVE_PREVIEW_SERVER_ON } from './utils/constants';
+import { ServerGrouping } from './server/serverGrouping';
 
 const localize = nls.loadMessageBundle();
 
-/**
- * @description the server log item that is sent from the HTTP server to the server logging task.
- */
-export interface serverMsg {
-	method: string;
-	url: string;
-	status: number;
+export interface IOpenFileOptions {
+	relativeFileString?: boolean;
+	workspace?: vscode.WorkspaceFolder;
+	port?: number;
+	manager?: ServerGrouping;
 }
 
 /**
- * @description the info for launching a preview, used after a server is launched.
+ * This object re-serializes the webview after a reload
  */
-export interface launchInfo {
-	external: boolean;
-	file: string;
-	relative: boolean;
-	debug: boolean;
-	panel?: vscode.WebviewPanel;
+class PanelSerializer
+	extends Disposable
+	implements vscode.WebviewPanelSerializer
+{
+	private readonly _onShouldRevive = this._register(
+		new vscode.EventEmitter<{ webviewPanel: vscode.WebviewPanel; state: any }>()
+	);
+
+	public readonly onShouldRevive = this._onShouldRevive.event;
+
+	deserializeWebviewPanel(
+		webviewPanel: vscode.WebviewPanel,
+		state: any
+	): Thenable<void> {
+		// fire event to parent, since all info needed to re-open a panel is in the parent
+		this._onShouldRevive.fire({ webviewPanel, state });
+		return Promise.resolve();
+	}
 }
+
+/**
+ * `Manager` is a singleton instance that managers all of the servers, the previews, connection info, etc.
+ * It also facilitates opening files (sometimes by calling `PreviewManager`) and starting the associated servers.
+ */
 export class Manager extends Disposable {
-	public currentPanel: BrowserPreview | undefined;
-
-	private readonly _server: Server;
-	private readonly _serverTaskProvider: ServerTaskProvider;
+	private _serverGroupings: Map<string | undefined, ServerGrouping>;
+	private _connectionManager: ConnectionManager;
 	private readonly _endpointManager: EndpointManager;
-	private readonly _workspaceManager: WorkspaceManager;
-	private readonly _connectionManager: ConnectionManager;
-	private readonly _outputChannel: vscode.OutputChannel;
-	private _pendingLaunchInfo: launchInfo | undefined;
-	private _runTaskWithExternalPreview: boolean;
-	private _previewActive = false;
-	private _currentTimeout: NodeJS.Timeout | undefined;
-	private _notifiedAboutLooseFiles = false;
-
-	public get workspace(): vscode.WorkspaceFolder | undefined {
-		return this._workspaceManager.workspace;
-	}
-
-	public get workspacePath(): string | undefined {
-		return this._workspaceManager.workspacePath;
-	}
+	private readonly _previewManager: PreviewManager;
+	private readonly _statusBar: StatusBarNotifier;
+	private readonly _serverTaskProvider: ServerTaskProvider;
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
-		userDataDir: string | undefined
+		private readonly _userDataDir: string | undefined
 	) {
 		super();
+		this._serverGroupings = new Map<string, ServerGrouping>();
+		this._connectionManager = this._register(new ConnectionManager());
 
-		this._outputChannel =
-			vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
-
-		this._workspaceManager = this._register(new WorkspaceManager());
-		this._endpointManager = this._register(
-			new EndpointManager(this._workspaceManager)
+		this._register(
+			this._connectionManager.onConnected((e) => {
+				this._statusBar.setServer(e.workspace?.uri, e.httpPort);
+				vscode.commands.executeCommand(
+					'setContext',
+					LIVE_PREVIEW_SERVER_ON,
+					true
+				);
+			})
 		);
-		const serverPort = SettingUtil.GetConfig(_extensionUri).portNumber;
-		const serverWSPort = serverPort;
-		const serverHost = SettingUtil.GetConfig(_extensionUri).hostIP;
-		this._connectionManager = this._register(
-			new ConnectionManager(serverPort, serverWSPort, serverHost)
-		);
 
-		this._server = this._register(
-			new Server(
-				_extensionUri,
-				_reporter,
-				this._endpointManager,
-				this._workspaceManager,
+		this._endpointManager = this._register(new EndpointManager());
+
+		this._previewManager = this._register(
+			new PreviewManager(
+				this._extensionUri,
+				this._reporter,
 				this._connectionManager,
-				userDataDir
+				this._endpointManager,
+				() => {
+					if (
+						this._hasServerRunning() &&
+						!this._serverTaskProvider.isRunning &&
+						vscode.workspace.workspaceFolders &&
+						vscode.workspace.workspaceFolders?.length > 0 &&
+						this._serverTaskProvider.runTaskWithExternalPreview
+					) {
+						this.closeServers();
+					}
+				}
 			)
 		);
 
-		this._serverTaskProvider = new ServerTaskProvider(
-			this._reporter,
-			this._endpointManager,
-			this._workspaceManager,
-			this._connectionManager
-		);
+		this._statusBar = this._register(new StatusBarNotifier());
 
-		this._runTaskWithExternalPreview =
-			SettingUtil.GetConfig(_extensionUri).runTaskWithExternalPreview;
+		this._serverTaskProvider = this._register(
+			new ServerTaskProvider(
+				this._reporter,
+				this._endpointManager,
+				this._connectionManager
+			)
+		);
 
 		this._register(
 			vscode.tasks.registerTaskProvider(
@@ -117,434 +123,397 @@ export class Manager extends Disposable {
 		);
 
 		this._register(
-			this._server.onNewReqProcessed((e) => {
-				this._serverTaskProvider.sendServerInfoToTerminal(e);
+			this._serverTaskProvider.onRequestOpenEditorToSide((uri) => {
+				if (
+					this._previewManager.previewActive &&
+					this._previewManager.currentPanel
+				) {
+					const avoidColumn =
+						this._previewManager.currentPanel.panel.viewColumn ??
+						vscode.ViewColumn.One;
+					const column: vscode.ViewColumn =
+						avoidColumn == vscode.ViewColumn.One
+							? avoidColumn + 1
+							: avoidColumn - 1;
+					vscode.commands.executeCommand('vscode.open', uri, {
+						viewColumn: column,
+					});
+				} else {
+					vscode.commands.executeCommand('vscode.open', uri);
+				}
 			})
 		);
 
 		this._register(
-			this._serverTaskProvider.onRequestToOpenServer(() => {
-				this.openServer(true);
+			this._serverTaskProvider.onRequestToOpenServer(async (workspace) => {
+				const serverGrouping = this._getServerGroupingFromWorkspace(workspace);
+				// running this with `fromTask = true` will still inform the task if the server is already open
+				await serverGrouping.openServer(true);
 			})
 		);
 
 		this._register(
-			this._serverTaskProvider.onRequestToCloseServer(() => {
-				if (this._previewActive) {
-					this._serverTaskProvider.serverStop(false);
+			this._serverTaskProvider.onRequestToCloseServer((workspace) => {
+				if (this._previewManager.previewActive) {
+					this._serverTaskProvider.serverStop(false, workspace);
 				} else {
-					this.closeServer();
-					this._serverTaskProvider.serverStop(true);
+					const serverGrouping = this._serverGroupings.get(
+						workspace?.uri.toString()
+					);
+					// closeServer will call `this._serverTaskProvider.serverStop(true, workspace);`
+					serverGrouping?.closeServer();
 				}
 			})
 		);
 
-		this._connectionManager.onConnected((e) => {
-			this._serverTaskProvider.serverStarted(
-				e.httpURI,
-				ServerStartedStatus.JUST_STARTED
-			);
+		const serializer = this._register(new PanelSerializer());
 
-			if (this._pendingLaunchInfo) {
-				if (this._pendingLaunchInfo.external) {
-					this.launchFileInExternalBrowser(
-						this._pendingLaunchInfo.file,
-						this._pendingLaunchInfo.relative,
-						this._pendingLaunchInfo.debug
-					);
+		this._register(
+			serializer.onShouldRevive((e) => {
+				let relative = false;
+				let file = e.state.currentAddress ?? '/';
+
+				let workspace = PathUtil.PathExistsRelativeToAnyWorkspace(file);
+				if (workspace) {
+					relative = true;
 				} else {
-					this.launchFileInEmbeddedPreview(
-						this._pendingLaunchInfo.file,
-						this._pendingLaunchInfo.relative,
-						this._pendingLaunchInfo.panel
-					);
+					// path isn't relative to workspaces, try checking absolute path for workspace
+					workspace = PathUtil.AbsPathInAnyWorkspace(file);
 				}
-				this._pendingLaunchInfo = undefined;
-			}
-		});
 
-		vscode.workspace.onDidChangeConfiguration((e) => {
-			if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
-				this._server.updateConfigurations();
-				this._connectionManager.pendingPort = SettingUtil.GetConfig(
-					this._extensionUri
-				).portNumber;
-				this._connectionManager.pendingHost = SettingUtil.GetConfig(
-					this._extensionUri
-				).hostIP;
-				this._runTaskWithExternalPreview = SettingUtil.GetConfig(
-					this._extensionUri
-				).runTaskWithExternalPreview;
-			}
-		});
-
-		this._serverTaskProvider.onRequestOpenEditorToSide((uri) => {
-			if (this._previewActive && this.currentPanel) {
-				const avoidColumn =
-					this.currentPanel.panel.viewColumn ?? vscode.ViewColumn.One;
-				const column: vscode.ViewColumn =
-					avoidColumn == vscode.ViewColumn.One
-						? avoidColumn + 1
-						: avoidColumn - 1;
-				vscode.commands.executeCommand('vscode.open', uri, {
-					viewColumn: column,
-				});
-			} else {
-				vscode.commands.executeCommand('vscode.open', uri);
-			}
-		});
-	}
-
-	dispose() {
-		this._server.closeServer();
-	}
-
-	/**
-	 * Creates an (or shows the existing) embedded preview.
-	 * @param {vscode.WebviewPanel} panel the panel, which may have been serialized from a previous session.
-	 * @param {string} file the filesystem path to open in the preview.
-	 * @param {boolean} relative whether the path was absolute or relative to the current workspace.
-	 * @param {boolean} debug whether to run in debug mode (not implemented).
-	 */
-	public createOrShowEmbeddedPreview(
-		panel: vscode.WebviewPanel | undefined = undefined,
-		file = '/',
-		relative = true,
-		debug = false
-	): void {
-		if (!this._server.isRunning) {
-			// set the pending launch info, which will trigger once the server starts in `launchFileInEmbeddedPreview`
-			this._pendingLaunchInfo = {
-				external: false,
-				panel: panel,
-				file: file,
-				relative: relative,
-				debug: debug,
-			};
-			this.openServer();
-		} else {
-			this.launchFileInEmbeddedPreview(file, relative, panel);
-		}
-	}
-
-	/**
-	 * Opens the preview in an external browser.
-	 * @param {string} file the filesystem path to open in the preview.
-	 * @param {boolean} relative whether the path was absolute or relative to the current workspace.
-	 * @param {boolean} debug whether or not to run in debug mode.
-	 */
-	public showPreviewInBrowser(
-		file = '/',
-		relative = true,
-		debug = false
-	): void {
-		if (!this._serverTaskProvider.isRunning) {
-			if (!this._server.isRunning) {
-				// set the pending launch info, which will trigger once the server starts in `launchFileInExternalPreview`
-				this._pendingLaunchInfo = {
-					external: true,
-					file: file,
-					relative: relative,
-					debug: debug,
-				};
-			} else {
-				this.launchFileInExternalBrowser(file, relative, debug);
-			}
-			if (
-				this._workspaceManager.numPaths > 0 &&
-				this._runTaskWithExternalPreview
-			) {
-				this._serverTaskProvider.extRunTask(
-					SettingUtil.GetConfig(this._extensionUri)
-						.browserPreviewLaunchServerLogging
-				);
-			} else {
-				// global tasks are currently not supported, just turn on server in this case.
-				const serverOn = this.openServer();
-
-				if (!serverOn) {
-					return;
+				if (!workspace) {
+					// no workspace; try to decode endpoint to fix file
+					file = this._endpointManager.decodeLooseFileEndpoint(file);
+					if (!file) {
+						e.webviewPanel.dispose();
+						return;
+					}
 				}
-			}
-		} else {
-			this.launchFileInExternalBrowser(file, relative, debug);
-		}
-	}
 
-	/**
-	 * Start the server.
-	 * @param {boolean} fromTask whether the request is from a task; if so, it requires a reply to the terminal
-	 * @returns {boolean} whether or not the server started successfully.
-	 */
-	public openServer(fromTask = false): boolean {
-		if (!this._server.isRunning) {
-			return this._server.openServer(this._serverPort);
-		} else if (fromTask) {
-			this._connectionManager.resolveExternalHTTPUri().then((uri) => {
-				this._serverTaskProvider.serverStarted(
-					uri,
-					ServerStartedStatus.STARTED_BY_EMBEDDED_PREV
-				);
-			});
-		}
+				// loose file workspace will be fetched if workspace is still undefined
+				const grouping = this._getServerGroupingFromWorkspace(workspace);
+				grouping.createOrShowEmbeddedPreview(e.webviewPanel, file, relative);
+				e.webviewPanel.webview.options =
+					this._previewManager.getWebviewOptions();
+			})
+		);
 
-		return true;
-	}
-
-	/**
-	 * Stops the server.
-	 * NOTE: the caller is reponsible for only calling this if nothing is using the server.
-	 * @returns {boolean} whether or not the server stopped successfully.
-	 */
-	public closeServer(): boolean {
-		if (this._server.isRunning) {
-			this._server.closeServer();
-
-			if (this.currentPanel) {
-				this.currentPanel.close();
-			}
-
-			if (this._serverTaskProvider.isRunning) {
-				this._serverTaskProvider.serverStop(true);
-			}
-
-			this._connectionManager.disconnected();
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * @returns {WebviewOptions} the webview options to allow us to load the files we need in the webivew.
-	 */
-	public getWebviewOptions(): vscode.WebviewOptions {
-		const options = {
-			// Enable javascript in the webview
-			enableScripts: true,
-
-			localResourceRoots: [
-				vscode.Uri.joinPath(this._extensionUri, 'media'),
-				vscode.Uri.joinPath(
-					this._extensionUri,
-					'node_modules',
-					'@vscode',
-					'codicons',
-					'dist'
-				),
-			],
-		};
-		return options;
-	}
-
-	/**
-	 * @returns {vscode.WebviewPanelOptions} the webview panel options to allow it to always retain context.
-	 */
-	public getWebviewPanelOptions(): vscode.WebviewPanelOptions {
-		return {
-			retainContextWhenHidden: true,
-		};
-	}
-
-	/**
-	 * @param {string} file filesystem path to encode an endpoint for.
-	 * @returns {string} the endpoint name to get this file from the server.
-	 */
-	public encodeEndpoint(file: string): string {
-		return this._endpointManager.encodeLooseFileEndpoint(file);
-	}
-
-	/**
-	 * @param {string} endpoint the endpoint to decode into a file path
-	 * @returns {string | undefined} the file path served from the endpoint or undefined if the endpoint does not serve anything.
-	 */
-	public decodeEndpoint(endpoint: string): string | undefined {
-		return this._endpointManager.decodeLooseFileEndpoint(endpoint);
-	}
-
-	/**
-	 * Whether the file is in the current workspace.
-	 * @param {string} file the path to test.
-	 * @returns {boolean} whether it is in the server's workspace (will always return false if no workspace is open or in multi-workspace)
-	 */
-	public absPathInDefaultWorkspace(file: string): boolean {
-		return this._workspaceManager.absPathInDefaultWorkspace(file);
-	}
-
-	/**
-	 * @param {string} file the path to test.
-	 * @returns {boolean} whether the path exists when placed relative to the workspae root.
-	 */
-	public pathExistsRelativeToWorkspace(file: string): boolean {
-		return this._workspaceManager.pathExistsRelativeToDefaultWorkspace(file);
-	}
-
-	/**
-	 * @param {string} file the path to use
-	 * @returns {string} the path relative to default workspace. Will return empty string if `!absPathInDefaultWorkspace(file)`
-	 */
-	public getFileRelativeToDefaultWorkspace(file: string): string | undefined {
-		return this._workspaceManager.getFileRelativeToDefaultWorkspace(file);
-	}
-
-	/**
-	 * @returns {number} the port where the HTTP server is running.
-	 */
-	private get _serverPort(): number {
-		return this._connectionManager.httpPort;
-	}
-
-	/**
-	 * Actually launch the embedded browser preview (caller guarantees that the server has started.)
-	 * @param {string} file the filesystem path to preview.
-	 * @param {boolean} relative whether the path is relative.
-	 * @param {vscode.WebviewPanel | undefined} panel the webview panel to reuse if defined.
-	 */
-	private launchFileInEmbeddedPreview(
-		file: string,
-		relative: boolean,
-		panel: vscode.WebviewPanel | undefined
-	) {
-		file = this.transformNonRelativeFile(relative, file);
-		// If we already have a panel, show it.
-		if (this.currentPanel) {
-			this.currentPanel.reveal(vscode.ViewColumn.Beside, file);
-			return;
-		}
-
-		if (!panel) {
-			// Otherwise, create a new panel.
-			panel = vscode.window.createWebviewPanel(
+		if (vscode.window.registerWebviewPanelSerializer) {
+			this._register(vscode.window.registerWebviewPanelSerializer(
 				BrowserPreview.viewType,
-				INIT_PANEL_TITLE,
-				vscode.ViewColumn.Beside,
-				{
-					...this.getWebviewOptions(),
-					...this.getWebviewPanelOptions(),
-				}
-			);
+				serializer
+			));
 		}
 
-		this.startEmbeddedPreview(panel, file);
-	}
+		this._register(vscode.workspace.onDidChangeWorkspaceFolders((e) => {
+			if (e.removed) {
+				e.removed.forEach((workspace) => {
+					const potentialGrouping = this._serverGroupings.get(
+						workspace.uri.toString()
+					);
+					if (potentialGrouping) {
+						potentialGrouping.closeServer();
+					}
+				});
+			}
+			// known bug: transitioning between 1 and 2 workspaces: https://github.com/microsoft/vscode/issues/128138
+		}));
 
-	/**
-	 * Actually launch the external browser preview (caller guarantees that the server has started.)
-	 * @param {string} file the filesystem path to preview.
-	 * @param {boolean} relative whether the path is relative.
-	 * @param {boolean} debug whether we are opening in a debug session.
-	 */
-	private launchFileInExternalBrowser(
-		file: string,
-		relative: boolean,
-		debug: boolean
-	) {
-		const relFile = PathUtil.ConvertToUnixPath(
-			this.transformNonRelativeFile(relative, file)
-		);
-
-		const url = `http://${this._connectionManager.host}:${this._serverPort}${relFile}`;
-		if (debug) {
-			vscode.commands.executeCommand('extension.js-debug.debugLink', url);
-		} else {
-			// will already resolve to local address
-			vscode.env.openExternal(vscode.Uri.parse(url));
-		}
-	}
-
-	/**
-	 * Handles opening the embedded preview and setting up its listeners.
-	 * After a browser preview is closed, the server will close if another browser preview has not opened after a period of time (configurable in settings)
-	 * or if a task is not runnning. Because of this, a timer is triggerred upon webview (embedded preview) disposal/closing.
-	 * @param {vscode.WebviewPanel} panel the panel to use to open the preview.
-	 * @param {string} file the path to preview relative to index (should already be encoded).
-	 */
-	private startEmbeddedPreview(panel: vscode.WebviewPanel, file: string) {
-		if (this._currentTimeout) {
-			clearTimeout(this._currentTimeout);
-		}
-		this.currentPanel = this._register(
-			new BrowserPreview(
-				file,
-				panel,
-				this._extensionUri,
-				this._reporter,
-				this._workspaceManager,
-				this._connectionManager,
-				this._outputChannel
+		this._register(
+			this._serverTaskProvider.onShouldLaunchPreview((e) =>
+				this.openPreviewAtFile(e.file, e.options, e.previewType)
 			)
 		);
 
-		this._previewActive = true;
-
 		this._register(
-			this.currentPanel.onDispose(() => {
-				this.currentPanel = undefined;
-				const closeServerDelay = SettingUtil.GetConfig(
-					this._extensionUri
-				).serverKeepAliveAfterEmbeddedPreviewClose;
-				this._currentTimeout = setTimeout(() => {
-					// set a delay to server shutdown to avoid bad performance from re-opening/closing server.
-					if (
-						this._server.isRunning &&
-						!this._serverTaskProvider.isRunning &&
-						this.workspace &&
-						this._runTaskWithExternalPreview
-					) {
-						this.closeServer();
-					}
-					this._previewActive = false;
-				}, Math.floor(closeServerDelay * 1000 * 60));
-			})
+			this._previewManager.onShouldLaunchPreview((e) =>
+				this.openPreviewAtFile(e.file, e.options, e.previewType)
+			)
 		);
 	}
 
 	/**
-	 * Transforms non-relative files into a path that can be used by the server.
-	 * @param {boolean} relative whether the path is relative (if not relative, returns `file`).
-	 * @param {string} file the path to potentially transform.
-	 * @returns {string} the transformed path if the original `file` was realtive.
+	 * handles opening a file
+	 * @param internal whether to launch an embedded preview
+	 * @param file the uri or string filePath to use
+	 * @param fileStringRelative whether the path is relative
+	 * @param debug whether to launch in debug
+	 * @param workspace the workspace to launch the file from
+	 * @param port the port to derive the workspace from
+	 * @param serverGrouping the serverGrouping that manages the server workspace
 	 */
-	private transformNonRelativeFile(relative: boolean, file: string): string {
-		if (!relative) {
-			if (!this._workspaceManager.absPathInDefaultWorkspace(file)) {
-				if (!this._workspaceManager.absPathInAnyWorkspace(file)) {
-					this.notifyLooseFileOpen();
-				}
-				file = this.encodeEndpoint(file);
+	public async handleOpenFile(
+		internal: boolean,
+		file: vscode.Uri | string | undefined,
+		fileStringRelative: boolean,
+		debug: boolean,
+		workspace?: vscode.WorkspaceFolder,
+		port?: number,
+		serverGrouping?: ServerGrouping
+	): Promise<void> {
+		const fileInfo = this._getFileInfo(file, fileStringRelative);
+
+		if (!serverGrouping) {
+			if (workspace) {
+				serverGrouping = this._getServerGroupingFromWorkspace(workspace);
+			} else if (port) {
+				this._serverGroupings.forEach((potentialServerGrouping, key) => {
+					if (potentialServerGrouping.port === port) {
+						serverGrouping = potentialServerGrouping;
+						return;
+					}
+				});
 			} else {
-				file =
-					this._workspaceManager.getFileRelativeToDefaultWorkspace(file) ?? '';
+				if (fileInfo.isRelative) {
+					workspace = PathUtil.PathExistsRelativeToAnyWorkspace(
+						fileInfo.filePath
+					);
+				} else {
+					workspace = PathUtil.AbsPathInAnyWorkspace(fileInfo.filePath);
+				}
+				serverGrouping = this._getServerGroupingFromWorkspace(workspace);
 			}
 		}
-		return file;
+
+		if (!serverGrouping) {
+			// last-resort: use loose workspace server.
+			serverGrouping = this._getServerGroupingFromWorkspace(undefined);
+		}
+
+		return await this._openPreview(
+			internal,
+			fileInfo.filePath,
+			serverGrouping,
+			fileInfo.isRelative,
+			debug
+		);
 	}
 
 	/**
-	 * @description notify the user that they are opening a file outside the current workspace(s).
+	 * Close all servers
 	 */
-	private notifyLooseFileOpen(): void {
-		/* __GDPR__
-			"preview.fileOutOfWorkspace" : {}
-		*/
-		this._reporter.sendTelemetryEvent('preview.fileOutOfWorkspace');
-		if (
-			!this._notifiedAboutLooseFiles &&
-			SettingUtil.GetConfig(this._extensionUri).notifyOnOpenLooseFile
-		) {
-			vscode.window
-				.showWarningMessage(
-					localize(
-						'notPartOfWorkspace',
-						'Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root.'
-					),
-					DONT_SHOW_AGAIN
-				)
-				.then((selection: vscode.MessageItem | undefined) => {
-					if (selection == DONT_SHOW_AGAIN) {
-						SettingUtil.UpdateSettings(Settings.notifyOnOpenLooseFile, false);
-					}
-				});
+	public closeServers(): void {
+		this._serverGroupings.forEach((serverGrouping) => {
+			serverGrouping.closeServer();
+			serverGrouping.dispose();
+		});
+	}
+
+	public dispose(): void {
+		this.closeServers();
+		super.dispose();
+	}
+
+	public closePanel(): void {
+		this._previewManager.currentPanel?.close();
+	}
+
+	/**
+	 * Using only a string path (unknown if relative or absolute), launch the preview or launch an error.
+	 * This is usually used for when the user configures a setting for initial filepath
+	 * @param filePath the string fsPath to use
+	 */
+	public openTargetAtFile(filePath: string): void {
+		if (filePath === '') {
+			this._openNoTarget();
+			return;
 		}
-		this._notifiedAboutLooseFiles = true;
+		let foundPath = false;
+		this._serverGroupings.forEach((serverGrouping) => {
+			if (serverGrouping.pathExistsRelativeToWorkspace(filePath)) {
+				this.openPreviewAtFile(filePath, {
+					relativeFileString: true,
+					manager: serverGrouping,
+					workspace: serverGrouping.workspace,
+				});
+				foundPath = true;
+				return;
+			}
+		});
+
+		if (foundPath) {
+			return;
+		}
+
+		if (existsSync(filePath)) {
+			this.openPreviewAtFile(filePath, { relativeFileString: false });
+		} else {
+			vscode.window.showWarningMessage(
+				localize('fileDNE', "The file '{0}' does not exist.", filePath)
+			);
+			this.openPreviewAtFile('/', { relativeFileString: true });
+		}
+	}
+
+	public async openPreviewAtFile(
+		file?: vscode.Uri | string,
+		options?: IOpenFileOptions,
+		previewType?: string
+	): Promise<void> {
+		if (!previewType) {
+			previewType = SettingUtil.GetPreviewType();
+		}
+
+		const internal = previewType === PreviewType.internalPreview;
+		const debug = previewType === PreviewType.debugOnExternalPreview;
+
+		return this.handleOpenFile(
+			internal,
+			file,
+			options?.relativeFileString ?? false,
+			debug,
+			options?.workspace,
+			options?.port,
+			options?.manager
+		);
+	}
+
+	/**
+	 * Creates a serverGrouping and connection object for a workspace if it doesn't already have an existing one.
+	 * Otherwise, return the existing serverGrouping.
+	 * @param workspace
+	 * @returns serverGrouping for this workspace (or, when `workspace == undefined`, the serverGrouping for the loose file workspace)
+	 */
+	private _getServerGroupingFromWorkspace(
+		workspace: vscode.WorkspaceFolder | undefined
+	): ServerGrouping {
+		let serverGrouping = this._serverGroupings.get(workspace?.uri.toString());
+		if (!serverGrouping) {
+			const connection =
+				this._connectionManager.createAndAddNewConnection(workspace);
+			serverGrouping = this._register(
+				new ServerGrouping(
+					this._extensionUri,
+					this._reporter,
+					this._endpointManager,
+					connection,
+					this._serverTaskProvider,
+					this._userDataDir
+				)
+			);
+			this._register(
+				serverGrouping.onClose(() => {
+					if (
+						this._previewManager.currentPanel &&
+						this._previewManager.currentPanel.currentConnection === connection
+					) {
+						// close the preview if it is showing this server's content
+						this._previewManager.currentPanel?.close();
+					}
+
+					this._statusBar.removeServer(workspace?.uri);
+					this._serverGroupings.delete(workspace?.uri.toString());
+					if (this._serverGroupings.size === 0) {
+						this._statusBar.serverOff();
+						vscode.commands.executeCommand(
+							'setContext',
+							LIVE_PREVIEW_SERVER_ON,
+							false
+						);
+					}
+					this._connectionManager.removeConnection(workspace);
+				})
+			);
+			this._register(
+				serverGrouping.onShouldLaunchEmbeddedPreview((e) =>
+					this._previewManager.launchFileInEmbeddedPreview(
+						e.file,
+						e.relative,
+						e.panel,
+						e.connection
+					)
+				)
+			);
+			this._register(
+				serverGrouping.onShouldLaunchExternalPreview((e) =>
+					this._previewManager.launchFileInExternalBrowser(
+						e.file,
+						e.relative,
+						e.debug,
+						e.connection
+					)
+				)
+			);
+			this._serverGroupings.set(workspace?.uri.toString(), serverGrouping);
+		}
+
+		return serverGrouping;
+	}
+
+	private async _openPreview(
+		internal: boolean,
+		file: string,
+		serverGrouping: ServerGrouping,
+		isRelative: boolean,
+		debug = false
+	): Promise<void> {
+		if (internal) {
+			// for now, ignore debug or no debug for embedded preview
+			serverGrouping.createOrShowEmbeddedPreview(undefined, file, isRelative);
+		} else {
+			await serverGrouping.showPreviewInBrowser(file, isRelative, debug);
+		}
+	}
+
+	private _getFileInfo(
+		file: vscode.Uri | string | undefined,
+		fileStringRelative: boolean
+	): { filePath: string; isRelative: boolean } {
+		if (typeof file == 'string') {
+			return { filePath: file, isRelative: fileStringRelative };
+		} else if (file instanceof vscode.Uri) {
+			let filePath = file?.fsPath;
+
+			if (!filePath) {
+				const activeFilePath =
+					vscode.window.activeTextEditor?.document.fileName;
+				if (activeFilePath) {
+					filePath = activeFilePath;
+					fileStringRelative = false;
+				}
+			}
+
+			return { filePath, isRelative: fileStringRelative };
+		} else {
+			const activeFilePath = vscode.window.activeTextEditor?.document.fileName;
+			if (activeFilePath) {
+				return { filePath: activeFilePath, isRelative: false };
+			}
+		}
+
+		return { filePath: '/', isRelative: fileStringRelative };
+	}
+
+	private _hasServerRunning(): boolean {
+		const isRunning = Array.from(this._serverGroupings.values()).filter(
+			(group) => group.running
+		);
+		return isRunning.length !== 0;
+	}
+
+	private _openNoTarget(): void {
+		// opens index at first open server or opens a loose workspace at root
+		const workspaces = vscode.workspace.workspaceFolders;
+		if (workspaces && workspaces.length > 0) {
+			for (let i = 0; i < workspaces.length; i++) {
+				const currWorkspace = workspaces[i];
+				const manager = this._serverGroupings.get(currWorkspace.uri.toString());
+				if (manager) {
+					this.openPreviewAtFile('/', {
+						relativeFileString: true,
+						workspace: currWorkspace,
+						manager: manager,
+					});
+					return;
+				}
+			}
+
+			this.openPreviewAtFile('/', {
+				relativeFileString: true,
+				workspace: workspaces[0],
+			});
+		} else {
+			this.openPreviewAtFile('/', { relativeFileString: false });
+		}
 	}
 }

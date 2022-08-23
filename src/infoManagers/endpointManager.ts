@@ -3,7 +3,7 @@ import * as path from 'path';
 import { PathUtil } from '../utils/pathUtil';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
-import { WorkspaceManager } from './workspaceManager';
+import { Connection } from '../connectionInfo/connection';
 
 /**
  * @description the object that manages the server endpoints for files outside of the default workspace
@@ -16,16 +16,14 @@ export class EndpointManager extends Disposable {
 
 	private validEndpointRoots = new Set<string>();
 
-	constructor(private readonly _workspaceManager: WorkspaceManager) {
+	constructor() {
 		super();
 		let i = 0;
 		const workspaceDocuments = vscode.workspace.textDocuments;
 		while (i < workspaceDocuments.length) {
 			if (
 				!workspaceDocuments[i].isUntitled &&
-				!this._workspaceManager.absPathInDefaultWorkspace(
-					workspaceDocuments[i].fileName
-				)
+				!PathUtil.AbsPathInAnyWorkspace(workspaceDocuments[i].fileName)
 			) {
 				this.encodeLooseFileEndpoint(workspaceDocuments[i].fileName);
 			}
@@ -52,7 +50,7 @@ export class EndpointManager extends Disposable {
 		return path.join(endpoint_prefix, child);
 	}
 
-	public getEndpointParent(urlPath: string) {
+	public getEndpointParent(urlPath: string): string {
 		let endpoint: string | undefined = urlPath.endsWith('/')
 			? urlPath.substr(0, urlPath.length - 1)
 			: urlPath;

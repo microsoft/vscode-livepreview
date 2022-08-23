@@ -12,18 +12,17 @@ import {
 } from '../../utils/utils';
 import { HTMLInjector } from './HTMLInjector';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { WorkspaceManager } from '../../infoManagers/workspaceManager';
 import { EndpointManager } from '../../infoManagers/endpointManager';
 import { PathUtil } from '../../utils/pathUtil';
 import { INJECTED_ENDPOINT_NAME } from '../../utils/constants';
-import { ConnectionManager } from '../../infoManagers/connectionManager';
+import { Connection } from '../../connectionInfo/connection';
 
 const localize = nls.loadMessageBundle();
 
 /**
  * @description the response information to give back to the server object
  */
-export interface RespInfo {
+interface IRespInfo {
 	ContentType: string | undefined;
 	Stream: Stream.Readable | fs.ReadStream | undefined;
 }
@@ -31,7 +30,7 @@ export interface RespInfo {
 /**
  * @description table entry for a file in the auto-generated index.
  */
-export interface IndexFileEntry {
+interface IIndexFileEntry {
 	LinkSrc: string;
 	LinkName: string;
 	FileSize: string;
@@ -41,7 +40,7 @@ export interface IndexFileEntry {
 /**
  * @description table entry for a directory in the auto-generated index.
  */
-export interface IndexDirEntry {
+interface IIndexDirEntry {
 	LinkSrc: string;
 	LinkName: string;
 	DateTime: string;
@@ -59,11 +58,10 @@ export class ContentLoader extends Disposable {
 		_extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
-		private readonly _workspaceManager: WorkspaceManager,
-		_connectionManager: ConnectionManager
+		private readonly _connection: Connection
 	) {
 		super();
-		this._scriptInjector = new HTMLInjector(_extensionUri, _connectionManager);
+		this._scriptInjector = new HTMLInjector(_extensionUri, _connection);
 	}
 
 	/**
@@ -88,9 +86,9 @@ export class ContentLoader extends Disposable {
 	}
 
 	/**
-	 * @returns {RespInfo} the injected script and its content type.
+	 * @returns {IRespInfo} the injected script and its content type.
 	 */
-	public loadInjectedJS(): RespInfo {
+	public loadInjectedJS(): IRespInfo {
 		const fileString = this._scriptInjector?.script ?? '';
 
 		return {
@@ -102,9 +100,9 @@ export class ContentLoader extends Disposable {
 	/**
 	 * @description create a "page does not exist" page to pair with the 404 error.
 	 * @param relativePath the path that does not exist
-	 * @returns {RespInfo} the response information
+	 * @returns {IRespInfo} the response information
 	 */
-	public createPageDoesNotExist(relativePath: string): RespInfo {
+	public createPageDoesNotExist(relativePath: string): IRespInfo {
 		/* __GDPR__
 			"server.pageDoesNotExist" : {}
 		*/
@@ -138,38 +136,15 @@ export class ContentLoader extends Disposable {
 
 	/**
 	 * @description In a multi-root case, the index will not lead to anything. Create this page to list all possible indices to visit.
-	 * @returns {RespInfo} the response info
+	 * @returns {IRespInfo} the response info
 	 */
-	public createNoRootServer(): RespInfo {
-		let customMsg;
+	public createNoRootServer(): IRespInfo {
 		const noServerRoot = localize('noServerRoot', 'No Server Root');
-		if (this._workspaceManager.numPaths == 0) {
-			const noWorkspaceOpen = localize(
-				'noWorkspaceOpen',
-				'You have no workspace open, so the index does not direct to anything.'
-			);
-			customMsg = `<p>${noWorkspaceOpen}</p>`;
-		} else {
-			const multiRoot = localize(
-				'multiRootOpen',
-				'You are in a multi-root workspace, so the index does not lead to one specific workspace. Access your workspaces using the links below:'
-			);
-			customMsg = `<p>${multiRoot}</p>
-			<ul>
-			`;
-
-			const workspaces = this._workspaceManager.workspaces;
-			if (workspaces) {
-				for (const i in workspaces) {
-					const workspacePath = this._endpointManager.encodeLooseFileEndpoint(
-						workspaces[i].uri.fsPath
-					);
-					customMsg += `
-					<li><a href="${workspacePath}/">${workspaces[i].name}</a></li>`;
-				}
-			}
-			customMsg += `</ul>`;
-		}
+		const noWorkspaceOpen = localize(
+			'noWorkspaceOpen',
+			'You have no workspace open, so the index does not direct to anything.'
+		);
+		const customMsg = `<p>${noWorkspaceOpen}</p>`;
 		const htmlString = `
 		<!DOCTYPE html>
 		<html>
@@ -195,13 +170,13 @@ export class ContentLoader extends Disposable {
 	 * @param {string} readPath the absolute path visited.
 	 * @param {string} relativePath the relative path (from workspace root).
 	 * @param {string} titlePath the path shown in the title.
-	 * @returns {RespInfo} the response info.
+	 * @returns {IRespInfo} the response info.
 	 */
 	public createIndexPage(
 		readPath: string,
 		relativePath: string,
 		titlePath = relativePath
-	): RespInfo {
+	): IRespInfo {
 		/* __GDPR__
 			"server.indexPage" : {}
 		*/
@@ -209,8 +184,8 @@ export class ContentLoader extends Disposable {
 
 		const childFiles = fs.readdirSync(readPath);
 
-		const fileEntries = new Array<IndexFileEntry>();
-		const dirEntries = new Array<IndexDirEntry>();
+		const fileEntries = new Array<IIndexFileEntry>();
+		const dirEntries = new Array<IIndexDirEntry>();
 
 		if (relativePath != '/') {
 			dirEntries.push({ LinkSrc: '..', LinkName: '..', DateTime: '' });
@@ -243,7 +218,7 @@ export class ContentLoader extends Disposable {
 		let directoryContents = '';
 
 		dirEntries.forEach(
-			(elem: IndexDirEntry) =>
+			(elem: IIndexDirEntry) =>
 				(directoryContents += `
 				<tr>
 				<td><a href="${elem.LinkSrc}/">${elem.LinkName}/</a></td>
@@ -253,7 +228,7 @@ export class ContentLoader extends Disposable {
 		);
 
 		fileEntries.forEach(
-			(elem: IndexFileEntry) =>
+			(elem: IIndexFileEntry) =>
 				(directoryContents += `
 				<tr>
 				<td><a href="${elem.LinkSrc}">${elem.LinkName}</a></td>
@@ -304,13 +279,13 @@ export class ContentLoader extends Disposable {
 	 * @description get the file contents and load it into a form that can be served.
 	 * @param {string} readPath the absolute file path to read from
 	 * @param {boolean} inFilesystem whether the path is in the filesystem (false for untitled files in editor)
-	 * @returns {RespInfo} the response info
+	 * @returns {IRespInfo} the response info
 	 */
-	public getFileStream(readPath: string, inFilesystem = true): RespInfo {
+	public getFileStream(readPath: string, inFilesystem = true): IRespInfo {
 		this._servedFiles.add(readPath);
 		const workspaceDocuments = vscode.workspace.textDocuments;
 		let i = 0;
-		let stream;
+		let stream: Stream.Readable | fs.ReadStream | undefined;
 
 		let contentType = mime.getType(readPath) ?? 'text/plain';
 
@@ -322,7 +297,7 @@ export class ContentLoader extends Disposable {
 				let fileContents = workspaceDocuments[i].getText();
 
 				if (workspaceDocuments[i].languageId == 'html') {
-					fileContents = this.injectIntoFile(fileContents);
+					fileContents = this._injectIntoFile(fileContents);
 					contentType = 'text/html';
 				}
 
@@ -335,7 +310,7 @@ export class ContentLoader extends Disposable {
 		if (inFilesystem && i == workspaceDocuments.length) {
 			if (isFileInjectable(readPath)) {
 				const buffer = fs.readFileSync(readPath, 'utf8');
-				const injectedFileContents = this.injectIntoFile(buffer.toString());
+				const injectedFileContents = this._injectIntoFile(buffer.toString());
 				stream = Stream.Readable.from(injectedFileContents);
 			} else {
 				stream = fs.createReadStream(readPath);
@@ -360,7 +335,7 @@ export class ContentLoader extends Disposable {
 	 * @param {string} contents the contents to inject.
 	 * @returns {string} the injected string.
 	 */
-	private injectIntoFile(contents: string): string {
+	private _injectIntoFile(contents: string): string {
 		// order of preference for script placement:
 		// 1. after <head>
 		// 2. after <body>
@@ -368,7 +343,7 @@ export class ContentLoader extends Disposable {
 		// 4. after <!DOCTYPE >
 		// 5. at the very beginning
 
-		let re;
+		let re: RegExp;
 		let tagEnd = 0;
 		for (const i in this._insertionTags) {
 			re = new RegExp(`<${this._insertionTags[i]}[^>]*>`, 'g');

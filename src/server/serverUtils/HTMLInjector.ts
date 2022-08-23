@@ -1,7 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { ConnectionManager } from '../../infoManagers/connectionManager';
+import { Connection } from '../../connectionInfo/connection';
+import { ConnectionManager } from '../../connectionInfo/connectionManager';
 import {
 	HTTP_URL_PLACEHOLDER,
 	WS_URL_PLACEHOLDER,
@@ -11,7 +12,7 @@ import { Disposable } from '../../utils/dispose';
 /**
  * @description the string replacement information for the `replace()` function
  */
-interface replaceObj {
+interface IReplaceObj {
 	original: string;
 	replacement: string;
 }
@@ -24,17 +25,9 @@ export class HTMLInjector extends Disposable {
 	private _script: string | undefined;
 	public rawScript: string;
 
-	/**
-	 * @description get the injected script (already has replacements).
-	 * For debugging, to serve non-injected files, just change this to always return the empty string.
-	 */
-	public get script(): string | undefined {
-		return this._script;
-	}
-
 	constructor(
 		_extensionUri: vscode.Uri,
-		private readonly _connectionManager: ConnectionManager
+		private readonly _connection: Connection
 	) {
 		super();
 		const scriptPath = path.join(
@@ -43,29 +36,37 @@ export class HTMLInjector extends Disposable {
 			'injectScript.js'
 		);
 		this.rawScript = fs.readFileSync(scriptPath, 'utf8').toString();
-		this.initScript(this.rawScript, undefined, undefined);
+		this._initScript(this.rawScript, undefined, undefined);
 
 		this._register(
-			this._connectionManager.onConnected((e) => {
-				this.refresh(e.httpURI, e.wsURI);
+			this._connection.onConnected((e) => {
+				this._refresh(e.httpURI, e.wsURI);
 			})
 		);
+	}
+
+	/**
+	 * @description get the injected script (already has replacements).
+	 * For debugging, to serve non-injected files, just change this to always return the empty string.
+	 */
+	public get script(): string | undefined {
+		return this._script;
 	}
 
 	/**
 	 * @description populate `this._script` with the script containing replacements for the server addresses.
 	 * @param {string} fileString the raw loaded script with no replacements yet.
 	 */
-	private async initScript(
+	private async _initScript(
 		fileString: string,
 		httpUri: vscode.Uri | undefined,
 		wsUri: vscode.Uri | undefined
-	) {
+	): Promise<void> {
 		if (!httpUri) {
-			httpUri = await this._connectionManager.resolveExternalHTTPUri();
+			httpUri = await this._connection.resolveExternalHTTPUri();
 		}
 		if (!wsUri) {
-			wsUri = await this._connectionManager.resolveExternalWSUri();
+			wsUri = await this._connection.resolveExternalWSUri();
 		}
 		const wsURL = `ws://${wsUri.authority}${wsUri.path}`;
 		let httpURL = `${httpUri.scheme}://${httpUri.authority}`;
@@ -77,15 +78,15 @@ export class HTMLInjector extends Disposable {
 			{ original: WS_URL_PLACEHOLDER, replacement: wsURL },
 			{ original: HTTP_URL_PLACEHOLDER, replacement: httpURL },
 		];
-		this._script = this.replace(fileString, replacements);
+		this._script = this._replace(fileString, replacements);
 	}
 
 	/**
 	 * @param {string} script the main string to perform replacements on
-	 * @param {replaceObj[]} replaces array replacements to make
+	 * @param {IReplaceObj[]} replaces array replacements to make
 	 * @returns {string} string with all replacements performed on.
 	 */
-	private replace(script: string, replaces: replaceObj[]): string {
+	private _replace(script: string, replaces: IReplaceObj[]): string {
 		replaces.forEach((replace) => {
 			const placeHolderIndex = script.indexOf(replace.original);
 			script =
@@ -99,7 +100,10 @@ export class HTMLInjector extends Disposable {
 	/**
 	 * @description re-populate the script field with replacements. Will re-query the connection manager for the port and host.
 	 */
-	private refresh(httpUri: vscode.Uri, wsUri: vscode.Uri) {
-		this.initScript(this.rawScript, httpUri, wsUri);
+	private async _refresh(
+		httpUri: vscode.Uri,
+		wsUri: vscode.Uri
+	): Promise<void> {
+		await this._initScript(this.rawScript, httpUri, wsUri);
 	}
 }
