@@ -58,12 +58,7 @@ export function isFileInjectable(file: string | undefined): boolean {
  */
 function hasInjectableFileEnding(file: string): boolean {
 	const supportedEndings = ['.html', '.htm', '.xhtml'];
-	for (const i in supportedEndings) {
-		if (file.endsWith(supportedEndings[i])) {
-			return true;
-		}
-	}
-	return false;
+	return supportedEndings.find((ending) => file.endsWith(ending)) !== undefined;
 }
 
 /**
