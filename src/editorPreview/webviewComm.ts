@@ -373,8 +373,8 @@ export class WebviewComm extends Disposable {
 		this.currentAddress = pathname;
 		const response = this._pageHistory?.addHistory(pathname, connection);
 		if (response) {
-			for (const i in response.actions) {
-				this.handleNavAction(response.actions[i]);
+			for (const action of response.actions) {
+				this.handleNavAction(action);
 			}
 		}
 	}
@@ -384,8 +384,8 @@ export class WebviewComm extends Disposable {
 	 */
 	public updateForwardBackArrows(): void {
 		const navigationStatus = this._pageHistory.currentCommands;
-		for (const i in navigationStatus) {
-			this.handleNavAction(navigationStatus[i]);
+		for (const status of navigationStatus) {
+			this.handleNavAction(status);
 		}
 	}
 
@@ -400,8 +400,8 @@ export class WebviewComm extends Disposable {
 			await this.goToFile(page.path, false, page.connection);
 		}
 
-		for (const i in response.actions) {
-			this.handleNavAction(response.actions[i]);
+		for (const action of response.actions) {
+			this.handleNavAction(action);
 		}
 	}
 
@@ -416,8 +416,8 @@ export class WebviewComm extends Disposable {
 			await this.goToFile(page.path, false, page.connection);
 		}
 
-		for (const i in response.actions) {
-			this.handleNavAction(response.actions[i]);
+		for (const action of response.actions) {
+			this.handleNavAction(action);
 		}
 	}
 }

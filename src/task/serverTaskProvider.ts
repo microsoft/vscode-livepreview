@@ -279,8 +279,8 @@ export class ServerTaskProvider
 		definition.workspacePath = workspace?.uri.fsPath;
 
 		let taskName = TASK_TERMINAL_BASE_NAME;
-		for (const i in args) {
-			taskName += ` ${args[i]}`;
+		for (const arg of args) {
+			taskName += ` ${arg}`;
 		}
 
 		const term = this._terminals.get(workspace?.uri.toString());

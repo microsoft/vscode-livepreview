@@ -18,12 +18,9 @@ export class PathUtil {
 		file = decodeURI(file);
 		const parts = file.split('/');
 
-		const newParts = [];
-		for (const i in parts) {
-			if (parts[i].length > 0) {
-				newParts.push(encodeURI(parts[i]));
-			}
-		}
+		const newParts = parts
+			.filter((part) => part.length > 0)
+			.map((filterdPart) => encodeURI(filterdPart));
 		return newParts.join('/');
 	}
 
@@ -34,12 +31,9 @@ export class PathUtil {
 	 */
 	public static UnescapePathParts(file: string): string {
 		const parts = file.split('/');
-		const newParts = [];
-		for (const i in parts) {
-			if (parts[i].length > 0) {
-				newParts.push(decodeURI(parts[i]));
-			}
-		}
+		const newParts = parts
+			.filter((part) => part.length > 0)
+			.map((filterdPart) => decodeURI(filterdPart));
 		return newParts.join('/');
 	}
 
@@ -120,11 +114,11 @@ export class PathUtil {
 		const parts = file.split('/');
 
 		const newParts = [];
-		for (const i in parts) {
-			if (parts[i].length > 0) {
-				newParts.push(parts[i]);
+		for (const part of parts) {
+			if (part.length > 0) {
+				newParts.push(part);
 			}
-			if (parts[i] == 'User') {
+			if (part == 'User') {
 				break;
 			}
 		}
@@ -141,14 +135,9 @@ export class PathUtil {
 		file: string
 	): vscode.WorkspaceFolder | undefined {
 		const workspaces = vscode.workspace.workspaceFolders;
-		if (workspaces) {
-			for (const i in workspaces) {
-				if (PathUtil.PathBeginsWith(file, workspaces[i].uri.fsPath)) {
-					return workspaces[i];
-				}
-			}
-		}
-		return undefined;
+		return workspaces?.find((workspace) =>
+			PathUtil.PathBeginsWith(file, workspace.uri.fsPath)
+		);
 	}
 
 	/**
@@ -160,13 +149,8 @@ export class PathUtil {
 		file: string
 	): vscode.WorkspaceFolder | undefined {
 		const workspaces = vscode.workspace.workspaceFolders;
-		if (workspaces) {
-			for (const i in workspaces) {
-				if (fs.existsSync(path.join(workspaces[i].uri.fsPath, file))) {
-					return workspaces[i];
-				}
-			}
-		}
-		return undefined;
+		return workspaces?.find((workspace) =>
+			fs.existsSync(path.join(workspace.uri.fsPath, file))
+		);
 	}
 }

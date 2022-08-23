@@ -191,9 +191,9 @@ export class ContentLoader extends Disposable {
 			dirEntries.push({ LinkSrc: '..', LinkName: '..', DateTime: '' });
 		}
 
-		for (const i in childFiles) {
-			const relativeFileWithChild = path.join(relativePath, childFiles[i]);
-			const absolutePath = path.join(readPath, childFiles[i]);
+		for (const childFile of childFiles) {
+			const relativeFileWithChild = path.join(relativePath, childFile);
+			const absolutePath = path.join(readPath, childFile);
 
 			const fileStats = fs.statSync(absolutePath);
 			const modifiedDateTimeString = FormatDateTime(fileStats.mtime);
@@ -201,14 +201,14 @@ export class ContentLoader extends Disposable {
 			if (fileStats.isDirectory()) {
 				dirEntries.push({
 					LinkSrc: relativeFileWithChild,
-					LinkName: childFiles[i],
+					LinkName: childFile,
 					DateTime: modifiedDateTimeString,
 				});
 			} else {
 				const fileSize = FormatFileSize(fileStats.size);
 				fileEntries.push({
 					LinkSrc: relativeFileWithChild,
-					LinkName: childFiles[i],
+					LinkName: childFile,
 					FileSize: fileSize,
 					DateTime: modifiedDateTimeString,
 				});
@@ -345,8 +345,8 @@ export class ContentLoader extends Disposable {
 
 		let re: RegExp;
 		let tagEnd = 0;
-		for (const i in this._insertionTags) {
-			re = new RegExp(`<${this._insertionTags[i]}[^>]*>`, 'g');
+		for (const tag of this._insertionTags) {
+			re = new RegExp(`<${tag}[^>]*>`, 'g');
 			re.test(contents);
 
 			tagEnd = re.lastIndex;
