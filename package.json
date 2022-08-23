@@ -37,7 +37,6 @@
 		"livepreview"
 	],
 	"activationEvents": [
-		"onLanguage:html",
 		"onWebviewPanel:browserPreview",
 		"onCommand:livePreview.start",
 		"onCommand:livePreview.start.preview.atFile",
