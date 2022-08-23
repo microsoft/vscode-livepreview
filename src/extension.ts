@@ -29,8 +29,6 @@ export function activate(context: vscode.ExtensionContext): void {
 		PathUtil.GetUserDataDirFromStorageUri(context.storageUri?.fsPath)
 	);
 
-	context.subscriptions.push(serverPreview);
-
 	/* __GDPR__
 		"extension.startUp" : {
 			"numWorkspaceFolders" : { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true }
@@ -167,4 +165,9 @@ export function activate(context: vscode.ExtensionContext): void {
 			}
 		)
 	);
+}
+
+export function deactivate(): void {
+	serverPreview.closePanel();
+	serverPreview.dispose();
 }
