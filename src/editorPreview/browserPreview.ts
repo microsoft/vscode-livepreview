@@ -154,10 +154,11 @@ export class BrowserPreview extends Disposable {
 				await this._handleOpenBrowser(message.text);
 				return;
 			case 'add-history': {
+				const msgJSON = JSON.parse(message.text);
 				const connection = this._connectionManager.getConnectionFromPort(
-					message.port
+					msgJSON.port
 				);
-				await this._webviewComm.setUrlBar(message.text, connection);
+				await this._webviewComm.setUrlBar(msgJSON.path, connection);
 				return;
 			}
 			case 'refresh-back-forward-buttons':
