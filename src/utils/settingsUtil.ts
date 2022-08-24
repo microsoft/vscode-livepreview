@@ -5,7 +5,6 @@ import * as vscode from 'vscode';
  */
 export interface ILivePreviewConfigItem {
 	portNumber: number;
-	showStatusBarItem: boolean;
 	showServerStatusNotifications: boolean;
 	autoRefreshPreview: AutoRefreshPreview;
 	browserPreviewLaunchServerLogging: boolean;
@@ -77,7 +76,6 @@ export class SettingUtil {
 		const config = vscode.workspace.getConfiguration(SETTINGS_SECTION_ID);
 		return {
 			portNumber: config.get<number>(Settings.portNumber, 3000),
-			showStatusBarItem: config.get<boolean>(Settings.showStatusBarItem, true),
 			showServerStatusNotifications: config.get<boolean>(
 				Settings.showServerStatusNotifications,
 				false

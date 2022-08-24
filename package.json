@@ -39,6 +39,7 @@
 	"activationEvents": [
 		"onLanguage:html",
 		"onWebviewPanel:browserPreview",
+    "onCommand:livePreview.setDefaultOpenFile",
 		"onCommand:livePreview.start",
 		"onCommand:livePreview.start.preview.atFile",
 		"onCommand:livePreview.start.debugPreview.atFile",
@@ -180,11 +181,6 @@
 					"minimum": 0,
 					"maximum": 20,
 					"description": "%settings.serverKeepAliveAfterEmbeddedPreviewClose%"
-				},
-				"livePreview.showStatusBarItem": {
-					"type": "boolean",
-					"default": true,
-					"description": "%settings.showStatusBarItem%"
 				},
 				"livePreview.showServerStatusNotifications": {
 					"type": "boolean",

@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { Disposable } from '../../utils/dispose';
-import { SETTINGS_SECTION_ID, SettingUtil } from '../../utils/settingsUtil';
 
 const localize = nls.loadMessageBundle();
 
@@ -20,15 +19,10 @@ export class StatusBarNotifier extends Disposable {
 		this._statusBar = this._register(
 			vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100)
 		);
+		this._statusBar.name = localize('livePreviewPorts', 'Live Preview Ports');
 		this.serverOff();
 		this._on = false;
 		this._ports = new Map<string, number>();
-
-		vscode.workspace.onDidChangeConfiguration((e) => {
-			if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
-				this.updateConfigurations();
-			}
-		});
 	}
 
 	/**
@@ -36,9 +30,7 @@ export class StatusBarNotifier extends Disposable {
 	 */
 	public setServer(uri: vscode.Uri | undefined, port: number): void {
 		this._on = true;
-		if (SettingUtil.GetConfig().showStatusBarItem) {
-			this._statusBar.show();
-		}
+		this._statusBar.show();
 		this._ports.set(uri?.toString(), port);
 		this._refreshBar();
 	}
@@ -98,19 +90,6 @@ export class StatusBarNotifier extends Disposable {
 			this.serverOff();
 		} else {
 			this._refreshBar();
-		}
-	}
-
-	/**
-	 * @description update fields to address config changes.
-	 */
-	public updateConfigurations(): void {
-		if (SettingUtil.GetConfig().showStatusBarItem) {
-			if (this._on) {
-				this._statusBar.show();
-			}
-		} else {
-			this._statusBar.hide();
 		}
 	}
 }
