@@ -359,7 +359,7 @@ export class Manager extends Disposable {
 		}
 
 		const internal = previewType === PreviewType.internalPreview;
-		const debug = previewType === PreviewType.debugOnExternalPreview;
+		const debug = previewType === PreviewType.externalDebugPreview;
 
 		return this.handleOpenFile(
 			internal,

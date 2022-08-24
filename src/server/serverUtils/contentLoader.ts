@@ -357,7 +357,6 @@ export class ContentLoader extends Disposable {
 
 		const newContents =
 			contents.substr(0, tagEnd) +
-			'\n' +
 			this._scriptInjection +
 			contents.substr(tagEnd);
 		return newContents;
