@@ -13,3 +13,4 @@ test-workspace
 release_notes
 img
 out/extension.js.map
+scripts/**
