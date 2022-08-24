@@ -61,7 +61,7 @@ export const Settings: any = {
 /**
  * @description the potential previewType for commands (formatted as `${SETTINGS_SECTION_ID}.start.${previewType}.${target}`).
  */
-export const PreviewType: any = {
+export const PreviewType = {
 	internalPreview: 'internalPreview',
 	externalPreview: 'externalPreview',
 	externalDebugPreview: 'externalDebugPreview',
