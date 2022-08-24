@@ -260,6 +260,8 @@
 		"webpack": "webpack --mode development",
 		"webpack-dev": "webpack --mode development --watch",
 		"build-preview": "npx webpack-cli --mode development",
+    "patch-prerelease": "node ./scripts/applyPatchForPrerelease.js",
+    "validate-stable": "node ./scripts/validateStable.js",
 		"compile": "node build/tools/codicon_copy.js && tsc -p ./",
 		"watch": "node build/tools/codicon_copy.js && tsc -watch -p ./",
 		"format": "prettier ./{src,media}/**/*.{ts,css,html,js} --write"

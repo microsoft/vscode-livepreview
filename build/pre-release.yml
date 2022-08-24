@@ -33,3 +33,6 @@ extends:
 
       - script: yarn eslint src
         displayName: Run ESLint
+
+      - script: yarn run patch-prerelease $(Build.BuildNumber)
+        displayName: Apply package.json patch

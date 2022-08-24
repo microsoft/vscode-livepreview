@@ -30,3 +30,6 @@ extends:
 
       - script: yarn eslint src
         displayName: Run ESLint
+
+      - script: yarn run validate-stable
+        displayName: Validate stable version number
