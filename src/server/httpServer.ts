@@ -166,47 +166,49 @@ export class HttpServer extends Disposable {
 		let absoluteReadPath = path.join(basePath ?? '', URLPathName);
 
 		let contentType = 'application/octet-stream';
+		if (!basePath) {
+			if (URLPathName.startsWith('/endpoint_unsaved')) {
+				const untitledFileName = URLPathName.substr(
+					URLPathName.lastIndexOf('/') + 1
+				);
+				const content = this._contentLoader.getFileStream(
+					untitledFileName,
+					false
+				);
+				if (content.Stream) {
+					stream = content.Stream;
+					contentType = content.ContentType ?? '';
+					res.writeHead(200, {
+						'Accept-Ranges': 'bytes',
+						'Content-Type': contentType,
+					});
+					stream.pipe(res);
+					return;
+				}
+			}
 
-		if (URLPathName.startsWith('/endpoint_unsaved')) {
-			const untitledFileName = URLPathName.substr(
-				URLPathName.lastIndexOf('/') + 1
-			);
-			const content = this._contentLoader.getFileStream(
-				untitledFileName,
-				false
-			);
-			if (content.Stream) {
-				stream = content.Stream;
-				contentType = content.ContentType ?? '';
-				res.writeHead(200, {
-					'Accept-Ranges': 'bytes',
-					'Content-Type': contentType,
-				});
-				stream.pipe(res);
-				return;
+			if (!fs.existsSync(absoluteReadPath)) {
+				const decodedReadPath =
+					this._endpointManager.decodeLooseFileEndpoint(URLPathName);
+				looseFile = true;
+				if (decodedReadPath && fs.existsSync(decodedReadPath)) {
+					absoluteReadPath = decodedReadPath;
+				}
 			}
 		}
 
 		if (!fs.existsSync(absoluteReadPath)) {
-			const decodedReadPath =
-				this._endpointManager.decodeLooseFileEndpoint(URLPathName);
-			looseFile = true;
-			if (decodedReadPath && fs.existsSync(decodedReadPath)) {
-				absoluteReadPath = decodedReadPath;
-			} else {
-				const respInfo =
-					this._contentLoader.createPageDoesNotExist(absoluteReadPath);
-				res.writeHead(404, {
-					'Accept-Ranges': 'bytes',
-					'Content-Type': respInfo.ContentType,
-				});
-				this._reportStatus(req, res);
-				stream = respInfo.Stream;
-				stream?.pipe(res);
-				return;
-			}
+			const respInfo =
+				this._contentLoader.createPageDoesNotExist(absoluteReadPath);
+			res.writeHead(404, {
+				'Accept-Ranges': 'bytes',
+				'Content-Type': respInfo.ContentType,
+			});
+			this._reportStatus(req, res);
+			stream = respInfo.Stream;
+			stream?.pipe(res);
+			return;
 		}
-
 		if (fs.statSync(absoluteReadPath).isDirectory()) {
 			if (!URLPathName.endsWith('/')) {
 				const queries =
