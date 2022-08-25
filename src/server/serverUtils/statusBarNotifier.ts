@@ -42,11 +42,6 @@ export class StatusBarNotifier extends Disposable {
 		if (this._ports.size === 1) {
 			const port = this._ports.values().next().value;
 			portsLabel = localize('port', 'Port: {0}', port);
-			portsTooltip = localize(
-				'livePreviewRunningOnPort',
-				'Live Preview running on port {0}',
-				port
-			);
 		} else {
 			if (this._ports.size === 2) {
 				portsLabel = localize(
@@ -57,12 +52,30 @@ export class StatusBarNotifier extends Disposable {
 			} else {
 				portsLabel = localize('port', '{0} Ports', this._ports.size);
 			}
-			portsTooltip = localize(
-				'livePreviewRunningOnPort',
-				'Live Preview running on ports: {0}',
-				`\n\t• ${Array.from(this._ports.values()).join('\n\t• ')}`
-			);
 		}
+
+		const bulletPoints: string[] = [];
+
+		this._ports.forEach((port, uriString) => {
+			let workspace;
+			try {
+				workspace = uriString ? vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(uriString)) : undefined;
+			} catch {
+				// no op
+			}
+			bulletPoints.push(`\n\t• ${port} (${workspace ? workspace.name : localize('nonWorkspaceFiles','non-workspace files')})`);
+		});
+
+		portsTooltip = this._ports.size == 1 ? localize(
+			'livePreviewRunningOnPort',
+			'Live Preview running on port: '
+		) :
+		localize(
+			'livePreviewRunningOnPorts',
+			'Live Preview running on ports: '
+		);
+
+		portsTooltip += bulletPoints.join('');
 
 		this._statusBar.tooltip = portsTooltip;
 		this._statusBar.text = `$(radio-tower) ${portsLabel}`;

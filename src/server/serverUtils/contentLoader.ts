@@ -142,7 +142,7 @@ export class ContentLoader extends Disposable {
 		const noServerRoot = localize('noServerRoot', 'No Server Root');
 		const noWorkspaceOpen = localize(
 			'noWorkspaceOpen',
-			'You have no workspace open, so the index does not direct to anything.'
+			'This server is not based inside of a workspace, so the index does not direct to anything.'
 		);
 		const customMsg = `<p>${noWorkspaceOpen}</p>`;
 		const htmlString = `
