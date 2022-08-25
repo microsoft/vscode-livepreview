@@ -57,13 +57,12 @@ export class StatusBarNotifier extends Disposable {
 		const bulletPoints: string[] = [];
 
 		this._ports.forEach((port, uriString) => {
-			let workspace;
 			try {
-				workspace = uriString ? vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(uriString)) : undefined;
+				const workspace = uriString ? vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(uriString)) : undefined;
+				bulletPoints.push(`\n\t• ${port} (${workspace ? workspace.name : localize('nonWorkspaceFiles','non-workspace files')})`);
 			} catch {
 				// no op
 			}
-			bulletPoints.push(`\n\t• ${port} (${workspace ? workspace.name : localize('nonWorkspaceFiles','non-workspace files')})`);
 		});
 
 		portsTooltip = this._ports.size == 1 ? localize(
