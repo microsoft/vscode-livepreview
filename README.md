@@ -77,11 +77,18 @@ No workspace? No problem! For a quick preview of your file, the server can also 
 ![no-workspace-preview](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/no-workspace-preview.gif)
 
 Notes about workspace-less extension use:
+- Files without a workspace will be served on its own server instance and will use its absolute path as the file path.
 - Linked files for these pages may not be correct if they are relative to a specific root (e.g. a project root).
 - Tasks do not work outside of a workspace, so a server will just launch in the background upon external preview when outside of a workspace. You can use the `Live Preview: Stop Server` command to kill the server in this case.
 
 ### Multi-root Support
-The different workspaces will be assigned specific server endpoints, allowing you to easily preview files in all of your workspaces.
+Live Preview works cleanly with your multi-root workspaces! It will simply open an additional server for each root that you open a preview on.
+
+![multi-root-demo](img/multi-root-demo.gif)
+
+You can view the ports that are open for Live Preview by hovering the status bar indicator (usually located in the bottom-right corner of the window).
+
+![multi-server-ports](img/server-status.png)
 
 ## Running the extension
 You can install the extension [in the marketplace here](https://marketplace.visualstudio.com/items?itemName=ms-vscode.live-server). To contribute, see the [contributing page](https://github.com/microsoft/vscode-livepreview/blob/main/CONTRIBUTING.md).
