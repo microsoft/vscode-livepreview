@@ -1,8 +1,30 @@
 # Changelog
 
+## 0.4.0 (August 31, 2022)
+- Added better multi-root support that opens a new server for each root. Paths relative to the root now work on multi-root. [#143](https://github.com/microsoft/vscode-livepreview/issues/143)
+- Localization support. [#221](https://github.com/microsoft/vscode-livepreview/issues/221)
+- Status bar setting removed in favor of using VS Code's native functionality to hide status bar contributions. [#269](https://github.com/microsoft/vscode-livepreview/issues/269)
+- Fixed debug to track breakpoint on correct line. [#295](https://github.com/microsoft/vscode-livepreview/issues/295)
+- Removed extension activation triggerring when simply on an HTML file. [#272](https://github.com/microsoft/vscode-livepreview/issues/272)
+
+## 0.2.13 (July 29, 2022)
+- Support Unicode characters (e.g. Chinese characters) in filenames. [#131](https://github.com/microsoft/vscode-livepreview/issues/131)
+- Page-based opt-out of live refreshing using the `data-server-no-reload` body attribute. [#241](https://github.com/microsoft/vscode-livepreview/issues/241)
+
+## 0.2.12 (January 11, 2022)
+- Use random path for the WebSocket server. [#193](https://github.com/microsoft/vscode-livepreview/issues/193)
+
+## 0.2.11 (December 2, 2021)
+- Reverted the change to support IPv6 addresses using the `livePreview.hostIP` setting. [#179](https://github.com/microsoft/vscode-livepreview/issues/179)
+
+## 0.2.10 (November 29, 2021)
+- Added support for IPv6 addresses to the `livePreview.hostIP` setting. [#179](https://github.com/microsoft/vscode-livepreview/issues/179)
+- Fixed an issue with dismissing the search widget when pressing the Esc key. [#130](https://github.com/microsoft/vscode-livepreview/issues/130)
+- Fixed an issue with using keybindings when focused on embedded preview. [#119](https://github.com/microsoft/vscode-livepreview/issues/119)
+
 ## 0.2.9 (September 30, 2021)
 - Fixed an issue with the find widget icon background. [#156](https://github.com/microsoft/vscode-livepreview/issues/156)
-- Fixed an issue that causes the find widget to flicker while navigating through matches. [#157](https://github.com/microsoft/vscode-livepreview/issues/157) 
+- Fixed an issue that causes the find widget to flicker while navigating through matches. [#157](https://github.com/microsoft/vscode-livepreview/issues/157)
 
 ## 0.2.8 (August 12, 2021)
 - Fixed Custom IP Error on Local Session. [#140](https://github.com/microsoft/vscode-livepreview/pull/#140)

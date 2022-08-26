@@ -140,7 +140,7 @@ function handleSocketMessage(data) {
 	const parsedMessage = JSON.parse(data);
 	switch (parsedMessage.command) {
 		case 'reload': {
-			window.location.reload();
+			reloadPage();
 		}
 	}
 }
@@ -154,6 +154,9 @@ function handleMessage(event) {
 
 	switch (message.command) {
 		case 'refresh':
+			reloadPage();
+			break;
+		case 'refresh-forced':
 			window.location.reload();
 			break;
 		case 'setup-parent-listener': {
@@ -310,4 +313,16 @@ function handleLinkHoverEnd() {
 	postParentMessage({
 		command: 'link-hover-end',
 	});
+}
+
+/**
+ * Reloads page when requested by a socket message or parent.
+ * Auto-reloading is prevented if the document body has a `data-server-no-reload` attribute.
+ */
+function reloadPage() {
+	const block = document.body
+		? document.body.hasAttribute('data-server-no-reload')
+		: false;
+	if (block) return;
+	window.location.reload();
 }

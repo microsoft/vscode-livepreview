@@ -52,7 +52,11 @@
 
 		// set up key to dismiss find
 		document.getElementById('find-box').addEventListener('keydown', (e) => {
-			if (!document.getElementById('find-box').hidden && e.key == 'Escape' && !ctrlDown) {
+			if (
+				!document.getElementById('find-box').hidden &&
+				e.key == 'Escape' &&
+				!ctrlDown
+			) {
 				hideFind();
 			}
 		});
@@ -86,7 +90,7 @@
 				}
 			}
 		});
-		
+
 		window.addEventListener('message', (event) => {
 			handleMessage(event.data); // The json data that the extension sent
 		});
@@ -114,7 +118,7 @@
 	 * @param {string} url the URL to use to set the URL bar.
 	 */
 	function setURLBar(url) {
-		document.getElementById('url-input').value = url;
+		document.getElementById('url-input').value = decodeURI(url);
 	}
 
 	/**
@@ -122,7 +126,7 @@
 	 * @param {string} pathname
 	 */
 	function updateState(pathname) {
-		vscode.setState({ currentAddress: pathname });
+		vscode.setState({ currentAddress: decodeURI(pathname) });
 	}
 
 	function goToUrl() {
@@ -220,7 +224,7 @@
 				// if the file we went to is not injectable, make sure to add it to history manually
 				vscode.postMessage({
 					command: 'add-history',
-					text: parsedMessage.path,
+					text: JSON.stringify({ path: parsedMessage.path, port: parsedMessage.port }),
 				});
 				return;
 		}
@@ -244,7 +248,9 @@
 			// from extension
 			case 'changed-history': {
 				const msgJSON = JSON.parse(message.text);
-				document.getElementById(msgJSON.element).disabled = msgJSON.disabled;
+				if (msgJSON.element) {
+					document.getElementById(msgJSON.element).disabled = msgJSON.disabled;
+				}
 				adjustTabIndex();
 				break;
 			}
@@ -433,7 +439,7 @@
 		document.getElementById('reload').onclick = function () {
 			document
 				.getElementById('hostedContent')
-				.contentWindow.postMessage({ command: 'refresh' }, '*');
+				.contentWindow.postMessage({ command: 'refresh-forced' }, '*');
 			document.getElementById('reload').blur();
 		};
 

@@ -2,46 +2,19 @@ import * as vscode from 'vscode';
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as Stream from 'stream';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { INJECTED_ENDPOINT_NAME } from '../utils/constants';
-import { serverMsg } from '../manager';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { WorkspaceManager } from '../infoManagers/workspaceManager';
-import { ConnectionManager } from '../infoManagers/connectionManager';
 import { PathUtil } from '../utils/pathUtil';
+import { Connection } from '../connectionInfo/connection';
+import { IServerMsg } from './serverGrouping';
 
 export class HttpServer extends Disposable {
 	private _server: any;
 	private _contentLoader: ContentLoader;
-	public port = 0;
-
-	constructor(
-		_extensionUri: vscode.Uri,
-		private readonly _reporter: TelemetryReporter,
-		private readonly _endpointManager: EndpointManager,
-		private readonly _workspaceManager: WorkspaceManager,
-		private readonly _connectionManager: ConnectionManager
-	) {
-		super();
-		this._contentLoader = this._register(
-			new ContentLoader(
-				_extensionUri,
-				_reporter,
-				_endpointManager,
-				_workspaceManager,
-				_connectionManager
-			)
-		);
-	}
-
-	/**
-	 * @returns {string | undefined} the path where the server index is located.
-	 */
-	private get _basePath(): string | undefined {
-		return this._workspaceManager.workspacePath;
-	}
 
 	private readonly _onConnected = this._register(
 		new vscode.EventEmitter<number>()
@@ -50,15 +23,34 @@ export class HttpServer extends Disposable {
 	public readonly onConnected = this._onConnected.event;
 
 	private readonly _onNewReqProcessed = this._register(
-		new vscode.EventEmitter<serverMsg>()
+		new vscode.EventEmitter<IServerMsg>()
 	);
 	public readonly onNewReqProcessed = this._onNewReqProcessed.event;
+
+	constructor(
+		_extensionUri: vscode.Uri,
+		private readonly _reporter: TelemetryReporter,
+		private readonly _endpointManager: EndpointManager,
+		private readonly _connection: Connection
+	) {
+		super();
+		this._contentLoader = this._register(
+			new ContentLoader(_extensionUri, _reporter, _endpointManager, _connection)
+		);
+	}
+
+	/**
+	 * @returns {string | undefined} the path where the server index is located.
+	 */
+	private get _basePath(): string | undefined {
+		return this._connection.workspacePath;
+	}
 
 	/**
 	 * @param {string} file file to check
 	 * @returns {boolean} whether the HTTP server has served `file` since last reset or beginning of extension activation.
 	 */
-	public hasServedFile(file: string) {
+	public hasServedFile(file: string): boolean {
 		if (this._contentLoader.servedFiles) {
 			for (const item of this._contentLoader.servedFiles.values()) {
 				if (PathUtil.PathEquals(file, item)) {
@@ -74,15 +66,15 @@ export class HttpServer extends Disposable {
 	 * @param {number} port port to try to start server on.
 	 */
 	public start(port: number): void {
-		this.port = port;
+		this._connection.httpPort = port;
 		this._contentLoader.resetServedFiles();
-		this.startHttpServer();
+		this._startHttpServer();
 	}
 
 	/**
 	 * @description stop the HTTP server.
 	 */
-	public close() {
+	public close(): void {
 		this._server.close();
 	}
 
@@ -90,24 +82,24 @@ export class HttpServer extends Disposable {
 	 * @description contains all of the listeners required to start the server and recover on port collision.
 	 * @returns {boolean} whether the HTTP server started successfully (currently only returns true)
 	 */
-	private startHttpServer(): boolean {
-		this._server = this.createServer();
+	private _startHttpServer(): boolean {
+		this._server = this._createServer();
 
 		this._server.on('listening', () => {
-			console.log(`Server is running on port ${this.port}`);
-			this._onConnected.fire(this.port);
+			console.log(`Server is running on port ${this._connection.httpPort}`);
+			this._onConnected.fire(this._connection.httpPort);
 		});
 
 		this._server.on('error', (err: any) => {
 			if (err.code == 'EADDRINUSE') {
-				this.port++;
-				this._server.listen(this.port, this._connectionManager.host);
+				this._connection.httpPort++;
+				this._server.listen(this._connection.httpPort, this._connection.host);
 			} else if (err.code == 'EADDRNOTAVAIL') {
-				this._connectionManager.resetHostToDefault();
-				this._server.listen(this.port, this._connectionManager.host);
+				this._connection.resetHostToDefault();
+				this._server.listen(this._connection.httpPort, this._connection.host);
 			} else {
 				/* __GDPR__
-					"server.err" : { 
+					"server.err" : {
 						"type": {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
 						"err": {"classification": "CallstackOrException", "purpose": "PerformanceAndHealth"}
 					}
@@ -120,7 +112,7 @@ export class HttpServer extends Disposable {
 			}
 		});
 
-		this._server.listen(this.port, this._connectionManager.host);
+		this._server.listen(this._connection.httpPort, this._connection.host);
 		return true;
 	}
 
@@ -130,23 +122,23 @@ export class HttpServer extends Disposable {
 	 * @param {http.IncomingMessage} req the request received
 	 * @param {http.ServerResponse} res the response to be loaded
 	 */
-	private serveStream(
+	private _serveStream(
 		basePath: string | undefined,
 		req: http.IncomingMessage,
 		res: http.ServerResponse
 	): void {
 		if (!req || !req.url) {
-			this.reportAndReturn(500, req, res);
+			this._reportAndReturn(500, req, res);
 			return;
 		}
 
-		let stream;
+		let stream: Stream.Readable | fs.ReadStream | undefined;
 		if (req.url == INJECTED_ENDPOINT_NAME) {
 			const respInfo = this._contentLoader.loadInjectedJS();
 			const contentType = respInfo.ContentType ?? '';
 			res.writeHead(200, {
 				'Accept-Ranges': 'bytes',
-				'Content-Type': `${contentType}; charset=UTF-8`,
+				'Content-Type': contentType,
 			});
 			stream = respInfo.Stream;
 			stream?.pipe(res);
@@ -158,8 +150,11 @@ export class HttpServer extends Disposable {
 
 		if (!basePath && (URLPathName == '/' || URLPathName == '')) {
 			const respInfo = this._contentLoader.createNoRootServer();
-			res.writeHead(404);
-			this.reportStatus(req, res);
+			res.writeHead(404, {
+				'Accept-Ranges': 'bytes',
+				'Content-Type': respInfo.ContentType,
+			});
+			this._reportStatus(req, res);
 			stream = respInfo.Stream;
 
 			stream?.pipe(res);
@@ -167,53 +162,61 @@ export class HttpServer extends Disposable {
 		}
 
 		let looseFile = false;
-		let absoluteReadPath = path.join(basePath ?? '', unescape(URLPathName));
-		let contentType = 'application/octet-stream';
+		URLPathName = decodeURI(URLPathName);
+		let absoluteReadPath = path.join(basePath ?? '', URLPathName);
 
-		if (URLPathName.startsWith('/endpoint_unsaved')) {
-			const untitledFileName = URLPathName.substr(
-				URLPathName.lastIndexOf('/') + 1
-			);
-			const content = this._contentLoader.getFileStream(
-				untitledFileName,
-				false
-			);
-			if (content.Stream) {
-				stream = content.Stream;
-				contentType = content.ContentType ?? '';
-				res.writeHead(200, {
-					'Accept-Ranges': 'bytes',
-					'Content-Type': `${contentType}; charset=UTF-8`,
-				});
-				stream.pipe(res);
-				return;
+		let contentType = 'application/octet-stream';
+		if (!basePath) {
+			if (URLPathName.startsWith('/endpoint_unsaved')) {
+				const untitledFileName = URLPathName.substr(
+					URLPathName.lastIndexOf('/') + 1
+				);
+				const content = this._contentLoader.getFileStream(
+					untitledFileName,
+					false
+				);
+				if (content.Stream) {
+					stream = content.Stream;
+					contentType = content.ContentType ?? '';
+					res.writeHead(200, {
+						'Accept-Ranges': 'bytes',
+						'Content-Type': contentType,
+					});
+					stream.pipe(res);
+					return;
+				}
+			}
+
+			if (!fs.existsSync(absoluteReadPath)) {
+				const decodedReadPath =
+					this._endpointManager.decodeLooseFileEndpoint(URLPathName);
+				looseFile = true;
+				if (decodedReadPath && fs.existsSync(decodedReadPath)) {
+					absoluteReadPath = decodedReadPath;
+				}
 			}
 		}
 
 		if (!fs.existsSync(absoluteReadPath)) {
-			const decodedReadPath =
-				this._endpointManager.decodeLooseFileEndpoint(URLPathName);
-			looseFile = true;
-			if (decodedReadPath && fs.existsSync(decodedReadPath)) {
-				absoluteReadPath = decodedReadPath;
-			} else {
-				const respInfo =
-					this._contentLoader.createPageDoesNotExist(absoluteReadPath);
-				res.writeHead(404);
-				this.reportStatus(req, res);
-				stream = respInfo.Stream;
-				stream?.pipe(res);
-				return;
-			}
+			const respInfo =
+				this._contentLoader.createPageDoesNotExist(absoluteReadPath);
+			res.writeHead(404, {
+				'Accept-Ranges': 'bytes',
+				'Content-Type': respInfo.ContentType,
+			});
+			this._reportStatus(req, res);
+			stream = respInfo.Stream;
+			stream?.pipe(res);
+			return;
 		}
-
 		if (fs.statSync(absoluteReadPath).isDirectory()) {
 			if (!URLPathName.endsWith('/')) {
 				const queries =
 					endOfPath == -1 ? '' : `${req.url.substring(endOfPath)}`;
 
+				URLPathName = encodeURI(URLPathName);
 				res.setHeader('Location', `${URLPathName}/${queries}`);
-				this.reportAndReturn(302, req, res); // redirect
+				this._reportAndReturn(302, req, res); // redirect
 				return;
 			}
 
@@ -225,7 +228,6 @@ export class HttpServer extends Disposable {
 				contentType = respInfo.ContentType ?? '';
 			} else {
 				// create a default index page
-				URLPathName = unescape(URLPathName);
 				const respInfo = this._contentLoader.createIndexPage(
 					absoluteReadPath,
 					URLPathName,
@@ -244,29 +246,29 @@ export class HttpServer extends Disposable {
 
 		if (stream) {
 			stream.on('error', () => {
-				this.reportAndReturn(500, req, res);
+				this._reportAndReturn(500, req, res);
 				return;
 			});
 			res.writeHead(200, {
 				'Accept-Ranges': 'bytes',
-				'Content-Type': `${contentType}; charset=UTF-8`,
+				'Content-Type': contentType,
 			});
 			stream.pipe(res);
 		} else {
-			this.reportAndReturn(500, req, res);
+			this._reportAndReturn(500, req, res);
 			return;
 		}
 
-		this.reportStatus(req, res);
+		this._reportStatus(req, res);
 		return;
 	}
 
 	/**
 	 * @returns the created HTTP server with the serving logic.
 	 */
-	private createServer(): http.Server {
+	private _createServer(): http.Server {
 		return http.createServer((req, res) =>
-			this.serveStream(this._basePath, req, res)
+			this._serveStream(this._basePath, req, res)
 		);
 	}
 
@@ -276,13 +278,13 @@ export class HttpServer extends Disposable {
 	 * @param {http.IncomingMessage} req the request object
 	 * @param {http.ServerResponse} res the response object
 	 */
-	private reportAndReturn(
+	private _reportAndReturn(
 		status: number,
 		req: http.IncomingMessage,
 		res: http.ServerResponse
 	): void {
 		res.writeHead(status);
-		this.reportStatus(req, res);
+		this._reportStatus(req, res);
 		res.end();
 	}
 
@@ -291,7 +293,10 @@ export class HttpServer extends Disposable {
 	 * @param {http.IncomingMessage} req the request object
 	 * @param {http.ServerResponse} res the response object
 	 */
-	private reportStatus(req: http.IncomingMessage, res: http.ServerResponse) {
+	private _reportStatus(
+		req: http.IncomingMessage,
+		res: http.ServerResponse
+	): void {
 		this._onNewReqProcessed.fire({
 			method: req.method ?? '',
 			url: req.url ?? '',

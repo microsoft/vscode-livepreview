@@ -1,10 +1,14 @@
 import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
-import { ConnectionManager } from '../infoManagers/connectionManager';
+import * as nls from 'vscode-nls';
+import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { INIT_PANEL_TITLE } from '../utils/constants';
 import { NavEditCommands, PageHistory } from './pageHistoryTracker';
 import { getNonce, isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
+import { Connection } from '../connectionInfo/connection';
+
+const localize = nls.loadMessageBundle();
 
 /**
  * @description the object responsible for communicating messages to the webview.
@@ -20,33 +24,49 @@ export class WebviewComm extends Disposable {
 
 	constructor(
 		initialFile: string,
+		public currentConnection: Connection,
 		private readonly _panel: vscode.WebviewPanel,
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
 
+		this._register(
+			this._connectionManager.onConnected((e) => {
+				if (e.workspace === this.currentConnection?.workspace) {
+					this._reloadWebview();
+				}
+			})
+		);
+
 		this._pageHistory = this._register(new PageHistory());
 		this.updateForwardBackArrows();
 
 		// Set the webview's html content
 		this.goToFile(initialFile, false);
-		this._pageHistory?.addHistory(initialFile);
+		this._pageHistory?.addHistory(initialFile, currentConnection);
 		this.currentAddress = initialFile;
+	}
+
+	/**
+	 * @description extension-side reload of webivew.
+	 */
+	private async _reloadWebview(): Promise<void> {
+		await this.goToFile(this.currentAddress, false);
 	}
 
 	/**
 	 * @returns {Promise<vscode.Uri>} the promise containing the HTTP URI.
 	 */
-	public async resolveHost(): Promise<vscode.Uri> {
-		return this._connectionManager.resolveExternalHTTPUri();
+	public async resolveHost(connection: Connection): Promise<vscode.Uri> {
+		return connection.resolveExternalHTTPUri();
 	}
 
 	/**
 	 * @returns {Promise<vscode.Uri>} the promise containing the WebSocket URI.
 	 */
-	private async resolveWsHost(): Promise<vscode.Uri> {
-		return this._connectionManager.resolveExternalWSUri();
+	private async _resolveWsHost(connection: Connection): Promise<vscode.Uri> {
+		return connection.resolveExternalWSUri();
 	}
 
 	/**
@@ -56,6 +76,7 @@ export class WebviewComm extends Disposable {
 	 */
 	public async constructAddress(
 		URLExt: string,
+		connection: Connection = this.currentConnection,
 		hostURI?: vscode.Uri
 	): Promise<string> {
 		if (URLExt.length > 0 && URLExt[0] == '/') {
@@ -65,7 +86,7 @@ export class WebviewComm extends Disposable {
 		URLExt = URLExt.startsWith('/') ? URLExt.substr(1) : URLExt;
 
 		if (!hostURI) {
-			hostURI = await this.resolveHost();
+			hostURI = await this.resolveHost(connection);
 		}
 		return `${hostURI.toString()}${URLExt}`;
 	}
@@ -75,8 +96,12 @@ export class WebviewComm extends Disposable {
 	 * @param {string} URLExt the pathname to navigate to
 	 * @param {boolean} updateHistory whether or not to update the history from this call.
 	 */
-	public async goToFile(URLExt: string, updateHistory = true) {
-		this.setHtml(this._panel.webview, URLExt, updateHistory);
+	public async goToFile(
+		URLExt: string,
+		updateHistory = true,
+		connection: Connection = this.currentConnection
+	): Promise<void> {
+		await this._setHtml(this._panel.webview, URLExt, updateHistory, connection);
 		this.currentAddress = URLExt;
 	}
 
@@ -86,18 +111,20 @@ export class WebviewComm extends Disposable {
 	 * @param {string} URLExt the pathname appended to the host to navigate the preview to.
 	 * @param {boolean} updateHistory whether or not to update the history from this call.
 	 */
-	public async setHtml(
+	private async _setHtml(
 		webview: vscode.Webview,
 		URLExt: string,
-		updateHistory: boolean
-	) {
-		const httpHost = await this.resolveHost();
-		const url = await this.constructAddress(URLExt, httpHost);
-		const wsURI = await this.resolveWsHost();
-		this._panel.webview.html = this.getHtmlForWebview(
+		updateHistory: boolean,
+		connection: Connection
+	): Promise<void> {
+		this.currentConnection = connection;
+		const httpHost = await this.resolveHost(connection);
+		const url = await this.constructAddress(URLExt, connection, httpHost);
+		const wsURI = await this._resolveWsHost(connection);
+		this._panel.webview.html = this._getHtmlForWebview(
 			webview,
 			url,
-			`ws://${wsURI.authority}`,
+			`ws://${wsURI.authority}${wsURI.path}`,
 			`${httpHost.scheme}://${httpHost.authority}`
 		);
 
@@ -111,7 +138,7 @@ export class WebviewComm extends Disposable {
 			});
 		}
 		if (updateHistory) {
-			this.handleNewPageLoad(URLExt);
+			this.handleNewPageLoad(URLExt, connection);
 		}
 	}
 
@@ -124,7 +151,7 @@ export class WebviewComm extends Disposable {
 	 * @param {string} httpServerAddr the address of the HTTP server.
 	 * @returns {string} the html to load in the webview.
 	 */
-	private getHtmlForWebview(
+	private _getHtmlForWebview(
 		webview: vscode.Webview,
 		httpURL: string,
 		wsServerAddr: string,
@@ -159,6 +186,17 @@ export class WebviewComm extends Disposable {
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = getNonce();
 
+		const back = localize('back', 'Back');
+		const forward = localize('forward', 'Forward');
+		const reload = localize('reload', 'Reload');
+		const more = localize('more', 'More Browser Actions');
+		const find_prev = localize('findPrev', 'Previous');
+		const find_next = localize('findNext', 'Next');
+		const find_x = localize('findX', 'Close');
+		const browser_open = localize('browser_open', 'Open in Browser');
+		const find = localize('find', 'Find in Page');
+		const devtools_open = localize('devtoolsOpen', 'Open Devtools Pane');
+
 		return `<!DOCTYPE html>
 		<html lang="en">
 			<head>
@@ -190,47 +228,47 @@ export class WebviewComm extends Disposable {
 						<nav class="controls">
 							<button
 								id="back"
-								title="Back"
+								title="${back}"
 								class="back-button icon leftmost-nav"><i class="codicon codicon-arrow-left"></i></button>
 							<button
 								id="forward"
-								title="Forward"
+								title="${forward}"
 								class="forward-button icon leftmost-nav"><i class="codicon codicon-arrow-right"></i></button>
 							<button
 								id="reload"
-								title="Reload"
+								title="${reload}"
 								class="reload-button icon leftmost-nav"><i class="codicon codicon-refresh"></i></button>
-							<input 
+							<input
 								id="url-input"
-								class="url-input" 
+								class="url-input"
 								type="text">
 							<button
 								id="more"
-								title="More Browser Actions"
+								title="${more}"
 								class="more-button icon"><i class="codicon codicon-list-flat"></i></button>
 						</nav>
 						<div class="find-container" id="find-box" hidden=true>
 							<nav class="find">
-								<input 
+								<input
 									id="find-input"
-									class="find-input" 
+									class="find-input"
 									type="text">
 								<div
 									id="find-result"
 									class="find-result icon" hidden=true><i id="find-result-icon" class="codicon" ></i></div>
 								<button
 									id="find-prev"
-									title="Previous"
+									title="${find_prev}"
 									class="find-prev-button icon find-nav"><i class="codicon codicon-chevron-up"></i></button>
 								<button
 									id="find-next"
 									tabIndex=-1
-									title="Next"
+									title="${find_next}"
 									class="find-next-button icon find-nav"><i class="codicon codicon-chevron-down"></i></button>
 								<button
 									id="find-x"
 									tabIndex=-1
-									title="Close"
+									title="${find_x}"
 									class="find-x-button icon find-nav"><i class="codicon codicon-chrome-close"></i></button>
 							</nav>
 						</div>
@@ -239,20 +277,20 @@ export class WebviewComm extends Disposable {
 						<table cellspacing="0" cellpadding="0">
 							<tr>
 								<td>
-									<button tabIndex=-1 
-										id="browser-open" class="extra-menu-nav">Open in Browser</button>
+									<button tabIndex=-1
+										id="browser-open" class="extra-menu-nav">${browser_open}</button>
 								</td>
 							</tr>
 							<tr>
 								<td>
-									<button tabIndex=-1 
-										id="find" class="extra-menu-nav">Find in Page</button>
+									<button tabIndex=-1
+										id="find" class="extra-menu-nav">${find}</button>
 								</td>
 							</tr>
 							<tr>
 								<td>
-									<button tabIndex=-1 
-										id="devtools-open" class="extra-menu-nav">Open Devtools Pane</button>
+									<button tabIndex=-1
+										id="devtools-open" class="extra-menu-nav">${devtools_open}</button>
 								</td>
 							</tr>
 						</table>
@@ -275,16 +313,19 @@ export class WebviewComm extends Disposable {
 	 * @description set the webview's URL bar.
 	 * @param {string} pathname the pathname of the address to set the URL bar with.
 	 */
-	public async setUrlBar(pathname: string) {
+	public async setUrlBar(
+		pathname: string,
+		connection: Connection = this.currentConnection
+	): Promise<void> {
 		this._panel.webview.postMessage({
 			command: 'set-url',
 			text: JSON.stringify({
-				fullPath: await this.constructAddress(pathname),
+				fullPath: await this.constructAddress(pathname, connection),
 				pathname: pathname,
 			}),
 		});
 		// called from main.js in the case where the target is non-injectable
-		this.handleNewPageLoad(pathname);
+		this.handleNewPageLoad(pathname, connection);
 	}
 
 	/**
@@ -318,7 +359,11 @@ export class WebviewComm extends Disposable {
 	 * @param {string} pathname path to file that loaded.
 	 * @param {string} panelTitle the panel title of file (if applicable).
 	 */
-	public handleNewPageLoad(pathname: string, panelTitle = ''): void {
+	public handleNewPageLoad(
+		pathname: string,
+		connection: Connection,
+		panelTitle = ''
+	): void {
 		// only load relative addresses
 		if (pathname.length > 0 && pathname[0] != '/') {
 			pathname = '/' + pathname;
@@ -326,10 +371,10 @@ export class WebviewComm extends Disposable {
 
 		this._onPanelTitleChange.fire({ title: panelTitle, pathname: pathname });
 		this.currentAddress = pathname;
-		const response = this._pageHistory?.addHistory(pathname);
+		const response = this._pageHistory?.addHistory(pathname, connection);
 		if (response) {
-			for (const i in response.actions) {
-				this.handleNavAction(response.actions[i]);
+			for (const action of response.actions) {
+				this.handleNavAction(action);
 			}
 		}
 	}
@@ -339,40 +384,40 @@ export class WebviewComm extends Disposable {
 	 */
 	public updateForwardBackArrows(): void {
 		const navigationStatus = this._pageHistory.currentCommands;
-		for (const i in navigationStatus) {
-			this.handleNavAction(navigationStatus[i]);
+		for (const status of navigationStatus) {
+			this.handleNavAction(status);
 		}
 	}
 
 	/**
 	 * @description go forwards in page history.
 	 */
-	public goForwards(): void {
+	public async goForwards(): Promise<void> {
 		const response = this._pageHistory.goForward();
 
-		const pagename = response.address;
-		if (pagename != undefined) {
-			this.goToFile(pagename, false);
+		const page = response.address;
+		if (page != undefined) {
+			await this.goToFile(page.path, false, page.connection);
 		}
 
-		for (const i in response.actions) {
-			this.handleNavAction(response.actions[i]);
+		for (const action of response.actions) {
+			this.handleNavAction(action);
 		}
 	}
 
 	/**
 	 * @description go backwards in page history.
 	 */
-	public goBack(): void {
+	public async goBack(): Promise<void> {
 		const response = this._pageHistory.goBackward();
 
-		const pagename = response.address;
-		if (pagename != undefined) {
-			this.goToFile(pagename, false);
+		const page = response.address;
+		if (page != undefined) {
+			await this.goToFile(page.path, false, page.connection);
 		}
 
-		for (const i in response.actions) {
-			this.handleNavAction(response.actions[i]);
+		for (const action of response.actions) {
+			this.handleNavAction(action);
 		}
 	}
 }

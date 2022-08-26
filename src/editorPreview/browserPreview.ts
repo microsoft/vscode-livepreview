@@ -3,12 +3,17 @@ import * as vscode from 'vscode';
 import { Disposable } from '../utils/dispose';
 import { PathUtil } from '../utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
-import { WorkspaceManager } from '../infoManagers/workspaceManager';
-import { ConnectionManager } from '../infoManagers/connectionManager';
+import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { WebviewComm } from './webviewComm';
 import { FormatDateTime } from '../utils/utils';
 import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
 import * as path from 'path';
+import * as nls from 'vscode-nls';
+import { URL } from 'url';
+import { Connection } from '../connectionInfo/connection';
+import { IOpenFileOptions } from '../manager';
+
+const localize = nls.loadMessageBundle();
 
 /**
  * @description the embedded preview object, containing the webview panel showing the preview.
@@ -21,29 +26,21 @@ export class BrowserPreview extends Disposable {
 	);
 	public readonly onDispose = this._onDisposeEmitter.event;
 
-	/**
-	 * @description close the embedded browser.
-	 */
-	public close(): void {
-		this._panel.dispose();
-	}
-
-	/**
-	 * Show the existing embedded preview.
-	 * @param column which column to show it in.
-	 * @param file the file (pathname) to go to.
-	 */
-	public reveal(column: number, file = '/'): void {
-		this._webviewComm.goToFile(file);
-		this._panel.reveal(column);
-	}
+	private readonly _onShouldLaunchPreview = this._register(
+		new vscode.EventEmitter<{
+			file?: vscode.Uri | string;
+			options?: IOpenFileOptions;
+			previewType?: string;
+		}>()
+	);
+	public readonly onShouldLaunchPreview = this._onShouldLaunchPreview.event;
 
 	constructor(
 		initialFile: string,
+		initialConnection: Connection,
 		private readonly _panel: vscode.WebviewPanel,
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
-		private readonly _workspaceManager: WorkspaceManager,
 		private readonly _connectionManager: ConnectionManager,
 		private readonly _outputChannel: vscode.OutputChannel
 	) {
@@ -62,7 +59,13 @@ export class BrowserPreview extends Disposable {
 		};
 
 		this._webviewComm = this._register(
-			new WebviewComm(initialFile, _panel, _extensionUri, _connectionManager)
+			new WebviewComm(
+				initialFile,
+				initialConnection,
+				_panel,
+				_extensionUri,
+				_connectionManager
+			)
 		);
 
 		// Listen for when the panel is disposed
@@ -74,30 +77,60 @@ export class BrowserPreview extends Disposable {
 		);
 
 		this._register(
-			this._connectionManager.onConnected((e) => {
-				this.reloadWebview();
-			})
-		);
-
-		this._register(
 			this._webviewComm.onPanelTitleChange((e) => {
-				this.setPanelTitle(e.title, e.pathname);
+				this._setPanelTitle(e.title, e.pathname);
 			})
 		);
 
 		// Handle messages from the webview
 		this._register(
 			this._panel.webview.onDidReceiveMessage((message) =>
-				this.handleWebviewMessage(message)
+				this._handleWebviewMessage(message)
 			)
 		);
+	}
+
+	/**
+	 * get the connection that the webview is currently using
+	 */
+	public get currentConnection(): Connection {
+		return this._webviewComm.currentConnection;
+	}
+
+	/**
+	 * get the webview panel
+	 */
+	public get panel(): vscode.WebviewPanel {
+		return this._panel;
+	}
+
+	/**
+	 * @description close the embedded browser.
+	 */
+	public close(): void {
+		this._panel.dispose();
+	}
+
+	/**
+	 * Show the existing embedded preview.
+	 * @param column which column to show it in.
+	 * @param file the file (pathname) to go to.
+	 * @param connection the connection to connect using
+	 */
+	public async reveal(
+		column: number,
+		file = '/',
+		connection: Connection
+	): Promise<void> {
+		await this._webviewComm.goToFile(file, true, connection);
+		this._panel.reveal(column);
 	}
 
 	/**
 	 * @description handle messages from the webview (see messages sent from `media/main.js`).
 	 * @param {any} message the message from webview
 	 */
-	private handleWebviewMessage(message: any): void {
+	private async _handleWebviewMessage(message: any): Promise<void> {
 		switch (message.command) {
 			case 'alert':
 				vscode.window.showErrorMessage(message.text);
@@ -106,33 +139,38 @@ export class BrowserPreview extends Disposable {
 				const msgJSON = JSON.parse(message.text);
 				this._webviewComm.handleNewPageLoad(
 					msgJSON.path.pathname,
+					this.currentConnection,
 					msgJSON.title
 				);
 				return;
 			}
 			case 'go-back':
-				this._webviewComm.goBack();
+				await this._webviewComm.goBack();
 				return;
 			case 'go-forward':
-				this._webviewComm.goForwards();
+				await this._webviewComm.goForwards();
 				return;
 			case 'open-browser':
-				this.handleOpenBrowser(message.text);
+				await this._handleOpenBrowser(message.text);
 				return;
 			case 'add-history': {
-				this._webviewComm.setUrlBar(message.text);
+				const msgJSON = JSON.parse(message.text);
+				const connection = this._connectionManager.getConnectionFromPort(
+					msgJSON.port
+				);
+				await this._webviewComm.setUrlBar(msgJSON.path, connection);
 				return;
 			}
 			case 'refresh-back-forward-buttons':
 				this._webviewComm.updateForwardBackArrows();
 				return;
 			case 'go-to-file':
-				this.goToFullAddress(message.text);
+				await this._goToFullAddress(message.text);
 				return;
 
 			case 'console': {
 				const msgJSON = JSON.parse(message.text);
-				this.handleConsole(msgJSON.type, msgJSON.data);
+				this._handleConsole(msgJSON.type, msgJSON.data);
 				return;
 			}
 			case 'devtools-open':
@@ -148,7 +186,7 @@ export class BrowserPreview extends Disposable {
 	 * @param {string} type the type of log
 	 * @param {string} log the log contents
 	 */
-	private handleConsole(type: string, log: string) {
+	private _handleConsole(type: string, log: string): void {
 		if (type == 'CLEAR') {
 			this._outputChannel.clear();
 		} else {
@@ -159,46 +197,54 @@ export class BrowserPreview extends Disposable {
 		}
 	}
 
-	dispose() {
+	dispose(): void {
 		this._onDisposeEmitter.fire();
 		this._panel.dispose();
 		super.dispose();
-	}
-
-	public get panel(): vscode.WebviewPanel {
-		return this._panel;
-	}
-
-	/**
-	 * @description extension-side reload of webivew.
-	 */
-	private reloadWebview() {
-		this._webviewComm.goToFile(this._webviewComm.currentAddress, false);
 	}
 
 	/**
 	 * Open in external browser. This also warns the user in the case where the URL is external to the hosted content.
 	 * @param {string} givenURL the (full) URL to open up in the external browser.
 	 */
-	private async handleOpenBrowser(givenURL: string) {
+	private async _handleOpenBrowser(givenURL: string): Promise<void> {
 		if (givenURL == '') {
 			// open at current address, needs task start
 			const givenURI = await this._webviewComm.constructAddress(
 				this._webviewComm.currentAddress
 			);
 			const uri = vscode.Uri.parse(givenURI.toString());
-			vscode.commands.executeCommand(
-				`${SETTINGS_SECTION_ID}.start.${SettingUtil.GetExternalPreviewType(
-					this._extensionUri
-				)}.atFile`,
-				uri,
-				false
-			);
+
+			const previewType = SettingUtil.GetExternalPreviewType();
+			if (this._webviewComm.currentConnection.workspace) {
+				this._onShouldLaunchPreview.fire({
+					file: uri,
+					options: {
+						relativeFileString: true,
+						workspace: this._webviewComm.currentConnection.workspace,
+						port: this._webviewComm.currentConnection.httpPort,
+					},
+					previewType,
+				});
+			} else {
+				this._onShouldLaunchPreview.fire({
+					file: uri,
+					options: {
+						relativeFileString: false,
+						port: this._webviewComm.currentConnection.httpPort,
+					},
+					previewType,
+				});
+			}
 		} else {
 			const uri = vscode.Uri.parse(givenURL);
 			vscode.window
 				.showInformationMessage(
-					`Externally hosted links are not supported in the embedded preview. Do you want to open ${givenURL} in an external browser?`,
+					localize(
+						'unsupportedLink',
+						'Externally hosted links are not supported in the embedded preview. Do you want to open {0} in an external browser?',
+						givenURL
+					),
 					{ modal: true },
 					OPEN_EXTERNALLY
 				)
@@ -215,24 +261,36 @@ export class BrowserPreview extends Disposable {
 			"preview.openExternalBrowser" : {}
 		*/
 		this._reporter.sendTelemetryEvent('preview.openExternalBrowser');
-		this._webviewComm.goToFile(this._webviewComm.currentAddress, false);
+		await this._webviewComm.goToFile(this._webviewComm.currentAddress, false);
 		this._webviewComm.updateForwardBackArrows();
 	}
 
 	/**
 	 * @param {string} address the (full) address to navigate to; will open in external browser if it is an external address.
 	 */
-	public async goToFullAddress(address: string) {
-		const host = await this._webviewComm.resolveHost();
-		let hostString = host.toString();
-		if (hostString.endsWith('/')) {
-			hostString = hostString.substr(0, hostString.length - 1);
-		}
-		if (address.startsWith(hostString)) {
+	private async _goToFullAddress(address: string): Promise<void> {
+		try {
+			const port = new URL(address).port;
+			if (port === undefined) {
+				throw Error;
+			}
+			const connection = this._connectionManager.getConnectionFromPort(
+				parseInt(port)
+			);
+
+			if (!connection) {
+				throw Error;
+			}
+
+			const host = await this._webviewComm.resolveHost(connection);
+			let hostString = host.toString();
+			if (hostString.endsWith('/')) {
+				hostString = hostString.substr(0, hostString.length - 1);
+			}
 			const file = address.substr(host.toString().length);
-			this._webviewComm.goToFile(file);
-		} else {
-			this.handleOpenBrowser(address);
+			await this._webviewComm.goToFile(file, true, connection);
+		} catch (e) {
+			await this._handleOpenBrowser(address);
 		}
 	}
 
@@ -241,13 +299,11 @@ export class BrowserPreview extends Disposable {
 	 * @param {string} title the page title of the page being hosted.
 	 * @param {string} pathname the pathname of the path being hosted.
 	 */
-	private setPanelTitle(title = '', pathname = 'Preview'): void {
+	private _setPanelTitle(title = '', pathname = 'Preview'): void {
 		if (title == '') {
 			pathname = unescape(pathname);
 			if (pathname.length > 0 && pathname[0] == '/') {
-				if (
-					this._workspaceManager.pathExistsRelativeToDefaultWorkspace(pathname)
-				) {
+				if (PathUtil.PathExistsRelativeToAnyWorkspace(pathname)) {
 					this._panel.title = PathUtil.GetFileName(pathname);
 				} else {
 					this._panel.title = path.basename(pathname.substr(1));

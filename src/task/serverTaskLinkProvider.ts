@@ -1,11 +1,18 @@
-import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
+import { URL } from 'url';
+import { Disposable } from '../utils/dispose';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { URL } from 'url';
-import { WorkspaceManager } from '../infoManagers/workspaceManager';
 import { SETTINGS_SECTION_ID } from '../utils/settingsUtil';
-import { ConnectionManager } from '../infoManagers/connectionManager';
+import { ConnectionManager } from '../connectionInfo/connectionManager';
+import { PathUtil } from '../utils/pathUtil';
+import { Connection } from '../connectionInfo/connection';
+import { ServerTaskProvider } from './serverTaskProvider';
+import { TASK_TERMINAL_BASE_NAME } from '../utils/constants';
+import { IOpenFileOptions } from '../manager';
+
+const localize = nls.loadMessageBundle();
 
 /**
  * @description the link provider that runs on Live Preview's `Run Server` task
@@ -23,11 +30,18 @@ export class serverTaskLinkProvider
 	public readonly onRequestOpenEditorToSide =
 		this._onRequestOpenEditorToSide.event;
 
+	private readonly _onShouldLaunchPreview = this._register(
+		new vscode.EventEmitter<{
+			file?: vscode.Uri | string;
+			options?: IOpenFileOptions;
+			previewType?: string;
+		}>()
+	);
+	public readonly onShouldLaunchPreview = this._onShouldLaunchPreview.event;
+
 	constructor(
-		public terminalName: string,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
-		private readonly _workspaceManager: WorkspaceManager,
 		private readonly _connectionManager: ConnectionManager
 	) {
 		super();
@@ -46,7 +60,10 @@ export class serverTaskLinkProvider
 			return links;
 		}
 
-		this._findFullLinkRegex(context.line, links);
+		this._connectionManager.connections.forEach((connection) => {
+			this._findFullLinkRegex(context.line, links, connection.httpPort);
+		});
+
 		this._findPathnameRegex(context.line, links);
 		return links;
 	}
@@ -60,10 +77,7 @@ export class serverTaskLinkProvider
 		if (link.inEditor) {
 			this._openRelativeLinkInWorkspace(link.data, link.isDir);
 		} else {
-			vscode.commands.executeCommand(
-				`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-				link.data
-			);
+			this._onShouldLaunchPreview.fire({ file: link.data });
 		}
 	}
 
@@ -72,9 +86,7 @@ export class serverTaskLinkProvider
 	 * @returns Whether it is a task terminal from the `Live Preview - Run Server` task.
 	 */
 	private _isLivePreviewTerminal(terminalName: string): boolean {
-		return (
-			this.terminalName != '' && terminalName.indexOf(this.terminalName) != -1
-		); // there may be additional terminal text in a multi-root workspace
+		return terminalName.indexOf(TASK_TERMINAL_BASE_NAME) != -1; // there may be additional terminal text in a multi-root workspace
 	}
 
 	/**
@@ -91,7 +103,7 @@ export class serverTaskLinkProvider
 			`(?<=\\s)\\/([:/(\\w%\\-.:@)]*)\\?*[\\w=]*`,
 			'g'
 		);
-		let partialLinkMatches;
+		let partialLinkMatches: RegExpExecArray | null;
 		do {
 			partialLinkMatches = partialLinkRegex.exec(input);
 			if (partialLinkMatches) {
@@ -125,13 +137,17 @@ export class serverTaskLinkProvider
 	 * @param {Array<vscode.TerminalLink>} links the array of links (pass-by-reference) that are added to.
 	 */
 
-	private _findFullLinkRegex(input: string, links: Array<vscode.TerminalLink>) {
+	private _findFullLinkRegex(
+		input: string,
+		links: Array<vscode.TerminalLink>,
+		host: number
+	): void {
 		const fullLinkRegex = new RegExp(
-			`\\b\\w{2,20}:\\/\\/(?:localhost|${this._connectionManager.host}|:\\d{2,5})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
+			`\\b\\w{2,20}:\\/\\/(?:localhost|${host}|:\\d{2,5})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
 			'g'
 		);
 
-		let fullURLMatches;
+		let fullURLMatches: RegExpExecArray | null;
 		do {
 			fullURLMatches = fullLinkRegex.exec(input);
 			if (fullURLMatches) {
@@ -141,7 +157,7 @@ export class serverTaskLinkProvider
 						const tl = {
 							startIndex: fullURLMatches.index,
 							length: fullURLMatches[i].length,
-							tooltip: `Open in Preview `,
+							tooltip: localize('openInPreview', 'Open in Preview'),
 							data: url.pathname + url.search,
 							inEditor: false,
 						};
@@ -162,17 +178,16 @@ export class serverTaskLinkProvider
 	 */
 	private _openRelativeLinkInWorkspace(file: string, isDir: boolean): void {
 		file = unescape(file);
-		const isWorkspaceFile =
-			this._workspaceManager.pathExistsRelativeToAnyWorkspace(file);
+		const workspace = PathUtil.PathExistsRelativeToAnyWorkspace(file);
 
-		const fullPath = isWorkspaceFile
-			? this._workspaceManager.workspace?.uri + file
+		const fullPath = workspace
+			? workspace?.uri + file
 			: 'file:///' + this._endpointManager.decodeLooseFileEndpoint(file);
 
 		const uri = vscode.Uri.parse(fullPath);
 
 		if (isDir) {
-			if (!this._workspaceManager.absPathInAnyWorkspace(uri.fsPath)) {
+			if (!PathUtil.AbsPathInAnyWorkspace(uri.fsPath)) {
 				vscode.window.showErrorMessage(
 					'Cannot reveal folder. It is not in the open workspace.'
 				);

@@ -38,6 +38,15 @@ const config = {
 	module: {
 		rules: [
 			{
+				// vscode-nls-dev loader:
+				// * rewrite nls-calls
+				loader: 'vscode-nls-dev/lib/webpack-loader',
+				options: {
+					// start with this being set to where your package.json is
+					base: __dirname,
+				},
+			},
+			{
 				test: /\.ts$/,
 				exclude: /node_modules/,
 				use: 'ts-loader',
@@ -49,16 +58,23 @@ const config = {
 		new CopyPlugin({
 			patterns: [
 				{
-					from: './node_modules/vscode-codicons/dist/codicon.css',
+					from: './node_modules/@vscode/codicons/dist/codicon.css',
 					to: '../media/codicon.css',
 				},
 				{
-					from: './node_modules/vscode-codicons/dist/codicon.ttf',
+					from: './node_modules/@vscode/codicons/dist/codicon.ttf',
 					to: '../media/codicon.ttf',
 				},
 			],
 		}),
-		new CleanWebpackPlugin(),
+		new CleanWebpackPlugin({
+			cleanOnceBeforeBuildPatterns: [
+				'*/',
+				'!nls.bundle.*.json',
+				'!nls.metadata.header.json',
+				'!nls.metadata.json'
+			],
+		}),
 	],
 };
 module.exports = config;

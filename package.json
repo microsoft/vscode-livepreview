@@ -2,7 +2,7 @@
 	"name": "live-server",
 	"displayName": "Live Preview",
 	"description": "Hosts a local server in your workspace for you to preview your webpages on.",
-	"version": "0.2.9",
+	"version": "0.2.14",
 	"preview": true,
 	"aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
 	"publisher": "ms-vscode",
@@ -19,7 +19,7 @@
 		}
 	},
 	"engines": {
-		"vscode": "^1.56.0"
+		"vscode": "^1.64.0"
 	},
 	"bugs": {
 		"url": "https://github.com/microsoft/vscode-livepreview/issues"
@@ -37,8 +37,8 @@
 		"livepreview"
 	],
 	"activationEvents": [
-		"onLanguage:html",
 		"onWebviewPanel:browserPreview",
+    "onCommand:livePreview.setDefaultOpenFile",
 		"onCommand:livePreview.start",
 		"onCommand:livePreview.start.preview.atFile",
 		"onCommand:livePreview.start.debugPreview.atFile",
@@ -51,38 +51,46 @@
 		"commands": [
 			{
 				"command": "livePreview.start",
-				"title": "Live Preview: Start Server"
+				"title": "%commands.startServer%",
+				"category": "%commands.category%"
 			},
 			{
 				"command": "livePreview.start.preview.atFile",
-				"title": "Live Preview: Show Preview",
+				"title": "%commands.showPreview%",
+				"category": "%commands.category%",
 				"icon": "$(open-preview)"
 			},
 			{
 				"command": "livePreview.start.debugPreview.atFile",
-				"title": "Live Preview: Show Debug Preview",
+				"title": "%commands.showDebugPreview%",
+				"category": "%commands.category%",
 				"icon": "$(debug-alt)"
 			},
 			{
 				"command": "livePreview.start.externalPreview.atFile",
-				"title": "Live Preview: Show Preview (External Browser)"
+				"title": "%commands.showPreviewExternalBrowser%",
+				"category": "%commands.category%"
 			},
 			{
 				"command": "livePreview.start.externalDebugPreview.atFile",
-				"title": "Live Preview: Show Debug Preview (External Browser)",
+				"title": "%commands.showDebugPreviewExternalBrowser%",
+				"category": "%commands.category%",
 				"icon": "$(debug-alt)"
 			},
 			{
 				"command": "livePreview.start.internalPreview.atFile",
-				"title": "Live Preview: Show Preview (Internal Browser)"
+				"title": "%commands.showPreviewInternalBrowser%",
+				"category": "%commands.category%"
 			},
 			{
 				"command": "livePreview.setDefaultOpenFile",
-				"title": "Live Preview: Open Automatically on Server Start"
+				"title": "%commands.openAutomaticallyOnServerStart%",
+				"category": "%commands.category%"
 			},
 			{
 				"command": "livePreview.end",
-				"title": "Live Preview: Stop Server"
+				"title": "%commands.stopServer%",
+				"category": "%commands.category%"
 			}
 		],
 		"menus": {
@@ -164,24 +172,19 @@
 					"default": 3000,
 					"minimum": 0,
 					"maximum": 65535,
-					"description": "Which local port the live preview's server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port."
+					"description": "%settings.portNumber%"
 				},
 				"livePreview.serverKeepAliveAfterEmbeddedPreviewClose": {
 					"type": "number",
 					"default": 3,
 					"minimum": 0,
 					"maximum": 20,
-					"description": "How many minutes after closing the embedded preview you want the server to shut off. Set to 0 to have server stay on indefinetely."
-				},
-				"livePreview.showStatusBarItem": {
-					"type": "boolean",
-					"default": true,
-					"description": "Whether to show the current hosting port when server is open on the status bar."
+					"description": "%settings.serverKeepAliveAfterEmbeddedPreviewClose%"
 				},
 				"livePreview.showServerStatusNotifications": {
 					"type": "boolean",
 					"default": false,
-					"description": "Whether or not to show information messages on server on/off status change."
+					"description": "%settings.showServerStatusNotifications%"
 				},
 				"livePreview.autoRefreshPreview": {
 					"enum": [
@@ -190,7 +193,7 @@
 						"Never"
 					],
 					"default": "On All Changes in Editor",
-					"description": "How often to automatically refresh the preview."
+					"description": "%settings.autoRefreshPreview%"
 				},
 				"livePreview.openPreviewTarget": {
 					"enum": [
@@ -198,37 +201,37 @@
 						"External Browser"
 					],
 					"default": "Embedded Preview",
-					"description": "The preferred target for previews."
+					"description": "%settings.openPreviewTarget%"
 				},
 				"livePreview.tasks.browserPreviewLaunchServerLogging": {
 					"type": "boolean",
 					"default": true,
-					"description": "Whether the auto-generated task terminal has logging."
+					"description": "%settings.tasks.browserPreviewLaunchServerLogging%"
 				},
 				"livePreview.notifyOnOpenLooseFile": {
 					"type": "boolean",
 					"default": true,
-					"description": "Whether to notify the user when opening a preview for a file that is not part of the currently opened workspace (or the workspace where the server is hosted)."
+					"description": "%settings.notifyOnOpenLooseFile%"
 				},
 				"livePreview.tasks.runTaskWithExternalPreview": {
 					"type": "boolean",
 					"default": true,
-					"description": "Whether or not to pair external preview instances with the auto-generated server task. When disabled, the server will also not automatically close (until the window is closed)."
+					"description": "%settings.tasks.runTaskWithExternalPreview%"
 				},
 				"livePreview.defaultPreviewPath": {
 					"type": "string",
 					"default": "",
-					"description": "The file to automatically show upon starting the server. Leave blank to open at the index."
+					"description": "%settings.defaultPreviewPath%"
 				},
 				"livePreview.debugOnExternalPreview": {
 					"type": "boolean",
 					"default": false,
-					"description": "Whether or not to attach the JavaScript debugger on external preview launches."
+					"description": "%settings.debugOnExternalPreview%"
 				},
 				"livePreview.hostIP": {
 					"type": "string",
 					"default": "127.0.0.1",
-					"description": "The local IP host address to host your files on."
+					"description": "%settings.hostIP%"
 				}
 			}
 		},
@@ -241,7 +244,12 @@
 				"properties": {
 					"args": {
 						"type": "array",
-						"description": "Whether to show incoming server messages and status codes."
+						"description": "%tasks.argsDesc%"
+					}
+          ,
+					"workspacePath": {
+						"type": "string",
+						"description": "%tasks.workspaceUriDesc%"
 					}
 				}
 			}
@@ -252,6 +260,8 @@
 		"webpack": "webpack --mode development",
 		"webpack-dev": "webpack --mode development --watch",
 		"build-preview": "npx webpack-cli --mode development",
+    "patch-prerelease": "node ./scripts/applyPatchForPrerelease.js",
+    "validate-stable": "node ./scripts/validateStable.js",
 		"compile": "node build/tools/codicon_copy.js && tsc -p ./",
 		"watch": "node build/tools/codicon_copy.js && tsc -watch -p ./",
 		"format": "prettier ./{src,media}/**/*.{ts,css,html,js} --write"
@@ -259,7 +269,7 @@
 	"devDependencies": {
 		"@types/mime": "^2.0.3",
 		"@types/node": "^14.17.5",
-		"@types/vscode": "^1.56.0",
+		"@types/vscode": "^1.64.0",
 		"@types/ws": "^7.4.4",
 		"@typescript-eslint/eslint-plugin": "^4.16.0",
 		"@typescript-eslint/parser": "^4.16.0",
@@ -271,14 +281,16 @@
 		"prettier-eslint-cli": "^5.0.1",
 		"ts-loader": "^9.2.2",
 		"typescript": "^4.2.2",
+		"vscode-nls-dev": "^4.0.0",
 		"webpack": "^5.38.1",
 		"webpack-cli": "^4.7.0"
 	},
 	"dependencies": {
+		"@vscode/codicons": "0.0.26",
 		"mime": "^2.5.2",
 		"url": "^0.11.0",
-		"vscode-codicons": "0.0.17",
 		"vscode-extension-telemetry": "0.3.2",
+		"vscode-nls": "^5.0.1",
 		"ws": "^7.4.6"
 	}
 }
