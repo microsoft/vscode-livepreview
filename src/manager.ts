@@ -306,15 +306,20 @@ export class Manager extends Disposable {
 		disposables.push(quickPick);
 
 		quickPick.matchOnDescription = true;
-		quickPick.placeholder = localize('selectPort', "Select the port that corresponds to the server that you want to close");
+		quickPick.placeholder = localize(
+			'selectPort',
+			'Select the port that corresponds to the server that you want to close'
+		);
 		quickPick.items = await this._getServerPicks();
 
-		disposables.push(quickPick.onDidAccept(() => {
-			const selectedItem = quickPick.selectedItems[0];
-			selectedItem.accept();
-			quickPick.hide();
-			disposables.forEach(d => d.dispose());
-		}));
+		disposables.push(
+			quickPick.onDidAccept(() => {
+				const selectedItem = quickPick.selectedItems[0];
+				selectedItem.accept();
+				quickPick.hide();
+				disposables.forEach((d) => d.dispose());
+			})
+		);
 
 		quickPick.show();
 	}
@@ -546,14 +551,16 @@ export class Manager extends Disposable {
 		}
 	}
 
-	private async _getServerPicks(): Promise<IServerQuickPickItem[]>  {
-
+	private async _getServerPicks(): Promise<IServerQuickPickItem[]> {
 		const serverPicks: Array<IServerQuickPickItem> = [];
 
 		const picks = await Promise.all(
-			Array.from(this._serverGroupings.values()).map((grouping) => this._getServerPickFromGrouping(grouping)));
+			Array.from(this._serverGroupings.values()).map((grouping) =>
+				this._getServerPickFromGrouping(grouping)
+			)
+		);
 
-		picks.forEach(pick => {
+		picks.forEach((pick) => {
 			if (pick) {
 				serverPicks.push(pick);
 			}
@@ -561,26 +568,31 @@ export class Manager extends Disposable {
 
 		if (picks.length > 0) {
 			serverPicks.push({
-				label: localize('allServers','All Servers'),
-				accept: (): void =>
-					this.closeAllServers()
+				label: localize('allServers', 'All Servers'),
+				accept: (): void => this.closeAllServers(),
 			});
 		}
 
 		return serverPicks;
 	}
 
-	private _getServerPickFromGrouping(grouping: ServerGrouping): IServerQuickPickItem  | undefined{
-		const connection = this._connectionManager.getConnection(grouping.workspace);
+	private _getServerPickFromGrouping(
+		grouping: ServerGrouping
+	): IServerQuickPickItem | undefined {
+		const connection = this._connectionManager.getConnection(
+			grouping.workspace
+		);
 		if (!connection) {
 			return;
 		}
 		return {
 			label: `$(radio-tower) ${connection.httpPort}`,
-			description: grouping.workspace?.name ?? localize('nonWorkspaceFiles','non-workspace files'),
-			accept: ():void => {
+			description:
+				grouping.workspace?.name ??
+				localize('nonWorkspaceFiles', 'non-workspace files'),
+			accept: (): void => {
 				grouping.dispose();
-			}
+			},
 		};
 	}
 }
