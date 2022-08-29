@@ -308,7 +308,7 @@ export class Manager extends Disposable {
 		quickPick.matchOnDescription = true;
 		quickPick.placeholder = localize(
 			'selectPort',
-			'Select the port that corresponds to the server that you want to close'
+			'Select the port that corresponds to the server that you want to stop'
 		);
 		quickPick.items = await this._getServerPicks();
 
