@@ -1,8 +1,8 @@
-import { Disposable } from "./utils/dispose";
+import { Disposable } from './utils/dispose';
 import * as vscode from 'vscode';
-import { UriSchemes } from "./utils/constants";
-import { AutoRefreshPreview, SettingUtil } from "./utils/settingsUtil";
-import { PathUtil } from "./utils/pathUtil";
+import { UriSchemes } from './utils/constants';
+import { AutoRefreshPreview, SettingUtil } from './utils/settingsUtil';
+import { PathUtil } from './utils/pathUtil';
 
 /**
  * Listens for any file changes within:
@@ -16,11 +16,9 @@ export class UpdateListener extends Disposable {
 		new vscode.EventEmitter<void>()
 	);
 
-	public readonly shouldRefreshPreviews =
-		this._shouldRefreshPreviews.event;
+	public readonly shouldRefreshPreviews = this._shouldRefreshPreviews.event;
 
-	constructor(
-		_userDataDir: string | undefined) {
+	constructor(_userDataDir: string | undefined) {
 		super();
 		this._watcher = vscode.workspace.createFileSystemWatcher('**');
 
@@ -97,7 +95,6 @@ export class UpdateListener extends Disposable {
 			})
 		);
 	}
-
 
 	/**
 	 * @description whether to reload on any change from the editor.

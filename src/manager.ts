@@ -4,10 +4,7 @@ import { PathUtil } from './utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { ConnectionManager } from './connectionInfo/connectionManager';
 import { BrowserPreview } from './editorPreview/browserPreview';
-import {
-	PreviewType,
-	SettingUtil,
-} from './utils/settingsUtil';
+import { PreviewType, SettingUtil } from './utils/settingsUtil';
 import * as nls from 'vscode-nls';
 import { ServerTaskProvider } from './task/serverTaskProvider';
 import { EndpointManager } from './infoManagers/endpointManager';
@@ -237,7 +234,9 @@ export class Manager extends Disposable {
 		);
 
 		this._updateListener = this._register(new UpdateListener(_userDataDir));
-		this._register(this._updateListener.shouldRefreshPreviews(() => this._refreshBrowsers()));
+		this._register(
+			this._updateListener.shouldRefreshPreviews(() => this._refreshBrowsers())
+		);
 	}
 
 	/**
@@ -377,7 +376,7 @@ export class Manager extends Disposable {
 	}
 
 	private _refreshBrowsers(): void {
-		Array.from(this._serverGroupings.values()).forEach(grouping => {
+		Array.from(this._serverGroupings.values()).forEach((grouping) => {
 			grouping.refresh();
 		});
 	}

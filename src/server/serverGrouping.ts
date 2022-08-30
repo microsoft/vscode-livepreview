@@ -97,7 +97,6 @@ export class ServerGrouping extends Disposable {
 			new HttpServer(_extensionUri, _reporter, _endpointManager, _connection)
 		);
 
-
 		this._wsServer = this._register(
 			new WSServer(_reporter, _endpointManager, _connection)
 		);
