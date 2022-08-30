@@ -96,7 +96,7 @@ export class SettingUtil {
 			),
 			runTaskWithExternalPreview: config.get<boolean>(
 				Settings.runTaskWithExternalPreview,
-				true
+				false
 			),
 			defaultPreviewPath: config.get<string>(Settings.defaultPreviewPath, ''),
 			debugOnExternalPreview: config.get<boolean>(

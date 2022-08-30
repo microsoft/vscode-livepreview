@@ -216,7 +216,7 @@
 				},
 				"livePreview.tasks.runTaskWithExternalPreview": {
 					"type": "boolean",
-					"default": true,
+					"default": false,
 					"description": "%settings.tasks.runTaskWithExternalPreview%"
 				},
 				"livePreview.defaultPreviewPath": {
