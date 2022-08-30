@@ -68,7 +68,9 @@ export class HTMLInjector extends Disposable {
 		if (!wsUri) {
 			wsUri = await this._connection.resolveExternalWSUri();
 		}
-		const wsURL = `ws://${wsUri.authority}${wsUri.path}`;
+    
+		// if the HTTP scheme uses SSL, the WS scheme must also use SSL
+		const wsURL = `${httpUri.scheme === 'https' ? 'wss' : 'ws'}://${wsUri.authority}${wsUri.path}`;
 		let httpURL = `${httpUri.scheme}://${httpUri.authority}`;
 
 		if (httpURL.endsWith('/')) {
