@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0 (August 31, 2022)
+## 0.4.0 (August 30, 2022)
 - Added better multi-root support that opens a new server for each root. Paths relative to the root now work on multi-root. [#143](https://github.com/microsoft/vscode-livepreview/issues/143)
 - Localization support. [#221](https://github.com/microsoft/vscode-livepreview/issues/221)
 - Status bar setting removed in favor of using VS Code's native functionality to hide status bar contributions. [#269](https://github.com/microsoft/vscode-livepreview/issues/269)
