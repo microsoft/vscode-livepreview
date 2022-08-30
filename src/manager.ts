@@ -4,11 +4,7 @@ import { PathUtil } from './utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { ConnectionManager } from './connectionInfo/connectionManager';
 import { BrowserPreview } from './editorPreview/browserPreview';
-import {
-	PreviewType,
-	SETTINGS_SECTION_ID,
-	SettingUtil,
-} from './utils/settingsUtil';
+import { PreviewType, SettingUtil } from './utils/settingsUtil';
 import * as nls from 'vscode-nls';
 import { ServerTaskProvider } from './task/serverTaskProvider';
 import { EndpointManager } from './infoManagers/endpointManager';
@@ -18,6 +14,7 @@ import { existsSync } from 'fs';
 import { StatusBarNotifier } from './server/serverUtils/statusBarNotifier';
 import { LIVE_PREVIEW_SERVER_ON } from './utils/constants';
 import { ServerGrouping } from './server/serverGrouping';
+import { UpdateListener } from './updateListener';
 
 const localize = nls.loadMessageBundle();
 
@@ -62,11 +59,12 @@ export class Manager extends Disposable {
 	private readonly _previewManager: PreviewManager;
 	private readonly _statusBar: StatusBarNotifier;
 	private readonly _serverTaskProvider: ServerTaskProvider;
+	private readonly _updateListener: UpdateListener;
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
-		private readonly _userDataDir: string | undefined
+		_userDataDir: string | undefined
 	) {
 		super();
 		this._serverGroupings = new Map<string, ServerGrouping>();
@@ -234,6 +232,11 @@ export class Manager extends Disposable {
 				this.openPreviewAtFile(e.file, e.options, e.previewType)
 			)
 		);
+
+		this._updateListener = this._register(new UpdateListener(_userDataDir));
+		this._register(
+			this._updateListener.shouldRefreshPreviews(() => this._refreshBrowsers())
+		);
 	}
 
 	/**
@@ -372,6 +375,12 @@ export class Manager extends Disposable {
 		);
 	}
 
+	private _refreshBrowsers(): void {
+		Array.from(this._serverGroupings.values()).forEach((grouping) => {
+			grouping.refresh();
+		});
+	}
+
 	/**
 	 * Creates a serverGrouping and connection object for a workspace if it doesn't already have an existing one.
 	 * Otherwise, return the existing serverGrouping.
@@ -391,8 +400,7 @@ export class Manager extends Disposable {
 					this._reporter,
 					this._endpointManager,
 					connection,
-					this._serverTaskProvider,
-					this._userDataDir
+					this._serverTaskProvider
 				)
 			);
 			this._register(

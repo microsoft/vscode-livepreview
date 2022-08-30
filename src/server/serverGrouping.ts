@@ -62,7 +62,6 @@ export class ServerGrouping extends Disposable {
 	private _isServerOn = false;
 	private _wsConnected = false;
 	private _httpConnected = false;
-	private readonly _watcher;
 
 	// on each new request processed by the HTTP server, we should
 	// relay the information to the task terminal for logging.
@@ -91,26 +90,16 @@ export class ServerGrouping extends Disposable {
 		_reporter: TelemetryReporter,
 		_endpointManager: EndpointManager,
 		private readonly _connection: Connection,
-		private readonly _serverTaskProvider: ServerTaskProvider,
-		_userDataDir: string | undefined
+		private readonly _serverTaskProvider: ServerTaskProvider
 	) {
 		super();
 		this._httpServer = this._register(
 			new HttpServer(_extensionUri, _reporter, _endpointManager, _connection)
 		);
 
-		this._watcher = vscode.workspace.createFileSystemWatcher('**');
-
 		this._wsServer = this._register(
 			new WSServer(_reporter, _endpointManager, _connection)
 		);
-
-		const notUserDataDirChange = function (file: vscode.Uri): boolean {
-			return (
-				file.scheme != UriSchemes.vscode_userdata &&
-				(!_userDataDir || !PathUtil.PathBeginsWith(file.fsPath, _userDataDir))
-			);
-		};
 
 		this._register(
 			this._httpServer.onNewReqProcessed((e) => {
@@ -118,55 +107,6 @@ export class ServerGrouping extends Disposable {
 					e,
 					this._connection.workspace
 				);
-			})
-		);
-
-		this._register(
-			vscode.workspace.onDidChangeTextDocument((e) => {
-				if (
-					e.contentChanges &&
-					e.contentChanges.length > 0 &&
-					(e.document.uri.scheme == UriSchemes.file ||
-						e.document.uri.scheme == UriSchemes.untitled) &&
-					this._reloadOnAnyChange
-				) {
-					this._wsServer.refreshBrowsers();
-				}
-			})
-		);
-
-		this._register(
-			this._watcher.onDidChange((e) => {
-				if (this._reloadOnSave && notUserDataDirChange(e)) {
-					this._wsServer.refreshBrowsers();
-				}
-			})
-		);
-
-		this._register(
-			this._watcher.onDidDelete((e) => {
-				if (
-					(this._reloadOnAnyChange || this._reloadOnSave) &&
-					notUserDataDirChange(e)
-				) {
-					this._wsServer.refreshBrowsers();
-				}
-			})
-		);
-
-		this._register(
-			this._watcher.onDidCreate((e) => {
-				if (
-					(this._reloadOnAnyChange || this._reloadOnSave) &&
-					notUserDataDirChange(e)
-				) {
-					this._wsServer.refreshBrowsers();
-				}
-			})
-		);
-
-		this._register(
-			this._httpServer.onNewReqProcessed((e) => {
 				this._onNewReqProcessed.fire(e);
 			})
 		);
@@ -231,6 +171,10 @@ export class ServerGrouping extends Disposable {
 		return this._isServerOn;
 	}
 
+	public refresh(): void {
+		this._wsServer.refreshBrowsers();
+	}
+
 	/**
 	 * @description close the server instances.
 	 */
@@ -281,16 +225,6 @@ export class ServerGrouping extends Disposable {
 		}
 
 		return true;
-	}
-
-	/**
-	 * @description whether to reload on any change from the editor.
-	 */
-	private get _reloadOnAnyChange(): boolean {
-		return (
-			SettingUtil.GetConfig().autoRefreshPreview ==
-			AutoRefreshPreview.onAnyChange
-		);
 	}
 
 	/**
@@ -392,15 +326,6 @@ export class ServerGrouping extends Disposable {
 	 */
 	public pathExistsRelativeToWorkspace(file: string): boolean {
 		return this._connection.pathExistsRelativeToWorkspace(file);
-	}
-
-	/**
-	 * @description whether to reload on file save.
-	 */
-	private get _reloadOnSave(): boolean {
-		return (
-			SettingUtil.GetConfig().autoRefreshPreview == AutoRefreshPreview.onSave
-		);
 	}
 
 	/**

@@ -58,21 +58,28 @@ export class StatusBarNotifier extends Disposable {
 
 		this._ports.forEach((port, uriString) => {
 			try {
-				const workspace = uriString ? vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(uriString)) : undefined;
-				bulletPoints.push(`\n\t• ${port} (${workspace ? workspace.name : localize('nonWorkspaceFiles','non-workspace files')})`);
+				const workspace = uriString
+					? vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(uriString))
+					: undefined;
+				bulletPoints.push(
+					`\n\t• ${port} (${
+						workspace
+							? workspace.name
+							: localize('nonWorkspaceFiles', 'non-workspace files')
+					})`
+				);
 			} catch {
 				// no op
 			}
 		});
 
-		portsTooltip = this._ports.size == 1 ? localize(
-			'livePreviewRunningOnPort',
-			'Live Preview running on port: '
-		) :
-		localize(
-			'livePreviewRunningOnPorts',
-			'Live Preview running on ports: '
-		);
+		portsTooltip =
+			this._ports.size == 1
+				? localize('livePreviewRunningOnPort', 'Live Preview running on port:')
+				: localize(
+						'livePreviewRunningOnPorts',
+						'Live Preview running on ports:'
+				) + ' ';
 
 		portsTooltip += bulletPoints.join('');
 
