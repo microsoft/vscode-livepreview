@@ -44,7 +44,8 @@
 		"onCommand:livePreview.start.debugPreview.atFile",
 		"onCommand:livePreview.start.internalPreview.atFile",
 		"onCommand:livePreview.start.externalPreview.atFile",
-		"onCommand:livePreview.start.externalDebugPreview.atFile"
+		"onCommand:livePreview.start.externalDebugPreview.atFile",
+		"onTaskType:Live Preview"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -238,18 +239,10 @@
 		"taskDefinitions": [
 			{
 				"type": "Live Preview",
-				"required": [
-					"args"
-				],
 				"properties": {
-					"args": {
-						"type": "array",
-						"description": "%tasks.argsDesc%"
-					}
-          ,
 					"workspacePath": {
 						"type": "string",
-						"description": "%tasks.workspaceUriDesc%"
+						"description": "%tasks.workspacePathDesc%"
 					}
 				}
 			}
