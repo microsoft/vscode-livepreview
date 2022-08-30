@@ -9,7 +9,6 @@ import * as nls from 'vscode-nls';
 import { ServerTaskProvider } from './task/serverTaskProvider';
 import { EndpointManager } from './infoManagers/endpointManager';
 import { PreviewManager } from './editorPreview/previewManager';
-import { Connection } from './connectionInfo/connection';
 import { existsSync } from 'fs';
 import { StatusBarNotifier } from './server/serverUtils/statusBarNotifier';
 import { LIVE_PREVIEW_SERVER_ON } from './utils/constants';
@@ -23,6 +22,10 @@ export interface IOpenFileOptions {
 	workspace?: vscode.WorkspaceFolder;
 	port?: number;
 	manager?: ServerGrouping;
+}
+
+export interface IServerQuickPickItem extends vscode.QuickPickItem {
+	accept(): void;
 }
 
 /**
@@ -97,7 +100,7 @@ export class Manager extends Disposable {
 						vscode.workspace.workspaceFolders?.length > 0 &&
 						this._serverTaskProvider.runTaskWithExternalPreview
 					) {
-						this.closeServers();
+						this.closeAllServers();
 					}
 				}
 			)
@@ -159,7 +162,7 @@ export class Manager extends Disposable {
 						workspace?.uri.toString()
 					);
 					// closeServer will call `this._serverTaskProvider.serverStop(true, workspace);`
-					serverGrouping?.closeServer();
+					serverGrouping?.dispose();
 				}
 			})
 		);
@@ -213,7 +216,7 @@ export class Manager extends Disposable {
 							workspace.uri.toString()
 						);
 						if (potentialGrouping) {
-							potentialGrouping.closeServer();
+							potentialGrouping.dispose();
 						}
 					});
 				}
@@ -297,17 +300,44 @@ export class Manager extends Disposable {
 	}
 
 	/**
+	 * Show the picker to select a server to close
+	 */
+	public async showCloseServerPicker(): Promise<void> {
+		const disposables: vscode.Disposable[] = [];
+
+		const quickPick = vscode.window.createQuickPick<IServerQuickPickItem>();
+		disposables.push(quickPick);
+
+		quickPick.matchOnDescription = true;
+		quickPick.placeholder = localize(
+			'selectPort',
+			'Select the port that corresponds to the server that you want to stop'
+		);
+		quickPick.items = await this._getServerPicks();
+
+		disposables.push(
+			quickPick.onDidAccept(() => {
+				const selectedItem = quickPick.selectedItems[0];
+				selectedItem.accept();
+				quickPick.hide();
+				disposables.forEach((d) => d.dispose());
+			})
+		);
+
+		quickPick.show();
+	}
+
+	/**
 	 * Close all servers
 	 */
-	public closeServers(): void {
+	public closeAllServers(): void {
 		this._serverGroupings.forEach((serverGrouping) => {
-			serverGrouping.closeServer();
 			serverGrouping.dispose();
 		});
 	}
 
 	public dispose(): void {
-		this.closeServers();
+		this.closeAllServers();
 		super.dispose();
 	}
 
@@ -527,5 +557,50 @@ export class Manager extends Disposable {
 		} else {
 			this.openPreviewAtFile('/', { relativeFileString: false });
 		}
+	}
+
+	private async _getServerPicks(): Promise<IServerQuickPickItem[]> {
+		const serverPicks: Array<IServerQuickPickItem> = [];
+
+		const picks = await Promise.all(
+			Array.from(this._serverGroupings.values()).map((grouping) =>
+				this._getServerPickFromGrouping(grouping)
+			)
+		);
+
+		picks.forEach((pick) => {
+			if (pick) {
+				serverPicks.push(pick);
+			}
+		});
+
+		if (picks.length > 0) {
+			serverPicks.push({
+				label: localize('allServers', 'All Servers'),
+				accept: (): void => this.closeAllServers(),
+			});
+		}
+
+		return serverPicks;
+	}
+
+	private _getServerPickFromGrouping(
+		grouping: ServerGrouping
+	): IServerQuickPickItem | undefined {
+		const connection = this._connectionManager.getConnection(
+			grouping.workspace
+		);
+		if (!connection) {
+			return;
+		}
+		return {
+			label: `$(radio-tower) ${connection.httpPort}`,
+			description:
+				grouping.workspace?.name ??
+				localize('nonWorkspaceFiles', 'non-workspace files'),
+			accept: (): void => {
+				grouping.dispose();
+			},
+		};
 	}
 }

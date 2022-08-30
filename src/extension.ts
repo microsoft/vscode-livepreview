@@ -148,8 +148,8 @@ export function activate(context: vscode.ExtensionContext): void {
 			/* __GDPR__
 				"server.forceClose" : {}
 			*/
-			serverPreview.closeServers();
 			reporter.sendTelemetryEvent('server.forceClose');
+			serverPreview.showCloseServerPicker();
 		})
 	);
 
