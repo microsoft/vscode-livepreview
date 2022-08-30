@@ -382,6 +382,31 @@ export class Manager extends Disposable {
 		}
 	}
 
+	/**
+	 * Runs task for workspace from within extension. Must have at least one workspace open.
+	 * @param file optional file to use to find the workspace to run the task out of.
+	 * @returns
+	 */
+	public async runTaskForFile(file?: vscode.Uri): Promise<void> {
+
+		if (!file) {
+			file = vscode.window.activeTextEditor?.document.uri;
+		}
+
+		let workspace;
+		if (file) {
+			workspace = vscode.workspace.getWorkspaceFolder(file);
+		} else if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders?.length > 0) {
+			workspace = vscode.workspace.workspaceFolders[0];
+		}
+
+		if (!workspace) {
+			return; // fails preconditions of being in a workspace
+		}
+
+		return await this._serverTaskProvider.extRunTask(workspace);
+
+	}
 	public async openPreviewAtFile(
 		file?: vscode.Uri | string,
 		options?: IOpenFileOptions,
