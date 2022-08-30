@@ -8,7 +8,7 @@ import {
 	TerminalStyleUtil,
 } from '../utils/terminalStyleUtil';
 import { FormatDateTime } from '../utils/utils';
-import { ServerStartedStatus, ServerArgs } from './serverTaskProvider';
+import { ServerStartedStatus } from './serverTaskProvider';
 import { IServerMsg } from '../server/serverGrouping';
 
 const localize = nls.loadMessageBundle();
@@ -37,8 +37,6 @@ export class ServerTaskTerminal
 	public readonly onRequestToCloseServer =
 		this._onRequestToCloseServerEmitter.event;
 
-	private readonly _verbose;
-
 	// `writeEmitter` and `closeEmitter` are inherited from the pseudoterminal.
 	private _onDidWrite = new vscode.EventEmitter<string>();
 	onDidWrite: vscode.Event<string> = this._onDidWrite.event;
@@ -47,7 +45,6 @@ export class ServerTaskTerminal
 	onDidClose?: vscode.Event<number> = this._onDidClose.event;
 
 	constructor(
-		args: string[],
 		private readonly _reporter: TelemetryReporter,
 		private _workspace: vscode.WorkspaceFolder | undefined,
 		private readonly _executeServer = true
@@ -58,7 +55,6 @@ export class ServerTaskTerminal
 				"tasks.terminal.start" : {}
 			*/
 			this._reporter.sendTelemetryEvent('tasks.terminal.start');
-			this._verbose = args.some((x) => x == ServerArgs.verbose);
 		}
 	}
 
@@ -111,20 +107,6 @@ export class ServerTaskTerminal
 		status: ServerStartedStatus
 	): void {
 		const formattedAddress = this._formatAddr(externalUri.toString());
-		if (!this._verbose) {
-			this._onDidWrite.fire(
-				localize(
-					{
-						key: 'noLoggerWarning',
-						comment: [
-							"{Locked='--verbose'}",
-							"Do not translate the '--verbose' part",
-						],
-					},
-					'This task does not have logging. To get logging, use the "--verbose" flag.'
-				) + '\r\n'
-			);
-		}
 		switch (status) {
 			case ServerStartedStatus.JUST_STARTED: {
 				this._onDidWrite.fire(
@@ -195,7 +177,6 @@ export class ServerTaskTerminal
 	 * @param {IServerMsg} msg the log message data from the HTTP server to show in the terminal
 	 */
 	public showServerMsg(msg: IServerMsg): void {
-		if (this._verbose) {
 			const date = new Date();
 
 			this._onDidWrite.fire(
@@ -206,7 +187,6 @@ export class ServerTaskTerminal
 					TerminalColor.blue
 				)} | ${this._colorHttpStatus(msg.status)}\r\n> `
 			);
-		}
 	}
 
 	/**

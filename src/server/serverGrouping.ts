@@ -261,7 +261,6 @@ export class ServerGrouping extends Disposable {
 				vscode.workspace.workspaceFolders.length > 0
 			) {
 				await this._serverTaskProvider.extRunTask(
-					SettingUtil.GetConfig().browserPreviewLaunchServerLogging,
 					this._connection.workspace
 				);
 			} else {

@@ -7,7 +7,6 @@ export interface ILivePreviewConfigItem {
 	portNumber: number;
 	showServerStatusNotifications: boolean;
 	autoRefreshPreview: AutoRefreshPreview;
-	browserPreviewLaunchServerLogging: boolean;
 	openPreviewTarget: OpenPreviewTarget;
 	serverKeepAliveAfterEmbeddedPreviewClose: number;
 	notifyOnOpenLooseFile: boolean;
@@ -47,7 +46,6 @@ export const Settings: any = {
 	showStatusBarItem: 'showStatusBarItem',
 	showServerStatusNotifications: 'showServerStatusNotifications',
 	autoRefreshPreview: 'autoRefreshPreview',
-	browserPreviewLaunchServerLogging: 'tasks.browserPreviewLaunchServerLogging',
 	openPreviewTarget: 'openPreviewTarget',
 	serverKeepAliveAfterEmbeddedPreviewClose:
 		'serverKeepAliveAfterEmbeddedPreviewClose',
@@ -84,10 +82,6 @@ export class SettingUtil {
 				Settings.autoRefreshPreview,
 				AutoRefreshPreview.onAnyChange
 			),
-			browserPreviewLaunchServerLogging: config.get<boolean>(
-				Settings.browserPreviewLaunchServerLogging,
-				true
-			),
 			openPreviewTarget: config.get<OpenPreviewTarget>(
 				Settings.openPreviewTarget,
 				OpenPreviewTarget.embeddedPreview
@@ -102,7 +96,7 @@ export class SettingUtil {
 			),
 			runTaskWithExternalPreview: config.get<boolean>(
 				Settings.runTaskWithExternalPreview,
-				true
+				false
 			),
 			defaultPreviewPath: config.get<string>(Settings.defaultPreviewPath, ''),
 			debugOnExternalPreview: config.get<boolean>(
