@@ -397,7 +397,17 @@ export class Manager extends Disposable {
 		if (file) {
 			workspace = vscode.workspace.getWorkspaceFolder(file);
 		} else if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders?.length > 0) {
-			workspace = vscode.workspace.workspaceFolders[0];
+			if (this._serverGroupings.size > 0) {
+				this._serverGroupings.forEach((grouping) => {
+					// get the first available open server
+					if (grouping.workspace && grouping.isRunning) {
+						workspace = grouping.workspace;
+						return;
+					}
+				});
+			} else {
+				workspace = vscode.workspace.workspaceFolders[0];
+			}
 		}
 
 		if (!workspace) {

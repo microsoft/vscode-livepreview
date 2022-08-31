@@ -301,7 +301,7 @@ export class BrowserPreview extends Disposable {
 	 */
 	private _setPanelTitle(title = '', pathname = 'Preview'): void {
 		if (title == '') {
-			pathname = unescape(pathname);
+			pathname = decodeURI(pathname);
 			if (pathname.length > 0 && pathname[0] == '/') {
 				if (PathUtil.PathExistsRelativeToAnyWorkspace(pathname)) {
 					this._panel.title = PathUtil.GetFileName(pathname);
