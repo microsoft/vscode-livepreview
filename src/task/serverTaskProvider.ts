@@ -11,7 +11,7 @@ import { SettingUtil } from '../utils/settingsUtil';
 import { IOpenFileOptions } from '../manager';
 
 interface IServerTaskDefinition extends vscode.TaskDefinition {
-	workspacePath?:string;
+	workspacePath?: string;
 }
 
 /**
@@ -59,7 +59,7 @@ export class ServerTaskProvider
 
 	private readonly _onShouldLaunchPreview = this._register(
 		new vscode.EventEmitter<{
-			file?: vscode.Uri | string;
+			uri?: vscode.Uri;
 			options?: IOpenFileOptions;
 			previewType?: string;
 		}>()
@@ -179,9 +179,7 @@ export class ServerTaskProvider
 		const tasks = await vscode.tasks.fetchTasks({
 			type: ServerTaskProvider.CustomBuildScriptType,
 		});
-		const selTasks = tasks.filter(
-			(x) => workspace === x.scope
-		);
+		const selTasks = tasks.filter((x) => workspace === x.scope);
 
 		if (selTasks.length > 0) {
 			vscode.tasks.executeTask(selTasks[0]);
@@ -223,24 +221,24 @@ export class ServerTaskProvider
 		this._tasks = [];
 		if (vscode.workspace.workspaceFolders) {
 			vscode.workspace.workspaceFolders.forEach((workspace) => {
-					this._tasks!.push(
-						this._getTask(
-							{
-								type: ServerTaskProvider.CustomBuildScriptType
-							},
-							workspace
-						)
-					);
-			});
-		} else {
 				this._tasks!.push(
 					this._getTask(
 						{
-							type: ServerTaskProvider.CustomBuildScriptType
+							type: ServerTaskProvider.CustomBuildScriptType,
 						},
-						undefined
+						workspace
 					)
 				);
+			});
+		} else {
+			this._tasks!.push(
+				this._getTask(
+					{
+						type: ServerTaskProvider.CustomBuildScriptType,
+					},
+					undefined
+				)
+			);
 		}
 		return this._tasks;
 	}
@@ -255,7 +253,6 @@ export class ServerTaskProvider
 		definition: IServerTaskDefinition,
 		workspace: vscode.WorkspaceFolder | undefined
 	): vscode.Task {
-
 		definition.workspacePath = workspace?.uri.fsPath;
 
 		const taskName = TASK_TERMINAL_BASE_NAME;

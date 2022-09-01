@@ -177,16 +177,16 @@ export class ServerTaskTerminal
 	 * @param {IServerMsg} msg the log message data from the HTTP server to show in the terminal
 	 */
 	public showServerMsg(msg: IServerMsg): void {
-			const date = new Date();
+		const date = new Date();
 
-			this._onDidWrite.fire(
-				`[${FormatDateTime(date, ' ')}] ${
-					msg.method
-				}: ${TerminalStyleUtil.ColorTerminalString(
-					msg.url,
-					TerminalColor.blue
-				)} | ${this._colorHttpStatus(msg.status)}\r\n> `
-			);
+		this._onDidWrite.fire(
+			`[${FormatDateTime(date, ' ')}] ${
+				msg.method
+			}: ${TerminalStyleUtil.ColorTerminalString(
+				msg.url,
+				TerminalColor.blue
+			)} | ${this._colorHttpStatus(msg.status)}\r\n> `
+		);
 	}
 
 	/**
