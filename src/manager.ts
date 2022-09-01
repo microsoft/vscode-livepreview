@@ -536,35 +536,6 @@ export class Manager extends Disposable {
 		}
 	}
 
-	// private _getFileInfo(
-	// 	file: vscode.Uri | string | undefined,
-	// 	fileStringRelative: boolean
-	// ): { filePath: string; isRelative: boolean } {
-	// 	if (typeof file == 'string') {
-	// 		return { filePath: file, isRelative: fileStringRelative };
-	// 	} else if (file instanceof vscode.Uri) {
-	// 		let filePath = file?.fsPath;
-
-	// 		if (!filePath) {
-	// 			const activeFilePath =
-	// 				vscode.window.activeTextEditor?.document.fileName;
-	// 			if (activeFilePath) {
-	// 				filePath = activeFilePath;
-	// 				fileStringRelative = false;
-	// 			}
-	// 		}
-
-	// 		return { filePath, isRelative: fileStringRelative };
-	// 	} else {
-	// 		const activeFilePath = vscode.window.activeTextEditor?.document.fileName;
-	// 		if (activeFilePath) {
-	// 			return { filePath: activeFilePath, isRelative: false };
-	// 		}
-	// 	}
-
-	// 	return { filePath: '/', isRelative: fileStringRelative };
-	// }
-
 	private _hasServerRunning(): boolean {
 		const isRunning = Array.from(this._serverGroupings.values()).filter(
 			(group) => group.running
