@@ -4,13 +4,11 @@ import { URL } from 'url';
 import { Disposable } from '../utils/dispose';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { SETTINGS_SECTION_ID } from '../utils/settingsUtil';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { PathUtil } from '../utils/pathUtil';
-import { Connection } from '../connectionInfo/connection';
-import { ServerTaskProvider } from './serverTaskProvider';
 import { TASK_TERMINAL_BASE_NAME } from '../utils/constants';
 import { IOpenFileOptions } from '../manager';
+import { Connection } from '../connectionInfo/connection';
 
 const localize = nls.loadMessageBundle();
 
@@ -60,9 +58,10 @@ export class serverTaskLinkProvider
 			return links;
 		}
 
-		this._connectionManager.connections.forEach((connection) => {
-			this._findFullLinkRegex(context.line, links, connection.httpPort);
-		});
+
+		await Promise.all(
+			this._connectionManager.connections.map((connection => this._findFullLinkRegex(context.line, links, connection)))
+			);
 
 		this._findPathnameRegex(context.line, links);
 		return links;
@@ -140,13 +139,17 @@ export class serverTaskLinkProvider
 	 * @param {Array<vscode.TerminalLink>} links the array of links (pass-by-reference) that are added to.
 	 */
 
-	private _findFullLinkRegex(
+	private async _findFullLinkRegex(
 		input: string,
 		links: Array<vscode.TerminalLink>,
-		host: number
-	): void {
+		connection: Connection
+	): Promise<void> {
+		const hostUri = connection.constructLocalUri(connection.httpPort);
+		const extHostUri = await connection.resolveExternalHTTPUri();
+		const extHostStr = `${extHostUri.scheme}://${extHostUri.authority}`;
+
 		const fullLinkRegex = new RegExp(
-			`\\b\\w{2,20}:\\/\\/(?:localhost|${host}|:\\d{2,5})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
+			`(?:${extHostStr})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
 			'g'
 		);
 
@@ -157,11 +160,12 @@ export class serverTaskLinkProvider
 				for (let i = 0; i < fullURLMatches.length; i++) {
 					if (fullURLMatches[i]) {
 						const url = new URL(fullURLMatches[i]);
+
 						const tl = {
 							startIndex: fullURLMatches.index,
 							length: fullURLMatches[i].length,
 							tooltip: localize('openInPreview', 'Open in Preview'),
-							data: url.pathname + url.search,
+							data: vscode.Uri.joinPath(hostUri, url.pathname),
 							inEditor: false,
 						};
 						links.push(tl);

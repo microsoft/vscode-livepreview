@@ -371,6 +371,11 @@ export class Manager extends Disposable {
 		}
 	}
 
+	/**
+	 * Opens a preview at an internal link that has the format <scheme>://<host>:<port>/<path>
+	 * @param link
+	 * @param previewType
+	 */
 	public async openPreviewAtLink(
 		link: vscode.Uri,
 		previewType?: string
@@ -382,11 +387,9 @@ export class Manager extends Disposable {
 				console.error(`${link.scheme} does not correspond to a link URI`);
 				throw Error;
 			}
-			// const port = parseInt(new URL(link.authority).port);
 			const pathStr = `${link.scheme}://${link.authority}`;
 			const url = new URL(pathStr);
-			const portStr = url.port;
-			const port = parseInt(portStr);
+			const port = parseInt(url.port);
 			const connection = this._connectionManager.getConnectionFromPort(port);
 			if (!connection) {
 				console.error(`There is no server from Live Preview on port ${port}.`);

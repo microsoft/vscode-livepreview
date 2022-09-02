@@ -146,7 +146,7 @@ export class ServerTaskTerminal
 	 * @description Called by the parent to tell the terminal that the server has stopped. May have been a result of the task ending or the result of a manual server shutdown.
 	 */
 	public serverStopped(): void {
-		this._onDidWrite.fire(localize('serverStopped', 'Server stopped. Bye!'));
+		this._onDidWrite.fire(localize('serverStopped', 'Server stopped. Bye!') + '\n');
 		this.close();
 	}
 

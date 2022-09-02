@@ -67,8 +67,8 @@ export class Connection extends Disposable {
 		this._wsPort = wsPort;
 		this._wsPath = wsPath;
 
-		const httpPortUri = this._constructLocalUri(this.httpPort);
-		const wsPortUri = this._constructLocalUri(this._wsPort, this._wsPath);
+		const httpPortUri = this.constructLocalUri(this.httpPort);
+		const wsPortUri = this.constructLocalUri(this._wsPort, this._wsPath);
 
 		const externalHTTPUri = await vscode.env.asExternalUri(httpPortUri);
 		const externalWSUri = await vscode.env.asExternalUri(wsPortUri);
@@ -85,7 +85,7 @@ export class Connection extends Disposable {
 	 * @returns {Promise<vscode.Uri>} a promise for the HTTP URI
 	 */
 	public async resolveExternalHTTPUri(): Promise<vscode.Uri> {
-		const httpPortUri = this._constructLocalUri(this.httpPort);
+		const httpPortUri = this.constructLocalUri(this.httpPort);
 		return vscode.env.asExternalUri(httpPortUri);
 	}
 	/**
@@ -93,7 +93,7 @@ export class Connection extends Disposable {
 	 * @returns {Promise<vscode.Uri>} a promise for the WS URI
 	 */
 	public async resolveExternalWSUri(): Promise<vscode.Uri> {
-		const wsPortUri = this._constructLocalUri(this._wsPort, this._wsPath);
+		const wsPortUri = this.constructLocalUri(this._wsPort, this._wsPath);
 		return vscode.env.asExternalUri(wsPortUri);
 	}
 
@@ -102,7 +102,7 @@ export class Connection extends Disposable {
 	 * @param path the path to use
 	 * @returns the vscode Uri of this address
 	 */
-	private _constructLocalUri(port: number, path?: string): vscode.Uri {
+	public constructLocalUri(port: number, path?: string): vscode.Uri {
 		return vscode.Uri.parse(`http://${this.host}:${port}${path ?? ''}`);
 	}
 
