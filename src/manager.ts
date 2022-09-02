@@ -63,6 +63,7 @@ export class Manager extends Disposable {
 	private readonly _statusBar: StatusBarNotifier;
 	private readonly _serverTaskProvider: ServerTaskProvider;
 	private readonly _updateListener: UpdateListener;
+	private readonly _pendingServerWorkspaces: Set<string | undefined>;
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
@@ -70,7 +71,8 @@ export class Manager extends Disposable {
 		_userDataDir: string | undefined
 	) {
 		super();
-		this._serverGroupings = new Map<string, ServerGrouping>();
+		this._serverGroupings = new Map<string | undefined, ServerGrouping>();
+		this._pendingServerWorkspaces = new Set<string | undefined>();
 		this._connectionManager = this._register(new ConnectionManager());
 
 		this._register(
@@ -292,7 +294,7 @@ export class Manager extends Disposable {
 			serverGrouping = this._getServerGroupingFromWorkspace(undefined);
 		}
 
-		return await this._openPreview(internal, serverGrouping, file, debug);
+		return this._openPreview(internal, serverGrouping, file, debug);
 	}
 
 	/**
@@ -462,19 +464,31 @@ export class Manager extends Disposable {
 	private _getServerGroupingFromWorkspace(
 		workspace: vscode.WorkspaceFolder | undefined
 	): ServerGrouping {
+		// if (this._pendingServerWorkspaces.has(workspace?.uri.toString()))
+
 		let serverGrouping = this._serverGroupings.get(workspace?.uri.toString());
 		if (!serverGrouping) {
 			const connection =
 				this._connectionManager.createAndAddNewConnection(workspace);
+
+			this._register(connection.onConnected(()=> {
+				this._pendingServerWorkspaces.delete(workspace?.uri.toString());
+			}));
 			serverGrouping = this._register(
 				new ServerGrouping(
 					this._extensionUri,
 					this._reporter,
 					this._endpointManager,
 					connection,
-					this._serverTaskProvider
+					this._serverTaskProvider,
+					this._pendingServerWorkspaces
 				)
 			);
+			// this._register(
+			// 	serverGrouping.onAttemptToOpen(()=> {
+			// 		this._pendingServerWorkspaces.add(workspace?.uri);
+			// 	})
+			// );
 			this._register(
 				serverGrouping.onClose(() => {
 					if (
@@ -530,7 +544,7 @@ export class Manager extends Disposable {
 	): Promise<void> {
 		if (internal) {
 			// for now, ignore debug or no debug for embedded preview
-			serverGrouping.createOrShowEmbeddedPreview(undefined, file);
+			await serverGrouping.createOrShowEmbeddedPreview(undefined, file);
 		} else {
 			await serverGrouping.showPreviewInBrowser(debug, file);
 		}

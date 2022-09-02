@@ -52,8 +52,9 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-			(file?: vscode.Uri, options?: IOpenFileOptions) => {
-				serverPreview.openPreviewAtFileUri(file, options);
+			async (file?: vscode.Uri, options?: IOpenFileOptions) => {
+				await serverPreview.openPreviewAtFileUri(file, options);
+				console.log('here!');
 			}
 		)
 	);
