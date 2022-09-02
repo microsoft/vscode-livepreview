@@ -179,14 +179,14 @@ export class ServerTaskTerminal
 	public showServerMsg(msg: IServerMsg): void {
 		const date = new Date();
 
-			this._onDidWrite.fire(
-				`[${FormatDateTime(date, ' ')}] ${
-					msg.method
-				}: ${TerminalStyleUtil.ColorTerminalString(
-					decodeURI(msg.url),
-					TerminalColor.blue
-				)} | ${this._colorHttpStatus(msg.status)}\r\n> `
-			);
+		this._onDidWrite.fire(
+			`[${FormatDateTime(date, ' ')}] ${
+				msg.method
+			}: ${TerminalStyleUtil.ColorTerminalString(
+				decodeURI(msg.url),
+				TerminalColor.blue
+			)} | ${this._colorHttpStatus(msg.status)}\r\n> `
+		);
 	}
 
 	/**

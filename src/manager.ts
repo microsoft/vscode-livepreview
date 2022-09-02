@@ -377,7 +377,6 @@ export class Manager extends Disposable {
 	 * @returns
 	 */
 	public async runTaskForFile(file?: vscode.Uri): Promise<void> {
-
 		if (!file) {
 			file = vscode.window.activeTextEditor?.document.uri;
 		}
@@ -385,15 +384,16 @@ export class Manager extends Disposable {
 		let workspace;
 		if (file) {
 			workspace = vscode.workspace.getWorkspaceFolder(file);
-		} else if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders?.length > 0) {
+		} else if (
+			vscode.workspace.workspaceFolders &&
+			vscode.workspace.workspaceFolders?.length > 0
+		) {
 			if (this._serverGroupings.size > 0) {
-				this._serverGroupings.forEach((grouping) => {
-					// get the first available open server
-					if (grouping.workspace && grouping.isRunning) {
-						workspace = grouping.workspace;
-						return;
-					}
-				});
+				const matchGrouping = Array.from(this._serverGroupings.values()).find(
+					(grouping) => grouping.workspace && grouping.isRunning
+				);
+				workspace =
+					matchGrouping?.workspace ?? vscode.workspace.workspaceFolders[0];
 			} else {
 				workspace = vscode.workspace.workspaceFolders[0];
 			}
@@ -404,7 +404,6 @@ export class Manager extends Disposable {
 		}
 
 		return await this._serverTaskProvider.extRunTask(workspace);
-
 	}
 
 	public async openPreviewAtLink(

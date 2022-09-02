@@ -165,7 +165,9 @@ export class ServerTaskProvider
 	/**
 	 * Run the Live Preview task if it's enabled to do so on external preview.
 	 */
-	public async extRunTaskOnPreview(workspace: vscode.WorkspaceFolder | undefined): Promise<void> {
+	public async extRunTaskOnPreview(
+		workspace: vscode.WorkspaceFolder | undefined
+	): Promise<void> {
 		if (this._runTaskWithExternalPreview) {
 			return this.extRunTask(workspace);
 		}
