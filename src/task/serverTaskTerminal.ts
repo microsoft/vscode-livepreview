@@ -177,7 +177,7 @@ export class ServerTaskTerminal
 	 * @param {IServerMsg} msg the log message data from the HTTP server to show in the terminal
 	 */
 	public showServerMsg(msg: IServerMsg): void {
-			const date = new Date();
+		const date = new Date();
 
 			this._onDidWrite.fire(
 				`[${FormatDateTime(date, ' ')}] ${

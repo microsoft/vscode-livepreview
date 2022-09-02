@@ -33,23 +33,20 @@ export interface IServerMsg {
  */
 export interface ILaunchInfo {
 	external: boolean;
-	file: string;
-	relative: boolean;
+	uri?: vscode.Uri;
 	debug: boolean;
 	panel?: vscode.WebviewPanel;
 	connection: Connection;
 }
 
 interface IExternalPreviewArgs {
-	file: string;
-	relative: boolean;
+	uri?: vscode.Uri;
 	debug: boolean;
 	connection: Connection;
 }
 
 interface IEmbeddedPreviewArgs {
-	file: string;
-	relative: boolean;
+	uri?: vscode.Uri;
 	panel: vscode.WebviewPanel | undefined;
 	connection: Connection;
 }
@@ -138,15 +135,13 @@ export class ServerGrouping extends Disposable {
 			if (this._pendingLaunchInfo) {
 				if (this._pendingLaunchInfo.external) {
 					this._onShouldLaunchExternalPreview.fire({
-						file: this._pendingLaunchInfo.file,
-						relative: this._pendingLaunchInfo.relative,
+						uri: this._pendingLaunchInfo.uri,
 						debug: this._pendingLaunchInfo.debug,
 						connection: this._connection,
 					});
 				} else {
 					this._onShouldLaunchEmbeddedPreview.fire({
-						file: this._pendingLaunchInfo.file,
-						relative: this._pendingLaunchInfo.relative,
+						uri: this._pendingLaunchInfo.uri,
 						panel: this._pendingLaunchInfo.panel,
 						connection: this._connection,
 					});
@@ -234,24 +229,21 @@ export class ServerGrouping extends Disposable {
 	 * @param {boolean} debug whether or not to run in debug mode.
 	 */
 	public async showPreviewInBrowser(
-		file: string,
-		relative: boolean,
-		debug: boolean
+		debug: boolean,
+		file?: vscode.Uri
 	): Promise<void> {
 		if (!this._serverTaskProvider.isTaskRunning(this._connection.workspace)) {
 			if (!this.isRunning) {
 				// set the pending launch info, which will trigger once the server starts in `launchFileInExternalPreview`
 				this._pendingLaunchInfo = {
 					external: true,
-					file: file,
-					relative: relative,
+					uri: file,
 					debug: debug,
 					connection: this._connection,
 				};
 			} else {
 				this._onShouldLaunchExternalPreview.fire({
-					file,
-					relative,
+					uri: file,
 					debug,
 					connection: this._connection,
 				});
@@ -275,8 +267,7 @@ export class ServerGrouping extends Disposable {
 			}
 		} else {
 			this._onShouldLaunchExternalPreview.fire({
-				file,
-				relative,
+				uri: file,
 				debug,
 				connection: this._connection,
 			});
@@ -296,8 +287,7 @@ export class ServerGrouping extends Disposable {
 	 */
 	public createOrShowEmbeddedPreview(
 		panel: vscode.WebviewPanel | undefined = undefined,
-		file = '/',
-		relative = true,
+		file?: vscode.Uri,
 		debug = false
 	): void {
 		if (!this.isRunning) {
@@ -305,16 +295,14 @@ export class ServerGrouping extends Disposable {
 			this._pendingLaunchInfo = {
 				external: false,
 				panel: panel,
-				file: file,
-				relative: relative,
+				uri: file,
 				debug: debug,
 				connection: this._connection,
 			};
 			this.openServer();
 		} else {
 			this._onShouldLaunchEmbeddedPreview.fire({
-				file,
-				relative,
+				uri: file,
 				panel,
 				connection: this._connection,
 			});

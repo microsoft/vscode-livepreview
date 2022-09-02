@@ -18,7 +18,11 @@ export class WebviewComm extends Disposable {
 	public currentAddress: string;
 
 	private readonly _onPanelTitleChange = this._register(
-		new vscode.EventEmitter<{ title?: string; pathname?: string }>()
+		new vscode.EventEmitter<{
+			title: string;
+			pathname: string;
+			connection: Connection;
+		}>()
 	);
 	public readonly onPanelTitleChange = this._onPanelTitleChange.event;
 
@@ -131,7 +135,11 @@ export class WebviewComm extends Disposable {
 		// If we can't rely on inline script to update panel title,
 		// then set panel title manually
 		if (!isFileInjectable(URLExt)) {
-			this._onPanelTitleChange.fire({ title: '', pathname: URLExt });
+			this._onPanelTitleChange.fire({
+				title: '',
+				pathname: URLExt,
+				connection: connection,
+			});
 			this._panel.webview.postMessage({
 				command: 'set-url',
 				text: JSON.stringify({ fullPath: url, pathname: URLExt }),
@@ -369,7 +377,7 @@ export class WebviewComm extends Disposable {
 			pathname = '/' + pathname;
 		}
 
-		this._onPanelTitleChange.fire({ title: panelTitle, pathname: pathname });
+		this._onPanelTitleChange.fire({ title: panelTitle, pathname, connection });
 		this.currentAddress = pathname;
 		const response = this._pageHistory?.addHistory(pathname, connection);
 		if (response) {

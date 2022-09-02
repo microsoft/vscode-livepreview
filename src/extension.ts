@@ -45,15 +45,15 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start`, () => {
 			const filePath = SettingUtil.GetConfig().defaultPreviewPath;
-			serverPreview.openTargetAtFile(filePath);
+			serverPreview.openPreviewAtFileString(filePath);
 		})
 	);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-			(file?: vscode.Uri | string, options?: IOpenFileOptions) => {
-				serverPreview.openPreviewAtFile(file, options);
+			(file?: vscode.Uri, options?: IOpenFileOptions) => {
+				serverPreview.openPreviewAtFileUri(file, options);
 			}
 		)
 	);
@@ -61,9 +61,9 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.debugPreview.atFile`,
-			async (file?: vscode.Uri | string, options?: IOpenFileOptions) => {
+			async (file?: vscode.Uri, options?: IOpenFileOptions) => {
 				// TODO: implement internalDebugPreview and use settings to choose which one to launch
-				await serverPreview.openPreviewAtFile(
+				await serverPreview.openPreviewAtFileUri(
 					file,
 					options,
 					PreviewType.externalDebugPreview
@@ -75,7 +75,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalPreview.atFile`,
-			async (file?: vscode.Uri | string, options?: IOpenFileOptions) => {
+			async (file?: vscode.Uri, options?: IOpenFileOptions) => {
 				/* __GDPR__
 					"preview" :{
 						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
@@ -87,7 +87,7 @@ export function activate(context: vscode.ExtensionContext): void {
 					location: 'atFile',
 					debug: 'false',
 				});
-				await serverPreview.openPreviewAtFile(
+				await serverPreview.openPreviewAtFileUri(
 					file,
 					options,
 					PreviewType.externalPreview
@@ -99,7 +99,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.internalPreview.atFile`,
-			async (file?: vscode.Uri | string, options?: IOpenFileOptions) => {
+			async (file?: vscode.Uri, options?: IOpenFileOptions) => {
 				/* __GDPR__
 					"preview" :{
 						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
@@ -110,7 +110,7 @@ export function activate(context: vscode.ExtensionContext): void {
 					type: 'internal',
 					location: 'atFile',
 				});
-				await serverPreview.openPreviewAtFile(
+				await serverPreview.openPreviewAtFileUri(
 					file,
 					options,
 					PreviewType.internalPreview
@@ -122,7 +122,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.externalDebugPreview.atFile`,
-			async (file?: vscode.Uri | string, options?: IOpenFileOptions) => {
+			async (file?: vscode.Uri, options?: IOpenFileOptions) => {
 				/* __GDPR__
 					"preview" :{
 						"type" : {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
@@ -134,7 +134,7 @@ export function activate(context: vscode.ExtensionContext): void {
 					location: 'atFile',
 					debug: 'true',
 				});
-				await serverPreview.openPreviewAtFile(
+				await serverPreview.openPreviewAtFileUri(
 					file,
 					options,
 					PreviewType.externalDebugPreview

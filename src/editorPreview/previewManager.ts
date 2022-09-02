@@ -29,7 +29,7 @@ export class PreviewManager extends Disposable {
 
 	private readonly _onShouldLaunchPreview = this._register(
 		new vscode.EventEmitter<{
-			file?: vscode.Uri | string;
+			uri?: vscode.Uri;
 			options?: IOpenFileOptions;
 			previewType?: string;
 		}>()
@@ -50,23 +50,21 @@ export class PreviewManager extends Disposable {
 
 	/**
 	 * Actually launch the embedded browser preview (caller guarantees that the server has started.)
-	 * @param {string} file the filesystem path to preview.
-	 * @param {boolean} relative whether the path is relative.
+	 * @param {vscode.Uri} file the filesystem path to preview.
 	 * @param {vscode.WebviewPanel | undefined} panel the webview panel to reuse if defined.
 	 * @param {Connection} connection the connection to connect using
 	 */
 	public async launchFileInEmbeddedPreview(
-		file: string,
-		relative: boolean,
 		panel: vscode.WebviewPanel | undefined,
-		connection: Connection
+		connection: Connection,
+		file?: vscode.Uri
 	): Promise<void> {
-		file = relative ? file : this._transformNonRelativeFile(file, connection);
+		const path = file ? this._fileUriToPath(file, connection) : '/';
 		// If we already have a panel, show it.
 		if (this.currentPanel) {
 			await this.currentPanel.reveal(
 				vscode.ViewColumn.Beside,
-				file,
+				path,
 				connection
 			);
 			return;
@@ -85,27 +83,25 @@ export class PreviewManager extends Disposable {
 			);
 		}
 
-		this._startEmbeddedPreview(panel, file, connection);
+		this._startEmbeddedPreview(panel, path, connection);
 	}
 
 	/**
 	 * Actually launch the external browser preview (caller guarantees that the server has started.)
-	 * @param {string} file the filesystem path to preview.
-	 * @param {boolean} relative whether the path is relative.
+	 * @param {vscode.Uri} file the filesystem path to preview.
 	 * @param {boolean} debug whether we are opening in a debug session.
 	 * @param {Connection} connection the connection to connect using
 	 */
 	public launchFileInExternalBrowser(
-		file: string,
-		relative: boolean,
 		debug: boolean,
-		connection: Connection
+		connection: Connection,
+		file?: vscode.Uri
 	): void {
-		const relFile = PathUtil.ConvertToUnixPath(
-			relative ? file : this._transformNonRelativeFile(file, connection)
-		);
+		const path = file
+			? PathUtil.ConvertToUnixPath(this._fileUriToPath(file, connection))
+			: '/';
 
-		const url = `http://${connection.host}:${connection.httpPort}${relFile}`;
+		const url = `http://${connection.host}:${connection.httpPort}${path}`;
 		if (debug) {
 			vscode.commands.executeCommand('extension.js-debug.debugLink', url);
 		} else {
@@ -166,23 +162,20 @@ export class PreviewManager extends Disposable {
 	}
 
 	/**
-	 * Transforms non-relative files into a path that can be used by the server.
-	 * @param {boolean} relative whether the path is relative (if not relative, returns `file`).
-	 * @param {string} file the path to potentially transform.
+	 * Transforms Uris into a path that can be used by the server.
+	 * @param {vscode.Uri} file the path to potentially transform.
 	 * @param {Connection} connection the connection to connect using
 	 * @returns {string} the transformed path if the original `file` was realtive.
 	 */
-	private _transformNonRelativeFile(
-		file: string,
-		connection: Connection
-	): string {
+	private _fileUriToPath(file: vscode.Uri, connection: Connection): string {
+		let path = '/';
 		if (!connection?.workspace) {
 			this._notifyLooseFileOpen();
-			file = this._endpointManager.encodeLooseFileEndpoint(file);
+			path = this._endpointManager.encodeLooseFileEndpoint(file.fsPath);
 		} else if (connection) {
-			file = connection.getFileRelativeToWorkspace(file) ?? '';
+			path = connection.getFileRelativeToWorkspace(file.fsPath) ?? '';
 		}
-		return file;
+		return path;
 	}
 
 	/**
@@ -190,7 +183,7 @@ export class PreviewManager extends Disposable {
 	 * After a browser preview is closed, the server will close if another browser preview has not opened after a period of time (configurable in settings)
 	 * or if a task is not runnning. Because of this, a timer is triggerred upon webview (embedded preview) disposal/closing.
 	 * @param {vscode.WebviewPanel} panel the panel to use to open the preview.
-	 * @param {string} file the path to preview relative to index (should already be encoded).
+	 * @param {vscode.Uri} file the path to preview (should already be encoded).
 	 * @param {Connection} connection the connection to connect using
 	 */
 	private _startEmbeddedPreview(

@@ -32,7 +32,7 @@ export class serverTaskLinkProvider
 
 	private readonly _onShouldLaunchPreview = this._register(
 		new vscode.EventEmitter<{
-			file?: vscode.Uri | string;
+			uri?: vscode.Uri;
 			options?: IOpenFileOptions;
 			previewType?: string;
 		}>()
@@ -77,7 +77,8 @@ export class serverTaskLinkProvider
 		if (link.inEditor) {
 			this._openRelativeLinkInWorkspace(link.data, link.isDir);
 		} else {
-			this._onShouldLaunchPreview.fire({ file: link.data });
+			const uri = vscode.Uri.parse(link.data);
+			this._onShouldLaunchPreview.fire({ uri });
 		}
 	}
 
@@ -115,7 +116,9 @@ export class serverTaskLinkProvider
 								? partialLinkMatches[i]
 								: partialLinkMatches[i].substr(0, queryIndex);
 						const isDir = link.endsWith('/');
-						const tooltip = isDir ? 'Reveal Folder ' : 'Open File ';
+						const tooltip = isDir
+							? localize('revealFolder', 'Reveal Folder ')
+							: localize('openFile', 'Open File ');
 						const tl = {
 							startIndex: partialLinkMatches.index,
 							length: partialLinkMatches[i].length,
