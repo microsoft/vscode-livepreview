@@ -303,7 +303,7 @@ export class BrowserPreview extends Disposable {
 		connection: Connection
 	): void {
 		if (title == '') {
-			pathname = unescape(pathname);
+			pathname = decodeURI(pathname);
 			if (pathname.length > 0 && pathname[0] == '/') {
 				if (connection.workspace) {
 					this._panel.title = PathUtil.GetFileName(pathname);

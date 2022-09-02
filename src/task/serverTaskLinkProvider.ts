@@ -100,7 +100,7 @@ export class serverTaskLinkProvider
 	): void {
 		// match relative links
 		const partialLinkRegex = new RegExp(
-			`(?<=\\s)\\/([:/(\\w%\\-.:@)]*)\\?*[\\w=]*`,
+			`(?<=\\s)\\/([^\\0<>\\?\\|\\s!\`&*()\\[\\]'":;]*)\\?*[\\w=]*`,
 			'g'
 		);
 		let partialLinkMatches: RegExpExecArray | null;

@@ -7,6 +7,7 @@
 	"commands.showDebugPreviewExternalBrowser": "Show Debug Preview (External Browser)",
 	"commands.showPreviewInternalBrowser": "Show Preview (Internal Browser)",
 	"commands.openAutomaticallyOnServerStart": "Open Automatically on Server Start",
+	"commands.runServerLoggingTask": "Start Server Logging",
 	"commands.stopServer": "Stop Server",
 	"settings.portNumber": "Which local port the live preview's server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port.",
 	"settings.serverKeepAliveAfterEmbeddedPreviewClose": "How many minutes after closing the embedded preview you want the server to shut off. Set to 0 to have server stay on indefinetely.",

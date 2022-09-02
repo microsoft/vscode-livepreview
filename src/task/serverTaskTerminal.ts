@@ -183,7 +183,7 @@ export class ServerTaskTerminal
 			`[${FormatDateTime(date, ' ')}] ${
 				msg.method
 			}: ${TerminalStyleUtil.ColorTerminalString(
-				msg.url,
+				decodeURI(msg.url),
 				TerminalColor.blue
 			)} | ${this._colorHttpStatus(msg.status)}\r\n> `
 		);
