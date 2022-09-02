@@ -39,6 +39,7 @@
 	"activationEvents": [
 		"onWebviewPanel:browserPreview",
     "onCommand:livePreview.setDefaultOpenFile",
+		"onCommand:livePreview.runServerLoggingTask",
 		"onCommand:livePreview.start",
 		"onCommand:livePreview.start.preview.atFile",
 		"onCommand:livePreview.start.debugPreview.atFile",
@@ -86,6 +87,11 @@
 			{
 				"command": "livePreview.setDefaultOpenFile",
 				"title": "%commands.openAutomaticallyOnServerStart%",
+				"category": "%commands.category%"
+			},
+			{
+				"command": "livePreview.runServerLoggingTask",
+				"title": "%commands.runServerLoggingTask%",
 				"category": "%commands.category%"
 			},
 			{

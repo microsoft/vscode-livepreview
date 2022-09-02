@@ -252,7 +252,9 @@ export class ServerGrouping extends Disposable {
 				vscode.workspace.workspaceFolders &&
 				vscode.workspace.workspaceFolders.length > 0
 			) {
-				await this._serverTaskProvider.extRunTask(this._connection.workspace);
+				await this._serverTaskProvider.extRunTaskOnPreview(
+					this._connection.workspace
+				);
 			} else {
 				// global tasks are currently not supported, just turn on server in this case.
 				const serverOn = await this.openServer();
