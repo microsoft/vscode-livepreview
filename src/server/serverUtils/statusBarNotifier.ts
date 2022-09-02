@@ -79,7 +79,7 @@ export class StatusBarNotifier extends Disposable {
 				: localize(
 						'livePreviewRunningOnPorts',
 						'Live Preview running on ports:'
-				) + ' ';
+				  ) + ' ';
 
 		portsTooltip += bulletPoints.join('');
 

@@ -14,11 +14,11 @@ import { StatusBarNotifier } from './server/serverUtils/statusBarNotifier';
 import { LIVE_PREVIEW_SERVER_ON } from './utils/constants';
 import { ServerGrouping } from './server/serverGrouping';
 import { UpdateListener } from './updateListener';
+import { URL } from 'url';
 
 const localize = nls.loadMessageBundle();
 
 export interface IOpenFileOptions {
-	relativeFileString?: boolean;
 	workspace?: vscode.WorkspaceFolder;
 	port?: number;
 	manager?: ServerGrouping;
@@ -225,15 +225,23 @@ export class Manager extends Disposable {
 		);
 
 		this._register(
-			this._serverTaskProvider.onShouldLaunchPreview((e) =>
-				this.openPreviewAtFile(e.file, e.options, e.previewType)
-			)
+			this._serverTaskProvider.onShouldLaunchPreview((e) => {
+				if (e.uri && e.uri.scheme !== 'file') {
+					this.openPreviewAtLink(e.uri, e.previewType);
+				} else {
+					this.openPreviewAtFileUri(e.uri, e.options, e.previewType);
+				}
+			})
 		);
 
 		this._register(
-			this._previewManager.onShouldLaunchPreview((e) =>
-				this.openPreviewAtFile(e.file, e.options, e.previewType)
-			)
+			this._previewManager.onShouldLaunchPreview((e) => {
+				if (e.uri && e.uri.scheme !== 'file') {
+					this.openPreviewAtLink(e.uri, e.previewType);
+				} else {
+					this.openPreviewAtFileUri(e.uri, e.options, e.previewType);
+				}
+			})
 		);
 
 		this._updateListener = this._register(new UpdateListener(_userDataDir));
@@ -254,33 +262,27 @@ export class Manager extends Disposable {
 	 */
 	public async handleOpenFile(
 		internal: boolean,
-		file: vscode.Uri | string | undefined,
-		fileStringRelative: boolean,
 		debug: boolean,
+		file: vscode.Uri,
 		workspace?: vscode.WorkspaceFolder,
 		port?: number,
 		serverGrouping?: ServerGrouping
 	): Promise<void> {
-		const fileInfo = this._getFileInfo(file, fileStringRelative);
-
+		if (file.scheme !== 'file') {
+			console.error('Tried to open a non-file URI with file opener');
+		}
 		if (!serverGrouping) {
 			if (workspace) {
 				serverGrouping = this._getServerGroupingFromWorkspace(workspace);
 			} else if (port) {
-				this._serverGroupings.forEach((potentialServerGrouping, key) => {
+				this._serverGroupings.forEach((potentialServerGrouping) => {
 					if (potentialServerGrouping.port === port) {
 						serverGrouping = potentialServerGrouping;
 						return;
 					}
 				});
 			} else {
-				if (fileInfo.isRelative) {
-					workspace = PathUtil.PathExistsRelativeToAnyWorkspace(
-						fileInfo.filePath
-					);
-				} else {
-					workspace = PathUtil.AbsPathInAnyWorkspace(fileInfo.filePath);
-				}
+				workspace = vscode.workspace.getWorkspaceFolder(file);
 				serverGrouping = this._getServerGroupingFromWorkspace(workspace);
 			}
 		}
@@ -290,13 +292,7 @@ export class Manager extends Disposable {
 			serverGrouping = this._getServerGroupingFromWorkspace(undefined);
 		}
 
-		return await this._openPreview(
-			internal,
-			fileInfo.filePath,
-			serverGrouping,
-			fileInfo.isRelative,
-			debug
-		);
+		return await this._openPreview(internal, serverGrouping, file, debug);
 	}
 
 	/**
@@ -350,43 +346,90 @@ export class Manager extends Disposable {
 	 * This is usually used for when the user configures a setting for initial filepath
 	 * @param filePath the string fsPath to use
 	 */
-	public openTargetAtFile(filePath: string): void {
+	public openPreviewAtFileString(filePath: string): void {
 		if (filePath === '') {
-			this._openNoTarget();
+			this._openPreviewWithNoTarget();
 			return;
 		}
-		let foundPath = false;
-		this._serverGroupings.forEach((serverGrouping) => {
-			if (serverGrouping.pathExistsRelativeToWorkspace(filePath)) {
-				this.openPreviewAtFile(filePath, {
-					relativeFileString: true,
-					manager: serverGrouping,
-					workspace: serverGrouping.workspace,
-				});
-				foundPath = true;
-				return;
-			}
-		});
-
-		if (foundPath) {
-			return;
+		// let foundPath = false;
+		const workspace = PathUtil.PathExistsRelativeToAnyWorkspace(filePath);
+		if (workspace) {
+			const file = vscode.Uri.joinPath(workspace.uri, filePath);
+			this.openPreviewAtFileUri(file, {
+				workspace: workspace,
+			});
 		}
 
 		if (existsSync(filePath)) {
-			this.openPreviewAtFile(filePath, { relativeFileString: false });
+			const file = vscode.Uri.file(filePath);
+			this.openPreviewAtFileUri(file);
 		} else {
 			vscode.window.showWarningMessage(
 				localize('fileDNE', "The file '{0}' does not exist.", filePath)
 			);
-			this.openPreviewAtFile('/', { relativeFileString: true });
+			this.openPreviewAtFileUri(undefined);
 		}
 	}
 
-	public async openPreviewAtFile(
-		file?: vscode.Uri | string,
+	public async openPreviewAtLink(
+		link: vscode.Uri,
+		previewType?: string
+	): Promise<void> {
+		const debug = previewType === PreviewType.externalDebugPreview;
+		const internal = this._isInternalPreview(previewType);
+		try {
+			if (link.scheme !== 'https' && link.scheme !== 'http') {
+				console.error(`${link.scheme} does not correspond to a link URI`);
+				throw Error;
+			}
+			// const port = parseInt(new URL(link.authority).port);
+			const pathStr = `${link.scheme}://${link.authority}`;
+			const url = new URL(pathStr);
+			const portStr = url.port;
+			const port = parseInt(portStr);
+			const connection = this._connectionManager.getConnectionFromPort(port);
+			if (!connection) {
+				console.error(`There is no server from Live Preview on port ${port}.`);
+				throw Error;
+			}
+
+			const serverGrouping = this._getServerGroupingFromWorkspace(
+				connection.workspace
+			);
+			if (!connection.workspace) {
+				return this._openPreview(
+					internal,
+					serverGrouping,
+					vscode.Uri.file(link.path),
+					debug
+				);
+			}
+
+			const file = vscode.Uri.joinPath(connection.workspace.uri, link.path);
+			this._openPreview(internal, serverGrouping, file, debug);
+		} catch (e) {
+			vscode.window.showErrorMessage(
+				localize('badURL', 'Tried to open preview on invalid URI')
+			);
+		}
+	}
+
+	public async openPreviewAtFileUri(
+		file?: vscode.Uri,
 		options?: IOpenFileOptions,
 		previewType?: string
 	): Promise<void> {
+		let fileUri: vscode.Uri;
+		if (!file) {
+			const activeFile = vscode.window.activeTextEditor?.document.uri;
+			if (activeFile) {
+				fileUri = activeFile;
+			} else {
+				return this._openPreviewWithNoTarget();
+			}
+		} else {
+			fileUri = file;
+		}
 		if (!previewType) {
 			previewType = SettingUtil.GetPreviewType();
 		}
@@ -396,9 +439,8 @@ export class Manager extends Disposable {
 
 		return this.handleOpenFile(
 			internal,
-			file,
-			options?.relativeFileString ?? false,
 			debug,
+			fileUri,
 			options?.workspace,
 			options?.port,
 			options?.manager
@@ -459,20 +501,18 @@ export class Manager extends Disposable {
 			this._register(
 				serverGrouping.onShouldLaunchEmbeddedPreview((e) =>
 					this._previewManager.launchFileInEmbeddedPreview(
-						e.file,
-						e.relative,
 						e.panel,
-						e.connection
+						e.connection,
+						e.uri
 					)
 				)
 			);
 			this._register(
 				serverGrouping.onShouldLaunchExternalPreview((e) =>
 					this._previewManager.launchFileInExternalBrowser(
-						e.file,
-						e.relative,
 						e.debug,
-						e.connection
+						e.connection,
+						e.uri
 					)
 				)
 			);
@@ -484,46 +524,16 @@ export class Manager extends Disposable {
 
 	private async _openPreview(
 		internal: boolean,
-		file: string,
 		serverGrouping: ServerGrouping,
-		isRelative: boolean,
+		file?: vscode.Uri,
 		debug = false
 	): Promise<void> {
 		if (internal) {
 			// for now, ignore debug or no debug for embedded preview
-			serverGrouping.createOrShowEmbeddedPreview(undefined, file, isRelative);
+			serverGrouping.createOrShowEmbeddedPreview(undefined, file);
 		} else {
-			await serverGrouping.showPreviewInBrowser(file, isRelative, debug);
+			await serverGrouping.showPreviewInBrowser(debug, file);
 		}
-	}
-
-	private _getFileInfo(
-		file: vscode.Uri | string | undefined,
-		fileStringRelative: boolean
-	): { filePath: string; isRelative: boolean } {
-		if (typeof file == 'string') {
-			return { filePath: file, isRelative: fileStringRelative };
-		} else if (file instanceof vscode.Uri) {
-			let filePath = file?.fsPath;
-
-			if (!filePath) {
-				const activeFilePath =
-					vscode.window.activeTextEditor?.document.fileName;
-				if (activeFilePath) {
-					filePath = activeFilePath;
-					fileStringRelative = false;
-				}
-			}
-
-			return { filePath, isRelative: fileStringRelative };
-		} else {
-			const activeFilePath = vscode.window.activeTextEditor?.document.fileName;
-			if (activeFilePath) {
-				return { filePath: activeFilePath, isRelative: false };
-			}
-		}
-
-		return { filePath: '/', isRelative: fileStringRelative };
 	}
 
 	private _hasServerRunning(): boolean {
@@ -533,16 +543,23 @@ export class Manager extends Disposable {
 		return isRunning.length !== 0;
 	}
 
-	private _openNoTarget(): void {
+	private _isInternalPreview(previewType?: string): boolean {
+		if (!previewType) {
+			previewType = SettingUtil.GetPreviewType();
+		}
+		return previewType === PreviewType.internalPreview;
+	}
+	private _openPreviewWithNoTarget(): void {
 		// opens index at first open server or opens a loose workspace at root
+
+		const internal = this._isInternalPreview();
 		const workspaces = vscode.workspace.workspaceFolders;
 		if (workspaces && workspaces.length > 0) {
 			for (let i = 0; i < workspaces.length; i++) {
 				const currWorkspace = workspaces[i];
 				const manager = this._serverGroupings.get(currWorkspace.uri.toString());
 				if (manager) {
-					this.openPreviewAtFile('/', {
-						relativeFileString: true,
+					this.openPreviewAtFileUri(undefined, {
 						workspace: currWorkspace,
 						manager: manager,
 					});
@@ -550,12 +567,11 @@ export class Manager extends Disposable {
 				}
 			}
 
-			this.openPreviewAtFile('/', {
-				relativeFileString: true,
-				workspace: workspaces[0],
-			});
+			const grouping = this._getServerGroupingFromWorkspace(workspaces[0]);
+			this._openPreview(internal, grouping, undefined);
 		} else {
-			this.openPreviewAtFile('/', { relativeFileString: false });
+			const grouping = this._getServerGroupingFromWorkspace(undefined);
+			this._openPreview(internal, grouping, undefined);
 		}
 	}
 

@@ -6,7 +6,7 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { WebviewComm } from './webviewComm';
 import { FormatDateTime } from '../utils/utils';
-import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
+import { SettingUtil } from '../utils/settingsUtil';
 import * as path from 'path';
 import * as nls from 'vscode-nls';
 import { URL } from 'url';
@@ -28,7 +28,7 @@ export class BrowserPreview extends Disposable {
 
 	private readonly _onShouldLaunchPreview = this._register(
 		new vscode.EventEmitter<{
-			file?: vscode.Uri | string;
+			uri?: vscode.Uri;
 			options?: IOpenFileOptions;
 			previewType?: string;
 		}>()
@@ -78,7 +78,7 @@ export class BrowserPreview extends Disposable {
 
 		this._register(
 			this._webviewComm.onPanelTitleChange((e) => {
-				this._setPanelTitle(e.title, e.pathname);
+				this._setPanelTitle(e.title, e.pathname, e.connection);
 			})
 		);
 
@@ -218,9 +218,8 @@ export class BrowserPreview extends Disposable {
 			const previewType = SettingUtil.GetExternalPreviewType();
 			if (this._webviewComm.currentConnection.workspace) {
 				this._onShouldLaunchPreview.fire({
-					file: uri,
+					uri: uri,
 					options: {
-						relativeFileString: true,
 						workspace: this._webviewComm.currentConnection.workspace,
 						port: this._webviewComm.currentConnection.httpPort,
 					},
@@ -228,9 +227,8 @@ export class BrowserPreview extends Disposable {
 				});
 			} else {
 				this._onShouldLaunchPreview.fire({
-					file: uri,
+					uri: uri,
 					options: {
-						relativeFileString: false,
 						port: this._webviewComm.currentConnection.httpPort,
 					},
 					previewType,
@@ -299,11 +297,15 @@ export class BrowserPreview extends Disposable {
 	 * @param {string} title the page title of the page being hosted.
 	 * @param {string} pathname the pathname of the path being hosted.
 	 */
-	private _setPanelTitle(title = '', pathname = 'Preview'): void {
+	private _setPanelTitle(
+		title: string,
+		pathname: string,
+		connection: Connection
+	): void {
 		if (title == '') {
 			pathname = unescape(pathname);
 			if (pathname.length > 0 && pathname[0] == '/') {
-				if (PathUtil.PathExistsRelativeToAnyWorkspace(pathname)) {
+				if (connection.workspace) {
 					this._panel.title = PathUtil.GetFileName(pathname);
 				} else {
 					this._panel.title = path.basename(pathname.substr(1));
