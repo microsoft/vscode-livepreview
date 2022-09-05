@@ -146,7 +146,7 @@ export class serverTaskLinkProvider
 	): Promise<void> {
 		const hostUri = connection.constructLocalUri(connection.httpPort);
 		const extHostUri = await connection.resolveExternalHTTPUri();
-		const extHostStr = `${extHostUri.scheme}://${extHostUri.authority}`;
+		const extHostStr = encodeURI(`${extHostUri.scheme}://${extHostUri.authority}`);
 
 		const fullLinkRegex = new RegExp(
 			`(?:${extHostStr})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
