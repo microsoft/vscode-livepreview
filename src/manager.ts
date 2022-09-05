@@ -456,11 +456,24 @@ export class Manager extends Disposable {
 	): Promise<void> {
 		let fileUri: vscode.Uri;
 		if (!file) {
-			const activeFile = vscode.window.activeTextEditor?.document.uri;
-			if (activeFile) {
-				fileUri = activeFile;
+			if (this._previewManager.currentPanel?.panel.active) {
+				if (this._previewManager.currentPanel.currentConnection.workspace) {
+					fileUri = vscode.Uri.joinPath(
+						this._previewManager.currentPanel.currentConnection.workspace.uri,
+						this._previewManager.currentPanel.currentAddress
+					);
+				} else {
+					fileUri = vscode.Uri.parse(
+						this._previewManager.currentPanel.currentAddress
+					);
+				}
 			} else {
-				return this._openPreviewWithNoTarget();
+				const activeFile = vscode.window.activeTextEditor?.document.uri;
+				if (activeFile) {
+					fileUri = activeFile;
+				} else {
+					return this._openPreviewWithNoTarget();
+				}
 			}
 		} else {
 			fileUri = file;

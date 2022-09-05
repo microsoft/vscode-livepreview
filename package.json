@@ -152,7 +152,7 @@
 				},
 				{
 					"command": "livePreview.start.externalPreview.atFile",
-					"when": "editorLangId == html && !notebookEditorFocused",
+					"when": "(editorLangId == html && !notebookEditorFocused) || activeWebviewPanelId == 'browserPreview'",
 					"group": "1_livepreview"
 				},
 				{
