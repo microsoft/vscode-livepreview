@@ -70,9 +70,6 @@ export class ServerGrouping extends Disposable {
 	private readonly _onClose = this._register(new vscode.EventEmitter<void>());
 	public readonly onClose = this._onClose.event;
 
-	// private readonly _onAttemptToOpen = this._register(new vscode.EventEmitter<void>());
-	// public readonly onAttemptToOpen = this._onAttemptToOpen.event;
-
 	private readonly _onShouldLaunchExternalPreview = this._register(
 		new vscode.EventEmitter<IExternalPreviewArgs>()
 	);

@@ -464,7 +464,6 @@ export class Manager extends Disposable {
 	private _getServerGroupingFromWorkspace(
 		workspace: vscode.WorkspaceFolder | undefined
 	): ServerGrouping {
-		// if (this._pendingServerWorkspaces.has(workspace?.uri.toString()))
 
 		let serverGrouping = this._serverGroupings.get(workspace?.uri.toString());
 		if (!serverGrouping) {
@@ -484,11 +483,7 @@ export class Manager extends Disposable {
 					this._pendingServerWorkspaces
 				)
 			);
-			// this._register(
-			// 	serverGrouping.onAttemptToOpen(()=> {
-			// 		this._pendingServerWorkspaces.add(workspace?.uri);
-			// 	})
-			// );
+
 			this._register(
 				serverGrouping.onClose(() => {
 					if (
