@@ -9,6 +9,7 @@ import { PathUtil } from '../utils/pathUtil';
 import { TASK_TERMINAL_BASE_NAME } from '../utils/constants';
 import { IOpenFileOptions } from '../manager';
 import { Connection } from '../connectionInfo/connection';
+import { escapeRegExp } from '../utils/utils';
 
 const localize = nls.loadMessageBundle();
 
@@ -146,7 +147,7 @@ export class serverTaskLinkProvider
 	): Promise<void> {
 		const hostUri = connection.constructLocalUri(connection.httpPort);
 		const extHostUri = await connection.resolveExternalHTTPUri();
-		const extHostStr = encodeURI(`${extHostUri.scheme}://${extHostUri.authority}`);
+		const extHostStr = escapeRegExp(`${extHostUri.scheme}://${extHostUri.authority}`);
 
 		const fullLinkRegex = new RegExp(
 			`(?:${extHostStr})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,
