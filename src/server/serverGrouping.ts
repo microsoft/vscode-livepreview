@@ -87,7 +87,8 @@ export class ServerGrouping extends Disposable {
 		_reporter: TelemetryReporter,
 		_endpointManager: EndpointManager,
 		private readonly _connection: Connection,
-		private readonly _serverTaskProvider: ServerTaskProvider
+		private readonly _serverTaskProvider: ServerTaskProvider,
+		private readonly _pendingServerWorkspaces: Set<string | undefined>
 	) {
 		super();
 		this._httpServer = this._register(
@@ -200,16 +201,21 @@ export class ServerGrouping extends Disposable {
 	 * @param {number} port the port to try to start the HTTP server on.
 	 * @returns {boolean} whether the server has been started correctly.
 	 */
-	public async openServer(fromTask = false): Promise<boolean> {
+	public async openServer(fromTask = false): Promise<void> {
+		if (this._pendingServerWorkspaces.has(this.workspace?.uri.toString())) {
+			// server is already being opened for this, don't try to open another one
+			return;
+		}
+
 		const port = this._connection.httpPort;
+		this._pendingServerWorkspaces.add(this.workspace?.uri.toString());
 		if (!this.isRunning) {
 			this._httpConnected = false;
 			this._wsConnected = false;
-			this._findFreePort(port, (freePort: number) => {
-				this._httpServer.start(freePort);
-				this._wsServer.start(freePort + 1);
-			});
-			return true;
+
+			const freePort = await this._findFreePort(port);
+			this._httpServer.start(freePort);
+			this._wsServer.start(freePort + 1);
 		} else if (fromTask) {
 			const uri = await this._connection.resolveExternalHTTPUri();
 			this._serverTaskProvider.serverStarted(
@@ -218,8 +224,6 @@ export class ServerGrouping extends Disposable {
 				this._connection.workspace
 			);
 		}
-
-		return true;
 	}
 
 	/**
@@ -257,11 +261,7 @@ export class ServerGrouping extends Disposable {
 				);
 			} else {
 				// global tasks are currently not supported, just turn on server in this case.
-				const serverOn = await this.openServer();
-
-				if (!serverOn) {
-					return;
-				}
+				await this.openServer();
 			}
 		} else {
 			this._onShouldLaunchExternalPreview.fire({
@@ -283,11 +283,11 @@ export class ServerGrouping extends Disposable {
 	 * @param {boolean} relative whether the path was absolute or relative to the current workspace.
 	 * @param {boolean} debug whether to run in debug mode (not implemented).
 	 */
-	public createOrShowEmbeddedPreview(
+	public async createOrShowEmbeddedPreview(
 		panel: vscode.WebviewPanel | undefined = undefined,
 		file?: vscode.Uri,
 		debug = false
-	): void {
+	): Promise<void> {
 		if (!this.isRunning) {
 			// set the pending launch info, which will trigger once the server starts in `launchFileInEmbeddedPreview`
 			this._pendingLaunchInfo = {
@@ -297,7 +297,7 @@ export class ServerGrouping extends Disposable {
 				debug: debug,
 				connection: this._connection,
 			};
-			this.openServer();
+			await this.openServer();
 		} else {
 			this._onShouldLaunchEmbeddedPreview.fire({
 				uri: file,
@@ -320,28 +320,27 @@ export class ServerGrouping extends Disposable {
 	 * @param startPort the port to start the check on
 	 * @param callback the callback triggerred when a free port has been found.
 	 */
-	private _findFreePort(
-		startPort: number,
-		callback: (port: number) => void
-	): void {
-		let port = startPort;
-		const sock = new net.Socket();
-		const host = this._connection.host;
-		sock.setTimeout(500);
-		sock.on('connect', function () {
-			sock.destroy();
-			port++;
+	private async _findFreePort(
+		startPort: number
+	): Promise<number> {
+		return new Promise((resolve) => {
+			let port = startPort;
+			const sock = new net.Socket();
+			const host = this._connection.host;
+			sock.setTimeout(500);
+			sock.on('connect', function () {
+				sock.destroy();
+				port++;
+				sock.connect(port, host);
+			});
+			sock.on('error', function (e) {
+				resolve(port);
+			});
+			sock.on('timeout', function () {
+				resolve(port);
+			});
 			sock.connect(port, host);
 		});
-		sock.on('error', function (e) {
-			callback(port);
-			return;
-		});
-		sock.on('timeout', function () {
-			callback(port);
-			return;
-		});
-		sock.connect(port, host);
 	}
 
 	/**

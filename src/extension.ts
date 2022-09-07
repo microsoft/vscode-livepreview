@@ -10,7 +10,6 @@ import {
 	SettingUtil,
 } from './utils/settingsUtil';
 import { IOpenFileOptions, Manager } from './manager';
-import { ServerGrouping } from './server/serverGrouping';
 
 let reporter: TelemetryReporter;
 let serverPreview: Manager;
@@ -52,8 +51,8 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atFile`,
-			(file?: vscode.Uri, options?: IOpenFileOptions) => {
-				serverPreview.openPreviewAtFileUri(file, options);
+			async (file?: vscode.Uri, options?: IOpenFileOptions) => {
+				await serverPreview.openPreviewAtFileUri(file, options);
 			}
 		)
 	);
