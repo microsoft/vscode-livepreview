@@ -97,6 +97,10 @@ export class BrowserPreview extends Disposable {
 		return this._webviewComm.currentConnection;
 	}
 
+	public get currentAddress(): string {
+		return this._webviewComm.currentAddress;
+	}
+
 	/**
 	 * get the webview panel
 	 */
