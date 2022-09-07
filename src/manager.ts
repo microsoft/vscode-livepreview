@@ -174,7 +174,7 @@ export class Manager extends Disposable {
 		this._register(
 			serializer.onShouldRevive((e) => {
 				let relative = false;
-				let file = e.state.currentAddress ?? '/';
+				let file: string = e.state.currentAddress ?? '/';
 
 				let workspace = PathUtil.PathExistsRelativeToAnyWorkspace(file);
 				if (workspace) {
@@ -186,16 +186,24 @@ export class Manager extends Disposable {
 
 				if (!workspace) {
 					// no workspace; try to decode endpoint to fix file
-					file = this._endpointManager.decodeLooseFileEndpoint(file);
-					if (!file) {
+					const potentialFile = this._endpointManager.decodeLooseFileEndpoint(file);
+					if (potentialFile) {
+						file = potentialFile;
+					} else {
 						e.webviewPanel.dispose();
 						return;
 					}
 				}
 
+				let fileUri;
 				// loose file workspace will be fetched if workspace is still undefined
 				const grouping = this._getServerGroupingFromWorkspace(workspace);
-				grouping.createOrShowEmbeddedPreview(e.webviewPanel, file, relative);
+				if (workspace) {
+					fileUri = vscode.Uri.joinPath(workspace.uri, file);
+				} else {
+					fileUri = vscode.Uri.parse(file);
+				}
+				grouping.createOrShowEmbeddedPreview(e.webviewPanel, fileUri, relative);
 				e.webviewPanel.webview.options =
 					this._previewManager.getWebviewOptions();
 			})
