@@ -59,10 +59,11 @@ export class serverTaskLinkProvider
 			return links;
 		}
 
-
 		await Promise.all(
-			this._connectionManager.connections.map((connection => this._findFullLinkRegex(context.line, links, connection)))
-			);
+			this._connectionManager.connections.map((connection) =>
+				this._findFullLinkRegex(context.line, links, connection)
+			)
+		);
 
 		this._findPathnameRegex(context.line, links);
 		return links;
@@ -147,7 +148,9 @@ export class serverTaskLinkProvider
 	): Promise<void> {
 		const hostUri = connection.constructLocalUri(connection.httpPort);
 		const extHostUri = await connection.resolveExternalHTTPUri();
-		const extHostStr = escapeRegExp(`${extHostUri.scheme}://${extHostUri.authority}`);
+		const extHostStr = escapeRegExp(
+			`${extHostUri.scheme}://${extHostUri.authority}`
+		);
 
 		const fullLinkRegex = new RegExp(
 			`(?:${extHostStr})[\\w\\-.~:/?#[\\]@!$&()*+,;=]*`,

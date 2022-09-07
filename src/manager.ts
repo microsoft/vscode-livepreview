@@ -186,7 +186,8 @@ export class Manager extends Disposable {
 
 				if (!workspace) {
 					// no workspace; try to decode endpoint to fix file
-					const potentialFile = this._endpointManager.decodeLooseFileEndpoint(file);
+					const potentialFile =
+						this._endpointManager.decodeLooseFileEndpoint(file);
 					if (potentialFile) {
 						file = potentialFile;
 					} else {
@@ -417,10 +418,10 @@ export class Manager extends Disposable {
 	}
 
 	/**
-	* Opens a preview at an internal link that has the format <scheme>://<host>:<port>/<path>
-	* @param link
-	* @param previewType
-	*/
+	 * Opens a preview at an internal link that has the format <scheme>://<host>:<port>/<path>
+	 * @param link
+	 * @param previewType
+	 */
 	public async openPreviewAtLink(
 		link: vscode.Uri,
 		previewType?: string
@@ -523,15 +524,16 @@ export class Manager extends Disposable {
 	private _getServerGroupingFromWorkspace(
 		workspace: vscode.WorkspaceFolder | undefined
 	): ServerGrouping {
-
 		let serverGrouping = this._serverGroupings.get(workspace?.uri.toString());
 		if (!serverGrouping) {
 			const connection =
 				this._connectionManager.createAndAddNewConnection(workspace);
 
-			this._register(connection.onConnected(()=> {
-				this._pendingServerWorkspaces.delete(workspace?.uri.toString());
-			}));
+			this._register(
+				connection.onConnected(() => {
+					this._pendingServerWorkspaces.delete(workspace?.uri.toString());
+				})
+			);
 			serverGrouping = this._register(
 				new ServerGrouping(
 					this._extensionUri,
