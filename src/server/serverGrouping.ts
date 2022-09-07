@@ -320,9 +320,7 @@ export class ServerGrouping extends Disposable {
 	 * @param startPort the port to start the check on
 	 * @param callback the callback triggerred when a free port has been found.
 	 */
-	private async _findFreePort(
-		startPort: number
-	): Promise<number> {
+	private async _findFreePort(startPort: number): Promise<number> {
 		return new Promise((resolve) => {
 			let port = startPort;
 			const sock = new net.Socket();
