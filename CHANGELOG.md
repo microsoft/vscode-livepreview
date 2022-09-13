@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.1 (September 13, 2022)
+- Changed nonce generation and link preview code
+
 ## 0.4.0 (August 31, 2022)
 - Added better multi-root support that opens a new server for each root. Paths relative to the root now work on multi-root. [#143](https://github.com/microsoft/vscode-livepreview/issues/143)
 - Localization support. [#221](https://github.com/microsoft/vscode-livepreview/issues/221)
