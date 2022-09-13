@@ -293,7 +293,7 @@
 			// from child iframe
 			case 'link-hover-start': {
 				if (message.text.trim().length) {
-					document.getElementById('link-preview').innerHTML = message.text;
+					document.getElementById('link-preview').innerText = message.text;
 					fadeElement(true, document.getElementById('link-preview'));
 				}
 				break;
