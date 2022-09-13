@@ -4,9 +4,10 @@ import * as nls from 'vscode-nls';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { INIT_PANEL_TITLE } from '../utils/constants';
 import { NavEditCommands, PageHistory } from './pageHistoryTracker';
-import { getNonce, isFileInjectable } from '../utils/utils';
+import { isFileInjectable } from '../utils/utils';
 import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
+import { randomBytes } from 'crypto';
 
 const localize = nls.loadMessageBundle();
 
@@ -192,7 +193,7 @@ export class WebviewComm extends Disposable {
 		const codiconsUri = webview.asWebviewUri(codiconsPathMainPath);
 
 		// Use a nonce to only allow specific scripts to be run
-		const nonce = getNonce();
+		const nonce = randomBytes(16).toString('base64');
 
 		const back = localize('back', 'Back');
 		const forward = localize('forward', 'Forward');
