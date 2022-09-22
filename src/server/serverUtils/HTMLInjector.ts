@@ -1,8 +1,12 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { Connection } from '../../connectionInfo/connection';
-import { ConnectionManager } from '../../connectionInfo/connectionManager';
 import {
 	HTTP_URL_PLACEHOLDER,
 	WS_URL_PLACEHOLDER,
