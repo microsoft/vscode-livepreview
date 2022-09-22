@@ -1,9 +1,13 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { Disposable } from '../utils/dispose';
 import * as path from 'path';
 import { PathUtil } from '../utils/pathUtil';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
-import { Connection } from '../connectionInfo/connection';
 
 /**
  * @description the object that manages the server endpoints for files outside of the default workspace
