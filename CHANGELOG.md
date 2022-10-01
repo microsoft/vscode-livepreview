@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.2 (October 5, 2022)
+- Added ability to open external preview from while focused on embedded preview through command palette. [#303](https://github.com/microsoft/vscode-livepreview/issues/303)
+- Fixed server launch while the server is already launching. [#324](https://github.com/microsoft/vscode-livepreview/issues/324)
+- Fixed bug where clicking on the "started on" URL in the task terminal doesn't open in default preview. [#322](https://github.com/microsoft/vscode-livepreview/issues/322)
+- Added command to run Live Preview server logging task. [#315](https://github.com/microsoft/vscode-livepreview/issues/315)
+- Fixed unicode character rendering in task terminal. [#254](https://github.com/microsoft/vscode-livepreview/issues/254)
+- Commands use URI arguments instead of strings. [#320](https://github.com/microsoft/vscode-livepreview/issues/320)
+
+# 0.4.1 (September 13, 22)
+- Changed nonce generation and link preview code
+
 ## 0.4.0 (August 30, 2022)
 - Added better multi-root support that opens a new server for each root. Paths relative to the root now work on multi-root. [#143](https://github.com/microsoft/vscode-livepreview/issues/143)
 - Localization support. [#221](https://github.com/microsoft/vscode-livepreview/issues/221)
