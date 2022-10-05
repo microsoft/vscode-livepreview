@@ -7,9 +7,10 @@
 - Added command to run Live Preview server logging task. [#315](https://github.com/microsoft/vscode-livepreview/issues/315)
 - Fixed unicode character rendering in task terminal. [#254](https://github.com/microsoft/vscode-livepreview/issues/254)
 - Commands use URI arguments instead of strings. [#320](https://github.com/microsoft/vscode-livepreview/issues/320)
+- Changed query parsing and host checking.
 
 # 0.4.1 (September 13, 22)
-- Changed nonce generation and link preview code
+- Changed nonce generation and link preview code.
 
 ## 0.4.0 (August 30, 2022)
 - Added better multi-root support that opens a new server for each root. Paths relative to the root now work on multi-root. [#143](https://github.com/microsoft/vscode-livepreview/issues/143)
