@@ -127,13 +127,21 @@ export class HttpServer extends Disposable {
 	 * @param {http.IncomingMessage} req the request received
 	 * @param {http.ServerResponse} res the response to be loaded
 	 */
-	private _serveStream(
+	private async _serveStream(
 		basePath: string | undefined,
 		req: http.IncomingMessage,
 		res: http.ServerResponse
-	): void {
+	): Promise<void> {
+
 		if (!req || !req.url) {
 			this._reportAndReturn(500, req, res);
+			return;
+		}
+
+		const expectedUri = await this._connection.resolveExternalHTTPUri();
+		const expectedHost = expectedUri.authority;
+		if (req.headers.host !== expectedHost || (req.headers.origin && req.headers.origin !== expectedHost)) {
+			this._reportAndReturn(401, req, res); // unauthorized
 			return;
 		}
 
@@ -149,10 +157,10 @@ export class HttpServer extends Disposable {
 			stream?.pipe(res);
 			return;
 		}
-		const endOfPath = req.url.lastIndexOf('?');
-		let URLPathName =
-			endOfPath == -1 ? req.url : req.url.substring(0, endOfPath);
+		// can't use vscode.Uri.joinPath because that doesn't parse out the query
+		const urlObj = vscode.Uri.parse(`${expectedUri.scheme}://${expectedUri.authority}${req.url}`);
 
+		let URLPathName = urlObj.path;
 		if (!basePath && (URLPathName == '/' || URLPathName == '')) {
 			const respInfo = this._contentLoader.createNoRootServer();
 			res.writeHead(404, {
@@ -200,6 +208,12 @@ export class HttpServer extends Disposable {
 					absoluteReadPath = decodedReadPath;
 				}
 			}
+		} else if (!PathUtil.PathBeginsWith(absoluteReadPath, basePath)) {
+			// double-check that we aren't serving parent files.
+
+			// if this server's workspace is undefined, the the path is already checked because
+			// the resolved path is already a child of the endpoint if it is to be decoded.
+			absoluteReadPath = basePath;
 		}
 
 		if (!fs.existsSync(absoluteReadPath)) {
@@ -216,14 +230,13 @@ export class HttpServer extends Disposable {
 		}
 		if (fs.statSync(absoluteReadPath).isDirectory()) {
 			if (!URLPathName.endsWith('/')) {
-				const queries =
-					endOfPath == -1 ? '' : `${req.url.substring(endOfPath)}`;
-
+				const queries = urlObj.query;
 				URLPathName = encodeURI(URLPathName);
-				res.setHeader('Location', `${URLPathName}/${queries}`);
+				res.setHeader('Location', `${URLPathName}/?${queries}`);
 				this._reportAndReturn(302, req, res); // redirect
 				return;
 			}
+
 
 			// Redirect to index.html if the request URL is a directory
 			if (fs.existsSync(path.join(absoluteReadPath, 'index.html'))) {
