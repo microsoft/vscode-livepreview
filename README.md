@@ -46,7 +46,7 @@ See the changes as you make them. By default, changes appear as you make them in
 Individual pages can opt out of live refreshing by adding the `<body>` attribute `data-server-no-reload`.
 
 ### Persistent Server Task with Server Logging
-If you're looking for a persistent server to run, you can run a `Live Preview` task, which can optionally log the server traffic. You can also click on the traffic to open the file location of the file returned by the server.
+If you're looking for a persistent server to run, you can run a `Live Preview` task, which also logs the server traffic. This can also be launched using the `Live Preview: Start Server Logging` command. You can click on the traffic to open the file location of the file returned by the server.
 
 ![task-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/task-demo.gif)
 ![task-demo-2](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/task-demo-2.gif)
