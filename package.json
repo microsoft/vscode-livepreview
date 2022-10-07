@@ -152,12 +152,22 @@
         },
         {
           "command": "livePreview.start.externalPreview.atFile",
-          "when": "(editorLangId == html && !notebookEditorFocused) || activeWebviewPanelId == 'browserPreview'",
+          "when": "editorLangId == html && !notebookEditorFocused",
+          "group": "1_livepreview"
+        },
+        {
+          "command": "livePreview.start.externalPreview.atFile",
+          "when": "activeWebviewPanelId == 'browserPreview'",
           "group": "1_livepreview"
         },
         {
           "command": "livePreview.start.externalDebugPreview.atFile",
           "when": "editorLangId == html && !notebookEditorFocused",
+          "group": "1_livepreview"
+        },
+        {
+          "command": "livePreview.start.externalDebugPreview.atFile",
+          "when": "activeWebviewPanelId == 'browserPreview'",
           "group": "1_livepreview"
         },
         {
