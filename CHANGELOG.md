@@ -13,7 +13,7 @@
 - Commands use URI arguments instead of strings. [#320](https://github.com/microsoft/vscode-livepreview/issues/320)
 - Changed query parsing and host checking.
 
-# 0.4.1 (September 13, 22)
+# 0.4.1 (September 13, 2022)
 - Changed nonce generation and link preview code.
 
 ## 0.4.0 (August 30, 2022)
