@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.3 (October 7, 2022)
+- Fixed 401 error in loading content with origin header. [#359](https://github.com/microsoft/vscode-livepreview/issues/359)
+- Fixed missing commands for opening in external preview. [#360](https://github.com/microsoft/vscode-livepreview/issues/360)
+
 ## 0.4.2 (October 5, 2022)
 - Added ability to open external preview from while focused on embedded preview through command palette. [#303](https://github.com/microsoft/vscode-livepreview/issues/303)
 - Fixed server launch while the server is already launching. [#324](https://github.com/microsoft/vscode-livepreview/issues/324)
@@ -9,7 +13,7 @@
 - Commands use URI arguments instead of strings. [#320](https://github.com/microsoft/vscode-livepreview/issues/320)
 - Changed query parsing and host checking.
 
-# 0.4.1 (September 13, 22)
+# 0.4.1 (September 13, 2022)
 - Changed nonce generation and link preview code.
 
 ## 0.4.0 (August 30, 2022)
