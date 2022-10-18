@@ -140,7 +140,7 @@ export class HttpServer extends Disposable {
 
 		const expectedUri = await this._connection.resolveExternalHTTPUri();
 		const expectedHost = expectedUri.authority;
-		if (req.headers.host !== expectedHost || (req.headers.origin && req.headers.origin !== `${expectedUri.scheme}://${expectedHost}`)) {
+		if ((req.headers.host !== 'localhost' && req.headers.host !== this._connection.host && req.headers.host !== expectedHost) || (req.headers.origin && req.headers.origin !== `${expectedUri.scheme}://${expectedHost}`)) {
 			this._reportAndReturn(401, req, res); // unauthorized
 			return;
 		}
