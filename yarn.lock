@@ -297,7 +297,7 @@
 
 "@types/vscode@^1.71.0":
   version "1.71.0"
-  resolved "https://registry.yarnpkg.com/@types/vscode/-/vscode-1.71.0.tgz#a8d9bb7aca49b0455060e6eb978711b510bdd2e2"
+  resolved "https://registry.npmjs.org/@types/vscode/-/vscode-1.71.0.tgz"
   integrity sha512-nB50bBC9H/x2CpwW9FzRRRDrTZ7G0/POttJojvN/LiVfzTGfLyQIje1L1QRMdFXK9G41k5UJN/1B9S4of7CSzA==
 
 "@types/ws@^8.5.3":
@@ -1248,6 +1248,11 @@ escape-string-regexp@^4.0.0:
   version "4.0.0"
   resolved "https://registry.npmjs.org/escape-string-regexp/-/escape-string-regexp-4.0.0.tgz"
   integrity sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==
+
+eslint-plugin-header@^3.1.1:
+  version "3.1.1"
+  resolved "https://registry.npmjs.org/eslint-plugin-header/-/eslint-plugin-header-3.1.1.tgz"
+  integrity sha512-9vlKxuJ4qf793CmeeSrZUvVClw6amtpghq3CuWcB5cUNnWHQhgcqy5eF8oVKFk1G3Y/CbchGfEaw3wiIJaNmVg==
 
 eslint-scope@5.1.1, eslint-scope@^5.0.0, eslint-scope@^5.1.1:
   version "5.1.1"
@@ -2839,7 +2844,7 @@ vscode-extension-telemetry@^0.4.5:
 
 vscode-nls-dev@^4.0.3:
   version "4.0.3"
-  resolved "https://registry.yarnpkg.com/vscode-nls-dev/-/vscode-nls-dev-4.0.3.tgz#e55e8a7bd35c719454af17c0c5c3516ff2971d15"
+  resolved "https://registry.npmjs.org/vscode-nls-dev/-/vscode-nls-dev-4.0.3.tgz"
   integrity sha512-Y+wUSLwmBwLD8uN+6hBbR4MICuURQ1DoW5k3Z34kPyDlr9ZRQxCPIWaK64IFzPpjloMbb0ORIHkpI8qjMd4L8w==
   dependencies:
     ansi-colors "^4.1.1"
