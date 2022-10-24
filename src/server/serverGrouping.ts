@@ -229,13 +229,13 @@ export class ServerGrouping extends Disposable {
 				this._connection.workspace
 			);
 		}
+		this._pendingServerWorkspaces.delete(this.workspace?.uri.toString());
 	}
 
 	/**
 	 * Opens the preview in an external browser.
-	 * @param {string} file the filesystem path to open in the preview.
-	 * @param {boolean} relative whether the path was absolute or relative to the current workspace.
 	 * @param {boolean} debug whether or not to run in debug mode.
+	 * @param {string} file the filesystem uri to open in the preview.
 	 */
 	public async showPreviewInBrowser(
 		debug: boolean,
@@ -257,15 +257,14 @@ export class ServerGrouping extends Disposable {
 					connection: this._connection,
 				});
 			}
+
 			if (
+				this._serverTaskProvider.runTaskWithExternalPreview &&
 				vscode.workspace.workspaceFolders &&
 				vscode.workspace.workspaceFolders.length > 0
 			) {
-				await this._serverTaskProvider.extRunTaskOnPreview(
-					this._connection.workspace
-				);
+				await this._serverTaskProvider.extRunTask(this._connection.workspace);
 			} else {
-				// global tasks are currently not supported, just turn on server in this case.
 				await this.openServer();
 			}
 		} else {

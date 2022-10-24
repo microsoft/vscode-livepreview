@@ -32,8 +32,7 @@ export enum ServerStartedStatus {
  */
 export class ServerTaskProvider
 	extends Disposable
-	implements vscode.TaskProvider
-{
+	implements vscode.TaskProvider {
 	public static CustomBuildScriptType = 'Live Preview';
 	private _tasks: vscode.Task[] | undefined;
 	private _terminals: Map<string | undefined, ServerTaskTerminal>;
@@ -164,17 +163,6 @@ export class ServerTaskProvider
 			} else {
 				term.serverWillBeStopped();
 			}
-		}
-	}
-
-	/**
-	 * Run the Live Preview task if it's enabled to do so on external preview.
-	 */
-	public async extRunTaskOnPreview(
-		workspace: vscode.WorkspaceFolder | undefined
-	): Promise<void> {
-		if (this._runTaskWithExternalPreview) {
-			return this.extRunTask(workspace);
 		}
 	}
 
