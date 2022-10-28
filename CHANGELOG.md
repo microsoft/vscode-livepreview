@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.4 (October 31, 2022)
+- Fixed 401 error in Codespaces. [#369](https://github.com/microsoft/vscode-livepreview/issues/369)
+- Fixed external preview open when server is closed. [#370](https://github.com/microsoft/vscode-livepreview/issues/370)
+
 ## 0.4.3 (October 7, 2022)
 - Fixed 401 error in loading content with origin header. [#359](https://github.com/microsoft/vscode-livepreview/issues/359)
 - Fixed missing commands for opening in external preview. [#360](https://github.com/microsoft/vscode-livepreview/issues/360)
