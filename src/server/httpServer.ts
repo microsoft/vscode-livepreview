@@ -132,7 +132,6 @@ export class HttpServer extends Disposable {
 		req: http.IncomingMessage,
 		res: http.ServerResponse
 	): Promise<void> {
-
 		if (!req || !req.url) {
 			this._reportAndReturn(500, req, res);
 			return;
@@ -140,7 +139,13 @@ export class HttpServer extends Disposable {
 
 		const expectedUri = await this._connection.resolveExternalHTTPUri();
 		const expectedHost = expectedUri.authority;
-		if ((req.headers.host !== 'localhost' && req.headers.host !== this._connection.host && req.headers.host !== expectedHost) || (req.headers.origin && req.headers.origin !== `${expectedUri.scheme}://${expectedHost}`)) {
+		if (
+			(req.headers.host !== 'localhost' &&
+				req.headers.host !== this._connection.host &&
+				req.headers.host !== expectedHost) ||
+			(req.headers.origin &&
+				req.headers.origin !== `${expectedUri.scheme}://${expectedHost}`)
+		) {
 			this._reportAndReturn(401, req, res); // unauthorized
 			return;
 		}
@@ -158,7 +163,9 @@ export class HttpServer extends Disposable {
 			return;
 		}
 		// can't use vscode.Uri.joinPath because that doesn't parse out the query
-		const urlObj = vscode.Uri.parse(`${expectedUri.scheme}://${expectedUri.authority}${req.url}`);
+		const urlObj = vscode.Uri.parse(
+			`${expectedUri.scheme}://${expectedUri.authority}${req.url}`
+		);
 
 		let URLPathName = urlObj.path;
 		if (!basePath && (URLPathName == '/' || URLPathName == '')) {
@@ -236,7 +243,6 @@ export class HttpServer extends Disposable {
 				this._reportAndReturn(302, req, res); // redirect
 				return;
 			}
-
 
 			// Redirect to index.html if the request URL is a directory
 			if (fs.existsSync(path.join(absoluteReadPath, 'index.html'))) {

@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-env browser */
 /* global acquireVsCodeApi, WS_URL */
 
@@ -21,7 +22,7 @@
 			'find-nav': true,
 		};
 	let fadeLinkID = null,
-		ctrlDown = false;
+		onlyCtrlDown = false;
 
 	onLoad();
 
@@ -29,17 +30,16 @@
 	 * @description run on load.
 	 */
 	function onLoad() {
-		for (let groupClassName in navGroups) {
+		for (const groupClassName in navGroups) {
 			const leftRight = navGroups[groupClassName];
 			handleNavGroup(getNavGroupElems(groupClassName), leftRight);
 		}
 
-		connection.onerror = (error) => {
+		connection.addEventListener('error', (e) => {
 			console.log('WebSocket error: ');
-			console.log(error);
-		};
-
-		connection.onmessage = (event) => handleSocketMessage(event.data);
+			console.log(e);
+		});
+		connection.addEventListener('message', (e) => handleSocketMessage(e.data));
 
 		document.addEventListener('DOMContentLoaded', function (e) {
 			vscode.postMessage({
@@ -60,7 +60,7 @@
 			if (
 				!document.getElementById('find-box').hidden &&
 				e.key == 'Escape' &&
-				!ctrlDown
+				!onlyCtrlDown
 			) {
 				hideFind();
 			}
@@ -75,14 +75,14 @@
 
 		// listen for CTRL+F for opening the find menu
 		document.addEventListener('keydown', (e) => {
-			ctrlDown = e.ctrlKey || e.metaKey;
-			if ((e.key == 'F' || e.key == 'f') && ctrlDown) {
+			onlyCtrlDown = (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey;
+			if ((e.key == 'F' || e.key == 'f') && onlyCtrlDown) {
 				showFind();
 			}
 		});
 
 		document.addEventListener('keyup', (e) => {
-			ctrlDown = e.ctrlKey || e.metaKey;
+			onlyCtrlDown = (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey;
 		});
 
 		document.getElementById('more').addEventListener('keydown', (e) => {
@@ -114,9 +114,7 @@
 	 * @returns
 	 */
 	function getNavGroupElems(groupClassName) {
-		return Array.prototype.slice.call(
-			document.getElementsByClassName(groupClassName)
-		);
+		return Array.from(document.getElementsByClassName(groupClassName));
 	}
 
 	/**
@@ -148,7 +146,7 @@
 	 * @returns whether the event includes the key pressed.
 	 */
 	function checkKeyCodeDetected(event, key) {
-		return event.key == key;
+		return event.key === key;
 	}
 
 	/**
@@ -157,9 +155,8 @@
 	 * @param {boolean} useRightLeft whether or not to navigate using right/left arrows. If false, uses up/down arrows.
 	 */
 	function handleNavGroup(nav, useRightLeft) {
-		for (const i in nav) {
-			const currIndex = i;
-			nav[i].addEventListener('keydown', (e) => {
+		for (const [currIndex, elem] of nav.entries()) {
+			elem.addEventListener('keydown', (e) => {
 				if (checkKeyCodeDetected(e, useRightLeft ? KEY_LEFT : KEY_UP)) {
 					moveFocusNav(false, nav, currIndex);
 				} else if (
@@ -205,12 +202,12 @@
 	function adjustTabIndex() {
 		let reachedElem = false;
 		const leftMostNavGroup = getNavGroupElems('leftmost-nav');
-		for (const i in leftMostNavGroup) {
-			if (!leftMostNavGroup[i].disabled) {
+		for (const elem of leftMostNavGroup) {
+			if (!elem.disabled) {
 				if (reachedElem) {
-					leftMostNavGroup[i].tabIndex = -1;
+					elem.tabIndex = -1;
 				} else {
-					leftMostNavGroup[i].tabIndex = 0;
+					elem.tabIndex = 0;
 					reachedElem = true;
 				}
 			}
@@ -380,8 +377,8 @@
 	 * @param {boolean} appear whether or not it should be fade from `hide -> show`; otherwise, will fade from `show -> hide`.
 	 */
 	function fadeElement(appear, elem) {
-		let initOpacity = appear ? 0 : 1;
-		let finalOpacity = appear ? 1 : 0;
+		const initOpacity = appear ? 0 : 1;
+		const finalOpacity = appear ? 1 : 0;
 
 		elem.style.opacity = initOpacity;
 		clearInterval(fadeLinkID);
@@ -432,77 +429,84 @@
 	 * @description Add click/keyboard listeners to all toolbar buttons.
 	 */
 	function addNavButtonListeners() {
-		document.getElementById('back').onclick = function () {
+		document.getElementById('back').addEventListener('click', () => {
 			vscode.postMessage({
 				command: 'go-back',
 			});
-		};
+		});
 
-		document.getElementById('forward').onclick = function () {
+		document.getElementById('forward').addEventListener('click', () => {
 			vscode.postMessage({
 				command: 'go-forward',
 			});
-		};
+		});
 
-		document.getElementById('reload').onclick = function () {
+		document.getElementById('reload').addEventListener('click', () => {
 			document
 				.getElementById('hostedContent')
 				.contentWindow.postMessage({ command: 'refresh-forced' }, '*');
 			document.getElementById('reload').blur();
-		};
+		});
 
-		document.getElementById('browser-open').onclick = function () {
+		document.getElementById('browser-open').addEventListener('click', () => {
 			document.getElementById('extras-menu-pane').hidden = true;
 			vscode.postMessage({
 				command: 'open-browser',
 				text: '',
 			});
-		};
+		});
 
 		// close extra-menu-pane whenever not clicking on it
-		document.body.onblur = function () {
+		// todo: fix to use addEventListener while still being able to hide menu on clicking elsewhere
+		document.body.onblur = function (e) {
 			document.getElementById('extras-menu-pane').hidden = true;
 		};
 
-		document.body.onclick = function () {
+		document.body.addEventListener('click', () => {
 			document.getElementById('extras-menu-pane').hidden = true;
-		};
+		});
 
-		document.getElementById('extras-menu-pane').onclick = function (e) {
-			e.stopPropagation();
-		};
+		document
+			.getElementById('extras-menu-pane')
+			.addEventListener('click', (e) => {
+				e.stopPropagation();
+			});
 		const menuNavGroup = getNavGroupElems('extra-menu-nav');
 
-		for (let i in menuNavGroup) {
-			menuNavGroup[i].onmouseover = function (e) {
-				menuNavGroup[i].focus();
-			};
+		for (const menuNavItem of menuNavGroup) {
+			menuNavItem.addEventListener('mouseover', () => menuNavItem.focus());
 		}
 
-		document.getElementById('more').onclick = function (e) {
+		document.getElementById('more').addEventListener('click', (e) => {
 			const menuPane = document.getElementById('extras-menu-pane');
 			menuPane.hidden = !menuPane.hidden;
 			e.stopPropagation();
-		};
+		});
 
-		document.getElementById('devtools-open').onclick = function () {
+		document.getElementById('devtools-open').addEventListener('click', () => {
 			document.getElementById('extras-menu-pane').hidden = true;
 			vscode.postMessage({
 				command: 'devtools-open',
 				text: '',
 			});
-		};
+		});
 
-		document.getElementById('find').onclick = function () {
+		document.getElementById('find').addEventListener('click', () => {
 			document.getElementById('extras-menu-pane').hidden = true;
 			showFind();
-		};
+		});
 
-		document.getElementById('find-next').onclick = findNext;
+		document
+			.getElementById('find-next')
+			.addEventListener('click', () => findNext());
 
-		document.getElementById('find-prev').onclick = findPrev;
+		document
+			.getElementById('find-prev')
+			.addEventListener('click', () => findPrev());
 
-		document.getElementById('find-x').onclick = hideFind;
+		document
+			.getElementById('find-x')
+			.addEventListener('click', () => hideFind());
 	}
 
 	/**
