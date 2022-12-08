@@ -2,8 +2,9 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-env browser */
 
-/*eslint-env browser*/
 /**
  * Script injected by the VS Code Live Preview Extension.
  * http://aka.ms/live-preview
@@ -30,10 +31,10 @@ console.clear = createConsoleOverride('CLEAR');
  * @description run initialization on load.
  */
 function onLoad() {
-	let connection = new WebSocket('${WS_URL}');
-	connection.onmessage = (event) => handleSocketMessage(event.data);
+	const connection = new WebSocket('${WS_URL}');
+	connection.addEventListener('message', (e) => handleSocketMessage(e.data));
 
-	let ctrlDown = false;
+	let onlyCtrlDown = false;
 
 	const commandPayload = {
 		path: window.location,
@@ -49,16 +50,18 @@ function onLoad() {
 	handleLinkHoverEnd();
 
 	const links = document.getElementsByTagName('a');
-	for (const i in links) {
+	for (const link of links) {
 		// In embedded preview, all link clicks must be checked to see if the target page can be injected with this file's script.
-		links[i].onclick = (e) => handleLinkClick(e.target.href);
-		links[i].onmouseenter = (e) => handleLinkHoverStart(e.target.href);
-		links[i].onmouseleave = handleLinkHoverEnd;
+		link.addEventListener('click', (e) => handleLinkClick(e.target.href));
+		link.addEventListener('mouseenter', (e) =>
+			handleLinkHoverStart(e.target.href)
+		);
+		link.addEventListener('mouseleave', () => handleLinkHoverEnd());
 	}
 
 	document.addEventListener('keydown', (e) => {
-		ctrlDown = e.ctrlKey || e.metaKey;
-		if ((e.key == 'F' || e.key == 'f') && ctrlDown) {
+		onlyCtrlDown = (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey;
+		if ((e.key == 'F' || e.key == 'f') && onlyCtrlDown) {
 			postParentMessage({
 				command: 'show-find',
 			});
@@ -80,7 +83,7 @@ function onLoad() {
 	});
 
 	document.addEventListener('keyup', (e) => {
-		ctrlDown = e.ctrlKey || e.metaKey;
+		onlyCtrlDown = (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey;
 		postParentMessage({
 			command: 'did-keyup',
 			key: {
@@ -286,7 +289,7 @@ function postParentMessage(data) {
  */
 function handleLinkClick(linkTarget) {
 	const host = '${HTTP_URL}';
-	if (linkTarget && linkTarget != '') {
+	if (linkTarget && linkTarget != '' && !linkTarget.startsWith('javascript:')) {
 		if (!linkTarget.startsWith(host)) {
 			// The embedded preview does not support external sites; let the extension know that an external link has been
 			// opened in the embedded preview; this will open the modal to ask the user to navigate in an external browser
