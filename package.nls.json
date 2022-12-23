@@ -14,7 +14,6 @@
 	"settings.showServerStatusNotifications": "Whether or not to show information messages on server on/off status change.",
 	"settings.autoRefreshPreview": "How often to automatically refresh the preview.",
 	"settings.openPreviewTarget": "The preferred target for previews.",
-	"settings.tasks.browserPreviewLaunchServerLogging": "Whether the auto-generated task terminal has logging.",
 	"settings.notifyOnOpenLooseFile": "Whether to notify the user when opening a preview for a file that is not part of the currently opened workspace (or the workspace where the server is hosted).",
 	"settings.tasks.runTaskWithExternalPreview": "Whether or not to pair external preview instances with the auto-generated server task. When disabled, the server will also not automatically close (until the window is closed).",
 	"settings.defaultPreviewPath": "The file to automatically show upon starting the server. Leave blank to open at the index.",
