@@ -62,8 +62,8 @@ export class ContentLoader extends Disposable {
 	constructor(
 		_extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
-		private readonly _endpointManager: EndpointManager,
-		private readonly _connection: Connection
+		readonly _endpointManager: EndpointManager,
+		readonly _connection: Connection
 	) {
 		super();
 		this._scriptInjector = new HTMLInjector(_extensionUri, _connection);
@@ -175,19 +175,19 @@ export class ContentLoader extends Disposable {
 	 * @param {string} readPath the absolute path visited.
 	 * @param {string} relativePath the relative path (from workspace root).
 	 * @param {string} titlePath the path shown in the title.
-	 * @returns {IRespInfo} the response info.
+	 * @returns {Promise<IRespInfo>} the response info.
 	 */
-	public createIndexPage(
+	public async createIndexPage(
 		readPath: string,
 		relativePath: string,
 		titlePath = relativePath
-	): IRespInfo {
+	): Promise<IRespInfo> {
 		/* __GDPR__
 			"server.indexPage" : {}
 		*/
 		this._reporter.sendTelemetryEvent('server.indexPage');
 
-		const childFiles = fs.readdirSync(readPath);
+		const childFiles = await this.fsReadDir(readPath);
 
 		const fileEntries = new Array<IIndexFileEntry>();
 		const dirEntries = new Array<IIndexDirEntry>();
@@ -200,7 +200,7 @@ export class ContentLoader extends Disposable {
 			const relativeFileWithChild = path.join(relativePath, childFile);
 			const absolutePath = path.join(readPath, childFile);
 
-			const fileStats = fs.statSync(absolutePath);
+			const fileStats = (await PathUtil.FileExistsStat(absolutePath)).stat;
 			const modifiedDateTimeString = FormatDateTime(fileStats.mtime);
 
 			if (fileStats.isDirectory()) {
@@ -224,7 +224,7 @@ export class ContentLoader extends Disposable {
 
 		dirEntries.forEach(
 			(elem: IIndexDirEntry) =>
-				(directoryContents += `
+			(directoryContents += `
 				<tr>
 				<td><a href="${elem.LinkSrc}/">${elem.LinkName}/</a></td>
 				<td></td>
@@ -234,7 +234,7 @@ export class ContentLoader extends Disposable {
 
 		fileEntries.forEach(
 			(elem: IIndexFileEntry) =>
-				(directoryContents += `
+			(directoryContents += `
 				<tr>
 				<td><a href="${elem.LinkSrc}">${elem.LinkName}</a></td>
 				<td>${elem.FileSize}</td>
@@ -286,7 +286,7 @@ export class ContentLoader extends Disposable {
 	 * @param {boolean} inFilesystem whether the path is in the filesystem (false for untitled files in editor)
 	 * @returns {IRespInfo} the response info
 	 */
-	public getFileStream(readPath: string, inFilesystem = true): IRespInfo {
+	public async getFileStream(readPath: string, inFilesystem = true): Promise<IRespInfo> {
 		this._servedFiles.add(readPath);
 		const workspaceDocuments = vscode.workspace.textDocuments;
 		let i = 0;
@@ -314,7 +314,7 @@ export class ContentLoader extends Disposable {
 
 		if (inFilesystem && i == workspaceDocuments.length) {
 			if (isFileInjectable(readPath)) {
-				const buffer = fs.readFileSync(readPath, 'utf8');
+				const buffer = await PathUtil.FileRead(readPath);
 				const injectedFileContents = this._injectIntoFile(buffer.toString());
 				stream = Stream.Readable.from(injectedFileContents);
 			} else {
@@ -365,5 +365,13 @@ export class ContentLoader extends Disposable {
 			this._scriptInjection +
 			contents.substr(tagEnd);
 		return newContents;
+	}
+
+	private fsReadDir(path: string): Promise<string[]> {
+		return (new Promise((resolve) => fs.readdir(path,
+			(err, files) => {
+				resolve(err ? [] : files);
+			})
+		));
 	}
 }

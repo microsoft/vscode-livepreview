@@ -47,8 +47,10 @@ export class PathUtil {
 	 * @returns {string} The parent pathname that the file belongs to; e.g. `c:/a/file/path.txt` returns `c:/a/file/`.
 	 * Using `c:/a/file/` should return `c:/a/file/` since `c:/a/file/` is a directory already.
 	 */
-	public static GetParentDir(file: string): string {
-		if (fs.existsSync(file) && fs.statSync(file).isDirectory()) {
+	public static async GetParentDir(file: string): Promise<string> {
+
+		const existsStatInfo = await PathUtil.FileExistsStat(file);
+		if (existsStatInfo.exists && existsStatInfo.stat.isDirectory()) {
 			return file;
 		}
 		return path.dirname(file);
@@ -58,8 +60,8 @@ export class PathUtil {
 	 * @param {string} file a file path.
 	 * @returns {string} The most immediate parent director for the file; e.g. `c:/a/file/path.txt` returns `file`.
 	 */
-	public static GetImmediateParentDir(file: string): string | undefined {
-		return PathUtil.GetParentDir(file).split(this._pathSepRegex).pop();
+	public static async GetImmediateParentDir(file: string): Promise<string | undefined> {
+		return (await PathUtil.GetParentDir(file)).split(this._pathSepRegex).pop();
 	}
 
 	/**
@@ -67,13 +69,13 @@ export class PathUtil {
 	 * @param {boolean} returnEmptyOnDir whether to return an empty string when given an existing directory.
 	 * @returns {string} The filename from the path; e.g. `c:/a/file/path.txt` returns `path.txt`.
 	 */
-	public static GetFileName(file: string, returnEmptyOnDir = false): string {
-		if (
-			returnEmptyOnDir &&
-			fs.existsSync(file) &&
-			fs.statSync(file).isDirectory()
-		) {
-			return '';
+	public static async GetFileName(file: string, returnEmptyOnDir = false): Promise<string> {
+
+		if (returnEmptyOnDir) {
+			const existsStatInfo = await PathUtil.FileExistsStat(file);
+			if (existsStatInfo.exists && existsStatInfo.stat.isDirectory()) {
+				return '';
+			}
 		}
 		return path.basename(file);
 	}
@@ -150,12 +152,48 @@ export class PathUtil {
 	 * @param {string} file path to test.
 	 * @returns {vscode.WorkspaceFolder | undefined} the workspace it belongs to
 	 */
-	public static PathExistsRelativeToAnyWorkspace(
+	public static async PathExistsRelativeToAnyWorkspace(
 		file: string
-	): vscode.WorkspaceFolder | undefined {
+	): Promise<vscode.WorkspaceFolder | undefined> {
 		const workspaces = vscode.workspace.workspaceFolders;
-		return workspaces?.find((workspace) =>
-			fs.existsSync(path.join(workspace.uri.fsPath, file))
-		);
+
+		if (!workspaces) {
+			return undefined;
+		}
+
+		const promises = workspaces.map((workspace) =>
+			PathUtil.FileExistsStat(path.join(workspace.uri.fsPath, file)));
+		const idx = (await Promise.all(promises)).findIndex((elem) => elem.exists);
+		if (idx === -1) {
+			return undefined;
+		}
+		return workspaces[idx];
+	}
+
+	/**
+	 * Promisify-ed version of fs.stat.
+	 * @param file
+	 * @returns object containing exists and stat info
+	 */
+	public static async FileExistsStat(file: string): Promise<{ exists: boolean, stat: fs.Stats }> {
+		return new Promise((resolve) => {
+			fs.stat(file, (err, stat) => {
+				resolve({ exists: (err !== undefined), stat });
+			});
+		});
+	}
+
+	/**
+	 * Promisify-ed version of fs.readFile.
+	 * Reads in utf-8 encoding.
+	 * @param file
+	 * @returns file contents
+	 */
+	public static async FileRead(file: string): Promise<string> {
+		return new Promise((resolve) => {
+			fs.readFile(file, 'utf-8', (err, data) => {
+				resolve(err ? '' : data.toString());
+			});
+		});
 	}
 }
