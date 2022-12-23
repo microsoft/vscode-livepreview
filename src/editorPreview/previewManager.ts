@@ -64,7 +64,7 @@ export class PreviewManager extends Disposable {
 		connection: Connection,
 		file?: vscode.Uri
 	): Promise<void> {
-		const path = file ? this._fileUriToPath(file, connection) : '/';
+		const path = file ? await this._fileUriToPath(file, connection) : '/';
 		// If we already have a panel, show it.
 		if (this.currentPanel) {
 			await this.currentPanel.reveal(
@@ -97,13 +97,13 @@ export class PreviewManager extends Disposable {
 	 * @param {boolean} debug whether we are opening in a debug session.
 	 * @param {Connection} connection the connection to connect using
 	 */
-	public launchFileInExternalBrowser(
+	public async launchFileInExternalBrowser(
 		debug: boolean,
 		connection: Connection,
 		file?: vscode.Uri
-	): void {
+	): Promise<void> {
 		const path = file
-			? PathUtil.ConvertToUnixPath(this._fileUriToPath(file, connection))
+			? PathUtil.ConvertToUnixPath(await this._fileUriToPath(file, connection))
 			: '/';
 
 		const url = `http://${connection.host}:${connection.httpPort}${path}`;
@@ -172,11 +172,11 @@ export class PreviewManager extends Disposable {
 	 * @param {Connection} connection the connection to connect using
 	 * @returns {string} the transformed path if the original `file` was realtive.
 	 */
-	private _fileUriToPath(file: vscode.Uri, connection: Connection): string {
+	private async _fileUriToPath(file: vscode.Uri, connection: Connection): Promise<string> {
 		let path = '/';
 		if (!connection?.workspace) {
 			this._notifyLooseFileOpen();
-			path = this._endpointManager.encodeLooseFileEndpoint(file.fsPath);
+			path = await this._endpointManager.encodeLooseFileEndpoint(file.fsPath);
 		} else if (connection) {
 			path = connection.getFileRelativeToWorkspace(file.fsPath) ?? '';
 		}
@@ -223,11 +223,13 @@ export class PreviewManager extends Disposable {
 				this.currentPanel = undefined;
 				const closeServerDelay =
 					SettingUtil.GetConfig().serverKeepAliveAfterEmbeddedPreviewClose;
-				this._currentTimeout = setTimeout(() => {
-					this._serverExpired();
+				if (closeServerDelay !== 0) {
+					this._currentTimeout = setTimeout(() => {
+						this._serverExpired();
 
-					this.previewActive = false;
-				}, Math.floor(closeServerDelay * 1000 * 60));
+						this.previewActive = false;
+					}, Math.floor(closeServerDelay * 1000 * 60));
+				}
 				listener.dispose();
 			})
 		);
