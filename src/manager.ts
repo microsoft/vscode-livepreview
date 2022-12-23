@@ -38,8 +38,7 @@ export interface IServerQuickPickItem extends vscode.QuickPickItem {
  */
 class PanelSerializer
 	extends Disposable
-	implements vscode.WebviewPanelSerializer
-{
+	implements vscode.WebviewPanelSerializer {
 	private readonly _onShouldRevive = this._register(
 		new vscode.EventEmitter<{ webviewPanel: vscode.WebviewPanel; state: any }>()
 	);
@@ -311,10 +310,18 @@ export class Manager extends Disposable {
 		return this._openPreview(internal, serverGrouping, file, debug);
 	}
 
+	public async forceCloseServers(): Promise<void> {
+		if (this._serverGroupings.size > 1) {
+			this._showCloseServerPicker();
+		} else {
+			this.closeAllServers();
+		}
+	}
+
 	/**
 	 * Show the picker to select a server to close
 	 */
-	public async showCloseServerPicker(): Promise<void> {
+	private async _showCloseServerPicker(): Promise<void> {
 		const disposables: vscode.Disposable[] = [];
 
 		const quickPick = vscode.window.createQuickPick<IServerQuickPickItem>();
