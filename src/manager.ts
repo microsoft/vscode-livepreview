@@ -38,8 +38,7 @@ export interface IServerQuickPickItem extends vscode.QuickPickItem {
  */
 class PanelSerializer
 	extends Disposable
-	implements vscode.WebviewPanelSerializer
-{
+	implements vscode.WebviewPanelSerializer {
 	private readonly _onShouldRevive = this._register(
 		new vscode.EventEmitter<{ webviewPanel: vscode.WebviewPanel; state: any }>()
 	);
@@ -367,13 +366,13 @@ export class Manager extends Disposable {
 			this._openPreviewWithNoTarget();
 			return;
 		}
-		// let foundPath = false;
 		const workspace = PathUtil.PathExistsRelativeToAnyWorkspace(filePath);
 		if (workspace) {
 			const file = vscode.Uri.joinPath(workspace.uri, filePath);
 			this.openPreviewAtFileUri(file, {
 				workspace: workspace,
 			});
+			return;
 		}
 
 		if (existsSync(filePath)) {
