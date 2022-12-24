@@ -162,7 +162,7 @@ export function activate(context: vscode.ExtensionContext): void {
 				"server.forceClose" : {}
 			*/
 			reporter.sendTelemetryEvent('server.forceClose');
-			serverPreview.showCloseServerPicker();
+			serverPreview.forceCloseServers();
 		})
 	);
 
