@@ -17,6 +17,7 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { UriSchemes } from '../utils/constants';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { Connection } from '../connectionInfo/connection';
+import { PathUtil } from '../utils/pathUtil';
 
 /**
  * @description override the `Websocket.Server` class to check websocket connection origins;
@@ -193,12 +194,12 @@ export class WSServer extends Disposable {
 	 * @param {WebSocket} ws the websocket server instance.
 	 */
 	private _handleWSConnection(basePath: string, ws: WebSocket): void {
-		ws.on('message', (message: string) => {
+		ws.on('message', async (message: string) => {
 			const parsedMessage = JSON.parse(message);
 			switch (parsedMessage.command) {
 				// perform the url check
 				case 'urlCheck': {
-					const results = this._performTargetInjectableCheck(
+					const results = await this._performTargetInjectableCheck(
 						basePath,
 						parsedMessage.url
 					);
@@ -227,10 +228,10 @@ export class WSServer extends Disposable {
 	 * @returns {boolean,string} info on injectability, in addition to the pathname
 	 * 	in case it needs to be forwarded to the webview.
 	 */
-	private _performTargetInjectableCheck(
+	private async _performTargetInjectableCheck(
 		basePath: string,
 		urlString: string
-	): { injectable: boolean; pathname: string; port: number } {
+	): Promise<{ injectable: boolean; pathname: string; port: number }> {
 		const url = new URL(urlString);
 		let absolutePath = path.join(basePath, url.pathname);
 
@@ -242,18 +243,19 @@ export class WSServer extends Disposable {
 			// no op
 		}
 
-		if (!fs.existsSync(absolutePath)) {
+		if (!(await PathUtil.FileExistsStat(absolutePath)).exists) {
 			const decodedLocation =
-				this._endpointManager.decodeLooseFileEndpoint(absolutePath);
-			if (!decodedLocation || !fs.existsSync(decodedLocation)) {
+				await this._endpointManager.decodeLooseFileEndpoint(absolutePath);
+			if (!decodedLocation || !(await PathUtil.FileExistsStat(decodedLocation)).exists) {
 				return { injectable: false, pathname: url.pathname, port };
 			} else {
 				absolutePath = decodedLocation;
 			}
 		}
 
-		if (
-			fs.statSync(absolutePath).isDirectory() ||
+		const existsStatInfo = await PathUtil.FileExistsStat(absolutePath);
+		if (existsStatInfo.stat &&
+			existsStatInfo.stat.isDirectory() ||
 			isFileInjectable(absolutePath)
 		) {
 			return { injectable: true, pathname: url.pathname, port };

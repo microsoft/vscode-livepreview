@@ -145,12 +145,12 @@ export class Connection extends Disposable {
 	 * @param {string} file file to test.
 	 * @returns {boolean} whether the path exists relative the default workspace
 	 */
-	public pathExistsRelativeToWorkspace(file: string): boolean {
+	public async pathExistsRelativeToWorkspace(file: string): Promise<boolean> {
 		if (!this.workspacePath) {
 			return false;
 		}
 		const fullPath = path.join(this.workspacePath, file);
-		return fs.existsSync(fullPath);
+		return (await PathUtil.FileExistsStat(fullPath)).exists;
 	}
 
 	/**

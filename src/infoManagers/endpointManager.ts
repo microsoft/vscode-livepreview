@@ -39,10 +39,10 @@ export class EndpointManager extends Disposable {
 	 * @param location the file location to encode.
 	 * @returns the encoded endpoint.
 	 */
-	public encodeLooseFileEndpoint(location: string): string {
-		const parent = PathUtil.GetImmediateParentDir(location);
-		let fullParent = PathUtil.GetParentDir(location);
-		const child = PathUtil.GetFileName(location, true);
+	public async encodeLooseFileEndpoint(location: string): Promise<string> {
+		const parent = await PathUtil.GetImmediateParentDir(location);
+		let fullParent = await PathUtil.GetParentDir(location);
+		const child = await PathUtil.GetFileName(location, true);
 
 		fullParent = PathUtil.ConvertToPosixPath(fullParent);
 		this.validEndpointRoots.add(fullParent);
@@ -70,13 +70,15 @@ export class EndpointManager extends Disposable {
 	 * @param {string} urlPath the endpoint to check
 	 * @returns {string | undefined} the filesystem path that it loads or undefined if it doesn't decode to anything.
 	 */
-	public decodeLooseFileEndpoint(urlPath: string): string | undefined {
+	public async decodeLooseFileEndpoint(urlPath: string): Promise<string | undefined> {
 		const path = PathUtil.UnescapePathParts(urlPath);
-		if (this.validPath(path) && fs.existsSync(path)) {
-			return path;
-		} else {
-			return undefined;
+		if (this.validPath(path)) {
+			const exists = (await PathUtil.FileExistsStat(path)).exists;
+			if (exists) {
+				return path;
+			}
 		}
+		return undefined;
 	}
 
 	/**

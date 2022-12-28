@@ -312,14 +312,6 @@ export class ServerGrouping extends Disposable {
 	}
 
 	/**
-	 * @param {string} file the path to test.
-	 * @returns {boolean} whether the path exists when placed relative to the workspae root.
-	 */
-	public pathExistsRelativeToWorkspace(file: string): boolean {
-		return this._connection.pathExistsRelativeToWorkspace(file);
-	}
-
-	/**
 	 * Find the first free port following (or on) the initial port configured in settings
 	 * @param startPort the port to start the check on
 	 * @param callback the callback triggerred when a free port has been found.

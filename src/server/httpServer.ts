@@ -191,7 +191,7 @@ export class HttpServer extends Disposable {
 				const untitledFileName = URLPathName.substr(
 					URLPathName.lastIndexOf('/') + 1
 				);
-				const content = this._contentLoader.getFileStream(
+				const content = await this._contentLoader.getFileStream(
 					untitledFileName,
 					false
 				);
@@ -207,11 +207,14 @@ export class HttpServer extends Disposable {
 				}
 			}
 
-			if (!fs.existsSync(absoluteReadPath)) {
+			if (!(await PathUtil.FileExistsStat(absoluteReadPath)).exists) {
 				const decodedReadPath =
-					this._endpointManager.decodeLooseFileEndpoint(URLPathName);
+					await this._endpointManager.decodeLooseFileEndpoint(URLPathName);
 				looseFile = true;
-				if (decodedReadPath && fs.existsSync(decodedReadPath)) {
+				if (
+					decodedReadPath &&
+					(await PathUtil.FileExistsStat(decodedReadPath)).exists
+				) {
 					absoluteReadPath = decodedReadPath;
 				}
 			}
@@ -223,7 +226,8 @@ export class HttpServer extends Disposable {
 			absoluteReadPath = basePath;
 		}
 
-		if (!fs.existsSync(absoluteReadPath)) {
+		const absPathExistsStatInfo = await PathUtil.FileExistsStat(absoluteReadPath);
+		if (!absPathExistsStatInfo.exists) {
 			const respInfo =
 				this._contentLoader.createPageDoesNotExist(absoluteReadPath);
 			res.writeHead(404, {
@@ -235,7 +239,7 @@ export class HttpServer extends Disposable {
 			stream?.pipe(res);
 			return;
 		}
-		if (fs.statSync(absoluteReadPath).isDirectory()) {
+		if (absPathExistsStatInfo.stat && absPathExistsStatInfo.stat.isDirectory()) {
 			if (!URLPathName.endsWith('/')) {
 				const queries = urlObj.query;
 				URLPathName = encodeURI(URLPathName);
@@ -245,14 +249,14 @@ export class HttpServer extends Disposable {
 			}
 
 			// Redirect to index.html if the request URL is a directory
-			if (fs.existsSync(path.join(absoluteReadPath, 'index.html'))) {
+			if ((await PathUtil.FileExistsStat(path.join(absoluteReadPath, 'index.html'))).exists) {
 				absoluteReadPath = path.join(absoluteReadPath, 'index.html');
-				const respInfo = this._contentLoader.getFileStream(absoluteReadPath);
+				const respInfo = await this._contentLoader.getFileStream(absoluteReadPath);
 				stream = respInfo.Stream;
 				contentType = respInfo.ContentType ?? '';
 			} else {
 				// create a default index page
-				const respInfo = this._contentLoader.createIndexPage(
+				const respInfo = await this._contentLoader.createIndexPage(
 					absoluteReadPath,
 					URLPathName,
 					looseFile
@@ -263,7 +267,7 @@ export class HttpServer extends Disposable {
 				contentType = respInfo.ContentType ?? '';
 			}
 		} else {
-			const respInfo = this._contentLoader.getFileStream(absoluteReadPath);
+			const respInfo = await this._contentLoader.getFileStream(absoluteReadPath);
 			stream = respInfo.Stream;
 			contentType = respInfo.ContentType ?? '';
 		}

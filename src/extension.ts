@@ -47,9 +47,9 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(reporter);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start`, () => {
+		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start`, async () => {
 			const filePath = SettingUtil.GetConfig().defaultPreviewPath;
-			serverPreview.openPreviewAtFileString(filePath);
+			await serverPreview.openPreviewAtFileString(filePath);
 		})
 	);
 
@@ -162,7 +162,7 @@ export function activate(context: vscode.ExtensionContext): void {
 				"server.forceClose" : {}
 			*/
 			reporter.sendTelemetryEvent('server.forceClose');
-			serverPreview.showCloseServerPicker();
+			serverPreview.forceCloseServers();
 		})
 	);
 
