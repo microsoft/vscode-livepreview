@@ -1,0 +1,18 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Preview Page 0",
+			"command": "${input:preview-args}",
+			"problemMatcher": []
+		}
+	],
+	"inputs": [
+		{
+			"id": "preview-args",
+			"type": "command",
+			"command": "livePreview.start.preview.atFileString",
+			"args": "/test-workspace/page0.html"
+		}
+	]
+}
