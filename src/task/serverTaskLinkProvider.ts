@@ -23,8 +23,7 @@ const localize = nls.loadMessageBundle();
  */
 export class serverTaskLinkProvider
 	extends Disposable
-	implements vscode.TerminalLinkProvider
-{
+	implements vscode.TerminalLinkProvider {
 	// Triggers the editor to open a file, but to the side of the preview,
 	// which means that the manager must use the panel column info from the preview
 	// to open the file in a column where the preview is not.
@@ -81,7 +80,7 @@ export class serverTaskLinkProvider
 		this._reporter.sendTelemetryEvent('task.terminal.handleTerminalLink');
 
 		if (link.inEditor) {
-			this._openRelativeLinkInWorkspace(link.data, link.isDir);
+			await this._openRelativeLinkInWorkspace(link.data, link.isDir);
 		} else {
 			const uri = vscode.Uri.parse(link.data);
 			this._onShouldLaunchPreview.fire({ uri });
@@ -192,9 +191,9 @@ export class serverTaskLinkProvider
 	 * @param {string} file the path to open in the editor
 	 * @param {boolean} isDir whether it is a directory.
 	 */
-	private _openRelativeLinkInWorkspace(file: string, isDir: boolean): void {
+	private async _openRelativeLinkInWorkspace(file: string, isDir: boolean): Promise<void> {
 		file = unescape(file);
-		const workspace = PathUtil.PathExistsRelativeToAnyWorkspace(file);
+		const workspace = await PathUtil.PathExistsRelativeToAnyWorkspace(file);
 
 		const fullPath = workspace
 			? workspace?.uri + file
