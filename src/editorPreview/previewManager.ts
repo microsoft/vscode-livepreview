@@ -223,11 +223,13 @@ export class PreviewManager extends Disposable {
 				this.currentPanel = undefined;
 				const closeServerDelay =
 					SettingUtil.GetConfig().serverKeepAliveAfterEmbeddedPreviewClose;
-				this._currentTimeout = setTimeout(() => {
-					this._serverExpired();
+				if (closeServerDelay !== 0) {
+					this._currentTimeout = setTimeout(() => {
+						this._serverExpired();
 
-					this.previewActive = false;
-				}, Math.floor(closeServerDelay * 1000 * 60));
+						this.previewActive = false;
+					}, Math.floor(closeServerDelay * 1000 * 60));
+				}
 				listener.dispose();
 			})
 		);
