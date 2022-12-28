@@ -138,7 +138,7 @@ export class SettingUtil {
 	 * @description Update a Live Preview setting
 	 * @param {string} settingSuffix the suffix, `livePreview.<suffix>` of the setting to set.
 	 * @param {T} value the value to set the setting to.
-	 * @param {boolean} scope whether to set the user setting, defaults to true.
+	 * @param {vscode.ConfigurationTarget | boolean | null} scope settings scope
 	 */
 	public static UpdateSettings<T>(
 		settingSuffix: string,
