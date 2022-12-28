@@ -379,6 +379,7 @@ export class Manager extends Disposable {
 			this.openPreviewAtFileUri(file, {
 				workspace: workspace,
 			});
+			return;
 		}
 
 		if ((await PathUtil.FileExistsStat(filePath)).exists) {

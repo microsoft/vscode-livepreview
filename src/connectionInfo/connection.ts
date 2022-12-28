@@ -163,7 +163,7 @@ export class Connection extends Disposable {
 		const workspaceFolder = this.workspacePath;
 
 		if (workspaceFolder && this._absPathInWorkspace(path)) {
-			return PathUtil.ConvertToUnixPath(path.substr(workspaceFolder.length));
+			return PathUtil.ConvertToPosixPath(path.substr(workspaceFolder.length));
 		} else {
 			return undefined;
 		}

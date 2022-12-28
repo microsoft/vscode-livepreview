@@ -100,10 +100,24 @@ export class PathUtil {
 
 	/**
 	 * @param {string} file the file to convert
-	 * @returns {string} the file path using the `/` unix path delimeter.
+	 * @returns {string} the file path using the `/` posix-compliant path delimeter.
 	 */
-	public static ConvertToUnixPath(file: string): string {
-		return file.replace(/\\/g, '/');
+	public static ConvertToPosixPath(file: string): string {
+		return file.split(path.sep).join(path.posix.sep);
+	}
+
+	/**
+	 * Get file path relative to workspace root.
+	 * @param file
+	 * @returns relative path (or undefined if the file does not belong to a workspace)
+	 */
+
+	public static getPathRelativeToWorkspace(file: vscode.Uri): string | undefined {
+		const workspaceFolder = vscode.workspace.getWorkspaceFolder(file);
+		if (!workspaceFolder) {
+			return undefined;
+		}
+		return file.fsPath.substring(workspaceFolder.uri.fsPath.length);
 	}
 
 	/**
@@ -117,7 +131,7 @@ export class PathUtil {
 		if (!file) {
 			return file;
 		}
-		file = PathUtil.ConvertToUnixPath(file);
+		file = PathUtil.ConvertToPosixPath(file);
 		const parts = file.split('/');
 
 		const newParts = [];

@@ -170,10 +170,26 @@ export function activate(context: vscode.ExtensionContext): void {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.setDefaultOpenFile`,
 			(file: vscode.Uri) => {
+				// Will set the path on workspace settings if workspace is open
+				// otherwise, it will set user setting.
+
+				const numWorkspaceFolders = vscode.workspace.workspaceFolders?.length ?? 0;
+				const relativePath = PathUtil.getPathRelativeToWorkspace(file);
+
+				if (relativePath) {
+					const setPath = (numWorkspaceFolders === 1) ? relativePath : file.fsPath;
+					SettingUtil.UpdateSettings(
+						Settings.defaultPreviewPath,
+						PathUtil.ConvertToPosixPath(setPath),
+						vscode.ConfigurationTarget.Workspace
+					);
+					return;
+				}
+
 				SettingUtil.UpdateSettings(
 					Settings.defaultPreviewPath,
-					file.fsPath,
-					false
+					PathUtil.ConvertToPosixPath(file.fsPath),
+					vscode.ConfigurationTarget.Global
 				);
 			}
 		)
