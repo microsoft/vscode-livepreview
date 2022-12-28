@@ -201,6 +201,9 @@ export class ContentLoader extends Disposable {
 			const absolutePath = path.join(readPath, childFile);
 
 			const fileStats = (await PathUtil.FileExistsStat(absolutePath)).stat;
+			if (!fileStats) {
+				continue;
+			}
 			const modifiedDateTimeString = FormatDateTime(fileStats.mtime);
 
 			if (fileStats.isDirectory()) {

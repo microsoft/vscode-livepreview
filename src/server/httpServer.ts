@@ -239,7 +239,7 @@ export class HttpServer extends Disposable {
 			stream?.pipe(res);
 			return;
 		}
-		if (absPathExistsStatInfo.stat.isDirectory()) {
+		if (absPathExistsStatInfo.stat && absPathExistsStatInfo.stat.isDirectory()) {
 			if (!URLPathName.endsWith('/')) {
 				const queries = urlObj.query;
 				URLPathName = encodeURI(URLPathName);

@@ -253,8 +253,9 @@ export class WSServer extends Disposable {
 			}
 		}
 
-		if (
-			(await PathUtil.FileExistsStat(absolutePath)).stat.isDirectory() ||
+		const existsStatInfo = await PathUtil.FileExistsStat(absolutePath);
+		if (existsStatInfo.stat &&
+			existsStatInfo.stat.isDirectory() ||
 			isFileInjectable(absolutePath)
 		) {
 			return { injectable: true, pathname: url.pathname, port };

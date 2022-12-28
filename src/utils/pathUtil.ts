@@ -50,7 +50,7 @@ export class PathUtil {
 	public static async GetParentDir(file: string): Promise<string> {
 
 		const existsStatInfo = await PathUtil.FileExistsStat(file);
-		if (existsStatInfo.exists && existsStatInfo.stat.isDirectory()) {
+		if (existsStatInfo.exists && existsStatInfo.stat && existsStatInfo.stat.isDirectory()) {
 			return file;
 		}
 		return path.dirname(file);
@@ -73,7 +73,7 @@ export class PathUtil {
 
 		if (returnEmptyOnDir) {
 			const existsStatInfo = await PathUtil.FileExistsStat(file);
-			if (existsStatInfo.exists && existsStatInfo.stat.isDirectory()) {
+			if (existsStatInfo.exists && existsStatInfo.stat && existsStatInfo.stat.isDirectory()) {
 				return '';
 			}
 		}
@@ -171,29 +171,23 @@ export class PathUtil {
 	}
 
 	/**
-	 * Promisify-ed version of fs.stat.
 	 * @param file
 	 * @returns object containing exists and stat info
 	 */
-	public static async FileExistsStat(file: string): Promise<{ exists: boolean, stat: fs.Stats }> {
-		return new Promise((resolve) => {
-			fs.stat(file, (err, stat) => {
-				resolve({ exists: (err === null), stat });
-			});
-		});
+	public static async FileExistsStat(file: string): Promise<{ exists: boolean, stat: fs.Stats | undefined }> {
+		return fs.promises.stat(file)
+			.then((stat) => { return { exists: true, stat }; })
+			.catch(() => { return { exists: false, stat: undefined }; });
 	}
 
 	/**
-	 * Promisify-ed version of fs.readFile.
-	 * Reads in utf-8 encoding.
+	 * Reads file in utf-8 encoding.
 	 * @param file
-	 * @returns file contents
+	 * @returns file contents (or empty string if error encountered)
 	 */
 	public static async FileRead(file: string): Promise<string> {
-		return new Promise((resolve) => {
-			fs.readFile(file, 'utf-8', (err, data) => {
-				resolve(err ? '' : data.toString());
-			});
-		});
+		return fs.promises.readFile(file, 'utf-8')
+			.then((data) => data.toString())
+			.catch(() => '');
 	}
 }
