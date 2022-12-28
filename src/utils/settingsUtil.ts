@@ -19,6 +19,7 @@ export interface ILivePreviewConfigItem {
 	defaultPreviewPath: string;
 	debugOnExternalPreview: boolean;
 	hostIP: string;
+	customExternalBrowser: CustomExternalBrowser;
 }
 
 /**
@@ -36,6 +37,13 @@ export enum AutoRefreshPreview {
 export enum OpenPreviewTarget {
 	embeddedPreview = 'Embedded Preview',
 	externalBrowser = 'External Browser',
+}
+
+export enum CustomExternalBrowser {
+	edge = 'Edge',
+	chrome = 'Chrome',
+	firefox = 'Firefox',
+	none = 'None'
 }
 
 /**
@@ -59,6 +67,7 @@ export const Settings: any = {
 	defaultPreviewPath: 'defaultPreviewPath',
 	debugOnExternalPreview: 'debugOnExternalPreview',
 	hostIP: 'hostIP',
+	customExternalBrowser: 'customExternalBrowser'
 };
 
 /**
@@ -109,6 +118,7 @@ export class SettingUtil {
 				false
 			),
 			hostIP: config.get<string>(Settings.hostIP, '127.0.0.1'),
+			customExternalBrowser: config.get<CustomExternalBrowser>(Settings.customExternalBrowser, CustomExternalBrowser.none),
 		};
 	}
 

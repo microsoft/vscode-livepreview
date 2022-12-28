@@ -19,5 +19,6 @@
 	"settings.defaultPreviewPath": "The file to automatically show upon starting the server. Leave blank to open at the index.",
 	"settings.debugOnExternalPreview": "Whether or not to attach the JavaScript debugger on external preview launches.",
 	"settings.hostIP": "The local IP host address to host your files on.",
+	"settings.customExternalBrowser": "The browser you want to launch when previewing a file in an external browser. Only works for normal preview (non-debug). Select `None` to use your default browser.",
 	"tasks.workspacePathDesc": "The path for the workspace that you want to start the server in."
 }

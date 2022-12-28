@@ -10,7 +10,7 @@ import { PathUtil } from '../utils/pathUtil';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { WebviewComm } from './webviewComm';
-import { FormatDateTime } from '../utils/utils';
+import { FormatDateTime, openInBrowser } from '../utils/utils';
 import { SettingUtil } from '../utils/settingsUtil';
 import * as path from 'path';
 import * as nls from 'vscode-nls';
@@ -258,7 +258,7 @@ export class BrowserPreview extends Disposable {
 				.then((selection: vscode.MessageItem | undefined) => {
 					if (selection) {
 						if (selection === OPEN_EXTERNALLY) {
-							vscode.env.openExternal(uri);
+							openInBrowser(uri, SettingUtil.GetConfig().customExternalBrowser);
 						}
 					}
 				});

@@ -19,6 +19,7 @@ import { Connection } from '../connectionInfo/connection';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import * as nls from 'vscode-nls';
 import { IOpenFileOptions } from '../manager';
+import { openInBrowser } from '../utils/utils';
 
 const localize = nls.loadMessageBundle();
 
@@ -111,7 +112,7 @@ export class PreviewManager extends Disposable {
 			vscode.commands.executeCommand('extension.js-debug.debugLink', url);
 		} else {
 			// will already resolve to local address
-			vscode.env.openExternal(vscode.Uri.parse(url));
+			openInBrowser(url, SettingUtil.GetConfig().customExternalBrowser);
 		}
 	}
 
