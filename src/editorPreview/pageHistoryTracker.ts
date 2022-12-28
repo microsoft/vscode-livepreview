@@ -114,7 +114,7 @@ export class PageHistory extends Disposable {
 		address: string,
 		connection: Connection
 	): INavResponse | undefined {
-		address = PathUtil.ConvertToUnixPath(address);
+		address = PathUtil.ConvertToPosixPath(address);
 		address = PathUtil.EscapePathParts(address);
 		const action = new Array<NavEditCommands>();
 		const lastItem = this._history[this._backstep];

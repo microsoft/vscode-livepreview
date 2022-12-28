@@ -44,7 +44,7 @@ export class EndpointManager extends Disposable {
 		let fullParent = await PathUtil.GetParentDir(location);
 		const child = await PathUtil.GetFileName(location, true);
 
-		fullParent = PathUtil.ConvertToUnixPath(fullParent);
+		fullParent = PathUtil.ConvertToPosixPath(fullParent);
 		this.validEndpointRoots.add(fullParent);
 		fullParent = PathUtil.EscapePathParts(fullParent);
 		let endpoint_prefix = `/endpoint_unsaved`;

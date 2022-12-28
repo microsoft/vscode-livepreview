@@ -138,15 +138,15 @@ export class SettingUtil {
 	 * @description Update a Live Preview setting
 	 * @param {string} settingSuffix the suffix, `livePreview.<suffix>` of the setting to set.
 	 * @param {T} value the value to set the setting to.
-	 * @param {boolean} isGlobal whether to set the user setting, defaults to false.
+	 * @param {vscode.ConfigurationTarget | boolean | null} scope settings scope
 	 */
 	public static UpdateSettings<T>(
 		settingSuffix: string,
 		value: T,
-		isGlobal = true
+		scope: vscode.ConfigurationTarget | boolean | null
 	): void {
 		vscode.workspace
 			.getConfiguration(SETTINGS_SECTION_ID)
-			.update(settingSuffix, value, isGlobal);
+			.update(settingSuffix, value, scope);
 	}
 }
