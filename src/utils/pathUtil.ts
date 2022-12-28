@@ -178,7 +178,7 @@ export class PathUtil {
 	public static async FileExistsStat(file: string): Promise<{ exists: boolean, stat: fs.Stats }> {
 		return new Promise((resolve) => {
 			fs.stat(file, (err, stat) => {
-				resolve({ exists: (err !== undefined), stat });
+				resolve({ exists: (err === null), stat });
 			});
 		});
 	}
