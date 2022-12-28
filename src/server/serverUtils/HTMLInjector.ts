@@ -39,6 +39,8 @@ export class HTMLInjector extends Disposable {
 			'media',
 			'injectScript.js'
 		);
+		// Reading the file synchronously since the rawScript string must exist for the
+		// object to function correctly.
 		this.rawScript = fs.readFileSync(scriptPath, 'utf8').toString();
 		this._initScript(this.rawScript, undefined, undefined);
 
@@ -74,9 +76,8 @@ export class HTMLInjector extends Disposable {
 		}
 
 		// if the HTTP scheme uses SSL, the WS scheme must also use SSL
-		const wsURL = `${httpUri.scheme === 'https' ? 'wss' : 'ws'}://${
-			wsUri.authority
-		}${wsUri.path}`;
+		const wsURL = `${httpUri.scheme === 'https' ? 'wss' : 'ws'}://${wsUri.authority
+			}${wsUri.path}`;
 		let httpURL = `${httpUri.scheme}://${httpUri.authority}`;
 
 		if (httpURL.endsWith('/')) {

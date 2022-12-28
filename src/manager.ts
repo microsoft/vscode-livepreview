@@ -14,7 +14,6 @@ import * as nls from 'vscode-nls';
 import { ServerTaskProvider } from './task/serverTaskProvider';
 import { EndpointManager } from './infoManagers/endpointManager';
 import { PreviewManager } from './editorPreview/previewManager';
-import { existsSync } from 'fs';
 import { StatusBarNotifier } from './server/serverUtils/statusBarNotifier';
 import { LIVE_PREVIEW_SERVER_ON } from './utils/constants';
 import { ServerGrouping } from './server/serverGrouping';
@@ -38,8 +37,7 @@ export interface IServerQuickPickItem extends vscode.QuickPickItem {
  */
 class PanelSerializer
 	extends Disposable
-	implements vscode.WebviewPanelSerializer
-{
+	implements vscode.WebviewPanelSerializer {
 	private readonly _onShouldRevive = this._register(
 		new vscode.EventEmitter<{ webviewPanel: vscode.WebviewPanel; state: any }>()
 	);
@@ -177,11 +175,11 @@ export class Manager extends Disposable {
 		const serializer = this._register(new PanelSerializer());
 
 		this._register(
-			serializer.onShouldRevive((e) => {
+			serializer.onShouldRevive(async (e) => {
 				let relative = false;
 				let file: string = e.state.currentAddress ?? '/';
 
-				let workspace = PathUtil.PathExistsRelativeToAnyWorkspace(file);
+				let workspace = await PathUtil.PathExistsRelativeToAnyWorkspace(file);
 				if (workspace) {
 					relative = true;
 				} else {
@@ -192,7 +190,7 @@ export class Manager extends Disposable {
 				if (!workspace) {
 					// no workspace; try to decode endpoint to fix file
 					const potentialFile =
-						this._endpointManager.decodeLooseFileEndpoint(file);
+						await this._endpointManager.decodeLooseFileEndpoint(file);
 					if (potentialFile) {
 						file = potentialFile;
 					} else {
@@ -311,10 +309,18 @@ export class Manager extends Disposable {
 		return this._openPreview(internal, serverGrouping, file, debug);
 	}
 
+	public async forceCloseServers(): Promise<void> {
+		if (this._serverGroupings.size > 1) {
+			this._showCloseServerPicker();
+		} else {
+			this.closeAllServers();
+		}
+	}
+
 	/**
 	 * Show the picker to select a server to close
 	 */
-	public async showCloseServerPicker(): Promise<void> {
+	private async _showCloseServerPicker(): Promise<void> {
 		const disposables: vscode.Disposable[] = [];
 
 		const quickPick = vscode.window.createQuickPick<IServerQuickPickItem>();
@@ -362,13 +368,12 @@ export class Manager extends Disposable {
 	 * This is usually used for when the user configures a setting for initial filepath
 	 * @param filePath the string fsPath to use
 	 */
-	public openPreviewAtFileString(filePath: string): void {
+	public async openPreviewAtFileString(filePath: string): Promise<void> {
 		if (filePath === '') {
 			this._openPreviewWithNoTarget();
 			return;
 		}
-		// let foundPath = false;
-		const workspace = PathUtil.PathExistsRelativeToAnyWorkspace(filePath);
+		const workspace = await PathUtil.PathExistsRelativeToAnyWorkspace(filePath);
 		if (workspace) {
 			const file = vscode.Uri.joinPath(workspace.uri, filePath);
 			this.openPreviewAtFileUri(file, {
@@ -376,7 +381,7 @@ export class Manager extends Disposable {
 			});
 		}
 
-		if (existsSync(filePath)) {
+		if ((await PathUtil.FileExistsStat(filePath)).exists) {
 			const file = vscode.Uri.file(filePath);
 			this.openPreviewAtFileUri(file);
 		} else {

@@ -306,16 +306,16 @@ export class BrowserPreview extends Disposable {
 	 * @param {string} title the page title of the page being hosted.
 	 * @param {string} pathname the pathname of the path being hosted.
 	 */
-	private _setPanelTitle(
+	private async _setPanelTitle(
 		title: string,
 		pathname: string,
 		connection: Connection
-	): void {
+	): Promise<void> {
 		if (title == '') {
 			pathname = decodeURI(pathname);
 			if (pathname.length > 0 && pathname[0] == '/') {
 				if (connection.workspace) {
-					this._panel.title = PathUtil.GetFileName(pathname);
+					this._panel.title = await PathUtil.GetFileName(pathname);
 				} else {
 					this._panel.title = path.basename(pathname.substr(1));
 				}

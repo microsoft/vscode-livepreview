@@ -220,11 +220,6 @@
           "default": "Embedded Preview",
           "description": "%settings.openPreviewTarget%"
         },
-        "livePreview.tasks.browserPreviewLaunchServerLogging": {
-          "type": "boolean",
-          "default": true,
-          "description": "%settings.tasks.browserPreviewLaunchServerLogging%"
-        },
         "livePreview.notifyOnOpenLooseFile": {
           "type": "boolean",
           "default": true,
