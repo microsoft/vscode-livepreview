@@ -103,7 +103,7 @@ export class PreviewManager extends Disposable {
 		file?: vscode.Uri
 	): void {
 		const path = file
-			? PathUtil.ConvertToUnixPath(this._fileUriToPath(file, connection))
+			? PathUtil.ConvertToPosixPath(this._fileUriToPath(file, connection))
 			: '/';
 
 		const url = `http://${connection.host}:${connection.httpPort}${path}`;
@@ -159,7 +159,7 @@ export class PreviewManager extends Disposable {
 				)
 				.then((selection: vscode.MessageItem | undefined) => {
 					if (selection == DONT_SHOW_AGAIN) {
-						SettingUtil.UpdateSettings(Settings.notifyOnOpenLooseFile, false);
+						SettingUtil.UpdateSettings(Settings.notifyOnOpenLooseFile, false, vscode.ConfigurationTarget.Global);
 					}
 				});
 		}

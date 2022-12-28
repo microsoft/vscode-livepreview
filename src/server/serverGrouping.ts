@@ -377,7 +377,8 @@ export class ServerGrouping extends Disposable {
 					if (selection == DONT_SHOW_AGAIN) {
 						SettingUtil.UpdateSettings(
 							Settings.showServerStatusNotifications,
-							false
+							false,
+							vscode.ConfigurationTarget.Global
 						);
 					}
 				});

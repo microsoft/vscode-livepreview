@@ -5,7 +5,6 @@
 
 import './setupNls';
 import * as vscode from 'vscode';
-import * as path from 'path';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EXTENSION_ID } from './utils/constants';
 import { PathUtil } from './utils/pathUtil';
@@ -171,21 +170,26 @@ export function activate(context: vscode.ExtensionContext): void {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.setDefaultOpenFile`,
 			(file: vscode.Uri) => {
-				const possibleRelativePaths = vscode.workspace.workspaceFolders?.map((e) => {
-					return PathUtil.PathBeginsWith(file.fsPath, e.uri.fsPath);
-				});
-				let pathToFile = file.fsPath;
-				if (possibleRelativePaths && possibleRelativePaths.length === 1) {
-					const workspace = PathUtil.AbsPathInAnyWorkspace(file.fsPath);
-					if (!workspace) {
-						return;
-					}
-					pathToFile = file.fsPath.substring(workspace.uri.fsPath.length);
+				// Will set the path on workspace settings if workspace is open
+				// otherwise, it will set user setting.
+
+				const numWorkspaceFolders = vscode.workspace.workspaceFolders?.length ?? 0;
+				const relativePath = PathUtil.getPathRelativeToWorkspace(file);
+
+				if (relativePath) {
+					const setPath = (numWorkspaceFolders === 1) ? relativePath : file.fsPath;
+					SettingUtil.UpdateSettings(
+						Settings.defaultPreviewPath,
+						PathUtil.ConvertToPosixPath(setPath),
+						vscode.ConfigurationTarget.Workspace
+					);
+					return;
 				}
+
 				SettingUtil.UpdateSettings(
 					Settings.defaultPreviewPath,
-					pathToFile.split(path.sep).join(path.posix.sep),
-					false
+					PathUtil.ConvertToPosixPath(file.fsPath),
+					vscode.ConfigurationTarget.Global
 				);
 			}
 		)
