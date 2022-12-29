@@ -53,6 +53,17 @@ export function activate(context: vscode.ExtensionContext): void {
 		})
 	);
 
+	/**
+	 * Not used directly by the extension, but can be called by a task or another extension to open a preview at a file
+	 */
+	context.subscriptions.push(
+		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start.preview.atFileString`,
+			async (filePath?: string) => {
+				filePath = filePath ?? '/';
+				await serverPreview.openPreviewAtFileString(filePath);
+			})
+	);
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.start.preview.atFile`,

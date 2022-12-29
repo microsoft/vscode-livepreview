@@ -46,6 +46,7 @@
     "onCommand:livePreview.start.internalPreview.atFile",
     "onCommand:livePreview.start.externalPreview.atFile",
     "onCommand:livePreview.start.externalDebugPreview.atFile",
+    "onCommand:livePreview.start.preview.atFileString",
     "onTaskType:Live Preview"
   ],
   "main": "./out/extension.js",
@@ -97,6 +98,11 @@
       {
         "command": "livePreview.end",
         "title": "%commands.stopServer%",
+        "category": "%commands.category%"
+      },
+      {
+        "command": "livePreview.start.preview.atFileString",
+        "title": "%commands.startServerAtFileString%",
         "category": "%commands.category%"
       }
     ],
