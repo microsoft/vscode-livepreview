@@ -11,12 +11,13 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { WebviewComm } from './webviewComm';
 import { FormatDateTime } from '../utils/utils';
-import { SettingUtil } from '../utils/settingsUtil';
+import { CustomExternalBrowser, SettingUtil } from '../utils/settingsUtil';
 import * as path from 'path';
 import * as nls from 'vscode-nls';
 import { URL } from 'url';
 import { Connection } from '../connectionInfo/connection';
 import { IOpenFileOptions } from '../manager';
+import { ExternalBrowserUtils } from '../utils/externalBrowserUtils';
 
 const localize = nls.loadMessageBundle();
 
@@ -258,7 +259,7 @@ export class BrowserPreview extends Disposable {
 				.then((selection: vscode.MessageItem | undefined) => {
 					if (selection) {
 						if (selection === OPEN_EXTERNALLY) {
-							vscode.env.openExternal(uri);
+							ExternalBrowserUtils.openInBrowser(givenURL, SettingUtil.GetConfig().customExternalBrowser);
 						}
 					}
 				});
