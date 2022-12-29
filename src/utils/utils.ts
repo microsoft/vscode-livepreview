@@ -3,10 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as open from 'open';
-import * as vscode from 'vscode';
-import { CustomExternalBrowser } from "./settingsUtil";
-
 /**
  * @description Function that formats the given date and time into a human-readable string.
  * @param date the date to be formatting.
@@ -73,27 +69,4 @@ function hasInjectableFileEnding(file: string): boolean {
 export function escapeRegExp(str: string): string {
 	// from https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
 	return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
-}
-
-export function openInBrowser(target: string | vscode.Uri, browser: CustomExternalBrowser): void {
-	let appName: string | readonly string[] = '';
-	switch (browser) {
-		case CustomExternalBrowser.chrome:
-			appName = open.apps.chrome;
-			break;
-		case CustomExternalBrowser.edge:
-			appName = open.apps.edge;
-			break;
-		case CustomExternalBrowser.firefox:
-			appName = open.apps.firefox;
-			break;
-	}
-	if (appName !== '') {
-		const url = (target instanceof vscode.Uri) ? target.fsPath : target;
-		open(url, { app: { name: appName } });
-	} else {
-		vscode.env.openExternal((target instanceof vscode.Uri) ? target : vscode.Uri.parse(target));
-	}
-
-
 }

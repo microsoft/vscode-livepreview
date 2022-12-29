@@ -5,7 +5,7 @@
 
 import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
-import { Settings, SettingUtil } from '../utils/settingsUtil';
+import { CustomExternalBrowser, Settings, SettingUtil } from '../utils/settingsUtil';
 import {
 	DONT_SHOW_AGAIN,
 	INIT_PANEL_TITLE,
@@ -19,7 +19,7 @@ import { Connection } from '../connectionInfo/connection';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import * as nls from 'vscode-nls';
 import { IOpenFileOptions } from '../manager';
-import { openInBrowser } from '../utils/utils';
+import { ExternalBrowserUtils } from '../utils/externalBrowserUtils';
 
 const localize = nls.loadMessageBundle();
 
@@ -112,7 +112,7 @@ export class PreviewManager extends Disposable {
 			vscode.commands.executeCommand('extension.js-debug.debugLink', url);
 		} else {
 			// will already resolve to local address
-			openInBrowser(url, SettingUtil.GetConfig().customExternalBrowser);
+			await ExternalBrowserUtils.openInBrowser(url, SettingUtil.GetConfig().customExternalBrowser);
 		}
 	}
 
