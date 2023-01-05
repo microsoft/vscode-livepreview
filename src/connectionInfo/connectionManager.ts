@@ -111,11 +111,13 @@ export class ConnectionManager extends Disposable {
 	 * @returns connection
 	 */
 	public createAndAddNewConnection(
-		workspaceFolder: vscode.WorkspaceFolder | undefined
+		workspaceFolder: vscode.WorkspaceFolder | undefined,
 	): Connection {
+		const serverRootPrefix = SettingUtil.GetConfig().serverRoot;
 		const connection = this._register(
 			new Connection(
 				workspaceFolder,
+				serverRootPrefix,
 				this._initHttpPort,
 				this._initWSPort,
 				this._initHost

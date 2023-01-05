@@ -20,6 +20,7 @@ export interface ConnectionInfo {
 	httpURI: vscode.Uri;
 	wsURI: vscode.Uri;
 	workspace: vscode.WorkspaceFolder | undefined;
+	rootPrefix: string | undefined;
 	httpPort: number;
 }
 
@@ -46,6 +47,7 @@ export class Connection extends Disposable {
 
 	constructor(
 		private readonly _workspace: vscode.WorkspaceFolder | undefined,
+		private readonly _rootPrefix: string,
 		public httpPort: number,
 		private _wsPort: number,
 		public host: string
@@ -82,6 +84,7 @@ export class Connection extends Disposable {
 			wsURI: externalWSUri,
 			workspace: this._workspace,
 			httpPort: httpPort,
+			rootPrefix: this._rootPrefix
 		});
 	}
 
@@ -115,8 +118,15 @@ export class Connection extends Disposable {
 		return this._workspace;
 	}
 
-	public get workspacePath(): string | undefined {
-		return this._workspace?.uri.fsPath;
+	public get rootURI(): vscode.Uri | undefined {
+		if (this.workspace) {
+			return vscode.Uri.joinPath(this.workspace.uri, this._rootPrefix);
+		}
+		return undefined;
+	}
+
+	public get rootPath(): string | undefined {
+		return this.rootURI?.fsPath;
 	}
 
 	/**
@@ -146,10 +156,10 @@ export class Connection extends Disposable {
 	 * @returns {boolean} whether the path exists relative the default workspace
 	 */
 	public async pathExistsRelativeToWorkspace(file: string): Promise<boolean> {
-		if (!this.workspacePath) {
+		if (!this.rootPath) {
 			return false;
 		}
-		const fullPath = path.join(this.workspacePath, file);
+		const fullPath = path.join(this.rootPath, file);
 		return (await PathUtil.FileExistsStat(fullPath)).exists;
 	}
 
@@ -160,10 +170,10 @@ export class Connection extends Disposable {
 	 * @returns {string} the equivalent relative path.
 	 */
 	public getFileRelativeToWorkspace(path: string): string | undefined {
-		const workspaceFolder = this.workspacePath;
+		const workspaceRoot = this.rootPath;
 
-		if (workspaceFolder && this._absPathInWorkspace(path)) {
-			return PathUtil.ConvertToPosixPath(path.substr(workspaceFolder.length));
+		if (workspaceRoot && this._absPathInWorkspace(path)) {
+			return PathUtil.ConvertToPosixPath(path.substring(workspaceRoot.length));
 		} else {
 			return undefined;
 		}
@@ -177,8 +187,15 @@ export class Connection extends Disposable {
 	 * @returns whether the path is in the workspace
 	 */
 	private _absPathInWorkspace(path: string): boolean {
-		return this.workspacePath
-			? PathUtil.PathBeginsWith(path, this.workspacePath)
+		return this.rootPath
+			? PathUtil.PathBeginsWith(path, this.rootPath)
 			: false;
+	}
+
+	/**
+	 * Get the URI given the relative path
+	 */
+	public getAppendedURI(path: string): vscode.Uri {
+		return this.rootURI ? vscode.Uri.joinPath(this.rootURI, path) : vscode.Uri.file(path);
 	}
 }

@@ -19,6 +19,7 @@ import { LIVE_PREVIEW_SERVER_ON } from './utils/constants';
 import { ServerGrouping } from './server/serverGrouping';
 import { UpdateListener } from './updateListener';
 import { URL } from 'url';
+import path = require('path');
 
 const localize = nls.loadMessageBundle();
 
@@ -179,12 +180,12 @@ export class Manager extends Disposable {
 				let relative = false;
 				let file: string = e.state.currentAddress ?? '/';
 
-				let workspace = await PathUtil.PathExistsRelativeToAnyWorkspace(file);
+				let workspace = await PathUtil.GetWorkspaceFromRelativePath(file);
 				if (workspace) {
 					relative = true;
 				} else {
 					// path isn't relative to workspaces, try checking absolute path for workspace
-					workspace = PathUtil.AbsPathInAnyWorkspace(file);
+					workspace = PathUtil.GetWorkspaceFromAbsolutePath(file);
 				}
 
 				if (!workspace) {
@@ -203,7 +204,8 @@ export class Manager extends Disposable {
 				// loose file workspace will be fetched if workspace is still undefined
 				const grouping = this._getServerGroupingFromWorkspace(workspace);
 				if (workspace) {
-					fileUri = vscode.Uri.joinPath(workspace.uri, file);
+					// PathExistsRelativeToAnyWorkspace already makes sure that file is under correct root prefix
+					fileUri = vscode.Uri.joinPath(workspace.uri, SettingUtil.GetConfig().serverRoot, file);
 				} else {
 					fileUri = vscode.Uri.parse(file);
 				}
@@ -287,7 +289,7 @@ export class Manager extends Disposable {
 		}
 		if (!serverGrouping) {
 			if (workspace) {
-				serverGrouping = this._getServerGroupingFromWorkspace(workspace);
+				serverGrouping = this._getServerGroupingFromWorkspace(this._shouldUseWorkspaceForFile(workspace, file) ? workspace : undefined);
 			} else if (port) {
 				this._serverGroupings.forEach((potentialServerGrouping) => {
 					if (potentialServerGrouping.port === port) {
@@ -296,7 +298,7 @@ export class Manager extends Disposable {
 					}
 				});
 			} else {
-				workspace = vscode.workspace.getWorkspaceFolder(file);
+				workspace = PathUtil.GetWorkspaceFromURI(file);
 				serverGrouping = this._getServerGroupingFromWorkspace(workspace);
 			}
 		}
@@ -373,7 +375,7 @@ export class Manager extends Disposable {
 			this._openPreviewWithNoTarget();
 			return;
 		}
-		const workspace = await PathUtil.PathExistsRelativeToAnyWorkspace(filePath);
+		const workspace = await PathUtil.GetWorkspaceFromRelativePath(filePath);
 		if (workspace) {
 			const file = vscode.Uri.joinPath(workspace.uri, filePath);
 			this.openPreviewAtFileUri(file, {
@@ -405,7 +407,7 @@ export class Manager extends Disposable {
 
 		let workspace;
 		if (file) {
-			workspace = vscode.workspace.getWorkspaceFolder(file);
+			workspace = PathUtil.GetWorkspaceFromURI(file);
 		} else if (
 			vscode.workspace.workspaceFolders &&
 			vscode.workspace.workspaceFolders?.length > 0
@@ -456,7 +458,8 @@ export class Manager extends Disposable {
 			const serverGrouping = this._getServerGroupingFromWorkspace(
 				connection.workspace
 			);
-			if (!connection.workspace) {
+			if (!connection.rootURI) {
+				// using server grouping with undefined workspace
 				return this._openPreview(
 					internal,
 					serverGrouping,
@@ -465,7 +468,7 @@ export class Manager extends Disposable {
 				);
 			}
 
-			const file = vscode.Uri.joinPath(connection.workspace.uri, link.path);
+			const file = connection.getAppendedURI(link.path);
 			this._openPreview(internal, serverGrouping, file, debug);
 		} catch (e) {
 			vscode.window.showErrorMessage(
@@ -482,9 +485,9 @@ export class Manager extends Disposable {
 		let fileUri: vscode.Uri;
 		if (!file) {
 			if (this._previewManager.currentPanel?.panel.active) {
-				if (this._previewManager.currentPanel.currentConnection.workspace) {
+				if (this._previewManager.currentPanel.currentConnection.rootURI) {
 					fileUri = vscode.Uri.joinPath(
-						this._previewManager.currentPanel.currentConnection.workspace.uri,
+						this._previewManager.currentPanel.currentConnection.rootURI,
 						this._previewManager.currentPanel.currentAddress
 					);
 				} else {
@@ -524,6 +527,25 @@ export class Manager extends Disposable {
 		Array.from(this._serverGroupings.values()).forEach((grouping) => {
 			grouping.refresh();
 		});
+	}
+
+	private _shouldUseWorkspaceForFile(workspace: vscode.WorkspaceFolder | undefined, file: vscode.Uri): boolean {
+		let shouldLookAtWorkspace = false;
+
+		const serverRootPrefix = SettingUtil.GetConfig().serverRoot;
+		if (workspace && serverRootPrefix !== '' && file) {
+			const workspaceURIWithServerRoot = vscode.Uri.joinPath(workspace?.uri, serverRootPrefix);
+
+			if (workspaceURIWithServerRoot) {
+				if (file.fsPath.startsWith(workspaceURIWithServerRoot.fsPath)) {
+					shouldLookAtWorkspace = true;
+				}
+			}
+		} else {
+			shouldLookAtWorkspace = true;
+		}
+
+		return shouldLookAtWorkspace;
 	}
 
 	/**

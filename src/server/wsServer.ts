@@ -99,7 +99,7 @@ export class WSServer extends Disposable {
 	 * @description the location of the workspace.
 	 */
 	private get _basePath(): string | undefined {
-		return this._connection.workspacePath;
+		return this._connection.rootPath;
 	}
 
 	public get wsPath(): string {

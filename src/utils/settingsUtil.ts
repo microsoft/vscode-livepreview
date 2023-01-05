@@ -20,6 +20,7 @@ export interface ILivePreviewConfigItem {
 	debugOnExternalPreview: boolean;
 	hostIP: string;
 	customExternalBrowser: CustomExternalBrowser;
+	serverRoot: string;
 }
 
 /**
@@ -67,7 +68,8 @@ export const Settings: any = {
 	defaultPreviewPath: 'defaultPreviewPath',
 	debugOnExternalPreview: 'debugOnExternalPreview',
 	hostIP: 'hostIP',
-	customExternalBrowser: 'customExternalBrowser'
+	customExternalBrowser: 'customExternalBrowser',
+	serverRoot: 'serverRoot'
 };
 
 /**
@@ -82,10 +84,10 @@ export const PreviewType = {
 export class SettingUtil {
 	/**
 	 * @description Get the current settings JSON.
-	 * @returns {ILivePreviewConfigItem} the LiveServerConfigItem, which is a JSON object with all of the settings for Live Preview.
+	 * @returns {ILivePreviewConfigItem} a JSON object with all of the settings for Live Preview.
 	 */
-	public static GetConfig(): ILivePreviewConfigItem {
-		const config = vscode.workspace.getConfiguration(SETTINGS_SECTION_ID);
+	public static GetConfig(scope?: vscode.ConfigurationScope): ILivePreviewConfigItem {
+		const config = vscode.workspace.getConfiguration(SETTINGS_SECTION_ID, scope);
 		return {
 			portNumber: config.get<number>(Settings.portNumber, 3000),
 			showServerStatusNotifications: config.get<boolean>(
@@ -119,6 +121,7 @@ export class SettingUtil {
 			),
 			hostIP: config.get<string>(Settings.hostIP, '127.0.0.1'),
 			customExternalBrowser: config.get<CustomExternalBrowser>(Settings.customExternalBrowser, CustomExternalBrowser.none),
+			serverRoot: config.get<string>(Settings.serverRoot, '')
 		};
 	}
 

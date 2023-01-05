@@ -245,7 +245,6 @@ export class BrowserPreview extends Disposable {
 				});
 			}
 		} else {
-			const uri = vscode.Uri.parse(givenURL);
 			vscode.window
 				.showInformationMessage(
 					localize(

@@ -241,6 +241,11 @@
           "default": "",
           "description": "%settings.defaultPreviewPath%"
         },
+        "livePreview.serverRoot": {
+          "type": "string",
+          "default": "",
+          "description": "%settings.serverRoot%"
+        },
         "livePreview.debugOnExternalPreview": {
           "type": "boolean",
           "default": false,

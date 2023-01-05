@@ -6,6 +6,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { SettingUtil } from './settingsUtil';
 
 /**
  * A collection of functions to perform path operations
@@ -113,7 +114,7 @@ export class PathUtil {
 	 */
 
 	public static getPathRelativeToWorkspace(file: vscode.Uri): string | undefined {
-		const workspaceFolder = vscode.workspace.getWorkspaceFolder(file);
+		const workspaceFolder = PathUtil.GetWorkspaceFromURI(file);
 		if (!workspaceFolder) {
 			return undefined;
 		}
@@ -147,17 +148,25 @@ export class PathUtil {
 		return newParts.join('/');
 	}
 
+	public static GetWorkspaceFromURI(
+		file: vscode.Uri
+	): vscode.WorkspaceFolder | undefined {
+		return PathUtil.GetWorkspaceFromAbsolutePath(file.fsPath);
+	}
+
 	/**
 	 * @description Similar to `_absPathInWorkspace`, but checks all workspaces and returns the matching workspace.
 	 * @param {string} path path to test.
 	 * @returns {vscode.WorkspaceFolder | undefined} the workspace it belongs to
 	 */
-	public static AbsPathInAnyWorkspace(
+	public static GetWorkspaceFromAbsolutePath(
 		file: string
 	): vscode.WorkspaceFolder | undefined {
 		const workspaces = vscode.workspace.workspaceFolders;
-		return workspaces?.find((workspace) =>
-			PathUtil.PathBeginsWith(file, workspace.uri.fsPath)
+		return workspaces?.find((workspace) => {
+			const rootPrefix = SettingUtil.GetConfig().serverRoot;
+			return PathUtil.PathBeginsWith(file, path.join(workspace.uri.fsPath, rootPrefix));
+		}
 		);
 	}
 
@@ -166,17 +175,22 @@ export class PathUtil {
 	 * @param {string} file path to test.
 	 * @returns {vscode.WorkspaceFolder | undefined} the workspace it belongs to
 	 */
-	public static async PathExistsRelativeToAnyWorkspace(
+	public static async GetWorkspaceFromRelativePath(
 		file: string
 	): Promise<vscode.WorkspaceFolder | undefined> {
+
+		// TODO: create function to check valid path and deprecate this
 		const workspaces = vscode.workspace.workspaceFolders;
 
 		if (!workspaces) {
 			return undefined;
 		}
 
-		const promises = workspaces.map((workspace) =>
-			PathUtil.FileExistsStat(path.join(workspace.uri.fsPath, file)));
+		const promises = workspaces.map((workspace) => {
+			const rootPrefix = SettingUtil.GetConfig().serverRoot;
+			return PathUtil.FileExistsStat(path.join(workspace.uri.fsPath, rootPrefix, file));
+		});
+
 		const idx = (await Promise.all(promises)).findIndex((elem) => elem.exists);
 		if (idx === -1) {
 			return undefined;
