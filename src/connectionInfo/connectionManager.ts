@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { DEFAULT_HOST } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
+import { PathUtil } from '../utils/pathUtil';
 import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
 import { Connection, ConnectionInfo } from './connection';
 
@@ -110,10 +111,11 @@ export class ConnectionManager extends Disposable {
 	 * @param workspaceFolder
 	 * @returns connection
 	 */
-	public createAndAddNewConnection(
+	public async createAndAddNewConnection(
 		workspaceFolder: vscode.WorkspaceFolder | undefined,
-	): Connection {
-		const serverRootPrefix = SettingUtil.GetConfig().serverRoot;
+	): Promise<Connection> {
+		const serverRootPrefix = workspaceFolder ? await PathUtil.GetValidServerRootForWorkspace(workspaceFolder) : '';
+
 		const connection = this._register(
 			new Connection(
 				workspaceFolder,
