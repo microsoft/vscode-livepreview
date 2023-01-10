@@ -125,7 +125,7 @@ export class UpdateListener extends Disposable {
 	 * @param uri
 	 */
 	private _reloadIfOutOfWorkspace(uri: vscode.Uri): void {
-		if (!vscode.workspace.getWorkspaceFolder(uri)) {
+		if (!PathUtil.GetWorkspaceFromURI(uri)) {
 			this._shouldRefreshPreviews.fire();
 		}
 	}

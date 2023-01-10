@@ -193,16 +193,12 @@ export class serverTaskLinkProvider
 	 */
 	private async _openRelativeLinkInWorkspace(file: string, isDir: boolean): Promise<void> {
 		file = unescape(file);
-		const workspace = await PathUtil.PathExistsRelativeToAnyWorkspace(file);
-
-		const fullPath = workspace
-			? workspace?.uri + file
-			: 'file:///' + this._endpointManager.decodeLooseFileEndpoint(file);
-
-		const uri = vscode.Uri.parse(fullPath);
+		const workspace = await PathUtil.GetWorkspaceFromRelativePath(file);
+		const connection = this._connectionManager.getConnection(workspace);
+		const uri = connection ? connection.getAppendedURI(file) : vscode.Uri.file(await this._endpointManager.decodeLooseFileEndpoint(file) ?? '');
 
 		if (isDir) {
-			if (!PathUtil.AbsPathInAnyWorkspace(uri.fsPath)) {
+			if (!PathUtil.GetWorkspaceFromAbsolutePath(uri.fsPath)) {
 				vscode.window.showErrorMessage(
 					'Cannot reveal folder. It is not in the open workspace.'
 				);

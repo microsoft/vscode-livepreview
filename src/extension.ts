@@ -48,8 +48,8 @@ export function activate(context: vscode.ExtensionContext): void {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start`, async () => {
-			const filePath = SettingUtil.GetConfig().defaultPreviewPath;
-			await serverPreview.openPreviewAtFileString(filePath);
+			const defaultPreviewPath = SettingUtil.GetConfig().defaultPreviewPath;
+			await serverPreview.openPreviewAtFileString(defaultPreviewPath);
 		})
 	);
 
@@ -180,12 +180,12 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.setDefaultOpenFile`,
-			(file: vscode.Uri) => {
+			async (file: vscode.Uri) => {
 				// Will set the path on workspace settings if workspace is open
 				// otherwise, it will set user setting.
 
 				const numWorkspaceFolders = vscode.workspace.workspaceFolders?.length ?? 0;
-				const relativePath = PathUtil.getPathRelativeToWorkspace(file);
+				const relativePath = await PathUtil.getPathRelativeToWorkspace(file);
 
 				if (relativePath) {
 					const setPath = (numWorkspaceFolders === 1) ? relativePath : file.fsPath;

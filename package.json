@@ -148,6 +148,10 @@
           "when": "false"
         },
         {
+          "command": "livePreview.start.preview.atFileString",
+          "when": "false"
+        },
+        {
           "command": "livePreview.start.debugPreview.atFile",
           "when": "false"
         },
@@ -240,6 +244,12 @@
           "type": "string",
           "default": "",
           "description": "%settings.defaultPreviewPath%"
+        },
+        "livePreview.serverRoot": {
+          "type": "string",
+          "default": "",
+          "description": "%settings.serverRoot%",
+          "scope": "resource"
         },
         "livePreview.debugOnExternalPreview": {
           "type": "boolean",

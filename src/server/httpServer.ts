@@ -48,22 +48,7 @@ export class HttpServer extends Disposable {
 	 * @returns {string | undefined} the path where the server index is located.
 	 */
 	private get _basePath(): string | undefined {
-		return this._connection.workspacePath;
-	}
-
-	/**
-	 * @param {string} file file to check
-	 * @returns {boolean} whether the HTTP server has served `file` since last reset or beginning of extension activation.
-	 */
-	public hasServedFile(file: string): boolean {
-		if (this._contentLoader.servedFiles) {
-			for (const item of this._contentLoader.servedFiles.values()) {
-				if (PathUtil.PathEquals(file, item)) {
-					return true;
-				}
-			}
-		}
-		return false;
+		return this._connection.rootPath;
 	}
 
 	/**

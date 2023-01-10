@@ -6,6 +6,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { SettingUtil } from './settingsUtil';
 
 /**
  * A collection of functions to perform path operations
@@ -86,7 +87,7 @@ export class PathUtil {
 	 * @returns {boolean} whether `file1` and `file2` are equal when using the same path delimeter
 	 */
 	public static PathEquals(file1: string, file2: string): boolean {
-		return path.normalize(file1) == path.normalize(file2);
+		return path.normalize(file1) === path.normalize(file2);
 	}
 
 	/**
@@ -111,9 +112,8 @@ export class PathUtil {
 	 * @param file
 	 * @returns relative path (or undefined if the file does not belong to a workspace)
 	 */
-
-	public static getPathRelativeToWorkspace(file: vscode.Uri): string | undefined {
-		const workspaceFolder = vscode.workspace.getWorkspaceFolder(file);
+	public static async getPathRelativeToWorkspace(file: vscode.Uri): Promise<string | undefined> {
+		const workspaceFolder = await PathUtil.GetWorkspaceFromURI(file);
 		if (!workspaceFolder) {
 			return undefined;
 		}
@@ -147,26 +147,18 @@ export class PathUtil {
 		return newParts.join('/');
 	}
 
-	/**
-	 * @description Similar to `_absPathInWorkspace`, but checks all workspaces and returns the matching workspace.
-	 * @param {string} path path to test.
-	 * @returns {vscode.WorkspaceFolder | undefined} the workspace it belongs to
-	 */
-	public static AbsPathInAnyWorkspace(
-		file: string
-	): vscode.WorkspaceFolder | undefined {
-		const workspaces = vscode.workspace.workspaceFolders;
-		return workspaces?.find((workspace) =>
-			PathUtil.PathBeginsWith(file, workspace.uri.fsPath)
-		);
+	public static async GetWorkspaceFromURI(
+		file: vscode.Uri
+	): Promise<vscode.WorkspaceFolder | undefined> {
+		return await PathUtil.GetWorkspaceFromAbsolutePath(file.fsPath);
 	}
 
 	/**
-	 * @description Just like `pathExistsRelativeToDefaultWorkspace`, but tests all workspaces and returns the matching workspace.
+	 * @description Similar to `_absPathInWorkspace`, but checks all workspaces and returns the matching workspace.
 	 * @param {string} file path to test.
 	 * @returns {vscode.WorkspaceFolder | undefined} the workspace it belongs to
 	 */
-	public static async PathExistsRelativeToAnyWorkspace(
+	public static async GetWorkspaceFromAbsolutePath(
 		file: string
 	): Promise<vscode.WorkspaceFolder | undefined> {
 		const workspaces = vscode.workspace.workspaceFolders;
@@ -175,13 +167,56 @@ export class PathUtil {
 			return undefined;
 		}
 
-		const promises = workspaces.map((workspace) =>
-			PathUtil.FileExistsStat(path.join(workspace.uri.fsPath, file)));
-		const idx = (await Promise.all(promises)).findIndex((elem) => elem.exists);
+		const checkPathBeginsWithForWorkspace = async (workspace: vscode.WorkspaceFolder, file: string): Promise<vscode.WorkspaceFolder | undefined> => {
+			const rootPrefix = await PathUtil.GetValidServerRootForWorkspace(workspace);
+			return PathUtil.PathBeginsWith(file, path.join(workspace.uri.fsPath, rootPrefix)) ? workspace : undefined;
+		};
+
+		const validWorkspacesForFile = await Promise.all(workspaces?.map((workspace) => {
+			return checkPathBeginsWithForWorkspace(workspace, file);
+		}));
+
+		return validWorkspacesForFile.find((workspace) => (workspace !== undefined));
+	}
+
+	/**
+	 * @description Just like `pathExistsRelativeToDefaultWorkspace`, but tests all workspaces and returns the matching workspace.
+	 * Assumes that the file is relative to the root prefix in settings.
+	 * @param {string} file path to test.
+	 * @returns {vscode.WorkspaceFolder | undefined} the workspace it belongs to
+	 */
+	public static async GetWorkspaceFromRelativePath(
+		file: string
+	): Promise<vscode.WorkspaceFolder | undefined> {
+
+		const workspaces = vscode.workspace.workspaceFolders;
+
+		if (!workspaces) {
+			return undefined;
+		}
+
+		const checkFileExistsStatForWorkspace = async (workspace: vscode.WorkspaceFolder): Promise<boolean> => {
+			const rootPrefix = await PathUtil.GetValidServerRootForWorkspace(workspace);
+			return (await PathUtil.FileExistsStat(path.join(workspace.uri.fsPath, rootPrefix, file))).exists;
+		};
+
+		const promises = workspaces.map((workspace) => checkFileExistsStatForWorkspace(workspace));
+
+		const idx = (await Promise.all(promises)).findIndex((exists) => exists);
 		if (idx === -1) {
 			return undefined;
 		}
 		return workspaces[idx];
+	}
+
+	/**
+	 * @description used to get the `serverRoot` setting properly, as it is only applied when using it would make a valid path
+	 * @param workspace
+	 * @returns the server root from settings if it would point to an existing directory
+	 */
+	public static async GetValidServerRootForWorkspace(workspace: vscode.WorkspaceFolder): Promise<string> {
+		const root = SettingUtil.GetConfig(workspace).serverRoot;
+		return (await PathUtil.FileExistsStat(path.join(workspace.uri.fsPath, root))).exists ? root : '';
 	}
 
 	/**

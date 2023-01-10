@@ -19,6 +19,7 @@ import { LIVE_PREVIEW_SERVER_ON } from './utils/constants';
 import { ServerGrouping } from './server/serverGrouping';
 import { UpdateListener } from './updateListener';
 import { URL } from 'url';
+import path = require('path');
 
 const localize = nls.loadMessageBundle();
 
@@ -152,7 +153,7 @@ export class Manager extends Disposable {
 
 		this._register(
 			this._serverTaskProvider.onRequestToOpenServer(async (workspace) => {
-				const serverGrouping = this._getServerGroupingFromWorkspace(workspace);
+				const serverGrouping = await this._getServerGroupingFromWorkspace(workspace);
 				// running this with `fromTask = true` will still inform the task if the server is already open
 				await serverGrouping.openServer(true);
 			})
@@ -179,12 +180,12 @@ export class Manager extends Disposable {
 				let relative = false;
 				let file: string = e.state.currentAddress ?? '/';
 
-				let workspace = await PathUtil.PathExistsRelativeToAnyWorkspace(file);
+				let workspace = await PathUtil.GetWorkspaceFromRelativePath(file);
 				if (workspace) {
 					relative = true;
 				} else {
 					// path isn't relative to workspaces, try checking absolute path for workspace
-					workspace = PathUtil.AbsPathInAnyWorkspace(file);
+					workspace = await PathUtil.GetWorkspaceFromAbsolutePath(file);
 				}
 
 				if (!workspace) {
@@ -201,9 +202,10 @@ export class Manager extends Disposable {
 
 				let fileUri;
 				// loose file workspace will be fetched if workspace is still undefined
-				const grouping = this._getServerGroupingFromWorkspace(workspace);
+				const grouping = await this._getServerGroupingFromWorkspace(workspace);
 				if (workspace) {
-					fileUri = vscode.Uri.joinPath(workspace.uri, file);
+					// PathExistsRelativeToAnyWorkspace already makes sure that file is under correct root prefix
+					fileUri = vscode.Uri.joinPath(workspace.uri, await PathUtil.GetValidServerRootForWorkspace(workspace), file);
 				} else {
 					fileUri = vscode.Uri.parse(file);
 				}
@@ -287,7 +289,7 @@ export class Manager extends Disposable {
 		}
 		if (!serverGrouping) {
 			if (workspace) {
-				serverGrouping = this._getServerGroupingFromWorkspace(workspace);
+				serverGrouping = await this._getServerGroupingFromWorkspace(await this._shouldUseWorkspaceForFile(workspace, file) ? workspace : undefined);
 			} else if (port) {
 				this._serverGroupings.forEach((potentialServerGrouping) => {
 					if (potentialServerGrouping.port === port) {
@@ -296,14 +298,14 @@ export class Manager extends Disposable {
 					}
 				});
 			} else {
-				workspace = vscode.workspace.getWorkspaceFolder(file);
-				serverGrouping = this._getServerGroupingFromWorkspace(workspace);
+				workspace = await PathUtil.GetWorkspaceFromURI(file);
+				serverGrouping = await this._getServerGroupingFromWorkspace(workspace);
 			}
 		}
 
 		if (!serverGrouping) {
 			// last-resort: use loose workspace server.
-			serverGrouping = this._getServerGroupingFromWorkspace(undefined);
+			serverGrouping = await this._getServerGroupingFromWorkspace(undefined);
 		}
 
 		return this._openPreview(internal, serverGrouping, file, debug);
@@ -370,12 +372,11 @@ export class Manager extends Disposable {
 	 */
 	public async openPreviewAtFileString(filePath: string): Promise<void> {
 		if (filePath === '') {
-			this._openPreviewWithNoTarget();
-			return;
+			return this._openPreviewWithNoTarget();
 		}
-		const workspace = await PathUtil.PathExistsRelativeToAnyWorkspace(filePath);
+		const workspace = await PathUtil.GetWorkspaceFromRelativePath(filePath);
 		if (workspace) {
-			const file = vscode.Uri.joinPath(workspace.uri, filePath);
+			const file = vscode.Uri.joinPath(workspace.uri, await PathUtil.GetValidServerRootForWorkspace(workspace), filePath);
 			this.openPreviewAtFileUri(file, {
 				workspace: workspace,
 			});
@@ -405,7 +406,7 @@ export class Manager extends Disposable {
 
 		let workspace;
 		if (file) {
-			workspace = vscode.workspace.getWorkspaceFolder(file);
+			workspace = await PathUtil.GetWorkspaceFromURI(file);
 		} else if (
 			vscode.workspace.workspaceFolders &&
 			vscode.workspace.workspaceFolders?.length > 0
@@ -453,10 +454,11 @@ export class Manager extends Disposable {
 				throw Error;
 			}
 
-			const serverGrouping = this._getServerGroupingFromWorkspace(
+			const serverGrouping = await this._getServerGroupingFromWorkspace(
 				connection.workspace
 			);
-			if (!connection.workspace) {
+			if (!connection.rootURI) {
+				// using server grouping with undefined workspace
 				return this._openPreview(
 					internal,
 					serverGrouping,
@@ -465,7 +467,7 @@ export class Manager extends Disposable {
 				);
 			}
 
-			const file = vscode.Uri.joinPath(connection.workspace.uri, link.path);
+			const file = connection.getAppendedURI(link.path);
 			this._openPreview(internal, serverGrouping, file, debug);
 		} catch (e) {
 			vscode.window.showErrorMessage(
@@ -482,9 +484,9 @@ export class Manager extends Disposable {
 		let fileUri: vscode.Uri;
 		if (!file) {
 			if (this._previewManager.currentPanel?.panel.active) {
-				if (this._previewManager.currentPanel.currentConnection.workspace) {
+				if (this._previewManager.currentPanel.currentConnection.rootURI) {
 					fileUri = vscode.Uri.joinPath(
-						this._previewManager.currentPanel.currentConnection.workspace.uri,
+						this._previewManager.currentPanel.currentConnection.rootURI,
 						this._previewManager.currentPanel.currentAddress
 					);
 				} else {
@@ -526,19 +528,40 @@ export class Manager extends Disposable {
 		});
 	}
 
+	private async _shouldUseWorkspaceForFile(workspace: vscode.WorkspaceFolder | undefined, file: vscode.Uri): Promise<boolean> {
+
+		if (!workspace) {
+			// never use the root prefix path on non-workspace paths
+			return false;
+		}
+
+		const serverRootPrefix = await PathUtil.GetValidServerRootForWorkspace(workspace);
+		if (serverRootPrefix !== '' && file) {
+			const workspaceURIWithServerRoot = vscode.Uri.joinPath(workspace.uri, serverRootPrefix);
+
+			if (workspaceURIWithServerRoot) {
+				if (file.fsPath.startsWith(workspaceURIWithServerRoot.fsPath)) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	/**
 	 * Creates a serverGrouping and connection object for a workspace if it doesn't already have an existing one.
 	 * Otherwise, return the existing serverGrouping.
 	 * @param workspace
 	 * @returns serverGrouping for this workspace (or, when `workspace == undefined`, the serverGrouping for the loose file workspace)
 	 */
-	private _getServerGroupingFromWorkspace(
+	private async _getServerGroupingFromWorkspace(
 		workspace: vscode.WorkspaceFolder | undefined
-	): ServerGrouping {
+	): Promise<ServerGrouping> {
 		let serverGrouping = this._serverGroupings.get(workspace?.uri.toString());
 		if (!serverGrouping) {
 			const connection =
-				this._connectionManager.createAndAddNewConnection(workspace);
+				await this._connectionManager.createAndAddNewConnection(workspace);
 
 			this._register(
 				connection.onConnected(() => {
@@ -630,7 +653,7 @@ export class Manager extends Disposable {
 		}
 		return previewType === PreviewType.internalPreview;
 	}
-	private _openPreviewWithNoTarget(): void {
+	private async _openPreviewWithNoTarget(): Promise<void> {
 		// opens index at first open server or opens a loose workspace at root
 
 		const internal = this._isInternalPreview();
@@ -648,10 +671,10 @@ export class Manager extends Disposable {
 				}
 			}
 
-			const grouping = this._getServerGroupingFromWorkspace(workspaces[0]);
+			const grouping = await this._getServerGroupingFromWorkspace(workspaces[0]);
 			this._openPreview(internal, grouping, undefined);
 		} else {
-			const grouping = this._getServerGroupingFromWorkspace(undefined);
+			const grouping = await this._getServerGroupingFromWorkspace(undefined);
 			this._openPreview(internal, grouping, undefined);
 		}
 	}
