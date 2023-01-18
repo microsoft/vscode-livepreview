@@ -370,7 +370,7 @@ export class Manager extends Disposable {
 	 * This is usually used for when the user configures a setting for initial filepath
 	 * @param filePath the string fsPath to use
 	 */
-	public async openPreviewAtFileString(filePath: string): Promise<void> {
+	public async openPreviewAtFileString(filePath: string, previewType?: string): Promise<void> {
 		if (filePath === '') {
 			return this._openPreviewWithNoTarget();
 		}
@@ -379,18 +379,18 @@ export class Manager extends Disposable {
 			const file = vscode.Uri.joinPath(workspace.uri, await PathUtil.GetValidServerRootForWorkspace(workspace), filePath);
 			this.openPreviewAtFileUri(file, {
 				workspace: workspace,
-			});
+			}, previewType);
 			return;
 		}
 
 		if ((await PathUtil.FileExistsStat(filePath)).exists) {
 			const file = vscode.Uri.file(filePath);
-			this.openPreviewAtFileUri(file);
+			this.openPreviewAtFileUri(file, undefined, previewType);
 		} else {
 			vscode.window.showWarningMessage(
 				localize('fileDNE', "The file '{0}' does not exist.", filePath)
 			);
-			this.openPreviewAtFileUri(undefined);
+			this.openPreviewAtFileUri(undefined, undefined, previewType);
 		}
 	}
 
@@ -450,8 +450,8 @@ export class Manager extends Disposable {
 			const port = parseInt(url.port);
 			const connection = this._connectionManager.getConnectionFromPort(port);
 			if (!connection) {
-				console.error(`There is no server from Live Preview on port ${port}.`);
-				throw Error;
+				// don't have any workspace info, just treat it as relative path
+				return this.openPreviewAtFileString(link.path, previewType);
 			}
 
 			const serverGrouping = await this._getServerGroupingFromWorkspace(
