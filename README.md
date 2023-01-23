@@ -98,18 +98,23 @@ You can install the extension [in the marketplace here](https://marketplace.visu
 A. Either:
 - You have no workspace open and opened a preview.
 - You opened a preview for a file that is not a part of your workspace(s).
+- You have the `livePreview.serverRoot` setting set to a sub-folder in your workspace and your file is not a child of that subfolder.
 
 Why does this happen?
 
-The server is hosted from the root of the workspace that the user opens. Files outside of this can be previewed, but some file paths (such as a link to the root) may not go to the right place. **If you are working on a web project, it is advised that you open a workspace at the root of the project.**
+The server is hosted from the root of the workspace that the user opens (or a subfolder of the workspace based on `livePreview.serverRoot`). Files outside of this can be previewed, but some file paths (such as a link to the root) may not go to the right place. **If you are working on a web project, it is advised that you open a workspace at the root of the project.**
 
 **Q. I'm trying to use Live Preview in Codespaces and the embedded preview isn't working.**
 
 A. Currently, you will need to manually navigate to the links host the forwarded port content before it works
 
-In the area of the editor where the integrated terminal usually is, navigate to `Ports` and open the local address in the browser. You can do this by using <kbd>CTRL</kbd>+<kbd>Click</kbd> on the URL in the `Ports` menu.
+In the area of the editor where the integrated terminal usually is, navigate to `Ports` and open the local addresses (usually at ports 3000 and 3001) in the browser. You can do this by using <kbd>CTRL</kbd>+<kbd>Click</kbd> on the URLs in the `Ports` menu.
 
 Allow the browser to perform the necessary redirects, then close the windows. Re-open the preview window and it _should_ work now.
+
+**Q. Why does my external browser preview look different than the preview in the embedded browser preview?**
+
+A. Aspects such as styling might look different based on the browser cache of your external browser or any other client-side state. Try clearing your cache and restarting your browser.
 
 ## Inspirations
 Special thanks to the following extensions for inspiring Live Preview! 💡
