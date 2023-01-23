@@ -98,7 +98,7 @@ You can install the extension [in the marketplace here](https://marketplace.visu
 A. Either:
 - You have no workspace open and opened a preview.
 - You opened a preview for a file that is not a part of your workspace(s).
-- You have the `livePreview.serverRoot` is set to a sub-folder in your workspace and your file is not a child of that subfolder.
+- You have the `livePreview.serverRoot` setting set to a sub-folder in your workspace and your file is not a child of that subfolder.
 
 Why does this happen?
 
