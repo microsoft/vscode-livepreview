@@ -536,7 +536,11 @@ export class Manager extends Disposable {
 		}
 
 		const serverRootPrefix = await PathUtil.GetValidServerRootForWorkspace(workspace);
-		if (serverRootPrefix !== '' && file) {
+		if (serverRootPrefix === '') {
+			return true;
+		}
+
+		if (file) {
 			const workspaceURIWithServerRoot = vscode.Uri.joinPath(workspace.uri, serverRootPrefix);
 
 			if (workspaceURIWithServerRoot) {
