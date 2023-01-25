@@ -44,7 +44,7 @@ export enum CustomExternalBrowser {
 	edge = 'Edge',
 	chrome = 'Chrome',
 	firefox = 'Firefox',
-	none = 'None'
+	default = 'Default'
 }
 
 /**
@@ -120,7 +120,7 @@ export class SettingUtil {
 				false
 			),
 			hostIP: config.get<string>(Settings.hostIP, '127.0.0.1'),
-			customExternalBrowser: config.get<CustomExternalBrowser>(Settings.customExternalBrowser, CustomExternalBrowser.none),
+			customExternalBrowser: config.get<CustomExternalBrowser>(Settings.customExternalBrowser, CustomExternalBrowser.default),
 			serverRoot: config.get<string>(Settings.serverRoot, '')
 		};
 	}
