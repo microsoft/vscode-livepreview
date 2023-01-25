@@ -10,6 +10,7 @@ import { DEFAULT_HOST } from '../utils/constants';
 import path = require('path');
 import { PathUtil } from '../utils/pathUtil';
 import * as fs from 'fs';
+import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
 
 const localize = nls.loadMessageBundle();
 
@@ -47,12 +48,21 @@ export class Connection extends Disposable {
 
 	constructor(
 		private readonly _workspace: vscode.WorkspaceFolder | undefined,
-		private readonly _rootPrefix: string,
+		private _rootPrefix: string,
 		public httpPort: number,
 		private _wsPort: number,
 		public host: string
 	) {
 		super();
+
+		this._register(
+			vscode.workspace.onDidChangeConfiguration(async (e) => {
+				if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
+					this._rootPrefix = _workspace ? await PathUtil.GetValidServerRootForWorkspace(_workspace) : '';
+				}
+			})
+		);
+
 	}
 
 	public get wsPort(): number {

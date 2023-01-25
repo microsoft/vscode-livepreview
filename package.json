@@ -266,9 +266,9 @@
             "Edge",
             "Chrome",
             "Firefox",
-            "None"
+            "Default"
           ],
-          "default": "None",
+          "default": "Default",
           "description": "%settings.customExternalBrowser%"
         }
       }
