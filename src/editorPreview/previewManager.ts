@@ -154,7 +154,7 @@ export class PreviewManager extends Disposable {
 				.showWarningMessage(
 					localize(
 						'notPartOfWorkspace',
-						'Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root.'
+						'Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root or consider changing your server root settings for Live Preview.'
 					),
 					DONT_SHOW_AGAIN
 				)

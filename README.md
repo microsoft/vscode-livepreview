@@ -93,7 +93,7 @@ You can view the ports that are open for Live Preview by hovering the status bar
 ## Running the extension
 You can install the extension [in the marketplace here](https://marketplace.visualstudio.com/items?itemName=ms-vscode.live-server). To contribute, see the [contributing page](https://github.com/microsoft/vscode-livepreview/blob/main/CONTRIBUTING.md).
 ## FAQ
-**Q. What does the `"Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root."` message mean?**
+**Q. What does the `"Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root or consider changing your server root settings for Live Preview."` message mean?**
 
 A. Either:
 - You have no workspace open and opened a preview.
