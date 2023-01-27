@@ -9,6 +9,12 @@ import * as vscode from 'vscode';
 export class ExternalBrowserUtils {
 
 	static async openInBrowser(target: string, browser: CustomExternalBrowser): Promise<void> {
+
+		if (vscode.env.appHost !== 'desktop') {
+			vscode.env.openExternal(vscode.Uri.parse(target));
+			return;
+		}
+
 		try {
 			let appName: string | readonly string[] = '';
 			switch (browser) {
