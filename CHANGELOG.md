@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.5 (February 1, 2023)
+- Added `livePreview.serverRoot` setting to specify server root in subfolder of workspace. [#155](https://github.com/microsoft/vscode-livepreview/issues/155)
+- Added `livePreview.customExternalBrowser` setting to specify external browser type (if different from default browser). [#69](https://github.com/microsoft/vscode-livepreview/issues/69)
+- Added `livePreview.start.preview.atFileString` command that takes an absolute or relative path string as an argument and opens the file in the preview. [#388](https://github.com/microsoft/vscode-livepreview/issues/388)
+
 ## 0.4.4 (October 31, 2022)
 - Fixed 401 error in Codespaces. [#369](https://github.com/microsoft/vscode-livepreview/issues/369)
 - Fixed external preview open when server is closed. [#370](https://github.com/microsoft/vscode-livepreview/issues/370)
