@@ -370,13 +370,13 @@ export class Manager extends Disposable {
 	 * This is usually used for when the user configures a setting for initial filepath
 	 * @param filePath the string fsPath to use
 	 */
-	public async openPreviewAtFileString(filePath: string, previewType?: string): Promise<void> {
+	public async openPreviewAtFileString(filePath: string, previewType?: string, ignoreFileRoot = false): Promise<void> {
 		if (filePath === '') {
 			return this._openPreviewWithNoTarget();
 		}
-		const workspace = await PathUtil.GetWorkspaceFromRelativePath(filePath);
+		const workspace = await PathUtil.GetWorkspaceFromRelativePath(filePath, ignoreFileRoot);
 		if (workspace) {
-			const file = vscode.Uri.joinPath(workspace.uri, await PathUtil.GetValidServerRootForWorkspace(workspace), filePath);
+			const file = vscode.Uri.joinPath(workspace.uri, ignoreFileRoot ? '' : await PathUtil.GetValidServerRootForWorkspace(workspace), filePath);
 			this.openPreviewAtFileUri(file, {
 				workspace: workspace,
 			}, previewType);

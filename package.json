@@ -243,7 +243,8 @@
         "livePreview.defaultPreviewPath": {
           "type": "string",
           "default": "",
-          "description": "%settings.defaultPreviewPath%"
+          "description": "%settings.defaultPreviewPath%",
+          "scope": "resource"
         },
         "livePreview.serverRoot": {
           "type": "string",
