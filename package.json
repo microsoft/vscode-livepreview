@@ -208,6 +208,13 @@
           "maximum": 20,
           "description": "%settings.serverKeepAliveAfterEmbeddedPreviewClose%"
         },
+        "livePreview.previewDebounceDelay": {
+          "type": "number",
+          "default": 50,
+          "minimum": 0,
+          "maximum": 65535,
+          "description": "%settings.previewDebounceDelay%"
+        },
         "livePreview.showServerStatusNotifications": {
           "type": "boolean",
           "default": false,

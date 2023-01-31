@@ -21,6 +21,7 @@ export interface ILivePreviewConfigItem {
 	hostIP: string;
 	customExternalBrowser: CustomExternalBrowser;
 	serverRoot: string;
+	previewDebounceDelay: number;
 }
 
 /**
@@ -69,7 +70,8 @@ export const Settings: any = {
 	debugOnExternalPreview: 'debugOnExternalPreview',
 	hostIP: 'hostIP',
 	customExternalBrowser: 'customExternalBrowser',
-	serverRoot: 'serverRoot'
+	serverRoot: 'serverRoot',
+	previewDebounceDelay: 'previewDebounceDelay'
 };
 
 /**
@@ -105,6 +107,10 @@ export class SettingUtil {
 			serverKeepAliveAfterEmbeddedPreviewClose: config.get<number>(
 				Settings.serverKeepAliveAfterEmbeddedPreviewClose,
 				20
+			),
+			previewDebounceDelay: config.get<number>(
+				Settings.previewDebounceDelay,
+				50
 			),
 			notifyOnOpenLooseFile: config.get<boolean>(
 				Settings.notifyOnOpenLooseFile,
