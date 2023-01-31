@@ -212,7 +212,6 @@
           "type": "number",
           "default": 50,
           "minimum": 0,
-          "maximum": 65535,
           "description": "%settings.previewDebounceDelay%"
         },
         "livePreview.showServerStatusNotifications": {
