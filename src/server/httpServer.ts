@@ -169,7 +169,7 @@ export class HttpServer extends Disposable {
 			stream?.pipe(res);
 		};
 
-		if (!basePath && (URLPathName == '/' || URLPathName == '')) {
+		if (basePath === '' && (URLPathName === '/' || URLPathName === '')) {
 			writePageNotFound(true);
 			return;
 		}

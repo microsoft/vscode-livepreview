@@ -96,8 +96,6 @@ export class PathUtil {
 	 * @returns {string} the file path using the `/` posix-compliant path delimeter.
 	 */
 	public static ConvertToPosixPath(file: string): string {
-
-
 		return file.split(path.sep).join(path.posix.sep);
 	}
 
