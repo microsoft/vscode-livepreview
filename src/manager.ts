@@ -457,12 +457,13 @@ export class Manager extends Disposable {
 			const serverGrouping = await this._getServerGroupingFromWorkspace(
 				connection.workspace
 			);
+
 			if (!connection.rootURI) {
 				// using server grouping with undefined workspace
 				return this._openPreview(
 					internal,
 					serverGrouping,
-					vscode.Uri.file(link.path),
+					vscode.Uri.file(this._endpointManager.changePrefixesForAbsPathDecode(link.path)),
 					debug
 				);
 			}

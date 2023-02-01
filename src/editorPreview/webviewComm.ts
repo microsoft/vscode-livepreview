@@ -21,7 +21,7 @@ const localize = nls.loadMessageBundle();
  */
 export class WebviewComm extends Disposable {
 	private readonly _pageHistory: PageHistory;
-	public currentAddress: string;
+	public currentAddress: string; // encoded address
 
 	private readonly _onPanelTitleChange = this._register(
 		new vscode.EventEmitter<{
@@ -44,7 +44,7 @@ export class WebviewComm extends Disposable {
 		this._register(
 			this._connectionManager.onConnected((e) => {
 				if (e.workspace === this.currentConnection?.workspace) {
-					this._reloadWebview();
+					this.reloadWebview();
 				}
 			})
 		);
@@ -61,7 +61,7 @@ export class WebviewComm extends Disposable {
 	/**
 	 * @description extension-side reload of webivew.
 	 */
-	private async _reloadWebview(): Promise<void> {
+	public async reloadWebview(): Promise<void> {
 		await this.goToFile(this.currentAddress, false);
 	}
 
@@ -92,8 +92,6 @@ export class WebviewComm extends Disposable {
 		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);
 		}
-		URLExt = PathUtil.ConvertToPosixPath(URLExt);
-		URLExt = URLExt.startsWith('/') ? URLExt.substr(1) : URLExt;
 
 		if (!hostURI) {
 			hostURI = await this.resolveHost(connection);
@@ -104,6 +102,10 @@ export class WebviewComm extends Disposable {
 	/**
 	 * @description go to a file in the embeded preview
 	 * @param {string} URLExt the pathname to navigate to
+	 *  can be:
+	 * 1. /relative-pathname OR (blank string) for root
+	 * 2. /c:/absolute-pathname
+	 * 3. //unc-absolute-path
 	 * @param {boolean} updateHistory whether or not to update the history from this call.
 	 */
 	public async goToFile(

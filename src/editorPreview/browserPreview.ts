@@ -18,6 +18,7 @@ import { URL } from 'url';
 import { Connection } from '../connectionInfo/connection';
 import { IOpenFileOptions } from '../manager';
 import { ExternalBrowserUtils } from '../utils/externalBrowserUtils';
+import { EndpointManager } from '../infoManagers/endpointManager';
 
 const localize = nls.loadMessageBundle();
 
@@ -48,6 +49,7 @@ export class BrowserPreview extends Disposable {
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _connectionManager: ConnectionManager,
+		private readonly _endpointManager: EndpointManager,
 		private readonly _outputChannel: vscode.OutputChannel
 	) {
 		super();
@@ -161,7 +163,7 @@ export class BrowserPreview extends Disposable {
 				await this._webviewComm.goForwards();
 				return;
 			case 'open-browser':
-				await this._handleOpenBrowser(message.text);
+				await this._openCurrentAddressInExternalBrowser();
 				return;
 			case 'add-history': {
 				const msgJSON = JSON.parse(message.text);
@@ -214,62 +216,55 @@ export class BrowserPreview extends Disposable {
 	}
 
 	/**
+	 * Open in embedded preview's address in external browser
+	 */
+	private async _openCurrentAddressInExternalBrowser(): Promise<void> {
+		const givenURL = await this._webviewComm.constructAddress(
+			this._webviewComm.currentAddress
+		);
+		const uri = vscode.Uri.parse(givenURL.toString());
+
+		const previewType = SettingUtil.GetExternalPreviewType();
+		this._onShouldLaunchPreview.fire({
+			uri: uri,
+			options: {
+				workspace: this._webviewComm.currentConnection.workspace,
+				port: this._webviewComm.currentConnection.httpPort,
+			},
+			previewType,
+		});
+	}
+
+	/**
 	 * Open in external browser. This also warns the user in the case where the URL is external to the hosted content.
 	 * @param {string} givenURL the (full) URL to open up in the external browser.
 	 */
 	private async _handleOpenBrowser(givenURL: string): Promise<void> {
-		if (givenURL == '') {
-			// open at current address, needs task start
-			const givenURI = await this._webviewComm.constructAddress(
-				this._webviewComm.currentAddress
-			);
-			const uri = vscode.Uri.parse(givenURI.toString());
-
-			const previewType = SettingUtil.GetExternalPreviewType();
-			if (this._webviewComm.currentConnection.workspace) {
-				this._onShouldLaunchPreview.fire({
-					uri: uri,
-					options: {
-						workspace: this._webviewComm.currentConnection.workspace,
-						port: this._webviewComm.currentConnection.httpPort,
-					},
-					previewType,
-				});
-			} else {
-				this._onShouldLaunchPreview.fire({
-					uri: uri,
-					options: {
-						port: this._webviewComm.currentConnection.httpPort,
-					},
-					previewType,
-				});
-			}
-		} else {
-			vscode.window
-				.showInformationMessage(
-					localize(
-						'unsupportedLink',
-						'Externally hosted links are not supported in the embedded preview. Do you want to open {0} in an external browser?',
-						givenURL
-					),
-					{ modal: true },
-					OPEN_EXTERNALLY
-				)
-				.then((selection: vscode.MessageItem | undefined) => {
-					if (selection) {
-						if (selection === OPEN_EXTERNALLY) {
-							ExternalBrowserUtils.openInBrowser(givenURL, SettingUtil.GetConfig().customExternalBrowser);
-						}
+		vscode.window
+			.showInformationMessage(
+				localize(
+					'unsupportedLink',
+					'Externally hosted links are not supported in the embedded preview. Do you want to open {0} in an external browser?',
+					givenURL
+				),
+				{ modal: true },
+				OPEN_EXTERNALLY
+			)
+			.then((selection: vscode.MessageItem | undefined) => {
+				if (selection) {
+					if (selection === OPEN_EXTERNALLY) {
+						ExternalBrowserUtils.openInBrowser(givenURL, SettingUtil.GetConfig().customExternalBrowser);
 					}
-				});
-		}
+				}
+			});
+		// navigate back to the previous page, since the page it went to is invalid
+		await this._webviewComm.reloadWebview();
+
 
 		/* __GDPR__
 			"preview.openExternalBrowser" : {}
 		*/
 		this._reporter.sendTelemetryEvent('preview.openExternalBrowser');
-		await this._webviewComm.goToFile(this._webviewComm.currentAddress, false);
-		this._webviewComm.updateForwardBackArrows();
 	}
 
 	/**
@@ -294,7 +289,7 @@ export class BrowserPreview extends Disposable {
 			if (hostString.endsWith('/')) {
 				hostString = hostString.substr(0, hostString.length - 1);
 			}
-			const file = address.substr(host.toString().length);
+			const file = address.substr(hostString.length);
 			await this._webviewComm.goToFile(file, true, connection);
 		} catch (e) {
 			await this._handleOpenBrowser(address);

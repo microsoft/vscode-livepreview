@@ -243,7 +243,7 @@ export class WSServer extends Disposable {
 			// no op
 		}
 
-		if (!(await PathUtil.FileExistsStat(absolutePath)).exists) {
+		if (!basePath) {
 			const decodedLocation =
 				await this._endpointManager.decodeLooseFileEndpoint(absolutePath);
 			if (!decodedLocation || !(await PathUtil.FileExistsStat(decodedLocation)).exists) {

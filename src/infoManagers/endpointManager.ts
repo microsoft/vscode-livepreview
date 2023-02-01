@@ -4,9 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Disposable } from '../utils/dispose';
-import * as path from 'path';
 import { PathUtil } from '../utils/pathUtil';
-import * as fs from 'fs';
 import * as vscode from 'vscode';
 
 /**
@@ -40,20 +38,27 @@ export class EndpointManager extends Disposable {
 	 * @returns the encoded endpoint.
 	 */
 	public async encodeLooseFileEndpoint(location: string): Promise<string> {
-		const parent = await PathUtil.GetImmediateParentDir(location);
 		let fullParent = await PathUtil.GetParentDir(location);
 		const child = await PathUtil.GetFileName(location, true);
 
 		fullParent = PathUtil.ConvertToPosixPath(fullParent);
 		this.validEndpointRoots.add(fullParent);
 		fullParent = PathUtil.EscapePathParts(fullParent);
+
 		let endpoint_prefix = `/endpoint_unsaved`;
-		if (parent != '.') {
-			endpoint_prefix = `/${fullParent}`;
+		if ((await PathUtil.FileExistsStat(location)).exists) {
+			endpoint_prefix = this.changePrefixesForAbsPathEncode(fullParent);
 		}
-		return path.join(endpoint_prefix, child);
+
+		// don't use path.join so that we don't remove leading slashes
+		const ret = `${endpoint_prefix}/${child}`;
+		return ret;
 	}
 
+	/**
+	 * Get the immediate parent of the encoded endpoint path. Needed to create index pages
+	 * @param urlPath
+	 */
 	public getEndpointParent(urlPath: string): string {
 		let endpoint: string | undefined = urlPath.endsWith('/')
 			? urlPath.substr(0, urlPath.length - 1)
@@ -63,7 +68,7 @@ export class EndpointManager extends Disposable {
 		if (!endpoint || endpoint == '/endpoint_unsaved') {
 			return '.';
 		}
-		return unescape(endpoint);
+		return decodeURI(endpoint);
 	}
 
 	/**
@@ -71,7 +76,7 @@ export class EndpointManager extends Disposable {
 	 * @returns {string | undefined} the filesystem path that it loads or undefined if it doesn't decode to anything.
 	 */
 	public async decodeLooseFileEndpoint(urlPath: string): Promise<string | undefined> {
-		const path = PathUtil.UnescapePathParts(urlPath);
+		const path = PathUtil.UnescapePathParts(this.changePrefixesForAbsPathDecode(urlPath));
 		if (this.validPath(path)) {
 			const exists = (await PathUtil.FileExistsStat(path)).exists;
 			if (exists) {
@@ -92,5 +97,35 @@ export class EndpointManager extends Disposable {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Performs the prefix changes that happen when decoding an absolute file path.
+	 * Public so that the link previewer can use it to create a file URI.
+	 * @param urlPath
+	 */
+	public changePrefixesForAbsPathDecode(urlPath: string): string {
+		let path = urlPath;
+		if (urlPath.startsWith('/unc/')) {
+			path = `//${urlPath.substring(5)}`;
+		} else if (urlPath.startsWith('/') && urlPath.length > 1) {
+			path = urlPath.substring(1);
+		}
+		return path;
+	}
+
+	/**
+	 * Performs the prefix changes that happen when encoding an absolute file path.
+	 * @param urlPath
+	 */
+	private changePrefixesForAbsPathEncode(urlPath: string): string {
+		let path = `/${urlPath}`;
+
+		if (urlPath.startsWith(`//`) && urlPath.length > 2) {
+			// use `unc` to differentiate UNC paths
+			path = `/unc/${urlPath.substring(2)}`;
+		}
+
+		return path;
 	}
 }

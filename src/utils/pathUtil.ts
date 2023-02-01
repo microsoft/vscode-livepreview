@@ -25,7 +25,6 @@ export class PathUtil {
 		const parts = file.split('/');
 
 		const newParts = parts
-			.filter((part) => part.length > 0)
 			.map((filterdPart) => encodeURI(filterdPart));
 		return newParts.join('/');
 	}
@@ -38,7 +37,6 @@ export class PathUtil {
 	public static UnescapePathParts(file: string): string {
 		const parts = file.split('/');
 		const newParts = parts
-			.filter((part) => part.length > 0)
 			.map((filterdPart) => decodeURI(filterdPart));
 		return newParts.join('/');
 	}
@@ -55,14 +53,6 @@ export class PathUtil {
 			return file;
 		}
 		return path.dirname(file);
-	}
-
-	/**
-	 * @param {string} file a file path.
-	 * @returns {string} The most immediate parent director for the file; e.g. `c:/a/file/path.txt` returns `file`.
-	 */
-	public static async GetImmediateParentDir(file: string): Promise<string | undefined> {
-		return (await PathUtil.GetParentDir(file)).split(this._pathSepRegex).pop();
 	}
 
 	/**
@@ -104,6 +94,8 @@ export class PathUtil {
 	 * @returns {string} the file path using the `/` posix-compliant path delimeter.
 	 */
 	public static ConvertToPosixPath(file: string): string {
+
+
 		return file.split(path.sep).join(path.posix.sep);
 	}
 

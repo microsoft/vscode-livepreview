@@ -121,6 +121,7 @@
 	 * @param {string} url the URL to use to set the URL bar.
 	 */
 	function setURLBar(url) {
+		console.log('wwwwwww');
 		document.getElementById('url-input').value = decodeURI(url);
 	}
 
@@ -261,6 +262,7 @@
 			}
 			// from extension
 			case 'set-url': {
+				console.log('wooooo');
 				const msgJSON = JSON.parse(message.text);
 				// setting a new address, ensure that previous link preview is gone
 				document.getElementById('link-preview').hidden = true;
@@ -285,6 +287,7 @@
 					command: 'update-path',
 					text: message.text,
 				});
+				console.log('eeeep');
 				setURLBar(msgJSON.path.href);
 				updateState(msgJSON.path.pathname);
 
@@ -310,8 +313,7 @@
 			// from child iframe
 			case 'open-external-link': {
 				vscode.postMessage({
-					command: 'open-browser',
-					text: message.text,
+					command: 'open-browser'
 				});
 				break;
 			}
@@ -451,8 +453,7 @@
 		document.getElementById('browser-open').addEventListener('click', () => {
 			document.getElementById('extras-menu-pane').hidden = true;
 			vscode.postMessage({
-				command: 'open-browser',
-				text: '',
+				command: 'open-browser'
 			});
 		});
 
