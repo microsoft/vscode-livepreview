@@ -105,7 +105,7 @@ export class WebviewComm extends Disposable {
 	 *  can be:
 	 * 1. /relative-pathname OR (blank string) for root
 	 * 2. /c:/absolute-pathname
-	 * 3. //unc-absolute-path
+	 * 3. /unc/absolute-unc-pathname
 	 * @param {boolean} updateHistory whether or not to update the history from this call.
 	 */
 	public async goToFile(
