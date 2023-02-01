@@ -245,7 +245,7 @@ export class WSServer extends Disposable {
 
 		if (!basePath) {
 			const decodedLocation =
-				await this._endpointManager.decodeLooseFileEndpoint(absolutePath);
+				await this._endpointManager.decodeLooseFileEndpoint(PathUtil.ConvertToPosixPath(absolutePath));
 			if (!decodedLocation || !(await PathUtil.FileExistsStat(decodedLocation)).exists) {
 				// shows file not found page, which is injectable
 				return { injectable: true, pathname: url.pathname, port };

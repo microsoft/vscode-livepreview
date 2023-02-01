@@ -156,8 +156,9 @@ export class HttpServer extends Disposable {
 
 		// start processing URL
 
-		const writePageNotFound = (): void => {
-			const respInfo =
+		const writePageNotFound = (noServerRoot = false): void => {
+			const respInfo = noServerRoot ?
+				this._contentLoader.createNoRootServer() :
 				this._contentLoader.createPageDoesNotExist(absoluteReadPath);
 			res.writeHead(404, {
 				'Accept-Ranges': 'bytes',
@@ -167,6 +168,11 @@ export class HttpServer extends Disposable {
 			stream = respInfo.Stream;
 			stream?.pipe(res);
 		};
+
+		if (!basePath && (URLPathName == '/' || URLPathName == '')) {
+			writePageNotFound(true);
+			return;
+		}
 
 		let looseFile = false;
 		URLPathName = decodeURI(URLPathName);

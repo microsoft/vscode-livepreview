@@ -140,6 +140,37 @@ export class ContentLoader extends Disposable {
 	}
 
 	/**
+	 * @description In a multi-root case, the index will not lead to anything. Create this page to list all possible indices to visit.
+	 * @returns {IRespInfo} the response info
+	 */
+	public createNoRootServer(): IRespInfo {
+		const noServerRoot = localize('noServerRoot', 'No Server Root');
+		const noWorkspaceOpen = localize(
+			'noWorkspaceOpen',
+			'This server is not based inside of a workspace, so the index does not direct to anything.'
+		);
+		const customMsg = `<p>${noWorkspaceOpen}</p>`;
+		const htmlString = `
+		<!DOCTYPE html>
+		<html>
+			<head>
+				<title>${noServerRoot}</title>
+			</head>
+			<body>
+				<h1>${noServerRoot}</h1>
+				${customMsg}
+			</body>
+			${this._scriptInjection}
+		</html>
+		`;
+
+		return {
+			Stream: Stream.Readable.from(htmlString),
+			ContentType: 'text/html; charset=UTF-8',
+		};
+	}
+
+	/**
 	 * @description Create a defaut index page (served if no `index.html` file is available for the directory).
 	 * @param {string} readPath the absolute path visited.
 	 * @param {string} relativePath the relative path (from workspace root).
