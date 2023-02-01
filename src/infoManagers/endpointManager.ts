@@ -43,12 +43,13 @@ export class EndpointManager extends Disposable {
 
 		fullParent = PathUtil.ConvertToPosixPath(fullParent);
 		this.validEndpointRoots.add(fullParent);
-		fullParent = PathUtil.EscapePathParts(fullParent);
 
 		let endpoint_prefix = `/endpoint_unsaved`;
 		if ((await PathUtil.FileExistsStat(location)).exists) {
 			endpoint_prefix = this.changePrefixesForAbsPathEncode(fullParent);
 		}
+
+		endpoint_prefix = PathUtil.EscapePathParts(endpoint_prefix);
 
 		// don't use path.join so that we don't remove leading slashes
 		const ret = `${endpoint_prefix}/${child}`;
@@ -76,7 +77,7 @@ export class EndpointManager extends Disposable {
 	 * @returns {string | undefined} the filesystem path that it loads or undefined if it doesn't decode to anything.
 	 */
 	public async decodeLooseFileEndpoint(urlPath: string): Promise<string | undefined> {
-		const path = PathUtil.UnescapePathParts(this.changePrefixesForAbsPathDecode(urlPath));
+		const path = this.changePrefixesForAbsPathDecode(PathUtil.UnescapePathParts(urlPath));
 		if (this.validPath(path)) {
 			const exists = (await PathUtil.FileExistsStat(path)).exists;
 			if (exists) {
@@ -106,11 +107,15 @@ export class EndpointManager extends Disposable {
 	 */
 	public changePrefixesForAbsPathDecode(urlPath: string): string {
 		let path = urlPath;
-		if (urlPath.startsWith('/unc/')) {
-			path = `//${urlPath.substring(5)}`;
-		} else if (urlPath.startsWith('/') && urlPath.length > 1) {
+
+		if (urlPath.startsWith('/') && urlPath.length > 1) {
 			path = urlPath.substring(1);
 		}
+
+		if (urlPath.startsWith('unc/')) {
+			path = `//${urlPath.substring(4)}`;
+		}
+
 		return path;
 	}
 

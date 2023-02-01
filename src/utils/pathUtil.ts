@@ -25,6 +25,7 @@ export class PathUtil {
 		const parts = file.split('/');
 
 		const newParts = parts
+			.filter((part) => part.length > 0)
 			.map((filterdPart) => encodeURI(filterdPart));
 		return newParts.join('/');
 	}
@@ -37,6 +38,7 @@ export class PathUtil {
 	public static UnescapePathParts(file: string): string {
 		const parts = file.split('/');
 		const newParts = parts
+			.filter((part) => part.length > 0)
 			.map((filterdPart) => decodeURI(filterdPart));
 		return newParts.join('/');
 	}
