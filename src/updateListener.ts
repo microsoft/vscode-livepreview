@@ -16,6 +16,8 @@ import { PathUtil } from './utils/pathUtil';
  */
 export class UpdateListener extends Disposable {
 	private readonly _watcher;
+	private _debounceTimer: NodeJS.Timeout | undefined;
+	private _debounceDelay: number;
 
 	private readonly _shouldRefreshPreviews = this._register(
 		new vscode.EventEmitter<void>()
@@ -33,6 +35,7 @@ export class UpdateListener extends Disposable {
 				(!_userDataDir || !PathUtil.PathBeginsWith(file.fsPath, _userDataDir))
 			);
 		};
+		this._debounceDelay = SettingUtil.GetConfig().previewDebounceDelay;
 
 		this._register(
 			vscode.workspace.onDidChangeTextDocument((e) => {
@@ -43,7 +46,7 @@ export class UpdateListener extends Disposable {
 						e.document.uri.scheme == UriSchemes.untitled) &&
 					this._reloadOnAnyChange
 				) {
-					this._shouldRefreshPreviews.fire();
+					this._refreshPreview();
 				}
 			})
 		);
@@ -73,7 +76,7 @@ export class UpdateListener extends Disposable {
 		this._register(
 			this._watcher.onDidChange((e) => {
 				if (this._reloadOnSave && notUserDataDirChange(e)) {
-					this._shouldRefreshPreviews.fire();
+					this._refreshPreview();
 				}
 			})
 		);
@@ -84,7 +87,7 @@ export class UpdateListener extends Disposable {
 					(this._reloadOnAnyChange || this._reloadOnSave) &&
 					notUserDataDirChange(e)
 				) {
-					this._shouldRefreshPreviews.fire();
+					this._refreshPreview();
 				}
 			})
 		);
@@ -95,8 +98,15 @@ export class UpdateListener extends Disposable {
 					(this._reloadOnAnyChange || this._reloadOnSave) &&
 					notUserDataDirChange(e)
 				) {
-					this._shouldRefreshPreviews.fire();
+					this._refreshPreview();
 				}
+			})
+		);
+
+		this._register(
+			vscode.workspace.onDidChangeConfiguration((e) => {
+				this._debounceDelay =
+					SettingUtil.GetConfig().previewDebounceDelay;
 			})
 		);
 	}
@@ -126,7 +136,12 @@ export class UpdateListener extends Disposable {
 	 */
 	private _reloadIfOutOfWorkspace(uri: vscode.Uri): void {
 		if (!PathUtil.GetWorkspaceFromURI(uri)) {
-			this._shouldRefreshPreviews.fire();
+			this._refreshPreview();
 		}
+	}
+
+	private _refreshPreview(): void {
+		clearTimeout(this._debounceTimer);
+		this._debounceTimer = setTimeout(() => { this._shouldRefreshPreviews.fire(); }, this._debounceDelay);
 	}
 }
