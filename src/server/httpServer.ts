@@ -47,8 +47,8 @@ export class HttpServer extends Disposable {
 	/**
 	 * @returns {string | undefined} the path where the server index is located.
 	 */
-	private get _basePath(): string | undefined {
-		return this._connection.rootPath;
+	private get _basePath(): string {
+		return this._connection.rootPath ?? '';
 	}
 
 	/**
@@ -108,12 +108,12 @@ export class HttpServer extends Disposable {
 
 	/**
 	 * @description contains the logic for content serving.
-	 * @param {string | undefined} basePath the path where the server index is located.
+	 * @param {string} basePath the path where the server index is located.
 	 * @param {http.IncomingMessage} req the request received
 	 * @param {http.ServerResponse} res the response to be loaded
 	 */
 	private async _serveStream(
-		basePath: string | undefined,
+		basePath: string,
 		req: http.IncomingMessage,
 		res: http.ServerResponse
 	): Promise<void> {
@@ -136,7 +136,7 @@ export class HttpServer extends Disposable {
 		}
 
 		let stream: Stream.Readable | fs.ReadStream | undefined;
-		if (req.url == INJECTED_ENDPOINT_NAME) {
+		if (req.url === INJECTED_ENDPOINT_NAME) {
 			const respInfo = this._contentLoader.loadInjectedJS();
 			const contentType = respInfo.ContentType ?? '';
 			res.writeHead(200, {
@@ -153,25 +153,33 @@ export class HttpServer extends Disposable {
 		);
 
 		let URLPathName = urlObj.path;
-		if (!basePath && (URLPathName == '/' || URLPathName == '')) {
-			const respInfo = this._contentLoader.createNoRootServer();
+
+		// start processing URL
+
+		const writePageNotFound = (noServerRoot = false): void => {
+			const respInfo = noServerRoot ?
+				this._contentLoader.createNoRootServer() :
+				this._contentLoader.createPageDoesNotExist(absoluteReadPath);
 			res.writeHead(404, {
 				'Accept-Ranges': 'bytes',
 				'Content-Type': respInfo.ContentType,
 			});
 			this._reportStatus(req, res);
 			stream = respInfo.Stream;
-
 			stream?.pipe(res);
+		};
+
+		if (basePath === '' && (URLPathName === '/' || URLPathName === '')) {
+			writePageNotFound(true);
 			return;
 		}
 
 		let looseFile = false;
 		URLPathName = decodeURI(URLPathName);
-		let absoluteReadPath = path.join(basePath ?? '', URLPathName);
+		let absoluteReadPath = path.join(basePath, URLPathName);
 
 		let contentType = 'application/octet-stream';
-		if (!basePath) {
+		if (basePath === '') {
 			if (URLPathName.startsWith('/endpoint_unsaved')) {
 				const untitledFileName = URLPathName.substr(
 					URLPathName.lastIndexOf('/') + 1
@@ -192,16 +200,17 @@ export class HttpServer extends Disposable {
 				}
 			}
 
-			if (!(await PathUtil.FileExistsStat(absoluteReadPath)).exists) {
-				const decodedReadPath =
-					await this._endpointManager.decodeLooseFileEndpoint(URLPathName);
-				looseFile = true;
-				if (
-					decodedReadPath &&
-					(await PathUtil.FileExistsStat(decodedReadPath)).exists
-				) {
-					absoluteReadPath = decodedReadPath;
-				}
+			const decodedReadPath =
+				await this._endpointManager.decodeLooseFileEndpoint(URLPathName);
+			looseFile = true;
+			if (
+				decodedReadPath &&
+				(await PathUtil.FileExistsStat(decodedReadPath)).exists
+			) {
+				absoluteReadPath = decodedReadPath;
+			} else {
+				writePageNotFound();
+				return;
 			}
 		} else if (!PathUtil.PathBeginsWith(absoluteReadPath, basePath)) {
 			// double-check that we aren't serving parent files.
@@ -211,17 +220,10 @@ export class HttpServer extends Disposable {
 			absoluteReadPath = basePath;
 		}
 
+		// path should be valid now
 		const absPathExistsStatInfo = await PathUtil.FileExistsStat(absoluteReadPath);
 		if (!absPathExistsStatInfo.exists) {
-			const respInfo =
-				this._contentLoader.createPageDoesNotExist(absoluteReadPath);
-			res.writeHead(404, {
-				'Accept-Ranges': 'bytes',
-				'Content-Type': respInfo.ContentType,
-			});
-			this._reportStatus(req, res);
-			stream = respInfo.Stream;
-			stream?.pipe(res);
+			writePageNotFound();
 			return;
 		}
 		if (absPathExistsStatInfo.stat && absPathExistsStatInfo.stat.isDirectory()) {

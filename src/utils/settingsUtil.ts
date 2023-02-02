@@ -21,6 +21,7 @@ export interface ILivePreviewConfigItem {
 	hostIP: string;
 	customExternalBrowser: CustomExternalBrowser;
 	serverRoot: string;
+	previewDebounceDelay: number;
 }
 
 /**
@@ -69,7 +70,8 @@ export const Settings: any = {
 	debugOnExternalPreview: 'debugOnExternalPreview',
 	hostIP: 'hostIP',
 	customExternalBrowser: 'customExternalBrowser',
-	serverRoot: 'serverRoot'
+	serverRoot: 'serverRoot',
+	previewDebounceDelay: 'previewDebounceDelay'
 };
 
 /**
@@ -105,6 +107,10 @@ export class SettingUtil {
 			serverKeepAliveAfterEmbeddedPreviewClose: config.get<number>(
 				Settings.serverKeepAliveAfterEmbeddedPreviewClose,
 				20
+			),
+			previewDebounceDelay: config.get<number>(
+				Settings.previewDebounceDelay,
+				50
 			),
 			notifyOnOpenLooseFile: config.get<boolean>(
 				Settings.notifyOnOpenLooseFile,
@@ -152,14 +158,16 @@ export class SettingUtil {
 	 * @param {string} settingSuffix the suffix, `livePreview.<suffix>` of the setting to set.
 	 * @param {T} value the value to set the setting to.
 	 * @param {vscode.ConfigurationTarget | boolean | null} scope settings scope
+	 * @param {vscode.Uri} uri uri to scope the settings to
 	 */
-	public static UpdateSettings<T>(
+	public static async UpdateSettings<T>(
 		settingSuffix: string,
 		value: T,
-		scope: vscode.ConfigurationTarget | boolean | null
-	): void {
-		vscode.workspace
-			.getConfiguration(SETTINGS_SECTION_ID)
+		scope: vscode.ConfigurationTarget | boolean | null,
+		uri?: vscode.Uri
+	): Promise<void> {
+		await vscode.workspace
+			.getConfiguration(SETTINGS_SECTION_ID, uri)
 			.update(settingSuffix, value, scope);
 	}
 }

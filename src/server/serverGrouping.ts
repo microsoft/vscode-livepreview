@@ -365,9 +365,9 @@ export class ServerGrouping extends Disposable {
 		if (SettingUtil.GetConfig().showServerStatusNotifications) {
 			vscode.window
 				.showInformationMessage(messsage, DONT_SHOW_AGAIN)
-				.then((selection: vscode.MessageItem | undefined) => {
+				.then(async (selection: vscode.MessageItem | undefined) => {
 					if (selection == DONT_SHOW_AGAIN) {
-						SettingUtil.UpdateSettings(
+						await SettingUtil.UpdateSettings(
 							Settings.showServerStatusNotifications,
 							false,
 							vscode.ConfigurationTarget.Global

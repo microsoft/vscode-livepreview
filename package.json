@@ -199,6 +199,12 @@
           "maximum": 20,
           "description": "%settings.serverKeepAliveAfterEmbeddedPreviewClose%"
         },
+        "livePreview.previewDebounceDelay": {
+          "type": "number",
+          "default": 50,
+          "minimum": 0,
+          "description": "%settings.previewDebounceDelay%"
+        },
         "livePreview.showServerStatusNotifications": {
           "type": "boolean",
           "default": false,
@@ -234,7 +240,8 @@
         "livePreview.defaultPreviewPath": {
           "type": "string",
           "default": "",
-          "description": "%settings.defaultPreviewPath%"
+          "description": "%settings.defaultPreviewPath%",
+          "scope": "resource"
         },
         "livePreview.serverRoot": {
           "type": "string",
