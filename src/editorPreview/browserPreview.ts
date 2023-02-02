@@ -11,7 +11,7 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { WebviewComm } from './webviewComm';
 import { FormatDateTime } from '../utils/utils';
-import { CustomExternalBrowser, SettingUtil } from '../utils/settingsUtil';
+import { SettingUtil } from '../utils/settingsUtil';
 import * as path from 'path';
 import * as nls from 'vscode-nls';
 import { URL } from 'url';

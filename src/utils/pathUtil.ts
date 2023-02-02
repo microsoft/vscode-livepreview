@@ -178,9 +178,8 @@ export class PathUtil {
 	 * @returns {vscode.WorkspaceFolder | undefined} the workspace it belongs to
 	 */
 	public static async GetWorkspaceFromRelativePath(
-		file: string
+		file: string, ignoreFileRoot = false
 	): Promise<vscode.WorkspaceFolder | undefined> {
-
 		const workspaces = vscode.workspace.workspaceFolders;
 
 		if (!workspaces) {
@@ -188,7 +187,7 @@ export class PathUtil {
 		}
 
 		const checkFileExistsStatForWorkspace = async (workspace: vscode.WorkspaceFolder): Promise<boolean> => {
-			const rootPrefix = await PathUtil.GetValidServerRootForWorkspace(workspace);
+			const rootPrefix = ignoreFileRoot ? '' : await PathUtil.GetValidServerRootForWorkspace(workspace);
 			return (await PathUtil.FileExistsStat(path.join(workspace.uri.fsPath, rootPrefix, file))).exists;
 		};
 

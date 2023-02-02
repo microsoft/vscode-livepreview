@@ -158,9 +158,9 @@ export class PreviewManager extends Disposable {
 					),
 					DONT_SHOW_AGAIN
 				)
-				.then((selection: vscode.MessageItem | undefined) => {
+				.then(async (selection: vscode.MessageItem | undefined) => {
 					if (selection == DONT_SHOW_AGAIN) {
-						SettingUtil.UpdateSettings(Settings.notifyOnOpenLooseFile, false, vscode.ConfigurationTarget.Global);
+						await SettingUtil.UpdateSettings(Settings.notifyOnOpenLooseFile, false, vscode.ConfigurationTarget.Global);
 					}
 				});
 		}
