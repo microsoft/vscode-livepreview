@@ -310,8 +310,7 @@
 			// from child iframe
 			case 'open-external-link': {
 				vscode.postMessage({
-					command: 'open-browser',
-					text: message.text,
+					command: 'open-browser'
 				});
 				break;
 			}
@@ -451,8 +450,7 @@
 		document.getElementById('browser-open').addEventListener('click', () => {
 			document.getElementById('extras-menu-pane').hidden = true;
 			vscode.postMessage({
-				command: 'open-browser',
-				text: '',
+				command: 'open-browser'
 			});
 		});
 

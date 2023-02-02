@@ -59,14 +59,6 @@ export class PathUtil {
 
 	/**
 	 * @param {string} file a file path.
-	 * @returns {string} The most immediate parent director for the file; e.g. `c:/a/file/path.txt` returns `file`.
-	 */
-	public static async GetImmediateParentDir(file: string): Promise<string | undefined> {
-		return (await PathUtil.GetParentDir(file)).split(this._pathSepRegex).pop();
-	}
-
-	/**
-	 * @param {string} file a file path.
 	 * @param {boolean} returnEmptyOnDir whether to return an empty string when given an existing directory.
 	 * @returns {string} The filename from the path; e.g. `c:/a/file/path.txt` returns `path.txt`.
 	 */
