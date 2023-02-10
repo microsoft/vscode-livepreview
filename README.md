@@ -8,7 +8,6 @@ This extension is most useful for projects where a server is not already created
 
 ## Table of Contents
 - [Features](#features)
-- [Prerequisites](#prerequisites)
 - [Running the Extension](#running-the-extension)
 - [FAQ](#faq)
 - [Inspirations](#inspirations)
@@ -66,7 +65,7 @@ Run `Live Preview: Show Debug Preview` in the command palette to get these debug
 ![external-debug-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/external-debug-demo.gif)
 
 
-## Console Output Channel (For Embedded Preview)
+### Console Output Channel (For Embedded Preview)
 For a simple view of the embedded preview's console messages, go to the `Output` tab and select `Embedded Live Preview Console` in the dropdown.
 
 ![console-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/console-demo.gif)
