@@ -48,8 +48,10 @@ export function activate(context: vscode.ExtensionContext): void {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start`, async () => {
-			const defaultPreviewPath = SettingUtil.GetConfig().defaultPreviewPath;
-			await serverPreview.openPreviewAtFileString(defaultPreviewPath);
+			// if multiple workspaces are open, use the first one
+			const defaultPreviewPath = SettingUtil.GetConfig(vscode.workspace.workspaceFolders?.[0]).defaultPreviewPath;
+			// defaultPreviewPath is relative to the workspace root, regardless of what is set for serverRoot
+			await serverPreview.openPreviewAtFileString(defaultPreviewPath, undefined, true);
 		})
 	);
 
@@ -181,26 +183,25 @@ export function activate(context: vscode.ExtensionContext): void {
 		vscode.commands.registerCommand(
 			`${SETTINGS_SECTION_ID}.setDefaultOpenFile`,
 			async (file: vscode.Uri) => {
-				// Will set the path on workspace settings if workspace is open
+				// Will set the path on workspace folder settings if workspace is open
 				// otherwise, it will set user setting.
+				const workspace = vscode.workspace.getWorkspaceFolder(file);
 
-				const numWorkspaceFolders = vscode.workspace.workspaceFolders?.length ?? 0;
-				const relativePath = await PathUtil.getPathRelativeToWorkspace(file);
-
-				if (relativePath) {
-					const setPath = (numWorkspaceFolders === 1) ? relativePath : file.fsPath;
-					SettingUtil.UpdateSettings(
+				if (!workspace) {
+					await SettingUtil.UpdateSettings(
 						Settings.defaultPreviewPath,
-						PathUtil.ConvertToPosixPath(setPath),
-						vscode.ConfigurationTarget.Workspace
+						PathUtil.ConvertToPosixPath(file.fsPath),
+						vscode.ConfigurationTarget.Global
 					);
 					return;
 				}
 
-				SettingUtil.UpdateSettings(
+				const relativeFileStr = file.fsPath.substring(workspace.uri.fsPath.length);
+				await SettingUtil.UpdateSettings(
 					Settings.defaultPreviewPath,
-					PathUtil.ConvertToPosixPath(file.fsPath),
-					vscode.ConfigurationTarget.Global
+					PathUtil.ConvertToPosixPath(relativeFileStr),
+					vscode.ConfigurationTarget.WorkspaceFolder,
+					file
 				);
 			}
 		)

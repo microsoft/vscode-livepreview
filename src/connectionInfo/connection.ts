@@ -158,22 +158,6 @@ export class Connection extends Disposable {
 	}
 
 	/**
-	 * @description Checks if a file exists given its **relative** file to the workspace.
-	 *  (always returns false if undefined workspace).
-	 *  e.g. with workspace `c:/a/file/path/`, and there exists `c:/a/file/path/continued/index.html`,
-	 *  passing `path` as `/continued/index.html` will return true.
-	 * @param {string} file file to test.
-	 * @returns {boolean} whether the path exists relative the default workspace
-	 */
-	public async pathExistsRelativeToWorkspace(file: string): Promise<boolean> {
-		if (!this.rootPath) {
-			return false;
-		}
-		const fullPath = path.join(this.rootPath, file);
-		return (await PathUtil.FileExistsStat(fullPath)).exists;
-	}
-
-	/**
 	 * @description Given an absolute file, get the file relative to the workspace.
 	 *  Will return empty string if `!_absPathInWorkspace(path)`.
 	 * @param {string} path the absolute path to convert.

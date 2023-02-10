@@ -12,6 +12,7 @@
 	"commands.startServerAtFileString": "Start Server at File Path String",
 	"settings.portNumber": "Which local port the live preview's server should try initially. If this port number doesn't work, it will increment the port number until it finds a free port.",
 	"settings.serverKeepAliveAfterEmbeddedPreviewClose": "How many minutes after closing the embedded preview you want the server to shut off. Set to 0 to have server stay on indefinetely.",
+	"settings.previewDebounceDelay": "How many milliseconds delay to use when debouncing the preview update.",
 	"settings.showServerStatusNotifications": "Whether or not to show information messages on server on/off status change.",
 	"settings.autoRefreshPreview": "How often to automatically refresh the preview.",
 	"settings.openPreviewTarget": "The preferred target for previews.",
