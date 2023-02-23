@@ -1,4 +1,9 @@
 # Changelog
+## 0.4.6 (March 1, 2023)
+- Added `livePreview.previewDebounceDelay` setting to control refresh debounce. Set 50ms default debounce. [#174](https://github.com/microsoft/vscode-livepreview/issues/174)
+- Fixed page history skip on non-html page.  [#444](https://github.com/microsoft/vscode-livepreview/issues/444)
+- Changed `livePreview.defaultPreviewPath` to use relative path and be scoped to resource. [#274](https://github.com/microsoft/vscode-livepreview/issues/274) [#438](https://github.com/microsoft/vscode-livepreview/issues/438)
+- Fixed out-of-workspace bug with UNC files. [#326](https://github.com/microsoft/vscode-livepreview/issues/326)
 
 ## 0.4.5 (February 1, 2023)
 - Added `livePreview.serverRoot` setting to specify server root in subfolder of workspace. [#155](https://github.com/microsoft/vscode-livepreview/issues/155)
