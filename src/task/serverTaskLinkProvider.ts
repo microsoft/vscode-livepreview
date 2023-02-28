@@ -119,7 +119,7 @@ export class serverTaskLinkProvider
 						const link =
 							queryIndex == -1
 								? partialLinkMatches[i]
-								: partialLinkMatches[i].substr(0, queryIndex);
+								: partialLinkMatches[i].substring(0, queryIndex);
 						const isDir = link.endsWith('/');
 						const tooltip = isDir
 							? localize('revealFolder', 'Reveal Folder ')

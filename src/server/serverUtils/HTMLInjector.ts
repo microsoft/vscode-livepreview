@@ -81,7 +81,7 @@ export class HTMLInjector extends Disposable {
 		let httpURL = `${httpUri.scheme}://${httpUri.authority}`;
 
 		if (httpURL.endsWith('/')) {
-			httpURL = httpURL.substr(httpURL.length - 1);
+			httpURL = httpURL.substring(httpURL.length - 1);
 		}
 		const replacements = [
 			{ original: WS_URL_PLACEHOLDER, replacement: wsURL },
@@ -99,9 +99,9 @@ export class HTMLInjector extends Disposable {
 		replaces.forEach((replace) => {
 			const placeHolderIndex = script.indexOf(replace.original);
 			script =
-				script.substr(0, placeHolderIndex) +
+				script.substring(0, placeHolderIndex) +
 				replace.replacement +
-				script.substr(placeHolderIndex + replace.original.length);
+				script.substring(placeHolderIndex + replace.original.length);
 		});
 		return script;
 	}
