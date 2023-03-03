@@ -287,9 +287,9 @@ export class BrowserPreview extends Disposable {
 			const host = await this._webviewComm.resolveHost(connection);
 			let hostString = host.toString();
 			if (hostString.endsWith('/')) {
-				hostString = hostString.substr(0, hostString.length - 1);
+				hostString = hostString.substring(0, hostString.length - 1);
 			}
-			const file = address.substr(hostString.length);
+			const file = address.substring(hostString.length);
 			await this._webviewComm.goToFile(file, true, connection);
 		} catch (e) {
 			await this._handleOpenBrowser(address);
@@ -312,7 +312,7 @@ export class BrowserPreview extends Disposable {
 				if (connection.workspace) {
 					this._panel.title = await PathUtil.GetFileName(pathname);
 				} else {
-					this._panel.title = path.basename(pathname.substr(1));
+					this._panel.title = path.basename(pathname.substring(1));
 				}
 			} else {
 				this._panel.title = pathname;

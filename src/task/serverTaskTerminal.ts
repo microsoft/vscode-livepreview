@@ -24,8 +24,7 @@ const CHAR_CODE_CTRL_C = 3;
  */
 export class ServerTaskTerminal
 	extends Disposable
-	implements vscode.Pseudoterminal
-{
+	implements vscode.Pseudoterminal {
 	public running = false;
 
 	// This object will request to open and close the server, so its parent
@@ -187,8 +186,7 @@ export class ServerTaskTerminal
 		const date = new Date();
 
 		this._onDidWrite.fire(
-			`[${FormatDateTime(date, ' ')}] ${
-				msg.method
+			`[${FormatDateTime(date, ' ')}] ${msg.method
 			}: ${TerminalStyleUtil.ColorTerminalString(
 				decodeURI(msg.url),
 				TerminalColor.blue
@@ -230,8 +228,8 @@ export class ServerTaskTerminal
 	 */
 	private _formatAddr(addr: string): string {
 		const indexSecondColon = this._getSecondColonPos(addr);
-		const firstHalfOfString = addr.substr(0, indexSecondColon);
-		const lastHalfOfString = addr.substr(indexSecondColon);
+		const firstHalfOfString = addr.substring(0, indexSecondColon);
+		const lastHalfOfString = addr.substring(indexSecondColon);
 		return (
 			TerminalStyleUtil.ColorTerminalString(
 				firstHalfOfString,
