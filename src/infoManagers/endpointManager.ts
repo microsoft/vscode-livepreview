@@ -41,7 +41,7 @@ export class EndpointManager extends Disposable {
 		let fullParent = await PathUtil.GetParentDir(location);
 		const child = await PathUtil.GetFileName(location, true);
 
-		fullParent = PathUtil.ConvertToPosixPath(fullParent);
+		fullParent = this.changePathForAbsPathEncode(fullParent);
 		this.validEndpointRoots.add(fullParent);
 
 		let endpoint_prefix = `/endpoint_unsaved`;
@@ -79,9 +79,11 @@ export class EndpointManager extends Disposable {
 	public async decodeLooseFileEndpoint(urlPath: string): Promise<string | undefined> {
 		const path = this.changePrefixesForAbsPathDecode(PathUtil.UnescapePathParts(urlPath));
 		if (this.validPath(path)) {
-			const exists = (await PathUtil.FileExistsStat(path)).exists;
-			if (exists) {
-				return path;
+			for (const elem of [path, `/${path}`]) { // if it's a linux path, it must be prepended by a `/`
+				const exists = (await PathUtil.FileExistsStat(elem)).exists;
+				if (exists) {
+					return elem;
+				}
 			}
 		}
 		return undefined;
@@ -117,6 +119,17 @@ export class EndpointManager extends Disposable {
 		}
 
 		return path;
+	}
+
+	public changePathForAbsPathEncode(urlPath: string): string {
+		const pathStr = PathUtil.ConvertToPosixPath(urlPath);
+		// All paths that get encoded will not start with a `/`.
+		// Since there is already a `/` between the hostname and pathname
+		// and it is non-ideal to have two slashes after the hostname.
+
+		// decoding will re-add the `/` according to a file existence check.
+		const ret = pathStr.startsWith('/') ? pathStr.substring(1) : pathStr;
+		return ret;
 	}
 
 	/**
