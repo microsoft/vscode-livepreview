@@ -41,7 +41,7 @@ export class EndpointManager extends Disposable {
 		let fullParent = await PathUtil.GetParentDir(location);
 		const child = await PathUtil.GetFileName(location, true);
 
-		fullParent = this.changePathForAbsPathEncode(fullParent);
+		fullParent = PathUtil.ConvertToPosixPath(fullParent);
 		this.validEndpointRoots.add(fullParent);
 
 		let endpoint_prefix = `/endpoint_unsaved`;
@@ -78,12 +78,11 @@ export class EndpointManager extends Disposable {
 	 */
 	public async decodeLooseFileEndpoint(urlPath: string): Promise<string | undefined> {
 		const path = this.changePrefixesForAbsPathDecode(PathUtil.UnescapePathParts(urlPath));
-		if (this.validPath(path)) {
-			for (const elem of [path, `/${path}`]) { // if it's a linux path, it must be prepended by a `/`
-				const exists = (await PathUtil.FileExistsStat(elem)).exists;
-				if (exists) {
-					return elem;
-				}
+		const actualPath = this.validPath(path);
+		if (actualPath) {
+			const exists = (await PathUtil.FileExistsStat(actualPath)).exists;
+			if (exists) {
+				return actualPath;
 			}
 		}
 		return undefined;
@@ -93,13 +92,15 @@ export class EndpointManager extends Disposable {
 	 * @param {string} file the endpoint to check
 	 * @returns {boolean} whether the endpoint can be decoded to an acutal file path.
 	 */
-	private validPath(file: string): boolean {
+	private validPath(file: string): string | undefined {
 		for (const item of this.validEndpointRoots.values()) {
-			if (file.startsWith(item)) {
-				return true;
+			for (const fileVariations of [file, `/${file}`]) { // if it's a unix path, it will be prepended by a `/`
+				if (fileVariations.startsWith(item)) {
+					return fileVariations;
+				}
 			}
 		}
-		return false;
+		return undefined;
 	}
 
 	/**
@@ -119,17 +120,6 @@ export class EndpointManager extends Disposable {
 		}
 
 		return path;
-	}
-
-	public changePathForAbsPathEncode(urlPath: string): string {
-		const pathStr = PathUtil.ConvertToPosixPath(urlPath);
-		// All paths that get encoded will not start with a `/`.
-		// Since there is already a `/` between the hostname and pathname
-		// and it is non-ideal to have two slashes after the hostname.
-
-		// decoding will re-add the `/` according to a file existence check.
-		const ret = pathStr.startsWith('/') ? pathStr.substring(1) : pathStr;
-		return ret;
 	}
 
 	/**
