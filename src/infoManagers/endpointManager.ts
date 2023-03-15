@@ -78,10 +78,11 @@ export class EndpointManager extends Disposable {
 	 */
 	public async decodeLooseFileEndpoint(urlPath: string): Promise<string | undefined> {
 		const path = this.changePrefixesForAbsPathDecode(PathUtil.UnescapePathParts(urlPath));
-		if (this.validPath(path)) {
-			const exists = (await PathUtil.FileExistsStat(path)).exists;
+		const actualPath = this.validPath(path);
+		if (actualPath) {
+			const exists = (await PathUtil.FileExistsStat(actualPath)).exists;
 			if (exists) {
-				return path;
+				return actualPath;
 			}
 		}
 		return undefined;
@@ -91,13 +92,15 @@ export class EndpointManager extends Disposable {
 	 * @param {string} file the endpoint to check
 	 * @returns {boolean} whether the endpoint can be decoded to an acutal file path.
 	 */
-	private validPath(file: string): boolean {
+	private validPath(file: string): string | undefined {
 		for (const item of this.validEndpointRoots.values()) {
-			if (file.startsWith(item)) {
-				return true;
+			for (const fileVariations of [file, `/${file}`]) { // if it's a unix path, it will be prepended by a `/`
+				if (fileVariations.startsWith(item)) {
+					return fileVariations;
+				}
 			}
 		}
-		return false;
+		return undefined;
 	}
 
 	/**
