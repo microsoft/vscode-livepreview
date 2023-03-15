@@ -1,12 +1,7 @@
 name: $(Date:yyyyMMdd)$(Rev:.r)
 
-trigger:
-  batch: true
-  branches:
-    include:
-      - main
-  tags:
-    include: ['*']
+trigger: none
+
 pr: none
 
 resources:
@@ -17,9 +12,16 @@ resources:
       ref: main
       endpoint: Monaco
 
+parameters:
+  - name: publishExtension
+    displayName: 🚀 Publish Extension
+    type: boolean
+    default: false
+
 extends:
   template: azure-pipelines/extension/stable.yml@templates
   parameters:
+    publishExtension: ${{ parameters.publishExtension }}
     locTsConfigs: $(Build.SourcesDirectory)/tsconfig.json
     locBundleDestination: '$(Build.SourcesDirectory)/out'
     buildSteps:
