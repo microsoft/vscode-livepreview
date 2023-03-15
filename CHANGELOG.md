@@ -1,6 +1,6 @@
 # Changelog
 ## 0.4.7 (March 15, 2023)
-- Fixed out-of-workspace preview for UNIX paths. [#469](https://github.com/microsoft/vscode-livepreview/issues/469)
+- Fixed out-of-workspace preview for UNIX paths. [#464](https://github.com/microsoft/vscode-livepreview/issues/464)
 
 ## 0.4.6 (March 1, 2023)
 - Added `livePreview.previewDebounceDelay` setting to control refresh debounce. Set 50ms default debounce. [#174](https://github.com/microsoft/vscode-livepreview/issues/174)
