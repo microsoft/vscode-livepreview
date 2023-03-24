@@ -370,11 +370,12 @@ export class Manager extends Disposable {
 	 * This is usually used for when the user configures a setting for initial filepath
 	 * @param filePath the string fsPath to use
 	 */
-	public async openPreviewAtFileString(filePath: string, previewType?: string, ignoreFileRoot = false): Promise<void> {
-		if (filePath === '') {
+	public async openPreviewAtFileString(filePath: string, previewType?: string, activeWorkspace?: vscode.WorkspaceFolder, ignoreFileRoot = false): Promise<void> {
+		if (filePath === '' && !activeWorkspace) {
 			return this._openPreviewWithNoTarget();
 		}
-		const workspace = await PathUtil.GetWorkspaceFromRelativePath(filePath, ignoreFileRoot);
+
+		const workspace = activeWorkspace ? activeWorkspace : await PathUtil.GetWorkspaceFromRelativePath(filePath, ignoreFileRoot);
 		if (workspace) {
 			const file = vscode.Uri.joinPath(workspace.uri, ignoreFileRoot ? '' : await PathUtil.GetValidServerRootForWorkspace(workspace), filePath);
 			this.openPreviewAtFileUri(file, {
@@ -383,12 +384,13 @@ export class Manager extends Disposable {
 			return;
 		}
 
+		// no workspace, try to open as a loose file
 		if ((await PathUtil.FileExistsStat(filePath)).exists) {
 			const file = vscode.Uri.file(filePath);
 			this.openPreviewAtFileUri(file, undefined, previewType);
 		} else {
 			vscode.window.showWarningMessage(
-				localize('fileDNE', "The file '{0}' does not exist.", filePath)
+				localize('fileDNE', "The file '{0}' does not exist relative your filesystem root.", filePath)
 			);
 			this.openPreviewAtFileUri(undefined, undefined, previewType);
 		}
@@ -659,7 +661,9 @@ export class Manager extends Disposable {
 		return previewType === PreviewType.internalPreview;
 	}
 	private async _openPreviewWithNoTarget(): Promise<void> {
-		// opens index at first open server or opens a loose workspace at root
+		// Opens index at first open server or opens a loose workspace at root.
+		// This function is called with the assumption that there might be an open server already
+		// and we should check.
 
 		const internal = this._isInternalPreview();
 		const workspaces = vscode.workspace.workspaceFolders;
