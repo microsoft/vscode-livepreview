@@ -384,12 +384,13 @@ export class Manager extends Disposable {
 			return;
 		}
 
+		// no workspace, try to open as a loose file
 		if ((await PathUtil.FileExistsStat(filePath)).exists) {
 			const file = vscode.Uri.file(filePath);
 			this.openPreviewAtFileUri(file, undefined, previewType);
 		} else {
 			vscode.window.showWarningMessage(
-				localize('fileDNE', "The file '{0}' does not exist.", filePath)
+				localize('fileDNE', "The file '{0}' does not exist relative your filesystem root.", filePath)
 			);
 			this.openPreviewAtFileUri(undefined, undefined, previewType);
 		}
