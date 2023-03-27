@@ -22,6 +22,7 @@ export interface ILivePreviewConfigItem {
 	customExternalBrowser: CustomExternalBrowser;
 	serverRoot: string;
 	previewDebounceDelay: number;
+	supportCrossOriginIsolation: boolean;
 }
 
 /**
@@ -71,7 +72,8 @@ export const Settings: any = {
 	hostIP: 'hostIP',
 	customExternalBrowser: 'customExternalBrowser',
 	serverRoot: 'serverRoot',
-	previewDebounceDelay: 'previewDebounceDelay'
+	previewDebounceDelay: 'previewDebounceDelay',
+	supportCrossOriginIsolation: 'supportCrossOriginIsolation'
 };
 
 /**
@@ -127,7 +129,8 @@ export class SettingUtil {
 			),
 			hostIP: config.get<string>(Settings.hostIP, '127.0.0.1'),
 			customExternalBrowser: config.get<CustomExternalBrowser>(Settings.customExternalBrowser, CustomExternalBrowser.default),
-			serverRoot: config.get<string>(Settings.serverRoot, '')
+			serverRoot: config.get<string>(Settings.serverRoot, ''),
+			supportCrossOriginIsolation: config.get<boolean>(Settings.supportCrossOriginIsolation, false),
 		};
 	}
 

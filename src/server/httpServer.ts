@@ -10,16 +10,18 @@ import * as path from 'path';
 import * as Stream from 'stream';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
-import { INJECTED_ENDPOINT_NAME } from '../utils/constants';
+import { COOP_COEP_HEADERS, INJECTED_ENDPOINT_NAME } from '../utils/constants';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
 import { IServerMsg } from './serverGrouping';
+import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
 
 export class HttpServer extends Disposable {
 	private _server: any;
 	private _contentLoader: ContentLoader;
+	private _defaultHeaders: http.OutgoingHttpHeaders;
 
 	private readonly _onConnected = this._register(
 		new vscode.EventEmitter<number>()
@@ -42,6 +44,24 @@ export class HttpServer extends Disposable {
 		this._contentLoader = this._register(
 			new ContentLoader(_extensionUri, _reporter, _endpointManager, _connection)
 		);
+		this._defaultHeaders = this.getUpdatedDefaultHeaders();
+
+		this._register(
+			vscode.workspace.onDidChangeConfiguration((e) => {
+				if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
+					this._defaultHeaders = this.getUpdatedDefaultHeaders();
+				}
+			})
+		);
+	}
+
+	private getUpdatedDefaultHeaders(): http.OutgoingHttpHeaders {
+		return SettingUtil.GetConfig().supportCrossOriginIsolation ?
+			{
+				'Accept-Ranges': 'bytes',
+				...COOP_COEP_HEADERS
+			} :
+			{ 'Accept-Ranges': 'bytes' };
 	}
 
 	/**
@@ -140,8 +160,8 @@ export class HttpServer extends Disposable {
 			const respInfo = this._contentLoader.loadInjectedJS();
 			const contentType = respInfo.ContentType ?? '';
 			res.writeHead(200, {
-				'Accept-Ranges': 'bytes',
 				'Content-Type': contentType,
+				...this._defaultHeaders
 			});
 			stream = respInfo.Stream;
 			stream?.pipe(res);
@@ -161,8 +181,8 @@ export class HttpServer extends Disposable {
 				this._contentLoader.createNoRootServer() :
 				this._contentLoader.createPageDoesNotExist(absoluteReadPath);
 			res.writeHead(404, {
-				'Accept-Ranges': 'bytes',
 				'Content-Type': respInfo.ContentType,
+				...this._defaultHeaders
 			});
 			this._reportStatus(req, res);
 			stream = respInfo.Stream;
@@ -192,8 +212,8 @@ export class HttpServer extends Disposable {
 					stream = content.Stream;
 					contentType = content.ContentType ?? '';
 					res.writeHead(200, {
-						'Accept-Ranges': 'bytes',
 						'Content-Type': contentType,
+						...this._defaultHeaders
 					});
 					stream.pipe(res);
 					return;
@@ -265,8 +285,8 @@ export class HttpServer extends Disposable {
 				return;
 			});
 			res.writeHead(200, {
-				'Accept-Ranges': 'bytes',
 				'Content-Type': contentType,
+				...this._defaultHeaders
 			});
 			stream.pipe(res);
 		} else {
