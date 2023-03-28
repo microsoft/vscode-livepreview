@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
+import { DEFAULT_HTTP_HEADERS } from './constants';
 
 /**
  * @description the object representation of the extension settings.
@@ -22,6 +23,7 @@ export interface ILivePreviewConfigItem {
 	customExternalBrowser: CustomExternalBrowser;
 	serverRoot: string;
 	previewDebounceDelay: number;
+	httpHeaders: any;
 }
 
 /**
@@ -71,7 +73,8 @@ export const Settings: any = {
 	hostIP: 'hostIP',
 	customExternalBrowser: 'customExternalBrowser',
 	serverRoot: 'serverRoot',
-	previewDebounceDelay: 'previewDebounceDelay'
+	previewDebounceDelay: 'previewDebounceDelay',
+	httpHeaders: 'httpHeaders'
 };
 
 /**
@@ -127,7 +130,8 @@ export class SettingUtil {
 			),
 			hostIP: config.get<string>(Settings.hostIP, '127.0.0.1'),
 			customExternalBrowser: config.get<CustomExternalBrowser>(Settings.customExternalBrowser, CustomExternalBrowser.default),
-			serverRoot: config.get<string>(Settings.serverRoot, '')
+			serverRoot: config.get<string>(Settings.serverRoot, ''),
+			httpHeaders: config.get<any>(Settings.httpHeaders, DEFAULT_HTTP_HEADERS),
 		};
 	}
 
