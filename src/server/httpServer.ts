@@ -22,9 +22,9 @@ import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
 const localize = nls.loadMessageBundle();
 
 export class HttpServer extends Disposable {
-	private _server: any;
+	private _server?: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>;
 	private _contentLoader: ContentLoader;
-	private _defaultHeaders: http.OutgoingHttpHeaders;
+	private _defaultHeaders: any; // headers will be validated when set on the reponse
 
 	private readonly _onConnected = this._register(
 		new vscode.EventEmitter<number>()
@@ -47,19 +47,19 @@ export class HttpServer extends Disposable {
 		this._contentLoader = this._register(
 			new ContentLoader(_extensionUri, _reporter, _endpointManager, _connection)
 		);
-		this._defaultHeaders = this.getUpdatedDefaultHeaders();
+		this._defaultHeaders = SettingUtil.GetConfig().httpHeaders;
 
 		this._register(
 			vscode.workspace.onDidChangeConfiguration((e) => {
 				if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
-					this._defaultHeaders = this.getUpdatedDefaultHeaders();
+					this._defaultHeaders = SettingUtil.GetConfig().httpHeaders;
 				}
 			})
 		);
 	}
 
-	private getUpdatedDefaultHeaders(): http.OutgoingHttpHeaders {
-		return SettingUtil.GetConfig().httpHeaders;
+	private _unsetDefaultHeaders(): void {
+		this._defaultHeaders = {};
 	}
 
 	/**
@@ -83,7 +83,7 @@ export class HttpServer extends Disposable {
 	 * @description stop the HTTP server.
 	 */
 	public close(): void {
-		this._server.close();
+		this._server?.close();
 	}
 
 	/**
@@ -101,10 +101,10 @@ export class HttpServer extends Disposable {
 		this._server.on('error', (err: any) => {
 			if (err.code == 'EADDRINUSE') {
 				this._connection.httpPort++;
-				this._server.listen(this._connection.httpPort, this._connection.host);
+				this._server?.listen(this._connection.httpPort, this._connection.host);
 			} else if (err.code == 'EADDRNOTAVAIL') {
 				this._connection.resetHostToDefault();
-				this._server.listen(this._connection.httpPort, this._connection.host);
+				this._server?.listen(this._connection.httpPort, this._connection.host);
 			} else {
 				/* __GDPR__
 					"server.err" : {
@@ -143,6 +143,7 @@ export class HttpServer extends Disposable {
 					...this._defaultHeaders
 				});
 			} catch (e) {
+				this._unsetDefaultHeaders(); // unset the headers so we don't keep trying to write them
 				vscode.window.showErrorMessage(localize(
 					'httpHeadersError',
 					'Error writing HTTP headers. Please double-check your Live Preview settings.',
