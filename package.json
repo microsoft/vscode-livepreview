@@ -269,10 +269,12 @@
           "default": "Default",
           "description": "%settings.customExternalBrowser%"
         },
-        "livePreview.supportCrossOriginIsolation": {
-          "type": "boolean",
-          "default": false,
-          "description": "%settings.supportCrossOriginIsolation%"
+        "livePreview.httpHeaders": {
+          "type": "object",
+          "default": {
+            "Accept-Ranges": "bytes"
+          },
+          "description": "%settings.httpHeaders%"
         }
       }
     },

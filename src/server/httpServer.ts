@@ -8,15 +8,18 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as Stream from 'stream';
+import * as nls from 'vscode-nls';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
-import { COOP_COEP_HEADERS, INJECTED_ENDPOINT_NAME } from '../utils/constants';
+import { INJECTED_ENDPOINT_NAME } from '../utils/constants';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
 import { IServerMsg } from './serverGrouping';
 import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
+
+const localize = nls.loadMessageBundle();
 
 export class HttpServer extends Disposable {
 	private _server: any;
@@ -56,12 +59,7 @@ export class HttpServer extends Disposable {
 	}
 
 	private getUpdatedDefaultHeaders(): http.OutgoingHttpHeaders {
-		return SettingUtil.GetConfig().supportCrossOriginIsolation ?
-			{
-				'Accept-Ranges': 'bytes',
-				...COOP_COEP_HEADERS
-			} :
-			{ 'Accept-Ranges': 'bytes' };
+		return SettingUtil.GetConfig().httpHeaders;
 	}
 
 	/**
@@ -137,8 +135,32 @@ export class HttpServer extends Disposable {
 		req: http.IncomingMessage,
 		res: http.ServerResponse
 	): Promise<void> {
+
+		const writeHeader = (code: number, contentType?: string | undefined): void => {
+			try {
+				res.writeHead(code, {
+					'Content-Type': contentType,
+					...this._defaultHeaders
+				});
+			} catch (e) {
+				vscode.window.showErrorMessage(localize(
+					'httpHeadersError',
+					'Error writing HTTP headers. Please double-check your Live Preview settings.',
+				));
+			}
+		};
+
+		const reportAndReturn = (
+			status: number
+		): void => {
+			// write the status to the header, send data for logging, then end.
+			writeHeader(status);
+			this._reportStatus(req, res);
+			res.end();
+		};
+
 		if (!req || !req.url) {
-			this._reportAndReturn(500, req, res);
+			reportAndReturn(500);
 			return;
 		}
 
@@ -151,7 +173,7 @@ export class HttpServer extends Disposable {
 			(req.headers.origin &&
 				req.headers.origin !== `${expectedUri.scheme}://${expectedHost}`)
 		) {
-			this._reportAndReturn(401, req, res); // unauthorized
+			reportAndReturn(401); // unauthorized
 			return;
 		}
 
@@ -159,10 +181,7 @@ export class HttpServer extends Disposable {
 		if (req.url === INJECTED_ENDPOINT_NAME) {
 			const respInfo = this._contentLoader.loadInjectedJS();
 			const contentType = respInfo.ContentType ?? '';
-			res.writeHead(200, {
-				'Content-Type': contentType,
-				...this._defaultHeaders
-			});
+			writeHeader(200, contentType);
 			stream = respInfo.Stream;
 			stream?.pipe(res);
 			return;
@@ -180,14 +199,12 @@ export class HttpServer extends Disposable {
 			const respInfo = noServerRoot ?
 				this._contentLoader.createNoRootServer() :
 				this._contentLoader.createPageDoesNotExist(absoluteReadPath);
-			res.writeHead(404, {
-				'Content-Type': respInfo.ContentType,
-				...this._defaultHeaders
-			});
+			writeHeader(404, respInfo.ContentType);
 			this._reportStatus(req, res);
 			stream = respInfo.Stream;
 			stream?.pipe(res);
 		};
+
 
 		if (basePath === '' && (URLPathName === '/' || URLPathName === '')) {
 			writePageNotFound(true);
@@ -211,10 +228,7 @@ export class HttpServer extends Disposable {
 				if (content.Stream) {
 					stream = content.Stream;
 					contentType = content.ContentType ?? '';
-					res.writeHead(200, {
-						'Content-Type': contentType,
-						...this._defaultHeaders
-					});
+					writeHeader(200, contentType);
 					stream.pipe(res);
 					return;
 				}
@@ -251,7 +265,7 @@ export class HttpServer extends Disposable {
 				const queries = urlObj.query;
 				URLPathName = encodeURI(URLPathName);
 				res.setHeader('Location', `${URLPathName}/?${queries}`);
-				this._reportAndReturn(302, req, res); // redirect
+				reportAndReturn(302); // redirect
 				return;
 			}
 
@@ -281,16 +295,13 @@ export class HttpServer extends Disposable {
 
 		if (stream) {
 			stream.on('error', () => {
-				this._reportAndReturn(500, req, res);
+				reportAndReturn(500);
 				return;
 			});
-			res.writeHead(200, {
-				'Content-Type': contentType,
-				...this._defaultHeaders
-			});
+			writeHeader(200, contentType);
 			stream.pipe(res);
 		} else {
-			this._reportAndReturn(500, req, res);
+			reportAndReturn(500);
 			return;
 		}
 
@@ -305,22 +316,6 @@ export class HttpServer extends Disposable {
 		return http.createServer((req, res) =>
 			this._serveStream(this._basePath, req, res)
 		);
-	}
-
-	/**
-	 * @description write the status to the header, send data for logging, then end.
-	 * @param {number} status the status returned
-	 * @param {http.IncomingMessage} req the request object
-	 * @param {http.ServerResponse} res the response object
-	 */
-	private _reportAndReturn(
-		status: number,
-		req: http.IncomingMessage,
-		res: http.ServerResponse
-	): void {
-		res.writeHead(status);
-		this._reportStatus(req, res);
-		res.end();
 	}
 
 	/**

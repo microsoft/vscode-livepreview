@@ -43,11 +43,4 @@ export const LIVE_PREVIEW_SERVER_ON = 'LivePreviewServerOn';
 
 export const TASK_TERMINAL_BASE_NAME = localize('task name', 'Run Server');
 
-// These headers are needed for cross-origin isolation to work.
-// See https://web.dev/coop-coep/ for more details.
-// Note that linking external content (like images) will not work when this is enabled.
-// However, this is needed for features like `SharedArrayBuffer`.
-export const COOP_COEP_HEADERS = {
-	'Cross-Origin-Embedder-Policy': 'require-corp',
-	'Cross-Origin-Opener-Policy': 'same-origin'
-};
+export const DEFAULT_HTTP_HEADERS = { 'Accept-Ranges': 'bytes' };
