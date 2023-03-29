@@ -243,7 +243,7 @@ export class Manager extends Disposable {
 		this._register(
 			this._serverTaskProvider.onShouldLaunchPreview((e) => {
 				if (e.uri && e.uri.scheme !== 'file') {
-					this.openPreviewAtLink(e.uri, e.previewType);
+					this._openPreviewAtLink(e.uri, e.previewType);
 				} else {
 					this.openPreviewAtFileUri(e.uri, e.options, e.previewType);
 				}
@@ -253,7 +253,7 @@ export class Manager extends Disposable {
 		this._register(
 			this._previewManager.onShouldLaunchPreview((e) => {
 				if (e.uri && e.uri.scheme !== 'file') {
-					this.openPreviewAtLink(e.uri, e.previewType);
+					this._openPreviewAtLink(e.uri, e.previewType);
 				} else {
 					this.openPreviewAtFileUri(e.uri, e.options, e.previewType);
 				}
@@ -266,85 +266,12 @@ export class Manager extends Disposable {
 		);
 	}
 
-	/**
-	 * handles opening a file
-	 * @param internal whether to launch an embedded preview
-	 * @param file the uri or string filePath to use
-	 * @param fileStringRelative whether the path is relative
-	 * @param debug whether to launch in debug
-	 * @param workspace the workspace to launch the file from
-	 * @param port the port to derive the workspace from
-	 * @param serverGrouping the serverGrouping that manages the server workspace
-	 */
-	public async handleOpenFile(
-		internal: boolean,
-		debug: boolean,
-		file: vscode.Uri,
-		workspace?: vscode.WorkspaceFolder,
-		port?: number,
-		serverGrouping?: ServerGrouping
-	): Promise<void> {
-		if (file.scheme !== 'file') {
-			console.error('Tried to open a non-file URI with file opener');
-		}
-		if (!serverGrouping) {
-			if (workspace) {
-				serverGrouping = await this._getServerGroupingFromWorkspace(await this._shouldUseWorkspaceForFile(workspace, file) ? workspace : undefined);
-			} else if (port) {
-				this._serverGroupings.forEach((potentialServerGrouping) => {
-					if (potentialServerGrouping.port === port) {
-						serverGrouping = potentialServerGrouping;
-						return;
-					}
-				});
-			} else {
-				workspace = await PathUtil.GetWorkspaceFromURI(file);
-				serverGrouping = await this._getServerGroupingFromWorkspace(workspace);
-			}
-		}
-
-		if (!serverGrouping) {
-			// last-resort: use loose workspace server.
-			serverGrouping = await this._getServerGroupingFromWorkspace(undefined);
-		}
-
-		return this._openPreview(internal, serverGrouping, file, debug);
-	}
-
 	public async forceCloseServers(): Promise<void> {
 		if (this._serverGroupings.size > 1) {
 			this._showCloseServerPicker();
 		} else {
 			this.closeAllServers();
 		}
-	}
-
-	/**
-	 * Show the picker to select a server to close
-	 */
-	private async _showCloseServerPicker(): Promise<void> {
-		const disposables: vscode.Disposable[] = [];
-
-		const quickPick = vscode.window.createQuickPick<IServerQuickPickItem>();
-		disposables.push(quickPick);
-
-		quickPick.matchOnDescription = true;
-		quickPick.placeholder = localize(
-			'selectPort',
-			'Select the port that corresponds to the server that you want to stop'
-		);
-		quickPick.items = await this._getServerPicks();
-
-		disposables.push(
-			quickPick.onDidAccept(() => {
-				const selectedItem = quickPick.selectedItems[0];
-				selectedItem.accept();
-				quickPick.hide();
-				disposables.forEach((d) => d.dispose());
-			})
-		);
-
-		quickPick.show();
 	}
 
 	/**
@@ -396,11 +323,57 @@ export class Manager extends Disposable {
 		}
 	}
 
+	public async openPreviewAtFileUri(
+		file?: vscode.Uri,
+		options?: IOpenFileOptions,
+		previewType?: string
+	): Promise<void> {
+		let fileUri: vscode.Uri;
+		if (!file) {
+			if (this._previewManager.currentPanel?.panel.active) {
+				if (this._previewManager.currentPanel.currentConnection.rootURI) {
+					fileUri = vscode.Uri.joinPath(
+						this._previewManager.currentPanel.currentConnection.rootURI,
+						this._previewManager.currentPanel.currentAddress
+					);
+				} else {
+					fileUri = vscode.Uri.parse(
+						this._previewManager.currentPanel.currentAddress
+					);
+				}
+			} else {
+				const activeFile = vscode.window.activeTextEditor?.document.uri;
+				if (activeFile) {
+					fileUri = activeFile;
+				} else {
+					return this._openPreviewWithNoTarget();
+				}
+			}
+		} else {
+			fileUri = file;
+		}
+		if (!previewType) {
+			previewType = SettingUtil.GetPreviewType();
+		}
+
+		const internal = previewType === PreviewType.internalPreview;
+		const debug = previewType === PreviewType.externalDebugPreview;
+
+		return this._handleOpenFile(
+			internal,
+			debug,
+			fileUri,
+			options?.workspace,
+			options?.port,
+			options?.manager
+		);
+	}
+
 	/**
-	 * Runs task for workspace from within extension. Must have at least one workspace open.
-	 * @param file optional file to use to find the workspace to run the task out of.
-	 * @returns
-	 */
+ * Runs task for workspace from within extension. Must have at least one workspace open.
+ * @param file optional file to use to find the workspace to run the task out of.
+ * @returns
+ */
 	public async runTaskForFile(file?: vscode.Uri): Promise<void> {
 		if (!file) {
 			file = vscode.window.activeTextEditor?.document.uri;
@@ -432,11 +405,39 @@ export class Manager extends Disposable {
 	}
 
 	/**
-	 * Opens a preview at an internal link that has the format <scheme>://<host>:<port>/<path>
-	 * @param link
-	 * @param previewType
+	 * Show the picker to select a server to close
 	 */
-	public async openPreviewAtLink(
+	private async _showCloseServerPicker(): Promise<void> {
+		const disposables: vscode.Disposable[] = [];
+
+		const quickPick = vscode.window.createQuickPick<IServerQuickPickItem>();
+		disposables.push(quickPick);
+
+		quickPick.matchOnDescription = true;
+		quickPick.placeholder = localize(
+			'selectPort',
+			'Select the port that corresponds to the server that you want to stop'
+		);
+		quickPick.items = await this._getServerPicks();
+
+		disposables.push(
+			quickPick.onDidAccept(() => {
+				const selectedItem = quickPick.selectedItems[0];
+				selectedItem.accept();
+				quickPick.hide();
+				disposables.forEach((d) => d.dispose());
+			})
+		);
+
+		quickPick.show();
+	}
+
+	/**
+ * Opens a preview at an internal link that has the format <scheme>://<host>:<port>/<path>
+ * @param link
+ * @param previewType
+ */
+	private async _openPreviewAtLink(
 		link: vscode.Uri,
 		previewType?: string
 	): Promise<void> {
@@ -479,50 +480,49 @@ export class Manager extends Disposable {
 		}
 	}
 
-	public async openPreviewAtFileUri(
-		file?: vscode.Uri,
-		options?: IOpenFileOptions,
-		previewType?: string
+	/**
+	 * handles opening a file
+	 * @param internal whether to launch an embedded preview
+	 * @param file the uri or string filePath to use
+	 * @param fileStringRelative whether the path is relative
+	 * @param debug whether to launch in debug
+	 * @param workspace the workspace to launch the file from
+	 * @param port the port to derive the workspace from
+	 * @param serverGrouping the serverGrouping that manages the server workspace
+	 */
+	private async _handleOpenFile(
+		internal: boolean,
+		debug: boolean,
+		file: vscode.Uri,
+		workspace?: vscode.WorkspaceFolder,
+		port?: number,
+		serverGrouping?: ServerGrouping
 	): Promise<void> {
-		let fileUri: vscode.Uri;
-		if (!file) {
-			if (this._previewManager.currentPanel?.panel.active) {
-				if (this._previewManager.currentPanel.currentConnection.rootURI) {
-					fileUri = vscode.Uri.joinPath(
-						this._previewManager.currentPanel.currentConnection.rootURI,
-						this._previewManager.currentPanel.currentAddress
-					);
-				} else {
-					fileUri = vscode.Uri.parse(
-						this._previewManager.currentPanel.currentAddress
-					);
-				}
+		if (file.scheme !== 'file') {
+			console.error('Tried to open a non-file URI with file opener');
+		}
+		if (!serverGrouping) {
+			if (workspace) {
+				serverGrouping = await this._getServerGroupingFromWorkspace(await this._shouldUseWorkspaceForFile(workspace, file) ? workspace : undefined);
+			} else if (port) {
+				this._serverGroupings.forEach((potentialServerGrouping) => {
+					if (potentialServerGrouping.port === port) {
+						serverGrouping = potentialServerGrouping;
+						return;
+					}
+				});
 			} else {
-				const activeFile = vscode.window.activeTextEditor?.document.uri;
-				if (activeFile) {
-					fileUri = activeFile;
-				} else {
-					return this._openPreviewWithNoTarget();
-				}
+				workspace = await PathUtil.GetWorkspaceFromURI(file);
+				serverGrouping = await this._getServerGroupingFromWorkspace(workspace);
 			}
-		} else {
-			fileUri = file;
-		}
-		if (!previewType) {
-			previewType = SettingUtil.GetPreviewType();
 		}
 
-		const internal = previewType === PreviewType.internalPreview;
-		const debug = previewType === PreviewType.externalDebugPreview;
+		if (!serverGrouping) {
+			// last-resort: use loose workspace server.
+			serverGrouping = await this._getServerGroupingFromWorkspace(undefined);
+		}
 
-		return this.handleOpenFile(
-			internal,
-			debug,
-			fileUri,
-			options?.workspace,
-			options?.port,
-			options?.manager
-		);
+		return this._openPreview(internal, serverGrouping, file, debug);
 	}
 
 	private _refreshBrowsers(): void {
@@ -660,6 +660,7 @@ export class Manager extends Disposable {
 		}
 		return previewType === PreviewType.internalPreview;
 	}
+
 	private async _openPreviewWithNoTarget(): Promise<void> {
 		// Opens index at first open server or opens a loose workspace at root.
 		// This function is called with the assumption that there might be an open server already
