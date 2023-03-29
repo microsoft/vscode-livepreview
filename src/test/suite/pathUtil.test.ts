@@ -150,5 +150,15 @@ describe('GetWorkspaceFromRelativePath / GetWorkspaceFromAbsolutePath', () => {
 		const actual = await PathUtil.GetWorkspaceFromRelativePath('/2/2/3/4.html');
 		assert.strictEqual(actual, undefined);
 	});
+});
 
+describe('getEndpointParent', () => {
+	it('returns the correct endpoint parent for full paths', async () => {
+		const endpoint1 = PathUtil.GetEndpointParent('c:/Users/TestUser/workspace1/');
+		const endpoint2 = PathUtil.GetEndpointParent('c:/Users/TestUser/workspace1');
+		const endpoint3 = PathUtil.GetEndpointParent('/');
+		assert.strictEqual(endpoint1, 'workspace1');
+		assert.strictEqual(endpoint2, 'workspace1');
+		assert.strictEqual(endpoint3, '.');
+	});
 });

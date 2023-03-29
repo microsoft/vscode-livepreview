@@ -65,26 +65,6 @@ export class ConnectionManager extends Disposable {
 		);
 	}
 
-	/**
-	 * @description If setting for the initial port is changed, change the port that servers try first
-	 */
-	private set _pendingPort(port: number) {
-		this._initHttpPort = port;
-		this._initWSPort = port + 1;
-	}
-
-	private set _pendingHost(host: string) {
-		if (this._validHost(host)) {
-			this._initHost = host;
-		} else {
-			this._showIncorrectHostFormatError(host);
-			this._initHost = DEFAULT_HOST;
-		}
-	}
-
-	private _validHost(host: string): boolean {
-		return isIPv4(host);
-	}
 
 	/**
 	 * get connection by workspaceFolder
@@ -150,6 +130,27 @@ export class ConnectionManager extends Disposable {
 	 */
 	public get connections(): Connection[] {
 		return Array.from(this._connections.values());
+	}
+
+	/**
+	 * @description If setting for the initial port is changed, change the port that servers try first
+	 */
+	private set _pendingPort(port: number) {
+		this._initHttpPort = port;
+		this._initWSPort = port + 1;
+	}
+
+	private set _pendingHost(host: string) {
+		if (this._validHost(host)) {
+			this._initHost = host;
+		} else {
+			this._showIncorrectHostFormatError(host);
+			this._initHost = DEFAULT_HOST;
+		}
+	}
+
+	private _validHost(host: string): boolean {
+		return isIPv4(host);
 	}
 
 	private _showIncorrectHostFormatError(host: string): void {

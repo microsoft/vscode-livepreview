@@ -106,6 +106,7 @@ export class Connection extends Disposable {
 		const httpPortUri = this.constructLocalUri(this.httpPort);
 		return vscode.env.asExternalUri(httpPortUri);
 	}
+
 	/**
 	 * Use `vscode.env.asExternalUri` to determine the WS host and port on the user's machine.
 	 * @returns {Promise<vscode.Uri>} a promise for the WS URI
@@ -174,6 +175,13 @@ export class Connection extends Disposable {
 	}
 
 	/**
+	 * Get the URI given the relative path
+	 */
+	public getAppendedURI(path: string): vscode.Uri {
+		return this.rootURI ? vscode.Uri.joinPath(this.rootURI, path) : vscode.Uri.file(path);
+	}
+
+	/**
 	 * @description Checks if a file is a child of the workspace given its **absolute** file
 	 *  (always returns false if undefined workspace).
 	 *  e.g. with workspace `c:/a/file/path/`, and path `c:/a/file/path/continued/index.html`, this returns true.
@@ -184,12 +192,5 @@ export class Connection extends Disposable {
 		return this.rootPath
 			? PathUtil.PathBeginsWith(path, this.rootPath)
 			: false;
-	}
-
-	/**
-	 * Get the URI given the relative path
-	 */
-	public getAppendedURI(path: string): vscode.Uri {
-		return this.rootURI ? vscode.Uri.joinPath(this.rootURI, path) : vscode.Uri.file(path);
 	}
 }

@@ -21,12 +21,6 @@ export class HttpServer extends Disposable {
 	private _server: any;
 	private _contentLoader: ContentLoader;
 
-	private readonly _onConnected = this._register(
-		new vscode.EventEmitter<number>()
-	);
-
-	public readonly onConnected = this._onConnected.event;
-
 	private readonly _onNewReqProcessed = this._register(
 		new vscode.EventEmitter<IServerMsg>()
 	);
@@ -55,10 +49,10 @@ export class HttpServer extends Disposable {
 	 * @description start the HTTP server.
 	 * @param {number} port port to try to start server on.
 	 */
-	public start(port: number): void {
+	public start(port: number): Promise<void> {
 		this._connection.httpPort = port;
 		this._contentLoader.resetServedFiles();
-		this._startHttpServer();
+		return this._startHttpServer();
 	}
 
 	/**
@@ -72,38 +66,40 @@ export class HttpServer extends Disposable {
 	 * @description contains all of the listeners required to start the server and recover on port collision.
 	 * @returns {boolean} whether the HTTP server started successfully (currently only returns true)
 	 */
-	private _startHttpServer(): boolean {
+	private _startHttpServer(): Promise<void> {
 		this._server = this._createServer();
 
-		this._server.on('listening', () => {
-			console.log(`Server is running on port ${this._connection.httpPort}`);
-			this._onConnected.fire(this._connection.httpPort);
-		});
+		return new Promise((resolve, reject) => {
+			this._server.on('listening', () => {
+				console.log(`Server is running on port ${this._connection.httpPort}`);
+				resolve();
+			});
 
-		this._server.on('error', (err: any) => {
-			if (err.code == 'EADDRINUSE') {
-				this._connection.httpPort++;
-				this._server.listen(this._connection.httpPort, this._connection.host);
-			} else if (err.code == 'EADDRNOTAVAIL') {
-				this._connection.resetHostToDefault();
-				this._server.listen(this._connection.httpPort, this._connection.host);
-			} else {
-				/* __GDPR__
-					"server.err" : {
-						"type": {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
-						"err": {"classification": "CallstackOrException", "purpose": "PerformanceAndHealth"}
-					}
-				*/
-				this._reporter.sendTelemetryErrorEvent('server.err', {
-					type: 'http',
-					err: err,
-				});
-				console.log(`Unknown error: ${err}`);
-			}
-		});
+			this._server.on('error', (err: any) => {
+				if (err.code == 'EADDRINUSE') {
+					this._connection.httpPort++;
+					this._server.listen(this._connection.httpPort, this._connection.host);
+				} else if (err.code == 'EADDRNOTAVAIL') {
+					this._connection.resetHostToDefault();
+					this._server.listen(this._connection.httpPort, this._connection.host);
+				} else {
+					/* __GDPR__
+						"server.err" : {
+							"type": {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+							"err": {"classification": "CallstackOrException", "purpose": "PerformanceAndHealth"}
+						}
+					*/
+					this._reporter.sendTelemetryErrorEvent('server.err', {
+						type: 'http',
+						err: err,
+					});
+					console.log(`Unknown error: ${err}`);
+					reject();
+				}
+			});
 
-		this._server.listen(this._connection.httpPort, this._connection.host);
-		return true;
+			this._server.listen(this._connection.httpPort, this._connection.host);
+		});
 	}
 
 	/**
@@ -247,7 +243,7 @@ export class HttpServer extends Disposable {
 					absoluteReadPath,
 					URLPathName,
 					looseFile
-						? this._endpointManager.getEndpointParent(URLPathName)
+						? PathUtil.GetEndpointParent(URLPathName)
 						: undefined
 				);
 				stream = respInfo.Stream;
