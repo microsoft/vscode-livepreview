@@ -34,7 +34,7 @@ export interface ConnectionInfo {
 export class Connection extends Disposable {
 	public httpServerBase: string | undefined;
 	public wsServerBase: string | undefined;
-	private _wsPath = '';
+	public wsPath = '';
 
 	private readonly _onConnected = this._register(
 		new vscode.EventEmitter<ConnectionInfo>()
@@ -50,7 +50,7 @@ export class Connection extends Disposable {
 		private readonly _workspace: vscode.WorkspaceFolder | undefined,
 		private _rootPrefix: string,
 		public httpPort: number,
-		private _wsPort: number,
+		public wsPort: number,
 		public host: string
 	) {
 		super();
@@ -65,27 +65,16 @@ export class Connection extends Disposable {
 
 	}
 
-	public get wsPort(): number {
-		return this._wsPort;
-	}
-
 	/**
 	 * Called by the server manager to inform this object that a connection has been successful.
 	 * @param httpPort HTTP server port number
 	 * @param wsPort WS server port number
 	 * @param wsPath WS server path
 	 */
-	public async connected(
-		httpPort: number,
-		wsPort: number,
-		wsPath: string
-	): Promise<void> {
-		this.httpPort = httpPort;
-		this._wsPort = wsPort;
-		this._wsPath = wsPath;
+	public async connected(): Promise<void> {
 
 		const httpPortUri = this.constructLocalUri(this.httpPort);
-		const wsPortUri = this.constructLocalUri(this._wsPort, this._wsPath);
+		const wsPortUri = this.constructLocalUri(this.wsPort, this.wsPath);
 
 		const externalHTTPUri = await vscode.env.asExternalUri(httpPortUri);
 		const externalWSUri = await vscode.env.asExternalUri(wsPortUri);
@@ -93,7 +82,7 @@ export class Connection extends Disposable {
 			httpURI: externalHTTPUri,
 			wsURI: externalWSUri,
 			workspace: this._workspace,
-			httpPort: httpPort,
+			httpPort: this.httpPort,
 			rootPrefix: this._rootPrefix
 		});
 	}
@@ -112,7 +101,7 @@ export class Connection extends Disposable {
 	 * @returns {Promise<vscode.Uri>} a promise for the WS URI
 	 */
 	public async resolveExternalWSUri(): Promise<vscode.Uri> {
-		const wsPortUri = this.constructLocalUri(this._wsPort, this._wsPath);
+		const wsPortUri = this.constructLocalUri(this.wsPort, this.wsPath);
 		return vscode.env.asExternalUri(wsPortUri);
 	}
 

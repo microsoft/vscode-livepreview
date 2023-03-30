@@ -8,32 +8,19 @@ import * as vscode from 'vscode';
 import { ConnectionManager } from '../../connectionInfo/connectionManager';
 import { PathUtil } from '../../utils/pathUtil';
 import { Stats } from 'fs';
-
-const testWorkspaces: vscode.WorkspaceFolder[] = [{
-	uri: vscode.Uri.file('C:/Users/TestUser/workspace1'),
-	name: '',
-	index: 0,
-},
-{
-	uri: vscode.Uri.file('C:/Users/TestUser/workspace2'),
-	name: '',
-	index: 1,
-}
-];
+import { makeSetting, testWorkspaces } from './common';
+import { SettingUtil } from '../../utils/settingsUtil';
 
 describe('ConnectionInfo', () => {
 	let sandbox: sinon.SinonSandbox;
 	let connectionManager: ConnectionManager;
-	before(() => {
+	beforeEach(() => {
 		sandbox = sinon.createSandbox();
 
 		connectionManager = new ConnectionManager();
 
 		const existingPaths = [
-			'c:/Users/TestUser/workspace1/index.html', 'c:/Users/TestUser/workspace1/pages/page1.html',
-			'/home/TestUser/workspace1/index.html', '/home/TestUser/workspace1/pages/page1.html',
-			'//other/TestUser/workspace1/index.html', '//other/TestUser/workspace1/pages/page1.html',
-			'c:/Users/TestUser/personal.html'
+			'c:/Users/TestUser/workspace1/test'
 		];
 
 		sandbox.stub(PathUtil, 'FileExistsStat').callsFake((path: string) => {
@@ -44,13 +31,90 @@ describe('ConnectionInfo', () => {
 		});
 	});
 
-	after(() => {
+	afterEach(() => {
 		sandbox.restore();
 	});
 
 	describe('ConnectionInfo', () => {
-		it('should be able to create a Connection', () => {
-			const connection = connectionManager.createAndAddNewConnection(testWorkspaces[0]);
+
+		it('should be able to create a Connection', async () => {
+			const target = sinon.spy();
+			sandbox.stub(SettingUtil, 'GetConfig').returns(makeSetting({ serverRoot: 'test' }));
+			sandbox.stub(vscode.env, 'asExternalUri').callsFake((uri) => Promise.resolve(uri));
+
+			const connection = await connectionManager.createAndAddNewConnection(testWorkspaces[0]);
+			connection.onConnected(
+				(elem) => {
+					target(elem);
+				});
+			connection.httpPort = 3000;
+			connection.wsPath = '/1234';
+			connection.wsPort = 3001;
+			await connection.connected();
+			assert(connection.workspace === testWorkspaces[0]);
+
+			assert.ok(target.calledOnce);
+			const httpUri = vscode.Uri.parse('http://127.0.0.1:3000');
+			const wsUri = vscode.Uri.parse('http://127.0.0.1:3001/1234');
+			assert.deepStrictEqual([
+				{
+					httpURI: httpUri,
+					wsURI: wsUri,
+					workspace: testWorkspaces[0],
+					httpPort: 3000,
+					rootPrefix: 'test'
+				}
+			], target.args[0]);
+
+			// it should return correct info from connection fields
+			const rootUri = vscode.Uri.joinPath(testWorkspaces[0].uri, 'test');
+			const testUri = vscode.Uri.joinPath(testWorkspaces[0].uri, 'test', 'woot');
+			assert.deepEqual(connection.workspace, testWorkspaces[0]);
+			assert.deepEqual(connection.rootURI, rootUri);
+			assert.deepEqual(connection.rootPath, rootUri.fsPath);
+
+			assert.deepEqual(connection.getFileRelativeToWorkspace(testUri.fsPath), '/woot');
+			assert.deepEqual(connection.getAppendedURI('woot').path, testUri.path);
+
+
+			// changing the host should work
+
+			assert.equal(connection.host, '127.0.0.1');
+			connection.host = '128.0.0.1';
+			connection.resetHostToDefault();
+			assert.equal(connection.host, '127.0.0.1');
+
+		});
+
+
+		it('should be able to create a Connection with an undefined workspace', async () => {
+			const target = sinon.spy();
+			sandbox.stub(SettingUtil, 'GetConfig').returns(makeSetting({}));
+			sandbox.stub(vscode.env, 'asExternalUri').callsFake((uri) => Promise.resolve(uri));
+
+			const connection = await connectionManager.createAndAddNewConnection(undefined);
+			connection.onConnected(
+				(elem) => {
+					target(elem);
+				});
+			connection.httpPort = 3000;
+			connection.wsPath = '/1234';
+			connection.wsPort = 3001;
+			await connection.connected();
+			assert(connection.workspace === undefined);
+			const httpUri = vscode.Uri.parse('http://127.0.0.1:3000');
+			const wsUri = vscode.Uri.parse('http://127.0.0.1:3001/1234');
+
+			assert.ok(target.calledOnce);
+			assert.deepStrictEqual([
+				{
+					httpURI: httpUri,
+					wsURI: wsUri,
+					workspace: undefined,
+					httpPort: 3000,
+					rootPrefix: ''
+				}
+			], target.args[0]);
 		});
 	});
 });

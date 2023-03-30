@@ -7,39 +7,10 @@ import * as sinon from 'sinon';
 
 import * as vscode from 'vscode';
 import { PathUtil } from '../../utils/pathUtil';
-import { AutoRefreshPreview, CustomExternalBrowser, ILivePreviewConfigItem, OpenPreviewTarget, SettingUtil } from '../../utils/settingsUtil';
+import { SettingUtil } from '../../utils/settingsUtil';
 import { Stats } from 'fs';
+import { makeSetting, testWorkspaces } from './common';
 
-const testWorkspaces: vscode.WorkspaceFolder[] = [{
-	uri: vscode.Uri.file('C:/Users/TestUser/workspace1'),
-	name: '',
-	index: 0,
-},
-{
-	uri: vscode.Uri.file('C:/Users/TestUser/workspace2'),
-	name: '',
-	index: 1,
-}
-];
-
-function makeSetting(nonDefaults: Partial<ILivePreviewConfigItem>): ILivePreviewConfigItem {
-	return {
-		serverRoot: '',
-		portNumber: 0,
-		showServerStatusNotifications: false,
-		autoRefreshPreview: AutoRefreshPreview.onAnyChange,
-		openPreviewTarget: OpenPreviewTarget.embeddedPreview,
-		serverKeepAliveAfterEmbeddedPreviewClose: 0,
-		notifyOnOpenLooseFile: false,
-		runTaskWithExternalPreview: false,
-		defaultPreviewPath: '',
-		debugOnExternalPreview: false,
-		hostIP: '',
-		customExternalBrowser: CustomExternalBrowser.edge,
-		previewDebounceDelay: 0,
-		...nonDefaults
-	};
-}
 
 describe('GetValidServerRootForWorkspace', () => {
 

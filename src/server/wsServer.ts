@@ -65,9 +65,7 @@ export class WSServerWithOriginCheck extends WebSocket.Server {
  *	 the embedded preview to provide the appropriate information and refresh the history.
  */
 export class WSServer extends Disposable {
-	public wsPort = 0;
 	private _wss: WSServerWithOriginCheck | undefined;
-	private _wsPath!: string;
 
 	constructor(
 		private readonly _reporter: TelemetryReporter,
@@ -97,7 +95,7 @@ export class WSServer extends Disposable {
 	}
 
 	public get wsPath(): string {
-		return this._wsPath;
+		return this._connection.wsPath;
 	}
 
 	/**
@@ -105,8 +103,8 @@ export class WSServer extends Disposable {
 	 * @param {number} wsPort the port to try to connect to.
 	 */
 	public start(wsPort: number): Promise<void> {
-		this.wsPort = wsPort;
-		this._wsPath = `/${randomBytes(20).toString('hex')}`;
+		this._connection.wsPort = wsPort;
+		this._connection.wsPath = `/${randomBytes(20).toString('hex')}`;
 		return this._startWSServer(this._basePath ?? '');
 	}
 
@@ -139,18 +137,18 @@ export class WSServer extends Disposable {
 
 			const _handleWSError = (err: any): void => {
 				if (err.code == 'EADDRINUSE') {
-					this.wsPort++;
+					this._connection.wsPort++;
 					this._wss = new WSServerWithOriginCheck({
-						port: this.wsPort,
+						port: this._connection.wsPort,
 						host: this._connection.host,
-						path: this._wsPath,
+						path: this._connection.wsPath,
 					});
 				} else if (err.code == 'EADDRNOTAVAIL') {
 					this._connection.resetHostToDefault();
 					this._wss = new WSServerWithOriginCheck({
-						port: this.wsPort,
+						port: this._connection.wsPort,
 						host: this._connection.host,
-						path: this._wsPath,
+						path: this._connection.wsPath,
 					});
 				} else {
 					/* __GDPR__
@@ -169,9 +167,9 @@ export class WSServer extends Disposable {
 			};
 
 			this._wss = new WSServerWithOriginCheck({
-				port: this.wsPort,
+				port: this._connection.wsPort,
 				host: this._connection.host,
-				path: this._wsPath,
+				path: this._connection.wsPath,
 			});
 
 			this._wss.on('connection', (ws: WebSocket) =>
@@ -179,7 +177,7 @@ export class WSServer extends Disposable {
 			);
 			this._wss.on('error', (err: Error) => _handleWSError(err));
 			this._wss.on('listening', () => {
-				console.log(`Websocket server is running on port ${this.wsPort}`);
+				console.log(`Websocket server is running on port ${this._connection.wsPort}`);
 				resolve();
 			});
 		});

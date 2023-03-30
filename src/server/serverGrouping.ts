@@ -330,11 +330,7 @@ export class ServerGrouping extends Disposable {
 				this._connection.httpPort
 			)
 		);
-		await this._connection.connected(
-			this._connection.httpPort,
-			this._wsServer.wsPort,
-			this._wsServer.wsPath
-		);
+		await this._connection.connected();
 	}
 
 	/**
