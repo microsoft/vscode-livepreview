@@ -18,28 +18,39 @@ import * as fs from 'fs';
 import * as http from 'http';
 import { INJECTED_ENDPOINT_NAME } from '../../utils/constants';
 import { ContentLoader } from '../../server/serverUtils/contentLoader';
+import { Connection } from '../../connectionInfo/connection';
 
 
-describe('ServerGrouping', () => {
+describe.only('ServerGrouping', () => {
 	let sandbox: sinon.SinonSandbox;
-	let serverGrouping: ServerGrouping;
-	let connection;
-	before(async () => {
+	const init = async (): Promise<void> => {
 		sandbox = sinon.createSandbox();
 		sandbox.stub(vscode.env, 'asExternalUri').callsFake((uri) => Promise.resolve(uri));
 		sandbox.stub(SettingUtil, 'GetConfig').returns(makeSetting({ serverRoot: 'test' }));
 
 		const existingDirectories = [
+			'c:/Users/TestUser/workspace1/test',
 			'c:/Users/TestUser/workspace1/test/',
 			'c:/Users/TestUser/workspace1/test/path',
 			'c:/Users/TestUser/workspace1/test/path/',
+
+			'c:/Users/TestUser/workspace2/test',
+			'c:/Users/TestUser/workspace2/test/',
+			'c:/Users/TestUser/workspace2/test/path',
+			'c:/Users/TestUser/workspace2/test/path/',
 		];
 		const existingPaths = [
 			'c:/Users/TestUser/workspace1/test',
 			'c:/Users/TestUser/workspace1/test/',
 			'c:/Users/TestUser/workspace1/test/path',
 			'c:/Users/TestUser/workspace1/test/path/',
-			'c:/Users/TestUser/workspace1/test/index.html'
+			'c:/Users/TestUser/workspace1/test/index.html',
+
+			'c:/Users/TestUser/workspace2/test',
+			'c:/Users/TestUser/workspace2/test/',
+			'c:/Users/TestUser/workspace2/test/path',
+			'c:/Users/TestUser/workspace2/test/path/',
+			'c:/Users/TestUser/workspace2/test/index.html'
 		];
 
 		sandbox.stub(PathUtil, 'FileExistsStat').callsFake((path: string) => {
@@ -62,79 +73,53 @@ describe('ServerGrouping', () => {
 		});
 
 		sandbox.stub(ContentLoader.prototype, <any>'fsReadDir').returns(Promise.resolve([])); // fsReadDir is private, so it is casted to any
+	};
 
-		const connectionManager = new ConnectionManager();
-		connection = await connectionManager.createAndAddNewConnection(testWorkspaces[0]);
-		const endpointManager = new EndpointManager();
-		const telemetryReporter = new MockTelemetryReporter();
-		const extensionUri = vscode.Uri.file('c:/Users/TestUser/vscode-livepreview/');
-
-		serverGrouping = new ServerGrouping(
-			extensionUri,
-			telemetryReporter,
-			endpointManager,
-			connection,
-			new ServerTaskProvider(telemetryReporter, endpointManager, connectionManager),
-			new Set()
-		);
-	});
-
-	after(() => {
-		sandbox.restore();
-	});
-
-	it('should start a server when openServer is called ', async () => {
-		assert(!serverGrouping.isRunning);
-		await serverGrouping.openServer();
-		assert(serverGrouping.isRunning);
-	});
-
-	it('should have a reachable index.html', async () => {
+	const getIndexHTML = (port: number | undefined, openAtAddr?: string, workspaceNum = 1): Promise<void> => {
 		return new Promise<void>((resolve, reject) => {
 			let str = '';
-			http.get({ host: "127.0.0.1", port: serverGrouping.connection.httpPort, path: "/index.html" }, function (res) {
+			http.get({ host: "127.0.0.1", port: port, path: `/${openAtAddr === undefined ? '' : openAtAddr}index.html` }, function (res) {
 				assert.equal(res.statusCode, 200);
 				res.on('data', function (data) {
 					str += data;
 				});
 
 				res.on('end', function () {
-					assert.equal(str, `<script type="text/javascript" src="${INJECTED_ENDPOINT_NAME}"></script>file contents from c:/Users/TestUser/workspace1/test/index.html`);
+					assert.equal(str, `<script type="text/javascript" src="${INJECTED_ENDPOINT_NAME}"></script>file contents from c:/Users/TestUser/workspace${workspaceNum}/test/index.html`);
 					resolve();
 				});
 			});
 		});
-	});
+	};
 
-
-	it('should navigate to index.html when reaching index ', async () => {
+	const getDirWithIndexHTML = (port: number | undefined, openAtAddr?: string, workspaceNum = 1): Promise<void> => {
 		return new Promise<void>((resolve, reject) => {
 			let str = '';
-			http.get({ host: "127.0.0.1", port: serverGrouping.connection.httpPort, path: "" }, function (res) {
+			http.get({ host: "127.0.0.1", port: port, path: `${openAtAddr === undefined ? '' : `/${openAtAddr}/`}` }, function (res) {
 				assert.equal(res.statusCode, 200);
 				res.on('data', function (data) {
 					str += data;
 				});
 
 				res.on('end', function () {
-					assert.equal(str, `<script type="text/javascript" src="${INJECTED_ENDPOINT_NAME}"></script>file contents from c:/Users/TestUser/workspace1/test/index.html`);
+					assert.equal(str, `<script type="text/javascript" src="${INJECTED_ENDPOINT_NAME}"></script>file contents from c:/Users/TestUser/workspace${workspaceNum}/test/index.html`);
 					resolve();
 				});
 			});
 		});
-	});
+	};
 
-	it('should navigate to a directory index if there is no index.html', async () => {
+	const getDirWithoutIndexHTML = (port: number | undefined, openAtAddr?: string): Promise<void> => {
 		return new Promise<void>((resolve, reject) => {
 			let str = '';
-			http.get({ host: "127.0.0.1", port: serverGrouping.connection.httpPort, path: "/path/" }, function (res) {
+			http.get({ host: "127.0.0.1", port: port, path: `/${openAtAddr === undefined ? '' : openAtAddr}path/` }, function (res) {
 				assert.equal(res.statusCode, 200);
 				res.on('data', function (data) {
 					str += data;
 				});
 
 				res.on('end', function () {
-					assert(str.indexOf('Index of /path/') > -1);
+					assert(str.indexOf('Index of /path/') > -1 || str.indexOf('Index of path') > -1);
 					assert(str.indexOf('<th>Name</th><th>Size</th><th>Date Modified</th>') > -1);
 					assert(str.indexOf('<td><a href="../">../</a></td>') > -1);
 					assert(str.indexOf('<script type="text/javascript" src="/___vscode_livepreview_injected_script"></script>') > -1);
@@ -142,12 +127,13 @@ describe('ServerGrouping', () => {
 				});
 			});
 		});
-	});
+	};
 
-	it('should hit 404 if the file does not exist', async () => {
+
+	const get404 = (port: number | undefined, openAtAddr?: string): Promise<void> => {
 		return new Promise<void>((resolve, reject) => {
 			let str = '';
-			http.get({ host: "127.0.0.1", port: serverGrouping.connection.httpPort, path: "/path/eep.html" }, function (res) {
+			http.get({ host: "127.0.0.1", port: port, path: `/${openAtAddr === undefined ? '' : openAtAddr}path/eep.html` }, function (res) {
 				assert.equal(res.statusCode, 404);
 				res.on('data', function (data) {
 					str += data;
@@ -159,23 +145,271 @@ describe('ServerGrouping', () => {
 				});
 			});
 		});
-	});
+	};
 
-	it('should hit 302 path does not end in forward slash but is directory', async () => {
+
+	const get302 = (port: number | undefined, openAtAddr?: string, workspaceNum = 1): Promise<void> => {
 		return new Promise<void>((resolve, reject) => {
-			http.get({ host: "127.0.0.1", port: serverGrouping.connection.httpPort, path: "/path" }, function (res) {
+			http.get({ host: "127.0.0.1", port: port, path: `/${openAtAddr === undefined ? '' : openAtAddr}path` }, function (res) {
 				assert.equal(res.statusCode, 302);
-				assert.equal(res.headers.location, '/path/');
+				assert.equal(res.headers.location, openAtAddr === undefined ? '/path/' : `/c:/Users/TestUser/workspace${workspaceNum}/test/path/`);
 				resolve();
 			});
 		});
+	};
+
+	describe("With a workspace", () => {
+		let serverGrouping: ServerGrouping;
+		let connection: Connection;
+		before(async () => {
+			await init();
+			const connectionManager = new ConnectionManager();
+			connection = await connectionManager.createAndAddNewConnection(testWorkspaces[0]);
+			const endpointManager = new EndpointManager();
+			const telemetryReporter = new MockTelemetryReporter();
+			const extensionUri = vscode.Uri.file('c:/Users/TestUser/vscode-livepreview/');
+
+			serverGrouping = new ServerGrouping(
+				extensionUri,
+				telemetryReporter,
+				endpointManager,
+				connection,
+				new ServerTaskProvider(telemetryReporter, endpointManager, connectionManager),
+				new Set()
+			);
+		});
+
+		after(async () => {
+			if (serverGrouping.isRunning) {
+				serverGrouping.closeServer();
+			}
+			sandbox.restore();
+		});
+
+		it('should start a server when openServer is called ', async () => {
+			assert(!serverGrouping.isRunning);
+			await serverGrouping.openServer();
+			assert(serverGrouping.isRunning);
+		});
+
+		it('should have a reachable index.html', async () => {
+			return getIndexHTML(serverGrouping.port);
+		});
+
+		it('should navigate to index.html when reaching index ', async () => {
+			return getDirWithIndexHTML(serverGrouping.port);
+		});
+
+		it('should navigate to a directory index if there is no index.html', async () => {
+			return getDirWithoutIndexHTML(serverGrouping.port);
+		});
+
+		it('should hit 404 if the file does not exist', async () => {
+			return get404(serverGrouping.port);
+		});
+
+		it('should hit 302 path does not end in forward slash but is directory', async () => {
+			return get302(serverGrouping.port);
+		});
+
+		it('should close the server when closeServer is called ', async () => {
+			const dispose = sinon.spy(serverGrouping.connection, 'dispose');
+			const closeSuccessful = serverGrouping.closeServer();
+			assert(closeSuccessful);
+			assert(!serverGrouping.isRunning);
+			assert.ok(dispose.calledOnce);
+		});
 	});
 
-	it('should close the server when closeServer is called ', async () => {
-		const dispose = sinon.spy(serverGrouping.connection, 'dispose');
-		const closeSuccessful = serverGrouping.closeServer();
-		assert(closeSuccessful);
-		assert(!serverGrouping.isRunning);
-		assert.ok(dispose.calledOnce);
+	describe("Without workspace", () => {
+		let serverGrouping: ServerGrouping;
+		let endpointManager: EndpointManager;
+		let connection: Connection;
+		let openAtAddr: string;
+		before(async () => {
+			await init();
+			const connectionManager = new ConnectionManager();
+			connection = await connectionManager.createAndAddNewConnection(undefined);
+			endpointManager = new EndpointManager();
+			const telemetryReporter = new MockTelemetryReporter();
+			const extensionUri = vscode.Uri.file('c:/Users/TestUser/vscode-livepreview/');
+
+			serverGrouping = new ServerGrouping(
+				extensionUri,
+				telemetryReporter,
+				endpointManager,
+				connection,
+				new ServerTaskProvider(telemetryReporter, endpointManager, connectionManager),
+				new Set()
+			);
+			openAtAddr = await endpointManager.encodeLooseFileEndpoint("c:/Users/TestUser/workspace1/test");
+		});
+
+		after(async () => {
+			if (serverGrouping.isRunning) {
+				serverGrouping.closeServer();
+			}
+			sandbox.restore();
+		});
+
+		it('should start a server when openServer is called ', async () => {
+			assert(!serverGrouping.isRunning);
+			await serverGrouping.openServer();
+			assert(serverGrouping.isRunning);
+		});
+
+		it('should have a reachable index.html', async () => {
+			return getIndexHTML(serverGrouping.port, openAtAddr);
+		});
+
+		it('should navigate to index.html when reaching index ', async () => {
+			return getDirWithIndexHTML(serverGrouping.port, openAtAddr);
+		});
+
+		it('should navigate to a directory index if there is no index.html', async () => {
+			return getDirWithoutIndexHTML(serverGrouping.port, openAtAddr);
+		});
+
+		it('should hit 404 if the file does not exist', async () => {
+			return get404(serverGrouping.port, openAtAddr);
+		});
+
+		it('should hit 302 path does not end in forward slash but is directory', async () => {
+
+			return get302(serverGrouping.port, openAtAddr);
+		});
+
+		it('should inform the user that there is no server root if they try to go to root', async () => {
+			return new Promise<void>((resolve, reject) => {
+				let str = '';
+				http.get({ host: "127.0.0.1", port: serverGrouping.port, path: `/` }, function (res) {
+					assert.equal(res.statusCode, 404);
+					res.on('data', function (data) {
+						str += data;
+					});
+
+					res.on('end', function () {
+						assert(str.indexOf('No Server Root') > -1);
+						resolve();
+					});
+				});
+			});
+		});
+
+		it('should close the server when closeServer is called ', async () => {
+			const dispose = sinon.spy(serverGrouping.connection, 'dispose');
+			const closeSuccessful = serverGrouping.closeServer();
+			assert(closeSuccessful);
+			assert(!serverGrouping.isRunning);
+			assert.ok(dispose.calledOnce);
+		});
+	});
+
+	describe("Two workspaces", () => {
+
+		let serverGrouping1: ServerGrouping;
+		let serverGrouping2: ServerGrouping;
+		let connection1: Connection;
+		let connection2: Connection;
+		before(async () => {
+			await init();
+			const connectionManager = new ConnectionManager();
+			connection1 = await connectionManager.createAndAddNewConnection(testWorkspaces[0]);
+			connection2 = await connectionManager.createAndAddNewConnection(testWorkspaces[1]);
+			const endpointManager = new EndpointManager();
+			const telemetryReporter = new MockTelemetryReporter();
+			const serverTaskProvider = new ServerTaskProvider(telemetryReporter, endpointManager, connectionManager);
+			const extensionUri = vscode.Uri.file('c:/Users/TestUser/vscode-livepreview/');
+
+			serverGrouping1 = new ServerGrouping(
+				extensionUri,
+				telemetryReporter,
+				endpointManager,
+				connection1,
+				serverTaskProvider,
+				new Set()
+			);
+			serverGrouping2 = new ServerGrouping(
+				extensionUri,
+				telemetryReporter,
+				endpointManager,
+				connection2,
+				serverTaskProvider,
+				new Set()
+			);
+		});
+
+		after(async () => {
+			if (serverGrouping1.isRunning) {
+				serverGrouping1.closeServer();
+			}
+			if (serverGrouping2.isRunning) {
+				serverGrouping2.closeServer();
+			}
+			sandbox.restore();
+		});
+
+		it('should start a server when openServer is called ', async () => {
+			assert(!serverGrouping1.isRunning);
+			await serverGrouping1.openServer();
+			assert(serverGrouping1.isRunning);
+
+			assert(!serverGrouping2.isRunning);
+			await serverGrouping2.openServer();
+			assert(serverGrouping2.isRunning);
+
+			assert(serverGrouping1.port !== serverGrouping2.port);
+			assert(connection1.wsPort !== connection2.wsPort);
+		});
+
+
+		it('should have a reachable index.html in both cases', async () => {
+			return Promise.all([
+				getIndexHTML(serverGrouping1.port, undefined, 1),
+				getIndexHTML(serverGrouping2.port, undefined, 2),
+			]);
+		});
+
+		it('should navigate to index.html when reaching index in both cases', async () => {
+			return Promise.all([
+				getDirWithIndexHTML(serverGrouping1.port, undefined, 1),
+				getDirWithIndexHTML(serverGrouping2.port, undefined, 2),
+			]);
+		});
+
+		it('should navigate to a directory index if there is no index.html in both cases', async () => {
+			return Promise.all([
+				getDirWithoutIndexHTML(serverGrouping1.port, undefined),
+				getDirWithoutIndexHTML(serverGrouping2.port, undefined),
+			]);
+		});
+
+		it('should hit 404 if the file does not exist in both cases', async () => {
+			return Promise.all([
+				get404(serverGrouping1.port),
+				get404(serverGrouping2.port),
+			]);
+		});
+
+		it('should hit 302 path does not end in forward slash but is directory in both cases', async () => {
+			return Promise.all([
+				get302(serverGrouping1.port, undefined, 1),
+				get302(serverGrouping2.port, undefined, 2),
+			]);
+		});
+
+		it('should close the server when closeServer is called in both cases', async () => {
+			const dispose1 = sinon.spy(serverGrouping1.connection, 'dispose');
+			const closeSuccessful1 = serverGrouping1.closeServer();
+			assert(closeSuccessful1);
+			assert(!serverGrouping1.isRunning);
+			assert.ok(dispose1.calledOnce);
+
+			const dispose2 = sinon.spy(serverGrouping2.connection, 'dispose');
+			const closeSuccessful2 = serverGrouping2.closeServer();
+			assert(closeSuccessful2);
+			assert(!serverGrouping2.isRunning);
+			assert.ok(dispose2.calledOnce);
+		});
 	});
 });
