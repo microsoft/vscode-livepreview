@@ -31,7 +31,7 @@ export function makeSetting(nonDefaults: Partial<ILivePreviewConfigItem>): ILive
 		runTaskWithExternalPreview: false,
 		defaultPreviewPath: '',
 		debugOnExternalPreview: false,
-		hostIP: '',
+		hostIP: '127.0.0.1',
 		customExternalBrowser: CustomExternalBrowser.edge,
 		previewDebounceDelay: 0,
 		...nonDefaults

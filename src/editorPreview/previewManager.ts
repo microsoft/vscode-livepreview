@@ -209,7 +209,6 @@ export class PreviewManager extends Disposable {
 				this._extensionUri,
 				this._reporter,
 				this._connectionManager,
-				this._endpointManager,
 				this._outputChannel
 			)
 		);

@@ -21,7 +21,7 @@ import { ContentLoader } from '../../server/serverUtils/contentLoader';
 import { Connection } from '../../connectionInfo/connection';
 
 
-describe.only('ServerGrouping', () => {
+describe('ServerGrouping', () => {
 	let sandbox: sinon.SinonSandbox;
 	const init = async (): Promise<void> => {
 		sandbox = sinon.createSandbox();
