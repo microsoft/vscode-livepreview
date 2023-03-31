@@ -11,7 +11,7 @@ import { ConnectionManager } from './connectionInfo/connectionManager';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { PreviewType, SettingUtil } from './utils/settingsUtil';
 import * as nls from 'vscode-nls';
-import { ServerTaskProvider } from './task/serverTaskProvider';
+import { ServerStartedStatus, ServerTaskProvider } from './task/serverTaskProvider';
 import { EndpointManager } from './infoManagers/endpointManager';
 import { PreviewManager } from './editorPreview/previewManager';
 import { StatusBarNotifier } from './server/serverUtils/statusBarNotifier';
@@ -154,8 +154,16 @@ export class Manager extends Disposable {
 		this._register(
 			this._serverTaskProvider.onRequestToOpenServer(async (workspace) => {
 				const serverGrouping = await this._getServerGroupingFromWorkspace(workspace);
-				// running this with `fromTask = true` will still inform the task if the server is already open
-				await serverGrouping.openServer(true);
+				if (!serverGrouping.isRunning) {
+					await serverGrouping.openServer();
+				} else {
+					const uri = await serverGrouping.connection.resolveExternalHTTPUri();
+					this._serverTaskProvider.serverStarted(
+						uri,
+						ServerStartedStatus.STARTED_BY_EMBEDDED_PREV,
+						serverGrouping.connection.workspace
+					);
+				}
 			})
 		);
 
@@ -643,13 +651,13 @@ export class Manager extends Disposable {
 			// for now, ignore debug or no debug for embedded preview
 			await serverGrouping.createOrShowEmbeddedPreview(undefined, file);
 		} else {
-			await serverGrouping.showPreviewInBrowser(debug, file);
+			await serverGrouping.showPreviewInExternalBrowser(debug, file);
 		}
 	}
 
 	private _hasServerRunning(): boolean {
 		const isRunning = Array.from(this._serverGroupings.values()).filter(
-			(group) => group.running
+			(group) => group.isRunning
 		);
 		return isRunning.length !== 0;
 	}

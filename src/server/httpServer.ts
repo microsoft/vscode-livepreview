@@ -226,7 +226,7 @@ export class HttpServer extends Disposable {
 			if (!URLPathName.endsWith('/')) {
 				const queries = urlObj.query;
 				URLPathName = encodeURI(URLPathName);
-				res.setHeader('Location', `${URLPathName}/?${queries}`);
+				res.setHeader('Location', `${URLPathName}/${queries.length > 0 ? `?${queries}` : ''}`);
 				this._reportAndReturn(302, req, res); // redirect
 				return;
 			}

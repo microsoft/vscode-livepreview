@@ -22,7 +22,7 @@ export const testWorkspaces: vscode.WorkspaceFolder[] =
 export function makeSetting(nonDefaults: Partial<ILivePreviewConfigItem>): ILivePreviewConfigItem {
 	return {
 		serverRoot: '',
-		portNumber: 0,
+		portNumber: 3000,
 		showServerStatusNotifications: false,
 		autoRefreshPreview: AutoRefreshPreview.onAnyChange,
 		openPreviewTarget: OpenPreviewTarget.embeddedPreview,

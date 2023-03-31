@@ -137,6 +137,10 @@ export class ServerGrouping extends Disposable {
 		});
 	}
 
+	public get connection(): Connection {
+		return this._connection;
+	}
+
 	public get port(): number | undefined {
 		return this._connection.httpPort;
 	}
@@ -185,7 +189,7 @@ export class ServerGrouping extends Disposable {
 	 * @param {number} port the port to try to start the HTTP server on.
 	 * @returns {boolean} whether the server has been started correctly.
 	 */
-	public async openServer(fromTask = false): Promise<void> {
+	public async openServer(): Promise<void> {
 		if (this._pendingServerWorkspaces.has(this.workspace?.uri.toString())) {
 			// server is already being opened for this, don't try to open another one
 			return;
@@ -194,20 +198,10 @@ export class ServerGrouping extends Disposable {
 		const port = this._connection.httpPort;
 		this._pendingServerWorkspaces.add(this.workspace?.uri.toString());
 		if (!this.isRunning) {
-
 			const freePort = await this._findFreePort(port);
-			Promise.all([this._httpServer.start(freePort), this._wsServer.start(freePort + 1)]).then(() => {
+			await Promise.all([this._httpServer.start(freePort), this._wsServer.start(freePort + 1)]).then(() => {
 				this._connected();
 			});
-
-
-		} else if (fromTask) {
-			const uri = await this._connection.resolveExternalHTTPUri();
-			this._serverTaskProvider.serverStarted(
-				uri,
-				ServerStartedStatus.STARTED_BY_EMBEDDED_PREV,
-				this._connection.workspace
-			);
 		}
 		this._pendingServerWorkspaces.delete(this.workspace?.uri.toString());
 	}
@@ -217,7 +211,7 @@ export class ServerGrouping extends Disposable {
 	 * @param {boolean} debug whether or not to run in debug mode.
 	 * @param {string} file the filesystem uri to open in the preview.
 	 */
-	public async showPreviewInBrowser(
+	public async showPreviewInExternalBrowser(
 		debug: boolean,
 		file?: vscode.Uri
 	): Promise<void> {
@@ -254,10 +248,6 @@ export class ServerGrouping extends Disposable {
 				connection: this._connection,
 			});
 		}
-	}
-
-	public get running(): boolean {
-		return this.isRunning;
 	}
 
 	/**

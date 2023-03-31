@@ -3,10 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
 import * as WebSocket from 'ws';
 import * as http from 'http';
-import * as fs from 'fs';
 import * as path from 'path';
 import { URL } from 'url';
 import { randomBytes } from 'crypto';
@@ -15,7 +13,6 @@ import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { UriSchemes } from '../utils/constants';
-import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { Connection } from '../connectionInfo/connection';
 import { PathUtil } from '../utils/pathUtil';
 

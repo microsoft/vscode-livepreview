@@ -7,10 +7,8 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { Disposable } from '../utils/dispose';
 import { DEFAULT_HOST } from '../utils/constants';
-import path = require('path');
 import { PathUtil } from '../utils/pathUtil';
-import * as fs from 'fs';
-import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
+import { SETTINGS_SECTION_ID } from '../utils/settingsUtil';
 
 const localize = nls.loadMessageBundle();
 
