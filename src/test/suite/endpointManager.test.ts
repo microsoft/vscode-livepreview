@@ -30,6 +30,7 @@ describe('EndpointManager', () => {
 	});
 
 	after(() => {
+		endpointManager.dispose();
 		sandbox.restore();
 	});
 

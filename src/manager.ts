@@ -19,7 +19,6 @@ import { LIVE_PREVIEW_SERVER_ON } from './utils/constants';
 import { ServerGrouping } from './server/serverGrouping';
 import { UpdateListener } from './updateListener';
 import { URL } from 'url';
-import path = require('path');
 
 const localize = nls.loadMessageBundle();
 
@@ -301,6 +300,26 @@ export class Manager extends Disposable {
 	}
 
 	/**
+	 * Gets called when someone calls `LivePreview.start`. Will simply use the default initial file that you've set.
+	 */
+	public async openPreview(): Promise<void> {
+		const activeFile = vscode.window.activeTextEditor?.document.uri;
+		const activeWorkspace = activeFile ? vscode.workspace.getWorkspaceFolder(activeFile) : vscode.workspace.workspaceFolders?.[0];
+
+		// use the active workspace folder. otherwise, use the first workspace folder.
+		let defaultPreviewPath = SettingUtil.GetConfig(activeWorkspace).defaultPreviewPath;
+
+		// if this gave no results, still try to use the the preview path from other settings, but appended to the active workspace
+		// otherwise, still use the active workspace, but with no default path.
+		if (defaultPreviewPath === '') {
+			defaultPreviewPath = SettingUtil.GetConfig().defaultPreviewPath;
+		}
+
+		// defaultPreviewPath is relative to the workspace root, regardless of what is set for serverRoot
+		return this.openPreviewAtFileString(defaultPreviewPath, undefined, activeWorkspace, true);
+	}
+
+	/**
 	 * Using only a string path (unknown if relative or absolute), launch the preview or launch an error.
 	 * This is usually used for when the user configures a setting for initial filepath
 	 * @param filePath the string fsPath to use
@@ -313,7 +332,7 @@ export class Manager extends Disposable {
 		const workspace = activeWorkspace ? activeWorkspace : await PathUtil.GetWorkspaceFromRelativePath(filePath, ignoreFileRoot);
 		if (workspace) {
 			const file = vscode.Uri.joinPath(workspace.uri, ignoreFileRoot ? '' : await PathUtil.GetValidServerRootForWorkspace(workspace), filePath);
-			this.openPreviewAtFileUri(file, {
+			await this.openPreviewAtFileUri(file, {
 				workspace: workspace,
 			}, previewType);
 			return;
@@ -322,12 +341,12 @@ export class Manager extends Disposable {
 		// no workspace, try to open as a loose file
 		if ((await PathUtil.FileExistsStat(filePath)).exists) {
 			const file = vscode.Uri.file(filePath);
-			this.openPreviewAtFileUri(file, undefined, previewType);
+			return this.openPreviewAtFileUri(file, undefined, previewType);
 		} else {
 			vscode.window.showWarningMessage(
 				localize('fileDNE', "The file '{0}' does not exist relative your filesystem root.", filePath)
 			);
-			this.openPreviewAtFileUri(undefined, undefined, previewType);
+			return this._openPreviewWithNoTarget();
 		}
 	}
 
@@ -367,7 +386,7 @@ export class Manager extends Disposable {
 		const internal = previewType === PreviewType.internalPreview;
 		const debug = previewType === PreviewType.externalDebugPreview;
 
-		return this._handleOpenFile(
+		return await this._handleOpenFile(
 			internal,
 			debug,
 			fileUri,

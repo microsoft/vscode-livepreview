@@ -48,21 +48,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start`, async () => {
-
-			const activeFile = vscode.window.activeTextEditor?.document.uri;
-			const activeWorkspace = activeFile ? vscode.workspace.getWorkspaceFolder(activeFile) : vscode.workspace.workspaceFolders?.[0];
-
-			// use the active workspace folder. otherwise, use the first workspace folder.
-			let defaultPreviewPath = SettingUtil.GetConfig(activeWorkspace).defaultPreviewPath;
-
-			// if this gave no results, still try to use the the preview path from other settings, but appended to the active workspace
-			// otherwise, still use the active workspace, but with no default path.
-			if (defaultPreviewPath === '') {
-				defaultPreviewPath = SettingUtil.GetConfig().defaultPreviewPath;
-			}
-
-			// defaultPreviewPath is relative to the workspace root, regardless of what is set for serverRoot
-			await serverPreview.openPreviewAtFileString(defaultPreviewPath, undefined, activeWorkspace, true);
+			serverPreview.openPreview();
 		})
 	);
 

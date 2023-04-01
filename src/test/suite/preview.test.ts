@@ -50,6 +50,7 @@ describe('PreviewManager', () => {
 
 	after(async () => {
 		await previewManager.currentPanel?.panel.dispose();
+		previewManager.dispose();
 		sandbox.restore();
 	});
 
@@ -60,11 +61,11 @@ describe('PreviewManager', () => {
 			testWorkspaces[0].uri);
 		const initialPanel = previewManager.currentPanel?.panel;
 		await previewManager.launchFileInEmbeddedPreview(undefined, connection,
-			vscode.Uri.file(PathUtil.ConvertToPosixPath(testWorkspaces[0].uri.fsPath) + "/index.html"));
+			vscode.Uri.joinPath(testWorkspaces[0].uri, "/index.html"));
 		await previewManager.launchFileInEmbeddedPreview(undefined, connection,
-			vscode.Uri.file(PathUtil.ConvertToPosixPath(testWorkspaces[0].uri.fsPath) + "/index.html"));
+			vscode.Uri.joinPath(testWorkspaces[0].uri, "/index.html"));
 		await previewManager.launchFileInEmbeddedPreview(undefined, connection,
-			vscode.Uri.file(PathUtil.ConvertToPosixPath(testWorkspaces[0].uri.fsPath) + "/page.html"));
+			vscode.Uri.joinPath(testWorkspaces[0].uri, "/page.html"));
 
 		assert(previewManager.currentPanel?.panel === initialPanel); // ensure that the same panel was used the entire time
 		assert.ok(goToFile.callCount === 4);
@@ -80,7 +81,7 @@ describe('PreviewManager', () => {
 		const openInBrowser = sinon.stub(ExternalBrowserUtils, 'openInBrowser');
 
 		await previewManager.launchFileInExternalBrowser(false, connection,
-			vscode.Uri.file(PathUtil.ConvertToPosixPath(testWorkspaces[0].uri.fsPath) + "/index.html"));
+			vscode.Uri.joinPath(testWorkspaces[0].uri, "/index.html"));
 
 		assert.ok(openInBrowser.calledOnce);
 		assert.ok(openInBrowser.getCall(0).calledWith(`http://${connection.host}:${connection.httpPort}/index.html`, CustomExternalBrowser.edge));
@@ -90,7 +91,7 @@ describe('PreviewManager', () => {
 		const executeCommand = sinon.stub(vscode.commands, 'executeCommand');
 
 		await previewManager.launchFileInExternalBrowser(true, connection,
-			vscode.Uri.file(PathUtil.ConvertToPosixPath(testWorkspaces[0].uri.fsPath) + "/index.html"));
+			vscode.Uri.joinPath(testWorkspaces[0].uri, "/index.html"));
 
 		assert.ok(executeCommand.calledOnce);
 		assert.ok(executeCommand.getCall(0).calledWith('extension.js-debug.debugLink', `http://${connection.host}:${connection.httpPort}/index.html`));

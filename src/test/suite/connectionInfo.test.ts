@@ -32,6 +32,7 @@ describe('ConnectionInfo', () => {
 	});
 
 	afterEach(() => {
+		connectionManager.dispose();
 		sandbox.restore();
 	});
 

@@ -23,6 +23,7 @@ import { Connection } from '../../connectionInfo/connection';
 
 describe('ServerGrouping', () => {
 	let sandbox: sinon.SinonSandbox;
+	let telemetryReporter: MockTelemetryReporter;
 	const init = async (): Promise<void> => {
 		sandbox = sinon.createSandbox();
 		sandbox.stub(vscode.env, 'asExternalUri').callsFake((uri) => Promise.resolve(uri));
@@ -39,6 +40,7 @@ describe('ServerGrouping', () => {
 			'c:/Users/TestUser/workspace2/test/path',
 			'c:/Users/TestUser/workspace2/test/path/',
 		];
+
 		const existingPaths = [
 			'c:/Users/TestUser/workspace1/test',
 			'c:/Users/TestUser/workspace1/test/',
@@ -73,6 +75,7 @@ describe('ServerGrouping', () => {
 		});
 
 		sandbox.stub(ContentLoader.prototype, <any>'fsReadDir').returns(Promise.resolve([])); // fsReadDir is private, so it is casted to any
+		telemetryReporter = new MockTelemetryReporter();
 	};
 
 	const getIndexHTML = (port: number | undefined, openAtAddr?: string, workspaceNum = 1): Promise<void> => {
@@ -161,12 +164,15 @@ describe('ServerGrouping', () => {
 	describe("With a workspace", () => {
 		let serverGrouping: ServerGrouping;
 		let connection: Connection;
+		let connectionManager: ConnectionManager;
+		let endpointManager: EndpointManager;
+		let serverTaskProvider: ServerTaskProvider;
 		before(async () => {
 			await init();
-			const connectionManager = new ConnectionManager();
+			connectionManager = new ConnectionManager();
 			connection = await connectionManager.createAndAddNewConnection(testWorkspaces[0]);
-			const endpointManager = new EndpointManager();
-			const telemetryReporter = new MockTelemetryReporter();
+			endpointManager = new EndpointManager();
+			serverTaskProvider = new ServerTaskProvider(telemetryReporter, endpointManager, connectionManager);
 			const extensionUri = vscode.Uri.file('c:/Users/TestUser/vscode-livepreview/');
 
 			serverGrouping = new ServerGrouping(
@@ -174,7 +180,7 @@ describe('ServerGrouping', () => {
 				telemetryReporter,
 				endpointManager,
 				connection,
-				new ServerTaskProvider(telemetryReporter, endpointManager, connectionManager),
+				serverTaskProvider,
 				new Set()
 			);
 		});
@@ -183,6 +189,12 @@ describe('ServerGrouping', () => {
 			if (serverGrouping.isRunning) {
 				serverGrouping.closeServer();
 			}
+			serverGrouping.dispose();
+			connectionManager.dispose();
+			endpointManager.dispose();
+			serverTaskProvider.dispose();
+			telemetryReporter.dispose();
+
 			sandbox.restore();
 		});
 
@@ -223,15 +235,17 @@ describe('ServerGrouping', () => {
 
 	describe("Without workspace", () => {
 		let serverGrouping: ServerGrouping;
-		let endpointManager: EndpointManager;
 		let connection: Connection;
+		let connectionManager: ConnectionManager;
+		let endpointManager: EndpointManager;
+		let serverTaskProvider: ServerTaskProvider;
 		let openAtAddr: string;
 		before(async () => {
 			await init();
-			const connectionManager = new ConnectionManager();
+			connectionManager = new ConnectionManager();
 			connection = await connectionManager.createAndAddNewConnection(undefined);
 			endpointManager = new EndpointManager();
-			const telemetryReporter = new MockTelemetryReporter();
+			serverTaskProvider = new ServerTaskProvider(telemetryReporter, endpointManager, connectionManager);
 			const extensionUri = vscode.Uri.file('c:/Users/TestUser/vscode-livepreview/');
 
 			serverGrouping = new ServerGrouping(
@@ -239,7 +253,7 @@ describe('ServerGrouping', () => {
 				telemetryReporter,
 				endpointManager,
 				connection,
-				new ServerTaskProvider(telemetryReporter, endpointManager, connectionManager),
+				serverTaskProvider,
 				new Set()
 			);
 			openAtAddr = await endpointManager.encodeLooseFileEndpoint("c:/Users/TestUser/workspace1/test");
@@ -249,6 +263,11 @@ describe('ServerGrouping', () => {
 			if (serverGrouping.isRunning) {
 				serverGrouping.closeServer();
 			}
+			serverGrouping.dispose();
+			connectionManager.dispose();
+			endpointManager.dispose();
+			serverTaskProvider.dispose();
+			telemetryReporter.dispose();
 			sandbox.restore();
 		});
 
@@ -311,14 +330,16 @@ describe('ServerGrouping', () => {
 		let serverGrouping2: ServerGrouping;
 		let connection1: Connection;
 		let connection2: Connection;
+		let connectionManager: ConnectionManager;
+		let endpointManager: EndpointManager;
+		let serverTaskProvider: ServerTaskProvider;
 		before(async () => {
 			await init();
-			const connectionManager = new ConnectionManager();
+			connectionManager = new ConnectionManager();
 			connection1 = await connectionManager.createAndAddNewConnection(testWorkspaces[0]);
 			connection2 = await connectionManager.createAndAddNewConnection(testWorkspaces[1]);
-			const endpointManager = new EndpointManager();
-			const telemetryReporter = new MockTelemetryReporter();
-			const serverTaskProvider = new ServerTaskProvider(telemetryReporter, endpointManager, connectionManager);
+			endpointManager = new EndpointManager();
+			serverTaskProvider = new ServerTaskProvider(telemetryReporter, endpointManager, connectionManager);
 			const extensionUri = vscode.Uri.file('c:/Users/TestUser/vscode-livepreview/');
 
 			serverGrouping1 = new ServerGrouping(
@@ -346,6 +367,10 @@ describe('ServerGrouping', () => {
 			if (serverGrouping2.isRunning) {
 				serverGrouping2.closeServer();
 			}
+			connectionManager.dispose();
+			endpointManager.dispose();
+			serverTaskProvider.dispose();
+			telemetryReporter.dispose();
 			sandbox.restore();
 		});
 
@@ -410,6 +435,55 @@ describe('ServerGrouping', () => {
 			assert(closeSuccessful2);
 			assert(!serverGrouping2.isRunning);
 			assert.ok(dispose2.calledOnce);
+		});
+	});
+
+	describe("Check that previewing will also open server", () => {
+		let serverGrouping: ServerGrouping;
+		let connection: Connection;
+		before(async () => {
+			await init();
+			const connectionManager = new ConnectionManager();
+			connection = await connectionManager.createAndAddNewConnection(testWorkspaces[0]);
+			const endpointManager = new EndpointManager();
+			const extensionUri = vscode.Uri.file('c:/Users/TestUser/vscode-livepreview/');
+
+			serverGrouping = new ServerGrouping(
+				extensionUri,
+				telemetryReporter,
+				endpointManager,
+				connection,
+				new ServerTaskProvider(telemetryReporter, endpointManager, connectionManager),
+				new Set()
+			);
+		});
+
+		after(async () => {
+			if (serverGrouping.isRunning) {
+				serverGrouping.closeServer();
+			}
+			sandbox.restore();
+		});
+
+		it("starts the server with createOrShowEmbeddedPreview", async () => {
+			// not checking for actual preview, since that happens upon connection
+			const open = sandbox.spy(serverGrouping, "openServer");
+			const file = vscode.Uri.joinPath(testWorkspaces[0].uri, "/index.html");
+			await serverGrouping.createOrShowEmbeddedPreview(undefined, file);
+			assert.ok(open.calledOnce);
+			assert(serverGrouping.isRunning);
+			serverGrouping.closeServer();
+			open.restore();
+		});
+
+		it("starts the server with showPreviewInExternalBrowser", async () => {
+			const openSpy = sandbox.spy(serverGrouping, "openServer");
+			const file = vscode.Uri.joinPath(testWorkspaces[0].uri, "/index.html");
+			await serverGrouping.showPreviewInExternalBrowser(false, file);
+			assert.ok(openSpy.calledOnce);
+			assert(serverGrouping.isRunning);
+			serverGrouping.closeServer();
+			openSpy.restore();
 		});
 	});
 });
