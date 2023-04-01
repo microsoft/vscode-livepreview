@@ -42,3 +42,5 @@ export const UriSchemes: any = {
 export const LIVE_PREVIEW_SERVER_ON = 'LivePreviewServerOn';
 
 export const TASK_TERMINAL_BASE_NAME = localize('task name', 'Run Server');
+
+export const DEFAULT_HTTP_HEADERS = { 'Accept-Ranges': 'bytes' };

@@ -8,6 +8,7 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as Stream from 'stream';
+import * as nls from 'vscode-nls';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { INJECTED_ENDPOINT_NAME } from '../utils/constants';
@@ -16,10 +17,20 @@ import { EndpointManager } from '../infoManagers/endpointManager';
 import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
 import { IServerMsg } from './serverGrouping';
+import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
+
+const localize = nls.loadMessageBundle();
 
 export class HttpServer extends Disposable {
-	private _server: any;
+	private _server?: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>;
 	private _contentLoader: ContentLoader;
+	private _defaultHeaders: any; // headers will be validated when set on the reponse
+
+	private readonly _onConnected = this._register(
+		new vscode.EventEmitter<number>()
+	);
+
+	public readonly onConnected = this._onConnected.event;
 
 	private readonly _onNewReqProcessed = this._register(
 		new vscode.EventEmitter<IServerMsg>()
@@ -36,6 +47,19 @@ export class HttpServer extends Disposable {
 		this._contentLoader = this._register(
 			new ContentLoader(_extensionUri, _reporter, _endpointManager, _connection)
 		);
+		this._defaultHeaders = SettingUtil.GetConfig().httpHeaders;
+
+		this._register(
+			vscode.workspace.onDidChangeConfiguration((e) => {
+				if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
+					this._defaultHeaders = SettingUtil.GetConfig().httpHeaders;
+				}
+			})
+		);
+	}
+
+	private _unsetDefaultHeaders(): void {
+		this._defaultHeaders = {};
 	}
 
 	/**
@@ -59,7 +83,7 @@ export class HttpServer extends Disposable {
 	 * @description stop the HTTP server.
 	 */
 	public close(): void {
-		this._server.close();
+		this._server?.close();
 	}
 
 	/**
@@ -70,18 +94,18 @@ export class HttpServer extends Disposable {
 		this._server = this._createServer();
 
 		return new Promise((resolve, reject) => {
-			this._server.on('listening', () => {
+			this._server?.on('listening', () => {
 				console.log(`Server is running on port ${this._connection.httpPort}`);
 				resolve();
 			});
 
-			this._server.on('error', (err: any) => {
+			this._server?.on('error', (err: any) => {
 				if (err.code == 'EADDRINUSE') {
 					this._connection.httpPort++;
-					this._server.listen(this._connection.httpPort, this._connection.host);
+					this._server?.listen(this._connection.httpPort, this._connection.host);
 				} else if (err.code == 'EADDRNOTAVAIL') {
 					this._connection.resetHostToDefault();
-					this._server.listen(this._connection.httpPort, this._connection.host);
+					this._server?.listen(this._connection.httpPort, this._connection.host);
 				} else {
 					/* __GDPR__
 						"server.err" : {
@@ -98,7 +122,7 @@ export class HttpServer extends Disposable {
 				}
 			});
 
-			this._server.listen(this._connection.httpPort, this._connection.host);
+			this._server?.listen(this._connection.httpPort, this._connection.host);
 		});
 	}
 
@@ -113,8 +137,33 @@ export class HttpServer extends Disposable {
 		req: http.IncomingMessage,
 		res: http.ServerResponse
 	): Promise<void> {
+
+		const writeHeader = (code: number, contentType?: string | undefined): void => {
+			try {
+				res.writeHead(code, {
+					'Content-Type': contentType,
+					...this._defaultHeaders
+				});
+			} catch (e) {
+				this._unsetDefaultHeaders(); // unset the headers so we don't keep trying to write them
+				vscode.window.showErrorMessage(localize(
+					'httpHeadersError',
+					'Error writing HTTP headers. Please double-check your Live Preview settings.',
+				));
+			}
+		};
+
+		const reportAndReturn = (
+			status: number
+		): void => {
+			// write the status to the header, send data for logging, then end.
+			writeHeader(status);
+			this._reportStatus(req, res);
+			res.end();
+		};
+
 		if (!req || !req.url) {
-			this._reportAndReturn(500, req, res);
+			reportAndReturn(500);
 			return;
 		}
 
@@ -127,7 +176,7 @@ export class HttpServer extends Disposable {
 			(req.headers.origin &&
 				req.headers.origin !== `${expectedUri.scheme}://${expectedHost}`)
 		) {
-			this._reportAndReturn(401, req, res); // unauthorized
+			reportAndReturn(401); // unauthorized
 			return;
 		}
 
@@ -135,10 +184,7 @@ export class HttpServer extends Disposable {
 		if (req.url === INJECTED_ENDPOINT_NAME) {
 			const respInfo = this._contentLoader.loadInjectedJS();
 			const contentType = respInfo.ContentType ?? '';
-			res.writeHead(200, {
-				'Accept-Ranges': 'bytes',
-				'Content-Type': contentType,
-			});
+			writeHeader(200, contentType);
 			stream = respInfo.Stream;
 			stream?.pipe(res);
 			return;
@@ -156,14 +202,12 @@ export class HttpServer extends Disposable {
 			const respInfo = noServerRoot ?
 				this._contentLoader.createNoRootServer() :
 				this._contentLoader.createPageDoesNotExist(absoluteReadPath);
-			res.writeHead(404, {
-				'Accept-Ranges': 'bytes',
-				'Content-Type': respInfo.ContentType,
-			});
+			writeHeader(404, respInfo.ContentType);
 			this._reportStatus(req, res);
 			stream = respInfo.Stream;
 			stream?.pipe(res);
 		};
+
 
 		if (basePath === '' && (URLPathName === '/' || URLPathName === '')) {
 			writePageNotFound(true);
@@ -187,10 +231,7 @@ export class HttpServer extends Disposable {
 				if (content.Stream) {
 					stream = content.Stream;
 					contentType = content.ContentType ?? '';
-					res.writeHead(200, {
-						'Accept-Ranges': 'bytes',
-						'Content-Type': contentType,
-					});
+					writeHeader(200, contentType);
 					stream.pipe(res);
 					return;
 				}
@@ -226,8 +267,8 @@ export class HttpServer extends Disposable {
 			if (!URLPathName.endsWith('/')) {
 				const queries = urlObj.query;
 				URLPathName = encodeURI(URLPathName);
-				res.setHeader('Location', `${URLPathName}/${queries.length > 0 ? `?${queries}` : ''}`);
-				this._reportAndReturn(302, req, res); // redirect
+				res.setHeader('Location', `${URLPathName}/?${queries}`);
+				reportAndReturn(302); // redirect
 				return;
 			}
 
@@ -257,16 +298,13 @@ export class HttpServer extends Disposable {
 
 		if (stream) {
 			stream.on('error', () => {
-				this._reportAndReturn(500, req, res);
+				reportAndReturn(500);
 				return;
 			});
-			res.writeHead(200, {
-				'Accept-Ranges': 'bytes',
-				'Content-Type': contentType,
-			});
+			writeHeader(200, contentType);
 			stream.pipe(res);
 		} else {
-			this._reportAndReturn(500, req, res);
+			reportAndReturn(500);
 			return;
 		}
 
@@ -281,22 +319,6 @@ export class HttpServer extends Disposable {
 		return http.createServer((req, res) =>
 			this._serveStream(this._basePath, req, res)
 		);
-	}
-
-	/**
-	 * @description write the status to the header, send data for logging, then end.
-	 * @param {number} status the status returned
-	 * @param {http.IncomingMessage} req the request object
-	 * @param {http.ServerResponse} res the response object
-	 */
-	private _reportAndReturn(
-		status: number,
-		req: http.IncomingMessage,
-		res: http.ServerResponse
-	): void {
-		res.writeHead(status);
-		this._reportStatus(req, res);
-		res.end();
 	}
 
 	/**
