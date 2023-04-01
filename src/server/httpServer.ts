@@ -140,10 +140,16 @@ export class HttpServer extends Disposable {
 
 		const writeHeader = (code: number, contentType?: string | undefined): void => {
 			try {
-				res.writeHead(code, {
-					'Content-Type': contentType,
-					...this._defaultHeaders
-				});
+				if (contentType) {
+					res.writeHead(code, {
+						'Content-Type': contentType,
+						...this._defaultHeaders
+					});
+				} else {
+					res.writeHead(code, {
+						...this._defaultHeaders
+					});
+				}
 			} catch (e) {
 				this._unsetDefaultHeaders(); // unset the headers so we don't keep trying to write them
 				vscode.window.showErrorMessage(localize(
