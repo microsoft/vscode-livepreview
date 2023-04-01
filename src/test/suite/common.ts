@@ -34,6 +34,9 @@ export function makeSetting(nonDefaults: Partial<ILivePreviewConfigItem>): ILive
 		hostIP: '127.0.0.1',
 		customExternalBrowser: CustomExternalBrowser.edge,
 		previewDebounceDelay: 0,
+		httpHeaders: {
+			"Accept-Ranges": "bytes"
+		},
 		...nonDefaults
 	};
 }
