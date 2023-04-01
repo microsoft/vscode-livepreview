@@ -26,12 +26,6 @@ export class HttpServer extends Disposable {
 	private _contentLoader: ContentLoader;
 	private _defaultHeaders: any; // headers will be validated when set on the reponse
 
-	private readonly _onConnected = this._register(
-		new vscode.EventEmitter<number>()
-	);
-
-	public readonly onConnected = this._onConnected.event;
-
 	private readonly _onNewReqProcessed = this._register(
 		new vscode.EventEmitter<IServerMsg>()
 	);
@@ -273,7 +267,7 @@ export class HttpServer extends Disposable {
 			if (!URLPathName.endsWith('/')) {
 				const queries = urlObj.query;
 				URLPathName = encodeURI(URLPathName);
-				res.setHeader('Location', `${URLPathName}/?${queries}`);
+				res.setHeader('Location', `${URLPathName}/${queries.length > 0 ? `?${queries}` : ''}`);
 				reportAndReturn(302); // redirect
 				return;
 			}
