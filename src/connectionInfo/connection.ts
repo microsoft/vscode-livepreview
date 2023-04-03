@@ -7,10 +7,8 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { Disposable } from '../utils/dispose';
 import { DEFAULT_HOST } from '../utils/constants';
-import path = require('path');
 import { PathUtil } from '../utils/pathUtil';
-import * as fs from 'fs';
-import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
+import { SETTINGS_SECTION_ID } from '../utils/settingsUtil';
 
 const localize = nls.loadMessageBundle();
 
@@ -34,7 +32,7 @@ export interface ConnectionInfo {
 export class Connection extends Disposable {
 	public httpServerBase: string | undefined;
 	public wsServerBase: string | undefined;
-	private _wsPath = '';
+	public wsPath = '';
 
 	private readonly _onConnected = this._register(
 		new vscode.EventEmitter<ConnectionInfo>()
@@ -50,7 +48,7 @@ export class Connection extends Disposable {
 		private readonly _workspace: vscode.WorkspaceFolder | undefined,
 		private _rootPrefix: string,
 		public httpPort: number,
-		private _wsPort: number,
+		public wsPort: number,
 		public host: string
 	) {
 		super();
@@ -65,27 +63,16 @@ export class Connection extends Disposable {
 
 	}
 
-	public get wsPort(): number {
-		return this._wsPort;
-	}
-
 	/**
 	 * Called by the server manager to inform this object that a connection has been successful.
 	 * @param httpPort HTTP server port number
 	 * @param wsPort WS server port number
 	 * @param wsPath WS server path
 	 */
-	public async connected(
-		httpPort: number,
-		wsPort: number,
-		wsPath: string
-	): Promise<void> {
-		this.httpPort = httpPort;
-		this._wsPort = wsPort;
-		this._wsPath = wsPath;
+	public async connected(): Promise<void> {
 
 		const httpPortUri = this.constructLocalUri(this.httpPort);
-		const wsPortUri = this.constructLocalUri(this._wsPort, this._wsPath);
+		const wsPortUri = this.constructLocalUri(this.wsPort, this.wsPath);
 
 		const externalHTTPUri = await vscode.env.asExternalUri(httpPortUri);
 		const externalWSUri = await vscode.env.asExternalUri(wsPortUri);
@@ -93,7 +80,7 @@ export class Connection extends Disposable {
 			httpURI: externalHTTPUri,
 			wsURI: externalWSUri,
 			workspace: this._workspace,
-			httpPort: httpPort,
+			httpPort: this.httpPort,
 			rootPrefix: this._rootPrefix
 		});
 	}
@@ -106,12 +93,13 @@ export class Connection extends Disposable {
 		const httpPortUri = this.constructLocalUri(this.httpPort);
 		return vscode.env.asExternalUri(httpPortUri);
 	}
+
 	/**
 	 * Use `vscode.env.asExternalUri` to determine the WS host and port on the user's machine.
 	 * @returns {Promise<vscode.Uri>} a promise for the WS URI
 	 */
 	public async resolveExternalWSUri(): Promise<vscode.Uri> {
-		const wsPortUri = this.constructLocalUri(this._wsPort, this._wsPath);
+		const wsPortUri = this.constructLocalUri(this.wsPort, this.wsPath);
 		return vscode.env.asExternalUri(wsPortUri);
 	}
 
@@ -174,6 +162,13 @@ export class Connection extends Disposable {
 	}
 
 	/**
+	 * Get the URI given the relative path
+	 */
+	public getAppendedURI(path: string): vscode.Uri {
+		return this.rootURI ? vscode.Uri.joinPath(this.rootURI, path) : vscode.Uri.file(path);
+	}
+
+	/**
 	 * @description Checks if a file is a child of the workspace given its **absolute** file
 	 *  (always returns false if undefined workspace).
 	 *  e.g. with workspace `c:/a/file/path/`, and path `c:/a/file/path/continued/index.html`, this returns true.
@@ -184,12 +179,5 @@ export class Connection extends Disposable {
 		return this.rootPath
 			? PathUtil.PathBeginsWith(path, this.rootPath)
 			: false;
-	}
-
-	/**
-	 * Get the URI given the relative path
-	 */
-	public getAppendedURI(path: string): vscode.Uri {
-		return this.rootURI ? vscode.Uri.joinPath(this.rootURI, path) : vscode.Uri.file(path);
 	}
 }

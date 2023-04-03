@@ -3,10 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
 import * as WebSocket from 'ws';
 import * as http from 'http';
-import * as fs from 'fs';
 import * as path from 'path';
 import { URL } from 'url';
 import { randomBytes } from 'crypto';
@@ -15,7 +13,6 @@ import { isFileInjectable } from '../utils/utils';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { UriSchemes } from '../utils/constants';
-import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { Connection } from '../connectionInfo/connection';
 import { PathUtil } from '../utils/pathUtil';
 
@@ -65,15 +62,7 @@ export class WSServerWithOriginCheck extends WebSocket.Server {
  *	 the embedded preview to provide the appropriate information and refresh the history.
  */
 export class WSServer extends Disposable {
-	public wsPort = 0;
 	private _wss: WSServerWithOriginCheck | undefined;
-	private _wsPath!: string;
-
-	// once connected, we must let the server manager know, as it needs to know when both servers are ready.
-	private readonly _onConnected = this._register(
-		new vscode.EventEmitter<void>()
-	);
-	public readonly onConnected = this._onConnected.event;
 
 	constructor(
 		private readonly _reporter: TelemetryReporter,
@@ -103,17 +92,17 @@ export class WSServer extends Disposable {
 	}
 
 	public get wsPath(): string {
-		return this._wsPath;
+		return this._connection.wsPath;
 	}
 
 	/**
 	 * @description Start the websocket server.
 	 * @param {number} wsPort the port to try to connect to.
 	 */
-	public start(wsPort: number): void {
-		this.wsPort = wsPort;
-		this._wsPath = `/${randomBytes(20).toString('hex')}`;
-		this._startWSServer(this._basePath ?? '');
+	public start(wsPort: number): Promise<void> {
+		this._connection.wsPort = wsPort;
+		this._connection.wsPath = `/${randomBytes(20).toString('hex')}`;
+		return this._startWSServer(this._basePath ?? '');
 	}
 
 	/**
@@ -140,52 +129,55 @@ export class WSServer extends Disposable {
 	 * @param {string} basePath the path where the server index is hosted.
 	 * @returns {boolean} whether the server has successfully started.
 	 */
-	private _startWSServer(basePath: string): boolean {
-		this._wss = new WSServerWithOriginCheck({
-			port: this.wsPort,
-			host: this._connection.host,
-			path: this._wsPath,
-		});
-		this._wss.on('connection', (ws: WebSocket) =>
-			this._handleWSConnection(basePath, ws)
-		);
-		this._wss.on('error', (err: Error) => this._handleWSError(basePath, err));
-		this._wss.on('listening', () => this._handleWSListen());
-		return true;
-	}
+	private _startWSServer(basePath: string): Promise<void> {
+		return new Promise((resolve, reject) => {
 
-	/**
-	 * @param {string} basePath the path where the server index is hosted.
-	 * @param {any} err the error received.
-	 */
-	private _handleWSError(basePath: string, err: any): void {
-		if (err.code == 'EADDRINUSE') {
-			this.wsPort++;
-			this._startWSServer(basePath);
-		} else if (err.code == 'EADDRNOTAVAIL') {
-			this._connection.resetHostToDefault();
-			this._startWSServer(basePath);
-		} else {
-			/* __GDPR__
-				"server.err" : {
-					"type": {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
-					"err": {"classification": "CallstackOrException", "purpose": "PerformanceAndHealth"}
+			const _handleWSError = (err: any): void => {
+				if (err.code == 'EADDRINUSE') {
+					this._connection.wsPort++;
+					this._wss = new WSServerWithOriginCheck({
+						port: this._connection.wsPort,
+						host: this._connection.host,
+						path: this._connection.wsPath,
+					});
+				} else if (err.code == 'EADDRNOTAVAIL') {
+					this._connection.resetHostToDefault();
+					this._wss = new WSServerWithOriginCheck({
+						port: this._connection.wsPort,
+						host: this._connection.host,
+						path: this._connection.wsPath,
+					});
+				} else {
+					/* __GDPR__
+						"server.err" : {
+							"type": {"classification": "SystemMetaData", "purpose": "FeatureInsight"},
+							"err": {"classification": "CallstackOrException", "purpose": "PerformanceAndHealth"}
+						}
+					*/
+					this._reporter.sendTelemetryErrorEvent('server.err', {
+						type: 'ws',
+						err: err,
+					});
+					console.log(`Unknown error: ${err}`);
+					reject();
 				}
-			*/
-			this._reporter.sendTelemetryErrorEvent('server.err', {
-				type: 'ws',
-				err: err,
-			});
-			console.log(`Unknown error: ${err}`);
-		}
-	}
+			};
 
-	/**
-	 * @description handle the websocket successfully connecting.
-	 */
-	private _handleWSListen(): void {
-		console.log(`Websocket server is running on port ${this.wsPort}`);
-		this._onConnected.fire();
+			this._wss = new WSServerWithOriginCheck({
+				port: this._connection.wsPort,
+				host: this._connection.host,
+				path: this._connection.wsPath,
+			});
+
+			this._wss.on('connection', (ws: WebSocket) =>
+				this._handleWSConnection(basePath, ws)
+			);
+			this._wss.on('error', (err: Error) => _handleWSError(err));
+			this._wss.on('listening', () => {
+				console.log(`Websocket server is running on port ${this._connection.wsPort}`);
+				resolve();
+			});
+		});
 	}
 
 	/**

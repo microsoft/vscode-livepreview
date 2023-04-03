@@ -18,7 +18,6 @@ import { URL } from 'url';
 import { Connection } from '../connectionInfo/connection';
 import { IOpenFileOptions } from '../manager';
 import { ExternalBrowserUtils } from '../utils/externalBrowserUtils';
-import { EndpointManager } from '../infoManagers/endpointManager';
 
 const localize = nls.loadMessageBundle();
 
@@ -49,7 +48,6 @@ export class BrowserPreview extends Disposable {
 		private readonly _extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _connectionManager: ConnectionManager,
-		private readonly _endpointManager: EndpointManager,
 		private readonly _outputChannel: vscode.OutputChannel
 	) {
 		super();

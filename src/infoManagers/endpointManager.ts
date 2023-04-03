@@ -57,22 +57,6 @@ export class EndpointManager extends Disposable {
 	}
 
 	/**
-	 * Get the immediate parent of the encoded endpoint path. Needed to create index pages
-	 * @param urlPath
-	 */
-	public getEndpointParent(urlPath: string): string {
-		let endpoint: string | undefined = urlPath.endsWith('/')
-			? urlPath.substring(0, urlPath.length - 1)
-			: urlPath;
-		endpoint = endpoint.split('/').pop();
-
-		if (!endpoint || endpoint == '/endpoint_unsaved') {
-			return '.';
-		}
-		return decodeURI(endpoint);
-	}
-
-	/**
 	 * @param {string} urlPath the endpoint to check
 	 * @returns {string | undefined} the filesystem path that it loads or undefined if it doesn't decode to anything.
 	 */

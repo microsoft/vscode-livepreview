@@ -21,6 +21,17 @@
 			"preLaunchTask": "npm: watch",
 			"smartStep": true,
 			"sourceMaps": true,
-		}
+		},
+		{
+			"name": "Extension Tests",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--disable-extensions",
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
+			],
+		},
 	]
 }

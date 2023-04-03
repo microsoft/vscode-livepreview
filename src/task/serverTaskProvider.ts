@@ -32,8 +32,7 @@ export enum ServerStartedStatus {
  */
 export class ServerTaskProvider
 	extends Disposable
-	implements vscode.TaskProvider
-{
+	implements vscode.TaskProvider {
 	public static CustomBuildScriptType = 'Live Preview';
 	private _tasks: vscode.Task[] | undefined;
 	private _terminals: Map<string | undefined, ServerTaskTerminal>;

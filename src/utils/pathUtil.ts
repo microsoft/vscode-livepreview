@@ -230,4 +230,22 @@ export class PathUtil {
 			.then((data) => data.toString())
 			.catch(() => '');
 	}
+
+
+
+	/**
+	 * Get the immediate parent of the encoded endpoint directory path. Needed to create index pages
+	 * @param urlPath
+	 */
+	public static GetEndpointParent(urlPath: string): string {
+		let endpoint: string | undefined = urlPath.endsWith('/')
+			? urlPath.substring(0, urlPath.length - 1)
+			: urlPath;
+		endpoint = endpoint.split('/').pop();
+
+		if (!endpoint) {
+			return '.';
+		}
+		return decodeURI(endpoint);
+	}
 }

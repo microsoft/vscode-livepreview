@@ -10,14 +10,12 @@ import { Disposable } from '../utils/dispose';
 import { WSServer } from './wsServer';
 import { HttpServer } from './httpServer';
 import {
-	AutoRefreshPreview,
 	SettingUtil,
 	Settings,
 } from '../utils/settingsUtil';
-import { DONT_SHOW_AGAIN, UriSchemes } from '../utils/constants';
+import { DONT_SHOW_AGAIN } from '../utils/constants';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
 import {
 	ServerStartedStatus,
@@ -62,8 +60,6 @@ export class ServerGrouping extends Disposable {
 	private readonly _httpServer: HttpServer;
 	private readonly _wsServer: WSServer;
 	private _isServerOn = false;
-	private _wsConnected = false;
-	private _httpConnected = false;
 
 	// on each new request processed by the HTTP server, we should
 	// relay the information to the task terminal for logging.
@@ -114,23 +110,6 @@ export class ServerGrouping extends Disposable {
 			})
 		);
 
-		this._register(
-			this._wsServer.onConnected(() => {
-				this._wsConnected = true;
-				if (this._wsConnected && this._httpConnected) {
-					this._connected();
-				}
-			})
-		);
-
-		this._register(
-			this._httpServer.onConnected(() => {
-				this._httpConnected = true;
-				if (this._wsConnected && this._httpConnected) {
-					this._connected();
-				}
-			})
-		);
 		this._connection.onConnected((e) => {
 			this._serverTaskProvider.serverStarted(
 				e.httpURI,
@@ -156,6 +135,10 @@ export class ServerGrouping extends Disposable {
 				this._pendingLaunchInfo = undefined;
 			}
 		});
+	}
+
+	public get connection(): Connection {
+		return this._connection;
 	}
 
 	public get port(): number | undefined {
@@ -206,7 +189,7 @@ export class ServerGrouping extends Disposable {
 	 * @param {number} port the port to try to start the HTTP server on.
 	 * @returns {boolean} whether the server has been started correctly.
 	 */
-	public async openServer(fromTask = false): Promise<void> {
+	public async openServer(): Promise<void> {
 		if (this._pendingServerWorkspaces.has(this.workspace?.uri.toString())) {
 			// server is already being opened for this, don't try to open another one
 			return;
@@ -215,19 +198,10 @@ export class ServerGrouping extends Disposable {
 		const port = this._connection.httpPort;
 		this._pendingServerWorkspaces.add(this.workspace?.uri.toString());
 		if (!this.isRunning) {
-			this._httpConnected = false;
-			this._wsConnected = false;
-
 			const freePort = await this._findFreePort(port);
-			this._httpServer.start(freePort);
-			this._wsServer.start(freePort + 1);
-		} else if (fromTask) {
-			const uri = await this._connection.resolveExternalHTTPUri();
-			this._serverTaskProvider.serverStarted(
-				uri,
-				ServerStartedStatus.STARTED_BY_EMBEDDED_PREV,
-				this._connection.workspace
-			);
+			await Promise.all([this._httpServer.start(freePort), this._wsServer.start(freePort + 1)]).then(() => {
+				this._connected();
+			});
 		}
 		this._pendingServerWorkspaces.delete(this.workspace?.uri.toString());
 	}
@@ -237,7 +211,7 @@ export class ServerGrouping extends Disposable {
 	 * @param {boolean} debug whether or not to run in debug mode.
 	 * @param {string} file the filesystem uri to open in the preview.
 	 */
-	public async showPreviewInBrowser(
+	public async showPreviewInExternalBrowser(
 		debug: boolean,
 		file?: vscode.Uri
 	): Promise<void> {
@@ -274,10 +248,6 @@ export class ServerGrouping extends Disposable {
 				connection: this._connection,
 			});
 		}
-	}
-
-	public get running(): boolean {
-		return this.isRunning;
 	}
 
 	/**
@@ -350,11 +320,7 @@ export class ServerGrouping extends Disposable {
 				this._connection.httpPort
 			)
 		);
-		await this._connection.connected(
-			this._connection.httpPort,
-			this._wsServer.wsPort,
-			this._wsServer.wsPath
-		);
+		await this._connection.connected();
 	}
 
 	/**
