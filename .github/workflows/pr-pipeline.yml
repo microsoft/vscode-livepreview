@@ -12,14 +12,15 @@ jobs:
     name: Compile and Test
     runs-on: ubuntu-latest
     steps:
-      - script: yarn install --frozen-lockfile
-        displayName: Install dependencies
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
 
-      - script: yarn run compile
-        displayName: Compile
+      - run: yarn install --frozen-lockfile
 
-      - script: yarn eslint src
-        displayName: Run ESLint
+      - run: yarn run compile
 
-      - script: yarn run test
-        displayName: Run Tests
+      - run: yarn eslint src
+
+      - run: yarn run test
