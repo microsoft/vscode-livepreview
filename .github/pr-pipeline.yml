@@ -1,0 +1,25 @@
+name: 'PR Pipeline'
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [main]
+
+jobs:
+  job:
+    name: Compile and Test
+    runs-on: ubuntu-latest
+    steps:
+      - script: yarn install --frozen-lockfile
+        displayName: Install dependencies
+
+      - script: yarn run compile
+        displayName: Compile
+
+      - script: yarn eslint src
+        displayName: Run ESLint
+
+      - script: yarn run test
+        displayName: Run Tests
