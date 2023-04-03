@@ -23,4 +23,4 @@ jobs:
 
       - run: yarn eslint src
 
-      - run: yarn run test
+      - run: xvfb-run -a npm test

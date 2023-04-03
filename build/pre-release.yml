@@ -34,7 +34,7 @@ extends:
       - script: yarn eslint src
         displayName: Run ESLint
 
-      - script: yarn run test
+      - script: xvfb-run -a npm test
         displayName: Run Tests
 
       - script: yarn run patch-prerelease $(Build.BuildNumber)
