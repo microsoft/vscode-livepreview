@@ -1,0 +1,26 @@
+name: 'PR Pipeline'
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [main]
+
+jobs:
+  job:
+    name: Compile and Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn run compile
+
+      - run: yarn eslint src
+
+      - run: xvfb-run -a npm test
