@@ -1,4 +1,8 @@
 # Changelog
+## 0.4.8 (May 3, 2023)
+- Add option to customize HTTP headers to support cross-origin isolation. [#375](https://github.com/microsoft/vscode-livepreview/issues/375)
+- Edit logic for workspace find for `livePreview.start` [#455](https://github.com/microsoft/vscode-livepreview/issues/455)
+
 ## 0.4.7 (March 15, 2023)
 - Fixed out-of-workspace preview for UNIX paths. [#464](https://github.com/microsoft/vscode-livepreview/issues/464)
 
