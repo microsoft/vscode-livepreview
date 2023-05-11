@@ -17,15 +17,17 @@ document.addEventListener('DOMContentLoaded', function (e) {
 	onLoad();
 });
 
-console.error = createConsoleOverride('ERROR');
+if (window.parent !== window) {
+	console.error = createConsoleOverride('ERROR');
 
-console.log = createConsoleOverride('LOG');
+	console.log = createConsoleOverride('LOG');
 
-console.warn = createConsoleOverride('WARN');
+	console.warn = createConsoleOverride('WARN');
 
-console.info = createConsoleOverride('INFO');
+	console.info = createConsoleOverride('INFO');
 
-console.clear = createConsoleOverride('CLEAR');
+	console.clear = createConsoleOverride('CLEAR');
+}
 
 /**
  * @description run initialization on load.
