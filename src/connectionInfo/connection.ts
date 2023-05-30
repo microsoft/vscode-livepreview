@@ -43,12 +43,13 @@ export class Connection extends Disposable {
 		new vscode.EventEmitter<string>()
 	);
 	public readonly onShouldResetInitHost = this._onShouldResetInitHost.event;
+	private readonly _portAttributes: serverPortAttributesProvider;
 
 	constructor(
 		private readonly _workspace: vscode.WorkspaceFolder | undefined,
 		private _rootPrefix: string,
-		public httpPort: number,
-		public wsPort: number,
+		private _httpPort: number,
+		private _wsPort: number,
 		public host: string
 	) {
 		super();
@@ -61,7 +62,28 @@ export class Connection extends Disposable {
 			})
 		);
 
+		this._portAttributes = this._register(new serverPortAttributesProvider());
+
 	}
+
+	set httpPort(port: number) {
+		this._httpPort = port;
+		this._portAttributes.httpPort = port;
+	}
+
+	get httpPort(): number {
+		return this._httpPort;
+	}
+
+	set wsPort(port: number) {
+		this._wsPort = port;
+		this._portAttributes.wsPort = port;
+	}
+
+	get wsPort(): number {
+		return this._wsPort;
+	}
+
 
 	/**
 	 * Called by the server manager to inform this object that a connection has been successful.
@@ -179,5 +201,32 @@ export class Connection extends Disposable {
 		return this.rootPath
 			? PathUtil.PathBeginsWith(path, this.rootPath)
 			: false;
+	}
+}
+
+export class serverPortAttributesProvider
+	extends Disposable
+	implements vscode.PortAttributesProvider
+{
+	public wsPort = 0;
+	public httpPort = 0;
+		constructor(
+	) {
+		super();
+		vscode.workspace.registerPortAttributesProvider({}, this);
+	}
+
+	providePortAttributes(
+		port: number,
+		pid: number | undefined,
+		commandLine: string | undefined,
+		token: vscode.CancellationToken
+	): vscode.ProviderResult<vscode.PortAttributes> {
+		if (port == this.wsPort || port == this.httpPort) {
+			return new vscode.PortAttributes(
+				vscode.PortAutoForwardAction.Silent
+			);
+		}
+		return undefined;
 	}
 }

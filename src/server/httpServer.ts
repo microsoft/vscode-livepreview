@@ -35,7 +35,7 @@ export class HttpServer extends Disposable {
 		_extensionUri: vscode.Uri,
 		private readonly _reporter: TelemetryReporter,
 		private readonly _endpointManager: EndpointManager,
-		private readonly _connection: Connection
+		private readonly _connection: Connection,
 	) {
 		super();
 		this._contentLoader = this._register(
@@ -337,3 +337,4 @@ export class HttpServer extends Disposable {
 		});
 	}
 }
+
