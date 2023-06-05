@@ -107,7 +107,7 @@ export class PreviewManager extends Disposable {
 			? PathUtil.ConvertToPosixPath(await this._fileUriToPath(file, connection))
 			: '/';
 
-		const url = `http://${connection.host}:${connection.httpPort}${path}`;
+		const url = `http://${connection.host}:${connection.httpPort}/${path}`;
 		if (debug) {
 			vscode.commands.executeCommand('extension.js-debug.debugLink', url);
 		} else {
