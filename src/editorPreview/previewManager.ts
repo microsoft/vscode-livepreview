@@ -178,6 +178,10 @@ export class PreviewManager extends Disposable {
 		if (!connection?.workspace) {
 			this._notifyLooseFileOpen();
 			path = await this._endpointManager.encodeLooseFileEndpoint(file.fsPath);
+
+			if (!path.startsWith('/')) {
+				path = `/${path}`;
+			}
 		} else if (connection) {
 			path = connection.getFileRelativeToWorkspace(file.fsPath) ?? '';
 		}
