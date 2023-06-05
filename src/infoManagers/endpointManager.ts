@@ -52,7 +52,11 @@ export class EndpointManager extends Disposable {
 		endpoint_prefix = PathUtil.EscapePathParts(endpoint_prefix);
 
 		// don't use path.join so that we don't remove leading slashes
-		const ret = `${endpoint_prefix}/${child}`;
+		let ret = `${endpoint_prefix}/${child}`;
+
+		if (!ret.startsWith('/')) {
+			ret = `/${ret}`;
+		}
 		return ret;
 	}
 

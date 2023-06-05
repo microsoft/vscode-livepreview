@@ -9,7 +9,6 @@ import { PreviewManager } from '../../editorPreview/previewManager';
 import { MockTelemetryReporter } from './mocks/mockTelemetryReporter';
 import { ConnectionManager } from '../../connectionInfo/connectionManager';
 import { EndpointManager } from '../../infoManagers/endpointManager';
-import { PathUtil } from '../../utils/pathUtil';
 import { CustomExternalBrowser, SettingUtil } from '../../utils/settingsUtil';
 import { makeSetting, testWorkspaces } from './common';
 import { Connection } from '../../connectionInfo/connection';
