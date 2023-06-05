@@ -53,7 +53,6 @@ export class EndpointManager extends Disposable {
 
 		// don't use path.join so that we don't remove leading slashes
 		const ret = `${endpoint_prefix}/${child}`;
-
 		return ret;
 	}
 
