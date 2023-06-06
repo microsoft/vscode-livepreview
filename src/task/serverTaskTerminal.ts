@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { Disposable } from '../utils/dispose';
 import {
@@ -16,7 +15,6 @@ import { FormatDateTime } from '../utils/utils';
 import { ServerStartedStatus } from './serverTaskProvider';
 import { IServerMsg } from '../server/serverGrouping';
 
-const localize = nls.loadMessageBundle();
 const CHAR_CODE_CTRL_C = 3;
 
 /**
@@ -67,15 +65,12 @@ export class ServerTaskTerminal
 		if (this._executeServer) {
 			this.running = true;
 			this._onDidWrite.fire(
-				localize('openingServer', 'Opening Server...') + '\r\n'
+				vscode.l10n.t('Opening Server...') + '\r\n'
 			);
 			this._onRequestToOpenServerEmitter.fire(this._workspace);
 		} else {
 			this._onDidWrite.fire(
-				localize(
-					'serverAlreadyRunning',
-					'Server already running in another task. Closing now.'
-				) + '\r\n'
+				vscode.l10n.t('serverAlreadyRunning','Server already running in another task. Closing now.') + '\r\n'
 			);
 			this.close();
 		}
@@ -94,7 +89,7 @@ export class ServerTaskTerminal
 	public handleInput(data: string): void {
 		if (data.length > 0 && data.charCodeAt(0) == CHAR_CODE_CTRL_C) {
 			this._onDidWrite.fire(
-				localize('serverClosing', 'Closing the server...') + '\r\n'
+				vscode.l10n.t('Closing the server...') + '\r\n'
 			);
 
 			this._onRequestToCloseServerEmitter.fire(this._workspace);
@@ -114,8 +109,7 @@ export class ServerTaskTerminal
 		switch (status) {
 			case ServerStartedStatus.JUST_STARTED: {
 				this._onDidWrite.fire(
-					localize(
-						'startedServer',
+					vscode.l10n.t(
 						'Started Server on {0}',
 						formattedAddress + '\r\n'
 					)
@@ -124,8 +118,7 @@ export class ServerTaskTerminal
 			}
 			case ServerStartedStatus.STARTED_BY_EMBEDDED_PREV: {
 				this._onDidWrite.fire(
-					localize(
-						'serverAlreadyStarted',
+					vscode.l10n.t(
 						'Server already on at {0}',
 						formattedAddress + '\r\n> '
 					)
@@ -134,8 +127,7 @@ export class ServerTaskTerminal
 			}
 		}
 		this._onDidWrite.fire(
-			localize(
-				'ctrlCToCloseServer',
+			vscode.l10n.t(
 				'Type {0} to close the server.',
 				TerminalStyleUtil.ColorTerminalString(
 					`CTRL+C`,
@@ -151,7 +143,7 @@ export class ServerTaskTerminal
 	 */
 	public serverStopped(): void {
 		this._onDidWrite.fire(
-			localize('serverStopped', 'Server stopped. Bye!') + '\n'
+			vscode.l10n.t('Server stopped. Bye!') + '\n'
 		);
 		this.close();
 	}
@@ -161,18 +153,11 @@ export class ServerTaskTerminal
 	 */
 	public serverWillBeStopped(): void {
 		this._onDidWrite.fire(
-			localize(
-				'taskFinished',
-				`This task will finish now, but the server will stay on since you've used the embedded preview recently.`
-			) + '\r\n'
+			vscode.l10n.t(`This task will finish now, but the server will stay on since you've used the embedded preview recently.`) + '\r\n'
 		);
 		this._onDidWrite.fire(
 			TerminalStyleUtil.ColorTerminalString(
-				localize(
-					'runToStopServer',
-					"Run 'Live Preview: Stop Server' in the command palette to close the server and close any previews."
-				) + '\r\n\r\n',
-
+				vscode.l10n.t("Run 'Live Preview: Stop Server' in the command palette to close the server and close any previews.") + '\r\n\r\n',
 				TerminalColor.yellow
 			)
 		);

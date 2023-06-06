@@ -5,7 +5,6 @@
 
 import { isIPv4 } from 'net';
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import { DEFAULT_HOST } from '../utils/constants';
 import { Disposable } from '../utils/dispose';
 import { PathUtil } from '../utils/pathUtil';
@@ -15,7 +14,6 @@ import { Connection, ConnectionInfo } from './connection';
 /**
  * @description keeps track of all of the Connection objects and the info needed to create them (ie: initial ports).
  */
-const localize = nls.loadMessageBundle();
 export class ConnectionManager extends Disposable {
 	private _initHttpPort: number;
 	private _initWSPort: number;
@@ -43,8 +41,7 @@ export class ConnectionManager extends Disposable {
 			this._initHost = DEFAULT_HOST;
 		} else if (vscode.env.remoteName && this._initHost != DEFAULT_HOST) {
 			vscode.window.showErrorMessage(
-				localize(
-					'hostCannotConnect',
+				vscode.l10n.t(
 					'Cannot use the host "{0}" when using a remote connection. Using default {1}.',
 					this._initHost,
 					DEFAULT_HOST
@@ -155,8 +152,7 @@ export class ConnectionManager extends Disposable {
 
 	private _showIncorrectHostFormatError(host: string): void {
 		vscode.window.showErrorMessage(
-			localize(
-				'ipAddressIncorrectFormat',
+			vscode.l10n.t(
 				'The local IP address "{0}" is not formatted correctly. Using default {1}.',
 				host,
 				DEFAULT_HOST

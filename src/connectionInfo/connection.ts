@@ -4,13 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import { Disposable } from '../utils/dispose';
 import { DEFAULT_HOST } from '../utils/constants';
 import { PathUtil } from '../utils/pathUtil';
 import { SETTINGS_SECTION_ID } from '../utils/settingsUtil';
-
-const localize = nls.loadMessageBundle();
 
 /**
  * @description the information that gets fired to emitter listeners on connection
@@ -133,8 +130,7 @@ export class Connection extends Disposable {
 	public resetHostToDefault(): void {
 		if (this.host != DEFAULT_HOST) {
 			vscode.window.showErrorMessage(
-				localize(
-					'ipCannotConnect',
+				vscode.l10n.t(
 					'The IP address "{0}" cannot be used to host the server. Using default IP {1}.',
 					this.host,
 					DEFAULT_HOST

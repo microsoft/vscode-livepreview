@@ -8,7 +8,6 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as mime from 'mime';
-import * as nls from 'vscode-nls';
 import { Disposable } from '../../utils/dispose';
 import {
 	FormatFileSize,
@@ -21,8 +20,6 @@ import { EndpointManager } from '../../infoManagers/endpointManager';
 import { PathUtil } from '../../utils/pathUtil';
 import { INJECTED_ENDPOINT_NAME } from '../../utils/constants';
 import { Connection } from '../../connectionInfo/connection';
-
-const localize = nls.loadMessageBundle();
 
 /**
  * @description the response information to give back to the server object
@@ -112,10 +109,9 @@ export class ContentLoader extends Disposable {
 			"server.pageDoesNotExist" : {}
 		*/
 		this._reporter.sendTelemetryEvent('server.pageDoesNotExist');
-		const fileNotFound = localize('fileNotFound', 'File not found');
+		const fileNotFound = vscode.l10n.t('File not found');
 		const relativePathFormatted = `<b>"${relativePath}"</b>`;
-		const fileNotFoundMsg = localize(
-			'fileNotFoundMsg',
+		const fileNotFoundMsg = vscode.l10n.t(
 			'The file {0} cannot be found. It may have been moved, edited, or deleted.',
 			relativePathFormatted
 		);
@@ -144,11 +140,8 @@ export class ContentLoader extends Disposable {
 	 * @returns {IRespInfo} the response info
 	 */
 	public createNoRootServer(): IRespInfo {
-		const noServerRoot = localize('noServerRoot', 'No Server Root');
-		const noWorkspaceOpen = localize(
-			'noWorkspaceOpen',
-			'This server is not based inside of a workspace, so the index does not direct to anything.'
-		);
+		const noServerRoot = vscode.l10n.t('No Server Root');
+		const noWorkspaceOpen = vscode.l10n.t('This server is not based inside of a workspace, so the index does not direct to anything.');
 		const customMsg = `<p>${noWorkspaceOpen}</p>`;
 		const htmlString = `
 		<!DOCTYPE html>
@@ -245,14 +238,10 @@ export class ContentLoader extends Disposable {
 				</tr>\n`)
 		);
 
-		const indexOfTitlePath = localize(
-			'indexOfTitlePath',
-			'Index of {0}',
-			titlePath
-		);
-		const name = localize('name', 'Name');
-		const size = localize('size', 'Size');
-		const dateModified = localize('dateModified', 'Date Modified');
+		const indexOfTitlePath = vscode.l10n.t('Index of {0}', titlePath);
+		const name = vscode.l10n.t('Name');
+		const size = vscode.l10n.t('Size');
+		const dateModified = vscode.l10n.t('Date Modified');
 		const htmlString = `
 		<!DOCTYPE html>
 		<html>
