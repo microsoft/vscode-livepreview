@@ -5,7 +5,6 @@
 
 import * as vscode from 'vscode';
 import * as net from 'net';
-import * as nls from 'vscode-nls';
 import { Disposable } from '../utils/dispose';
 import { WSServer } from './wsServer';
 import { HttpServer } from './httpServer';
@@ -54,7 +53,6 @@ interface IEmbeddedPreviewArgs {
 	connection: Connection;
 }
 
-const localize = nls.loadMessageBundle();
 export class ServerGrouping extends Disposable {
 	private _pendingLaunchInfo: ILaunchInfo | undefined;
 	private readonly _httpServer: HttpServer;
@@ -314,8 +312,7 @@ export class ServerGrouping extends Disposable {
 		this._isServerOn = true;
 
 		this._showServerStatusMessage(
-			localize(
-				'serverStartedOnPort',
+			vscode.l10n.t(
 				'Server Started on Port {0}',
 				this._connection.httpPort
 			)

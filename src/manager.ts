@@ -10,7 +10,6 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { ConnectionManager } from './connectionInfo/connectionManager';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { PreviewType, SettingUtil } from './utils/settingsUtil';
-import * as nls from 'vscode-nls';
 import { ServerStartedStatus, ServerTaskProvider } from './task/serverTaskProvider';
 import { EndpointManager } from './infoManagers/endpointManager';
 import { PreviewManager } from './editorPreview/previewManager';
@@ -19,8 +18,6 @@ import { LIVE_PREVIEW_SERVER_ON } from './utils/constants';
 import { ServerGrouping } from './server/serverGrouping';
 import { UpdateListener } from './updateListener';
 import { URL } from 'url';
-
-const localize = nls.loadMessageBundle();
 
 export interface IOpenFileOptions {
 	workspace?: vscode.WorkspaceFolder;
@@ -343,9 +340,7 @@ export class Manager extends Disposable {
 			const file = vscode.Uri.file(filePath);
 			return this.openPreviewAtFileUri(file, undefined, previewType);
 		} else {
-			vscode.window.showWarningMessage(
-				localize('fileDNE', "The file '{0}' does not exist relative your filesystem root.", filePath)
-			);
+			vscode.window.showWarningMessage(vscode.l10n.t("The file '{0}' does not exist relative your filesystem root.", filePath));
 			return this._openPreviewWithNoTarget();
 		}
 	}
@@ -441,10 +436,7 @@ export class Manager extends Disposable {
 		disposables.push(quickPick);
 
 		quickPick.matchOnDescription = true;
-		quickPick.placeholder = localize(
-			'selectPort',
-			'Select the port that corresponds to the server that you want to stop'
-		);
+		quickPick.placeholder = vscode.l10n.t('Select the port that corresponds to the server that you want to stop');
 		quickPick.items = await this._getServerPicks();
 
 		disposables.push(
@@ -501,9 +493,7 @@ export class Manager extends Disposable {
 			const file = connection.getAppendedURI(link.path);
 			this._openPreview(internal, serverGrouping, file, debug);
 		} catch (e) {
-			vscode.window.showErrorMessage(
-				localize('badURL', 'Tried to open preview on invalid URI')
-			);
+			vscode.window.showErrorMessage(vscode.l10n.t('badURL', 'Tried to open preview on invalid URI'));
 		}
 	}
 
@@ -733,7 +723,7 @@ export class Manager extends Disposable {
 
 		if (picks.length > 0) {
 			serverPicks.push({
-				label: localize('allServers', 'All Servers'),
+				label: vscode.l10n.t('All Servers'),
 				accept: (): void => this.closeAllServers(),
 			});
 		}
@@ -754,7 +744,7 @@ export class Manager extends Disposable {
 			label: `$(radio-tower) ${connection.httpPort}`,
 			description:
 				grouping.workspace?.name ??
-				localize('nonWorkspaceFiles', 'non-workspace files'),
+				vscode.l10n.t('non-workspace files'),
 			accept: (): void => {
 				grouping.dispose();
 			},
