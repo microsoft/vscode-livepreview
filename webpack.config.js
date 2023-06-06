@@ -59,12 +59,7 @@ const config = {
 			],
 		}),
 		new CleanWebpackPlugin({
-			cleanOnceBeforeBuildPatterns: [
-				'*/',
-				'!nls.bundle.*.json',
-				'!nls.metadata.header.json',
-				'!nls.metadata.json'
-			],
+			cleanOnceBeforeBuildPatterns: ['*/'],
 		}),
 	],
 };
