@@ -8,7 +8,6 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as Stream from 'stream';
-import * as nls from 'vscode-nls';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { INJECTED_ENDPOINT_NAME } from '../utils/constants';
@@ -18,8 +17,6 @@ import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
 import { IServerMsg } from './serverGrouping';
 import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
-
-const localize = nls.loadMessageBundle();
 
 export class HttpServer extends Disposable {
 	private _server?: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>;
@@ -146,10 +143,7 @@ export class HttpServer extends Disposable {
 				}
 			} catch (e) {
 				this._unsetDefaultHeaders(); // unset the headers so we don't keep trying to write them
-				vscode.window.showErrorMessage(localize(
-					'httpHeadersError',
-					'Error writing HTTP headers. Please double-check your Live Preview settings.',
-				));
+				vscode.window.showErrorMessage(vscode.l10n.t('Error writing HTTP headers. Please double-check your Live Preview settings.'));
 			}
 		};
 

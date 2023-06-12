@@ -4,10 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import { Disposable } from '../../utils/dispose';
-
-const localize = nls.loadMessageBundle();
 
 /**
  * @description the status bar handler.
@@ -24,7 +21,7 @@ export class StatusBarNotifier extends Disposable {
 		this._statusBar = this._register(
 			vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100)
 		);
-		this._statusBar.name = localize('livePreviewPorts', 'Live Preview Ports');
+		this._statusBar.name = vscode.l10n.t('Live Preview Ports');
 		this.serverOff();
 		this._on = false;
 		this._ports = new Map<string, number>();
@@ -46,16 +43,12 @@ export class StatusBarNotifier extends Disposable {
 
 		if (this._ports.size === 1) {
 			const port = this._ports.values().next().value;
-			portsLabel = localize('port', 'Port: {0}', port);
+			portsLabel = vscode.l10n.t('Port: {0}', port);
 		} else {
 			if (this._ports.size === 2) {
-				portsLabel = localize(
-					'port',
-					'Ports: {0}',
-					Array.from(this._ports.values()).join(', ')
-				);
+				portsLabel = vscode.l10n.t('Ports: {0}', Array.from(this._ports.values()).join(', '));
 			} else {
-				portsLabel = localize('port', '{0} Ports', this._ports.size);
+				portsLabel = vscode.l10n.t('{0} Ports', this._ports.size);
 			}
 		}
 
@@ -70,7 +63,7 @@ export class StatusBarNotifier extends Disposable {
 					`\n\t• ${port} (${
 						workspace
 							? workspace.name
-							: localize('nonWorkspaceFiles', 'non-workspace files')
+							: vscode.l10n.t('non-workspace files')
 					})`
 				);
 			} catch {
@@ -80,18 +73,15 @@ export class StatusBarNotifier extends Disposable {
 
 		portsTooltip =
 			this._ports.size == 1
-				? localize('livePreviewRunningOnPort', 'Live Preview running on port:')
-				: localize(
-						'livePreviewRunningOnPorts',
-						'Live Preview running on ports:'
-				) + ' ';
+				? vscode.l10n.t('Live Preview running on port:')
+				: vscode.l10n.t('Live Preview running on ports:') + ' ';
 
 		portsTooltip += bulletPoints.join('');
 
 		this._statusBar.tooltip = portsTooltip;
 		this._statusBar.text = `$(radio-tower) ${portsLabel}`;
 		this._statusBar.command = {
-			title: localize('openCommandPalette', 'Open Command Palette'),
+			title: vscode.l10n.t('Open Command Palette'),
 			command: 'workbench.action.quickOpen',
 			arguments: ['>Live Preview: '],
 		};

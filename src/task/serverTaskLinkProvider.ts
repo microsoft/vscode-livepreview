@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import { URL } from 'url';
 import { Disposable } from '../utils/dispose';
 import TelemetryReporter from 'vscode-extension-telemetry';
@@ -15,8 +14,6 @@ import { TASK_TERMINAL_BASE_NAME } from '../utils/constants';
 import { IOpenFileOptions } from '../manager';
 import { Connection } from '../connectionInfo/connection';
 import { escapeRegExp } from '../utils/utils';
-
-const localize = nls.loadMessageBundle();
 
 /**
  * @description the link provider that runs on Live Preview's `Run Server` task
@@ -122,8 +119,8 @@ export class serverTaskLinkProvider
 								: partialLinkMatches[i].substring(0, queryIndex);
 						const isDir = link.endsWith('/');
 						const tooltip = isDir
-							? localize('revealFolder', 'Reveal Folder ')
-							: localize('openFile', 'Open File ');
+							? vscode.l10n.t('Reveal Folder ')
+							: vscode.l10n.t('Open File ');
 						const tl = {
 							startIndex: partialLinkMatches.index,
 							length: partialLinkMatches[i].length,
@@ -172,7 +169,7 @@ export class serverTaskLinkProvider
 						const tl = {
 							startIndex: fullURLMatches.index,
 							length: fullURLMatches[i].length,
-							tooltip: localize('openInPreview', 'Open in Preview'),
+							tooltip: vscode.l10n.t('Open in Preview'),
 							data: vscode.Uri.joinPath(hostUri, url.pathname),
 							inEditor: false,
 						};

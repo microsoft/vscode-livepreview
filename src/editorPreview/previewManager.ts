@@ -17,11 +17,8 @@ import { PathUtil } from '../utils/pathUtil';
 import { BrowserPreview } from './browserPreview';
 import { Connection } from '../connectionInfo/connection';
 import { EndpointManager } from '../infoManagers/endpointManager';
-import * as nls from 'vscode-nls';
 import { IOpenFileOptions } from '../manager';
 import { ExternalBrowserUtils } from '../utils/externalBrowserUtils';
-
-const localize = nls.loadMessageBundle();
 
 /**
  * PreviewManager` is a singleton that handles the logic of opening the embedded preview.
@@ -152,10 +149,7 @@ export class PreviewManager extends Disposable {
 		) {
 			vscode.window
 				.showWarningMessage(
-					localize(
-						'notPartOfWorkspace',
-						'Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root or consider changing your server root settings for Live Preview.'
-					),
+					vscode.l10n.t('Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root or consider changing your server root settings for Live Preview.'),
 					DONT_SHOW_AGAIN
 				)
 				.then(async (selection: vscode.MessageItem | undefined) => {
@@ -178,6 +172,10 @@ export class PreviewManager extends Disposable {
 		if (!connection?.workspace) {
 			this._notifyLooseFileOpen();
 			path = await this._endpointManager.encodeLooseFileEndpoint(file.fsPath);
+
+			if (!path.startsWith('/')) {
+				path = `/${path}`;
+			}
 		} else if (connection) {
 			path = connection.getFileRelativeToWorkspace(file.fsPath) ?? '';
 		}

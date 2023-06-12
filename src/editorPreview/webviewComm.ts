@@ -5,16 +5,12 @@
 
 import { Disposable } from '../utils/dispose';
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { INIT_PANEL_TITLE } from '../utils/constants';
 import { NavEditCommands, PageHistory } from './pageHistoryTracker';
 import { isFileInjectable } from '../utils/utils';
-import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
 import { randomBytes } from 'crypto';
-
-const localize = nls.loadMessageBundle();
 
 /**
  * @description the object responsible for communicating messages to the webview.
@@ -202,16 +198,16 @@ export class WebviewComm extends Disposable {
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = randomBytes(16).toString('base64');
 
-		const back = localize('back', 'Back');
-		const forward = localize('forward', 'Forward');
-		const reload = localize('reload', 'Reload');
-		const more = localize('more', 'More Browser Actions');
-		const find_prev = localize('findPrev', 'Previous');
-		const find_next = localize('findNext', 'Next');
-		const find_x = localize('findX', 'Close');
-		const browser_open = localize('browser_open', 'Open in Browser');
-		const find = localize('find', 'Find in Page');
-		const devtools_open = localize('devtoolsOpen', 'Open Devtools Pane');
+		const back = vscode.l10n.t('Back');
+		const forward = vscode.l10n.t('Forward');
+		const reload = vscode.l10n.t('Reload');
+		const more = vscode.l10n.t('More Browser Actions');
+		const find_prev = vscode.l10n.t('Previous');
+		const find_next = vscode.l10n.t('Next');
+		const find_x = vscode.l10n.t('Close');
+		const browser_open = vscode.l10n.t('Open in Browser');
+		const find = vscode.l10n.t('Find in Page');
+		const devtools_open = vscode.l10n.t('Open Devtools Pane');
 
 		return `<!DOCTYPE html>
 		<html lang="en">
