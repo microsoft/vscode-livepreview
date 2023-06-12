@@ -2,9 +2,10 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as open from 'open';
 import { CustomExternalBrowser } from "./settingsUtil";
 import * as vscode from 'vscode';
+import * as JSDebugBrowsers from '@vscode/js-debug-browsers';
+import open from "open";
 
 export class ExternalBrowserUtils {
 
@@ -15,21 +16,35 @@ export class ExternalBrowserUtils {
 			return;
 		}
 
+		if (browser === CustomExternalBrowser.default) {
+			vscode.env.openExternal(vscode.Uri.parse(target));
+			return;
+		}
 		try {
-			let appName: string | readonly string[] = '';
+			let browserFinder: JSDebugBrowsers.IBrowserFinder | undefined;
 			switch (browser) {
 				case CustomExternalBrowser.chrome:
-					appName = open.apps.chrome;
+					browserFinder = new JSDebugBrowsers.ChromeBrowserFinder();
 					break;
 				case CustomExternalBrowser.edge:
-					appName = open.apps.edge;
+					browserFinder = new JSDebugBrowsers.EdgeBrowserFinder();
 					break;
 				case CustomExternalBrowser.firefox:
-					appName = open.apps.firefox;
+					browserFinder = new JSDebugBrowsers.FirefoxBrowserFinder();
 					break;
 			}
-			// TODO: find a way to add error message if custom browser fails to find URL https://github.com/microsoft/vscode-livepreview/issues/402
-			await open(target, (appName !== '') ? { app: { name: appName } } : undefined);
+
+			const exe = await browserFinder?.findWhere(() => true);
+			if (exe) {
+				await open(target, { app: { name: exe.path } });
+			} else {
+				vscode.window.showErrorMessage(`Could not find ${browser} installation. Please make sure it is installed or change the external preview browser in your settings.`,
+					'Open Settings').then((value) => {
+						if (value) {
+							vscode.commands.executeCommand('workbench.action.openSettings', 'livePreview.customExternalBrowser');
+						}
+					});
+			}
 		} catch (e) {
 			vscode.env.openExternal(vscode.Uri.parse(target));
 		}
