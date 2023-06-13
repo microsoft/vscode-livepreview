@@ -6,7 +6,6 @@ pr: none
 schedules:
   - cron: '0 9 * * Mon-Thu'
     displayName: Nightly Release Schedule
-    always: true
     branches:
       include:
         - main
