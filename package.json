@@ -42,7 +42,6 @@
   ],
   "l10n": "./l10n",
   "main": "./out/extension.js",
-  "esModuleInterop": true,
   "contributes": {
     "commands": [
       {
