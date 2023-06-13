@@ -2,18 +2,17 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as assert from 'assert';
-import * as sinon from 'sinon';
-import * as vscode from 'vscode';
+import assert from 'assert';
+import sinon from 'sinon';
+import vscode from 'vscode';
+import fs from 'fs';
 import { makeSetting, testWorkspaces } from './common';
-import { Stats } from 'fs';
 import { ContentLoader } from '../../server/serverUtils/contentLoader';
 import { PathUtil } from '../../utils/pathUtil';
 import { ILivePreviewConfigItem, PreviewType, SettingUtil } from '../../utils/settingsUtil';
 import { Manager } from '../../manager';
 import { MockTelemetryReporter } from './mocks/mockTelemetryReporter';
 import { ServerGrouping } from '../../server/serverGrouping';
-import * as fs from 'fs';
 import { ServerTaskProvider } from '../../task/serverTaskProvider';
 
 describe("Manager", () => {
@@ -36,14 +35,14 @@ describe("Manager", () => {
 		];
 
 		sandbox.stub(PathUtil, 'FileExistsStat').callsFake((path: string) => {
-			const stats = new Stats();
+			const stats = new fs.Stats();
 			sandbox.stub(stats, 'isDirectory').callsFake(() => {
 				return existingDirectories.indexOf(PathUtil.ConvertToPosixPath(path)) > -1;
 			});
 			if (existingPaths.indexOf(PathUtil.ConvertToPosixPath(path)) > -1) {
 				return Promise.resolve({ exists: true, stat: stats });
 			}
-			return Promise.resolve({ exists: false, stat: new Stats() });
+			return Promise.resolve({ exists: false, stat: new fs.Stats() });
 		});
 
 		sandbox.stub(PathUtil, 'FileRead').callsFake((file) => {

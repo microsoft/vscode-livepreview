@@ -2,9 +2,9 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as assert from 'assert';
-import * as sinon from 'sinon';
-import * as vscode from 'vscode';
+import assert from 'assert';
+import sinon from 'sinon';
+import vscode from 'vscode';
 import { PreviewManager } from '../../editorPreview/previewManager';
 import { MockTelemetryReporter } from './mocks/mockTelemetryReporter';
 import { ConnectionManager } from '../../connectionInfo/connectionManager';

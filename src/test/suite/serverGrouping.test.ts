@@ -2,20 +2,19 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as assert from 'assert';
-import * as sinon from 'sinon';
-import * as vscode from 'vscode';
+import assert from 'assert';
+import sinon from 'sinon';
+import fs from 'fs';
+import http from 'http';
+import vscode from 'vscode';
 import { ConnectionManager } from '../../connectionInfo/connectionManager';
 import { PathUtil } from '../../utils/pathUtil';
-import { Stats } from 'fs';
 import { makeSetting, testWorkspaces } from './common';
 import { SettingUtil } from '../../utils/settingsUtil';
 import { ServerGrouping } from '../../server/serverGrouping';
 import { MockTelemetryReporter } from './mocks/mockTelemetryReporter';
 import { EndpointManager } from '../../infoManagers/endpointManager';
 import { ServerTaskProvider } from '../../task/serverTaskProvider';
-import * as fs from 'fs';
-import * as http from 'http';
 import { INJECTED_ENDPOINT_NAME } from '../../utils/constants';
 import { ContentLoader } from '../../server/serverUtils/contentLoader';
 import { Connection } from '../../connectionInfo/connection';
@@ -56,14 +55,14 @@ describe('ServerGrouping', () => {
 		];
 
 		sandbox.stub(PathUtil, 'FileExistsStat').callsFake((path: string) => {
-			const stats = new Stats();
+			const stats = new fs.Stats();
 			sandbox.stub(stats, 'isDirectory').callsFake(() => {
 				return existingDirectories.indexOf(PathUtil.ConvertToPosixPath(path)) > -1;
 			});
 			if (existingPaths.indexOf(PathUtil.ConvertToPosixPath(path)) > -1) {
 				return Promise.resolve({ exists: true, stat: stats });
 			}
-			return Promise.resolve({ exists: false, stat: new Stats() });
+			return Promise.resolve({ exists: false, stat: new fs.Stats() });
 		});
 
 		sandbox.stub(fs, 'readFileSync').callsFake((path, _) => {
