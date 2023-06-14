@@ -18,6 +18,12 @@ resources:
       ref: main
       endpoint: Monaco
 
+parameters:
+  - name: publishExtension
+    displayName: 🚀 Publish Extension
+    type: boolean
+    default: false
+
 extends:
   template: azure-pipelines/extension/pre-release.yml@templates
   parameters:
@@ -37,3 +43,5 @@ extends:
 
       - script: yarn run patch-prerelease $(Build.BuildNumber)
         displayName: Apply package.json patch
+
+    publishExtension: ${{ parameters.publishExtension }}
