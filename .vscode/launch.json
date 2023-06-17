@@ -33,5 +33,31 @@
 				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
 			],
 		},
+
+		{
+			"name": "Extension and JS Debug Companion",
+			"type": "extensionHost",
+			"request": "launch",
+			"skipFiles": [
+			  "<node_internals>/**"
+			],
+			"args": [
+			  "--extensionDevelopmentPath=${workspaceFolder}/../vscode-js-debug-companion",
+			  "--extensionDevelopmentPath=${workspaceFolder}/"
+			],
+			"env": {
+			  "JS_DEBUG_USE_COMPANION": "1"
+			},
+			"trace": true,
+			"resolveSourceMapLocations": [
+			  "${workspaceFolder}/**",
+			  "${workspaceFolder}/../vscode-js-debug-companion/**",
+			  "!**/node_modules/**"
+			],
+			"outFiles": [
+			  "${workspaceFolder}/out/**/*.js",
+			  "${workspaceFolder}/../vscode-js-debug-companion/out/**/*.js"
+			]
+		  },
 	]
 }
