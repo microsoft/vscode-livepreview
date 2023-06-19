@@ -19,7 +19,7 @@
     }
   },
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.80.0"
   },
   "bugs": {
     "url": "https://github.com/microsoft/vscode-livepreview/issues"
