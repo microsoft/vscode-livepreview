@@ -1,4 +1,9 @@
 # Changelog
+## 0.4.9 (July 5, 2023)
+- Fix custom external browser open in remote. [#517](https://github.com/microsoft/vscode-livepreview/issues/517)
+- Fix out-of-workspace file external browser preview. [#509](https://github.com/microsoft/vscode-livepreview/issues/509)
+- Reduce injected script line number clobber for external browser preview. [#508](https://github.com/microsoft/vscode-livepreview/issues/508)
+
 ## 0.4.8 (May 3, 2023)
 - Add option to customize HTTP headers to support cross-origin isolation. [#375](https://github.com/microsoft/vscode-livepreview/issues/375)
 - Edit logic for workspace find for `livePreview.start` [#455](https://github.com/microsoft/vscode-livepreview/issues/455)
