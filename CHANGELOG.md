@@ -1,4 +1,7 @@
 # Changelog
+## 0.4.10 (August 3, 2023)
+- Fix silent fail on custom external browser not found. [#421](https://github.com/microsoft/vscode-livepreview/issues/421)
+
 ## 0.4.9 (July 5, 2023)
 - Fix custom external browser open in remote. [#517](https://github.com/microsoft/vscode-livepreview/issues/517)
 - Fix out-of-workspace file external browser preview. [#509](https://github.com/microsoft/vscode-livepreview/issues/509)
