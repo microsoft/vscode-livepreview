@@ -26,6 +26,7 @@ import { Connection } from '../../connectionInfo/connection';
  */
 interface IRespInfo {
 	ContentType: string | undefined;
+	ContentLength: number | undefined;
 	Stream: Stream.Readable | fs.ReadStream | undefined;
 }
 
@@ -91,11 +92,12 @@ export class ContentLoader extends Disposable {
 	 * @returns {IRespInfo} the injected script and its content type.
 	 */
 	public loadInjectedJS(): IRespInfo {
-		const fileString = this._scriptInjector?.script ?? '';
+		const fileString = Buffer.from(this._scriptInjector?.script ?? '');
 
 		return {
 			Stream: Stream.Readable.from(fileString),
 			ContentType: 'text/javascript; charset=UTF-8',
+			ContentLength: fileString.length,
 		};
 	}
 
@@ -115,7 +117,7 @@ export class ContentLoader extends Disposable {
 			'The file {0} cannot be found. It may have been moved, edited, or deleted.',
 			relativePathFormatted
 		);
-		const htmlString = `
+		const htmlString = Buffer.from(`
 		<!DOCTYPE html>
 		<html>
 			<head>
@@ -127,11 +129,12 @@ export class ContentLoader extends Disposable {
 			</body>
 			${this._scriptInjection}
 		</html>
-		`;
+		`);
 
 		return {
 			Stream: Stream.Readable.from(htmlString),
 			ContentType: 'text/html; charset=UTF-8',
+			ContentLength: htmlString.length,
 		};
 	}
 
@@ -143,7 +146,7 @@ export class ContentLoader extends Disposable {
 		const noServerRoot = vscode.l10n.t('No Server Root');
 		const noWorkspaceOpen = vscode.l10n.t('This server is not based inside of a workspace, so the index does not direct to anything.');
 		const customMsg = `<p>${noWorkspaceOpen}</p>`;
-		const htmlString = `
+		const htmlString = Buffer.from(`
 		<!DOCTYPE html>
 		<html>
 			<head>
@@ -155,11 +158,12 @@ export class ContentLoader extends Disposable {
 			</body>
 			${this._scriptInjection}
 		</html>
-		`;
+		`);
 
 		return {
 			Stream: Stream.Readable.from(htmlString),
 			ContentType: 'text/html; charset=UTF-8',
+			ContentLength: htmlString.length,
 		};
 	}
 
@@ -242,7 +246,7 @@ export class ContentLoader extends Disposable {
 		const name = vscode.l10n.t('Name');
 		const size = vscode.l10n.t('Size');
 		const dateModified = vscode.l10n.t('Date Modified');
-		const htmlString = `
+		const htmlString = Buffer.from(`
 		<!DOCTYPE html>
 		<html>
 			<head>
@@ -264,11 +268,12 @@ export class ContentLoader extends Disposable {
 
 			${this._scriptInjection}
 		</html>
-		`;
+		`);
 
 		return {
 			Stream: Stream.Readable.from(htmlString),
 			ContentType: 'text/html; charset=UTF-8',
+			ContentLength: htmlString.length,
 		};
 	}
 
@@ -285,6 +290,7 @@ export class ContentLoader extends Disposable {
 		let stream: Stream.Readable | fs.ReadStream | undefined;
 
 		let contentType = mime.getType(readPath) ?? 'text/plain';
+		let contentLength = 0;
 
 		while (i < workspaceDocuments.length) {
 			if (PathUtil.PathEquals(readPath, workspaceDocuments[i].fileName)) {
@@ -298,7 +304,9 @@ export class ContentLoader extends Disposable {
 					contentType = 'text/html';
 				}
 
-				stream = Stream.Readable.from(fileContents);
+				const fileContentsBuffer = Buffer.from(fileContents);
+				stream = Stream.Readable.from(fileContentsBuffer);
+				contentLength = fileContentsBuffer.length;
 				break;
 			}
 			i++;
@@ -308,9 +316,12 @@ export class ContentLoader extends Disposable {
 			if (isFileInjectable(readPath)) {
 				const buffer = await PathUtil.FileRead(readPath);
 				const injectedFileContents = this._injectIntoFile(buffer.toString());
-				stream = Stream.Readable.from(injectedFileContents);
+				const injectedFileContentsBuffer = Buffer.from(injectedFileContents);
+				stream = Stream.Readable.from(injectedFileContentsBuffer);
+				contentLength = injectedFileContentsBuffer.length;
 			} else {
 				stream = fs.createReadStream(readPath);
+				contentLength = fs.statSync(readPath).size;
 			}
 		}
 
@@ -321,6 +332,7 @@ export class ContentLoader extends Disposable {
 		return {
 			Stream: stream,
 			ContentType: contentType,
+			ContentLength: contentLength
 		};
 	}
 

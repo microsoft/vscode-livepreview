@@ -129,18 +129,13 @@ export class HttpServer extends Disposable {
 		res: http.ServerResponse
 	): Promise<void> {
 
-		const writeHeader = (code: number, contentType?: string | undefined): void => {
+		const writeHeader = (code: number, contentType?: string | undefined, contentLength?: number | undefined): void => {
 			try {
-				if (contentType) {
-					res.writeHead(code, {
-						'Content-Type': contentType,
-						...this._defaultHeaders
-					});
-				} else {
-					res.writeHead(code, {
-						...this._defaultHeaders
-					});
-				}
+				res.writeHead(code, {
+					...(contentType ? { 'Content-Type': contentType } : {}),
+					...(contentLength ? { 'Content-Length': contentLength } : {}),
+					...this._defaultHeaders
+				});
 			} catch (e) {
 				this._unsetDefaultHeaders(); // unset the headers so we don't keep trying to write them
 				vscode.window.showErrorMessage(vscode.l10n.t('Error writing HTTP headers. Please double-check your Live Preview settings.'));
@@ -175,10 +170,12 @@ export class HttpServer extends Disposable {
 		}
 
 		let stream: Stream.Readable | fs.ReadStream | undefined;
+		let contentLength: number | undefined;
 		if (req.url === INJECTED_ENDPOINT_NAME) {
 			const respInfo = this._contentLoader.loadInjectedJS();
 			const contentType = respInfo.ContentType ?? '';
-			writeHeader(200, contentType);
+			contentLength = respInfo.ContentLength;
+			writeHeader(200, contentType, contentLength);
 			stream = respInfo.Stream;
 			stream?.pipe(res);
 			return;
@@ -196,7 +193,7 @@ export class HttpServer extends Disposable {
 			const respInfo = noServerRoot ?
 				this._contentLoader.createNoRootServer() :
 				this._contentLoader.createPageDoesNotExist(absoluteReadPath);
-			writeHeader(404, respInfo.ContentType);
+			writeHeader(404, respInfo.ContentType, respInfo.ContentLength);
 			this._reportStatus(req, res);
 			stream = respInfo.Stream;
 			stream?.pipe(res);
@@ -225,7 +222,8 @@ export class HttpServer extends Disposable {
 				if (content.Stream) {
 					stream = content.Stream;
 					contentType = content.ContentType ?? '';
-					writeHeader(200, contentType);
+					contentLength = content.ContentLength;
+					writeHeader(200, contentType, content.ContentLength);
 					stream.pipe(res);
 					return;
 				}
@@ -272,6 +270,7 @@ export class HttpServer extends Disposable {
 				const respInfo = await this._contentLoader.getFileStream(absoluteReadPath);
 				stream = respInfo.Stream;
 				contentType = respInfo.ContentType ?? '';
+				contentLength = respInfo.ContentLength;
 			} else {
 				// create a default index page
 				const respInfo = await this._contentLoader.createIndexPage(
@@ -283,11 +282,13 @@ export class HttpServer extends Disposable {
 				);
 				stream = respInfo.Stream;
 				contentType = respInfo.ContentType ?? '';
+				contentLength = respInfo.ContentLength;
 			}
 		} else {
 			const respInfo = await this._contentLoader.getFileStream(absoluteReadPath);
 			stream = respInfo.Stream;
 			contentType = respInfo.ContentType ?? '';
+			contentLength = respInfo.ContentLength;
 		}
 
 		if (stream) {
@@ -295,7 +296,7 @@ export class HttpServer extends Disposable {
 				reportAndReturn(500);
 				return;
 			});
-			writeHeader(200, contentType);
+			writeHeader(200, contentType, contentLength);
 			stream.pipe(res);
 		} else {
 			reportAndReturn(500);
