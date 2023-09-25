@@ -96,8 +96,8 @@ export class Connection extends Disposable {
 	 * @returns {Promise<vscode.Uri>} a promise for the WS URI
 	 */
 	public async resolveExternalWSUri(): Promise<vscode.Uri> {
-		const wsPortUri = this.constructLocalUri(this.wsPort, this.wsPath);
-		return vscode.env.asExternalUri(wsPortUri);
+		const wsPortUri = this.constructLocalUri(this.wsPort);
+		return vscode.Uri.joinPath(await vscode.env.asExternalUri(wsPortUri),this.wsPath); // ensure that this pathname is retained, as the websocket server must see this in order to authorize
 	}
 
 	/**
