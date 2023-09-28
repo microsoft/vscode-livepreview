@@ -100,7 +100,7 @@ export class Connection extends Disposable {
 		}
 
 		if (!wsPath) {
-			wsPath = this.wsPath
+			wsPath = this.wsPath;
 		}
 		const wsPortUri = this.constructLocalUri(wsPort);
 		return vscode.Uri.joinPath(await vscode.env.asExternalUri(wsPortUri),wsPath); // ensure that this pathname is retained, as the websocket server must see this in order to authorize
