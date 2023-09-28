@@ -67,12 +67,8 @@ export class Connection extends Disposable {
 	 * @param wsPath WS server path
 	 */
 	public async connected(): Promise<void> {
-
-		const httpPortUri = this.constructLocalUri(this.httpPort);
-		const wsPortUri = this.constructLocalUri(this.wsPort, this.wsPath);
-
-		const externalHTTPUri = await vscode.env.asExternalUri(httpPortUri);
-		const externalWSUri = await vscode.env.asExternalUri(wsPortUri);
+		const externalHTTPUri = await this.resolveExternalHTTPUri(this.httpPort);
+		const externalWSUri = await this.resolveExternalWSUri(this.wsPort, this.wsPath);
 		this._onConnected.fire({
 			httpURI: externalHTTPUri,
 			wsURI: externalWSUri,
@@ -86,8 +82,11 @@ export class Connection extends Disposable {
 	 * Use `vscode.env.asExternalUri` to determine the HTTP host and port on the user's machine.
 	 * @returns {Promise<vscode.Uri>} a promise for the HTTP URI
 	 */
-	public async resolveExternalHTTPUri(): Promise<vscode.Uri> {
-		const httpPortUri = this.constructLocalUri(this.httpPort);
+	public async resolveExternalHTTPUri(httpPort?: number): Promise<vscode.Uri> {
+		if (!httpPort) {
+			httpPort = this.httpPort;
+		}
+		const httpPortUri = this.constructLocalUri(httpPort);
 		return vscode.env.asExternalUri(httpPortUri);
 	}
 
@@ -95,9 +94,16 @@ export class Connection extends Disposable {
 	 * Use `vscode.env.asExternalUri` to determine the WS host and port on the user's machine.
 	 * @returns {Promise<vscode.Uri>} a promise for the WS URI
 	 */
-	public async resolveExternalWSUri(): Promise<vscode.Uri> {
-		const wsPortUri = this.constructLocalUri(this.wsPort);
-		return vscode.Uri.joinPath(await vscode.env.asExternalUri(wsPortUri),this.wsPath); // ensure that this pathname is retained, as the websocket server must see this in order to authorize
+	public async resolveExternalWSUri(wsPort?: number, wsPath?: string): Promise<vscode.Uri> {
+		if (!wsPort) {
+			wsPort = this.wsPort;
+		}
+
+		if (!wsPath) {
+			wsPath = this.wsPath
+		}
+		const wsPortUri = this.constructLocalUri(wsPort);
+		return vscode.Uri.joinPath(await vscode.env.asExternalUri(wsPortUri),wsPath); // ensure that this pathname is retained, as the websocket server must see this in order to authorize
 	}
 
 	/**
