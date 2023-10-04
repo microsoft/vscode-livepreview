@@ -1,4 +1,9 @@
 # Changelog
+
+## 0.4.11 (October 4, 2023)
+- Fix 401 on Codespaces. [#546](https://github.com/microsoft/vscode-livepreview/issues/546)
+- Support `Content-Length` header. [#549](https://github.com/microsoft/vscode-livepreview/issues/549)
+
 ## 0.4.10 (August 3, 2023)
 - Fix silent fail on custom external browser not found. [#421](https://github.com/microsoft/vscode-livepreview/issues/421)
 
