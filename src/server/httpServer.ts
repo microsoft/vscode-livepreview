@@ -134,6 +134,9 @@ export class HttpServer extends Disposable {
 				res.writeHead(code, {
 					...(contentType ? { 'Content-Type': contentType } : {}),
 					...(contentLength ? { 'Content-Length': contentLength } : {}),
+					// add CORP header for codespaces
+					// https://github.com/microsoft/vscode-livepreview/issues/560
+					...{'Cross-Origin-Resource-Policy': 'cross-origin'},
 					...this._defaultHeaders
 				});
 			} catch (e) {
