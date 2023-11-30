@@ -136,7 +136,8 @@ export class HttpServer extends Disposable {
 					...(contentLength ? { 'Content-Length': contentLength } : {}),
 					// add CORP header for codespaces
 					// https://github.com/microsoft/vscode-livepreview/issues/560
-					...{'Cross-Origin-Resource-Policy': 'cross-origin'},
+					...{'Cross-Origin-Resource-Policy': 'cross-origin',
+						'Cross-Origin-Embedder-Policy': 'require-corp'},
 					...this._defaultHeaders
 				});
 			} catch (e) {
