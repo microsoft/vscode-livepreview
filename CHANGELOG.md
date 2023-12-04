@@ -1,4 +1,6 @@
 # Changelog
+## 0.4.12 (December 6, 2023)
+- Progress on adding CORP headers for `COI=true` on codespaces [#560](https://github.com/microsoft/vscode-livepreview/issues/560)
 
 ## 0.4.11 (October 4, 2023)
 - Fix 401 on Codespaces. [#546](https://github.com/microsoft/vscode-livepreview/issues/546)
