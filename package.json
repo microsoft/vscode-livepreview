@@ -286,9 +286,6 @@
           "workspacePath": {
             "type": "string",
             "description": "%tasks.workspacePathDesc%"
-          },
-          "icon": {
-            "id": "$(radio-tower)"
           }
         }
       }
