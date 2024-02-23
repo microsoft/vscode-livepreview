@@ -9,13 +9,16 @@ resources:
     - repository: templates
       type: github
       name: microsoft/vscode-engineering
-      ref: main
+      ref: apiscan/extensions
       endpoint: Monaco
 
 parameters:
   - name: publishExtension
     displayName: 🚀 Publish Extension
     type: boolean
+    default: false
+  - name: apiScan
+    displayName: 🔍 API Scan
     default: false
 
 extends:
