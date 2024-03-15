@@ -45,4 +45,10 @@ extends:
       - script: yarn run patch-prerelease $(Build.BuildNumber)
         displayName: Apply package.json patch
 
+    tsa:
+      config:
+        areaPath: 'Visual Studio Code Miscellaneous Extensions'
+        serviceTreeID: 'c8cb03c6-176e-40dd-90a5-518de08666dc'
+      enabled: true
+
     publishExtension: ${{ parameters.publishExtension }}
