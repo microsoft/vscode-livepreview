@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.14 (July 3, 2024)
+
+- Bump `braces` and `ws` dependencies.
+
 ## 0.4.13 (December 11, 2023)
 
 - Revert `require-corp` header to fix iframe, video, and image linking [#579](https://github.com/microsoft/vscode-livepreview/issues/579) [#578](https://github.com/microsoft/vscode-livepreview/issues/578) [#577](https://github.com/microsoft/vscode-livepreview/issues/577)
