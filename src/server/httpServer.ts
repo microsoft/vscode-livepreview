@@ -253,7 +253,27 @@ export class HttpServer extends Disposable {
 		}
 
 		// path should be valid now
-		const absPathExistsStatInfo = await PathUtil.FileExistsStat(absoluteReadPath);
+		let absPathExistsStatInfo = await PathUtil.FileExistsStat(absoluteReadPath);
+		if (!absPathExistsStatInfo.exists) {
+			// first determine whether this path already includes an extension
+			const fileName = URLPathName.substring(
+				URLPathName.lastIndexOf('/') + 1
+			);
+			// if this path has no extension, try to match paths with whitelisted extensions
+			if (!fileName.includes('.')) {
+				const whitelistedExtensions = ['.html', '.htm'];
+				for	(let i = 0; i < whitelistedExtensions.length; i++) {
+					const modifiedAbsoluteReadPath = absoluteReadPath + whitelistedExtensions[i];
+					const modifiedAbsPathExistsStatInfo = await PathUtil.FileExistsStat(modifiedAbsoluteReadPath);
+					if (modifiedAbsPathExistsStatInfo.exists) {
+						// if a path with added extension exists, use it and stop checking 
+						absoluteReadPath = modifiedAbsoluteReadPath;
+						absPathExistsStatInfo = modifiedAbsPathExistsStatInfo;
+						break;
+					}
+				}
+			}
+		}
 		if (!absPathExistsStatInfo.exists) {
 			writePageNotFound();
 			return;
