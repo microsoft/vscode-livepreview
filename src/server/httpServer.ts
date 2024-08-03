@@ -215,9 +215,7 @@ export class HttpServer extends Disposable {
 		let contentType = 'application/octet-stream';
 		if (basePath === '') {
 			if (URLPathName.startsWith('/endpoint_unsaved')) {
-				const untitledFileName = URLPathName.substring(
-					URLPathName.lastIndexOf('/') + 1
-				);
+				const untitledFileName = URLPathName.slice('/endpoint_unsaved/'.length);
 				const content = await this._contentLoader.getFileStream(
 					untitledFileName,
 					false

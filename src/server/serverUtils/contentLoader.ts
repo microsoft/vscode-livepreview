@@ -293,7 +293,11 @@ export class ContentLoader extends Disposable {
 		let contentLength = 0;
 
 		while (i < workspaceDocuments.length) {
-			if (PathUtil.PathEquals(readPath, workspaceDocuments[i].fileName)) {
+			let docFileName = workspaceDocuments[i].fileName;
+			if (docFileName.startsWith('/') && !readPath.startsWith('/')) {
+				docFileName = docFileName.slice(1);
+			}
+			if (PathUtil.PathEquals(readPath, docFileName)) {
 				if (inFilesystem && workspaceDocuments[i].isUntitled) {
 					continue;
 				}
