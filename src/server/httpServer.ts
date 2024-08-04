@@ -22,6 +22,7 @@ export class HttpServer extends Disposable {
 	private _server?: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>;
 	private _contentLoader: ContentLoader;
 	private _defaultHeaders: any; // headers will be validated when set on the reponse
+	private _defaultPathExtensions: string[];
 
 	private readonly _onNewReqProcessed = this._register(
 		new vscode.EventEmitter<IServerMsg>()
@@ -38,12 +39,16 @@ export class HttpServer extends Disposable {
 		this._contentLoader = this._register(
 			new ContentLoader(_extensionUri, _reporter, _endpointManager, _connection)
 		);
-		this._defaultHeaders = SettingUtil.GetConfig().httpHeaders;
+		const config = SettingUtil.GetConfig();
+		this._defaultHeaders = config.httpHeaders;
+		this._defaultPathExtensions = config.pathExtensions;
 
 		this._register(
 			vscode.workspace.onDidChangeConfiguration((e) => {
 				if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
-					this._defaultHeaders = SettingUtil.GetConfig().httpHeaders;
+					const config = SettingUtil.GetConfig();
+					this._defaultHeaders = config.httpHeaders;
+					this._defaultPathExtensions = config.pathExtensions;
 				}
 			})
 		);
@@ -261,9 +266,8 @@ export class HttpServer extends Disposable {
 			);
 			// if this path has no extension, try to match paths with whitelisted extensions
 			if (!fileName.includes('.')) {
-				const whitelistedExtensions = ['.html', '.htm'];
-				for	(let i = 0; i < whitelistedExtensions.length; i++) {
-					const modifiedAbsoluteReadPath = absoluteReadPath + whitelistedExtensions[i];
+				for	(let i = 0; i < this._defaultPathExtensions.length; i++) {
+					const modifiedAbsoluteReadPath = absoluteReadPath + this._defaultPathExtensions[i];
 					const modifiedAbsPathExistsStatInfo = await PathUtil.FileExistsStat(modifiedAbsoluteReadPath);
 					if (modifiedAbsPathExistsStatInfo.exists) {
 						// if a path with added extension exists, use it and stop checking 
