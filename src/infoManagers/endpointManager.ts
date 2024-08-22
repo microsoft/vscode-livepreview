@@ -40,7 +40,8 @@ export class EndpointManager extends Disposable {
 	public async encodeLooseFileEndpoint(location: string, file?: vscode.Uri): Promise<string> {
 		let fullParent = await PathUtil.GetParentDir(location);
 		const child = file?.scheme === 'vscode-chat-code-block' ? 
-			file.fsPath.slice(1) : 
+			PathUtil.ConvertToPosixPath(file.fsPath.slice(1)) : 
+
 			await PathUtil.GetFileName(location, true);
 
 		fullParent = PathUtil.ConvertToPosixPath(fullParent);
