@@ -136,7 +136,7 @@ export class HttpServer extends Disposable {
 					...(contentLength ? { 'Content-Length': contentLength } : {}),
 					// add CORP header for codespaces
 					// https://github.com/microsoft/vscode-livepreview/issues/560
-					...{'Cross-Origin-Resource-Policy': 'cross-origin'},
+					...{ 'Cross-Origin-Resource-Policy': 'cross-origin' },
 					...this._defaultHeaders
 				});
 			} catch (e) {
@@ -214,26 +214,15 @@ export class HttpServer extends Disposable {
 
 		let contentType = 'application/octet-stream';
 		if (basePath === '') {
-			if (URLPathName.startsWith('/chatCodeBlock')) {
-				const codeBlockUriStr = decodeURIComponent(URLPathName.slice('/chatCodeBlock/'.length));
-				const content = await this._contentLoader.getFileStream(
-					codeBlockUriStr,
-					false
-				);
-				if (content.Stream) {
-					stream = content.Stream;
-					contentType = content.ContentType ?? '';
-					contentLength = content.ContentLength;
-					writeHeader(200, contentType, content.ContentLength);
-					stream.pipe(res);
-					return;
+			if (URLPathName.startsWith('/endpoint_unsaved') || URLPathName.startsWith('/chatCodeBlock')) {
+				let fileName: string;
+				if (URLPathName.startsWith('/endpoint_unsaved')) {
+					fileName = URLPathName.substring(URLPathName.lastIndexOf('/') + 1);
+				} else {
+					fileName = decodeURIComponent(URLPathName.slice('/chatCodeBlock/'.length));
 				}
-			} else if (URLPathName.startsWith('/endpoint_unsaved')) {
-				const untitledFileName = URLPathName.substring(
-					URLPathName.lastIndexOf('/') + 1
-				);
 				const content = await this._contentLoader.getFileStream(
-					untitledFileName,
+					fileName,
 					false
 				);
 				if (content.Stream) {
