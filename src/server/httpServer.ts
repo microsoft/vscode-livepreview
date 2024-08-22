@@ -214,8 +214,24 @@ export class HttpServer extends Disposable {
 
 		let contentType = 'application/octet-stream';
 		if (basePath === '') {
-			if (URLPathName.startsWith('/endpoint_unsaved')) {
-				const untitledFileName = URLPathName.slice('/endpoint_unsaved/'.length);
+			if (URLPathName.startsWith('/chatCodeBlock')) {
+				const codeBlockUriStr = decodeURIComponent(URLPathName.slice('/chatCodeBlock/'.length));
+				const content = await this._contentLoader.getFileStream(
+					codeBlockUriStr,
+					false
+				);
+				if (content.Stream) {
+					stream = content.Stream;
+					contentType = content.ContentType ?? '';
+					contentLength = content.ContentLength;
+					writeHeader(200, contentType, content.ContentLength);
+					stream.pipe(res);
+					return;
+				}
+			} else if (URLPathName.startsWith('/endpoint_unsaved')) {
+				const untitledFileName = URLPathName.substring(
+					URLPathName.lastIndexOf('/') + 1
+				);
 				const content = await this._contentLoader.getFileStream(
 					untitledFileName,
 					false

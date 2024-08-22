@@ -171,7 +171,7 @@ export class PreviewManager extends Disposable {
 		let path = '/';
 		if (!connection?.workspace) {
 			this._notifyLooseFileOpen();
-			path = await this._endpointManager.encodeLooseFileEndpoint(file.fsPath, file);
+			path = await this._endpointManager.encodeLooseFileEndpoint(file);
 
 			if (!path.startsWith('/')) {
 				path = `/${path}`;

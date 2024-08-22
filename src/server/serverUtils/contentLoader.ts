@@ -293,11 +293,7 @@ export class ContentLoader extends Disposable {
 		let contentLength = 0;
 
 		while (i < workspaceDocuments.length) {
-			let docFileName = workspaceDocuments[i].fileName;
-			if (docFileName.startsWith('/') && !readPath.startsWith('/')) {
-				docFileName = docFileName.slice(1);
-			}
-			if (PathUtil.PathEquals(readPath, docFileName)) {
+			if (PathUtil.PathEquals(readPath, workspaceDocuments[i].fileName) || (workspaceDocuments[i].uri.scheme === 'vscode-chat-code-block' && workspaceDocuments[i].uri.with({ fragment: '' }).toString() === readPath)) {
 				if (inFilesystem && workspaceDocuments[i].isUntitled) {
 					continue;
 				}
