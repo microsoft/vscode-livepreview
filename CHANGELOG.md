@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.15 (September 5, 2024)
+
+- Bump `webpack` and `micromatch` dependencies.
+
 ## 0.4.14 (July 3, 2024)
 
 - Bump `braces` and `ws` dependencies.
