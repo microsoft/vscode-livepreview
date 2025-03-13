@@ -1,28 +1,23 @@
 {
-  "name": "live-server",
-  "displayName": "Live Preview",
+  "name": "linty-live-server",
+  "displayName": "Linty Live Preview",
   "description": "Hosts a local server in your workspace for you to preview your webpages on.",
-  "version": "0.4.15",
-  "preview": true,
-  "aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
-  "publisher": "ms-vscode",
-  "icon": "icon.png",
+  "version": "1.0.0",
+  "publisher": "LintyServices",
+  "icon": "linty-logo.png",
+  "homepage": "https://linty-services.com",
+  "pricing": "Free",
+  "license": "Proprietary",
   "repository": {
     "type": "git",
-    "url": "https://github.com/microsoft/vscode-livepreview"
-  },
-  "capabilities": {
-    "virtualWorkspaces": false,
-    "untrustedWorkspaces": {
-      "supported": false,
-      "description": "Live Preview runs a server to host workspace files."
-    }
+    "url": "https://github.com/Linty-Services/linty-livepreview"
   },
   "engines": {
     "vscode": "^1.80.0"
   },
   "bugs": {
-    "url": "https://github.com/microsoft/vscode-livepreview/issues"
+    "url": "https://github.com/Linty-Services/linty-livepreview/issues",
+    "email": "support@linty-services.com"
   },
   "categories": [
     "Other"
@@ -184,7 +179,7 @@
       ]
     },
     "configuration": {
-      "title": "Live Preview",
+      "title": "Linty Live Preview",
       "properties": {
         "livePreview.portNumber": {
           "type": "number",
