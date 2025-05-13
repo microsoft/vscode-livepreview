@@ -83,7 +83,8 @@ export class WebviewComm extends Disposable {
 	public async constructAddress(
 		URLExt: string,
 		connection: Connection = this.currentConnection,
-		hostURI?: vscode.Uri
+		hostURI?: vscode.Uri,
+		windowId?: number | undefined,
 	): Promise<string> {
 		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);
@@ -92,7 +93,13 @@ export class WebviewComm extends Disposable {
 		if (!hostURI) {
 			hostURI = await this.resolveHost(connection);
 		}
-		return `${hostURI.toString()}${URLExt}`;
+
+		let urlParams = '';
+		if (windowId) {
+			urlParams = `?windowId=${windowId}`;
+		}
+
+		return `${hostURI.toString()}${URLExt}${urlParams}`;
 	}
 
 	/**
