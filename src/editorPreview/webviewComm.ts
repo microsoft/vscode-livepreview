@@ -94,12 +94,7 @@ export class WebviewComm extends Disposable {
 			hostURI = await this.resolveHost(connection);
 		}
 
-		let urlParams = '';
-		if (windowId) {
-			urlParams = `?windowId=${windowId}`;
-		}
-
-		return `${hostURI.toString()}${URLExt}${urlParams}`;
+		return `${hostURI.toString()}${URLExt}`;
 	}
 
 	/**

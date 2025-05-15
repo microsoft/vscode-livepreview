@@ -143,7 +143,7 @@
 
 	function getWindowId() {
 		const existing = new URLSearchParams(location.search);
-		const windowId = existing.get('windowId');
+		const windowId = existing.get('id');
 		if (windowId) {
 			vscode.postMessage({
 				command: 'get-window-id',
