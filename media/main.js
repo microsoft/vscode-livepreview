@@ -30,6 +30,7 @@
 	 * @description run on load.
 	 */
 	function onLoad() {
+		getWindowId();
 		for (const groupClassName in navGroups) {
 			const leftRight = navGroups[groupClassName];
 			handleNavGroup(getNavGroupElems(groupClassName), leftRight);
@@ -138,6 +139,17 @@
 			command: 'go-to-file',
 			text: linkTarget,
 		});
+	}
+
+	function getWindowId() {
+		const existing = new URLSearchParams(location.search);
+		const windowId = existing.get('id');
+		if (windowId) {
+			vscode.postMessage({
+				command: 'get-window-id',
+				id: windowId,
+			});
+		}
 	}
 
 	/**

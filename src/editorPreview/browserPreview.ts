@@ -29,6 +29,8 @@ export class BrowserPreview extends Disposable {
 	);
 	public readonly onDispose = this._onDisposeEmitter.event;
 
+	private windowId: number | undefined = undefined;
+
 	private readonly _onShouldLaunchPreview = this._register(
 		new vscode.EventEmitter<{
 			uri?: vscode.Uri;
@@ -185,6 +187,18 @@ export class BrowserPreview extends Disposable {
 					'workbench.action.webview.openDeveloperTools'
 				);
 				return;
+			case 'get-window-id':
+				this.windowId = message.id;
+				if (this.windowId) {
+					const currentFullAddress = await this.currentConnection.resolveExternalHTTPUri();
+					const url = new URL(this.currentAddress, currentFullAddress.toString(true));
+					if (!url.searchParams.has('serverWindowId')) {
+						url.searchParams.set('serverWindowId', this.windowId.toString());
+						this._webviewComm.currentAddress = url.pathname + url.search;
+						this._webviewComm.reloadWebview();
+					}
+				}
+				return;
 		}
 	}
 
@@ -215,7 +229,7 @@ export class BrowserPreview extends Disposable {
 	 */
 	private async _openCurrentAddressInExternalBrowser(): Promise<void> {
 		const givenURL = await this._webviewComm.constructAddress(
-			this._webviewComm.currentAddress
+			this._webviewComm.currentAddress, undefined, undefined
 		);
 		const uri = vscode.Uri.parse(givenURL.toString());
 
