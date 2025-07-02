@@ -55,7 +55,6 @@ interface IIndexDirEntry {
 export class ContentLoader extends Disposable {
 	private _scriptInjector: HTMLInjector | undefined;
 	private _servedFiles: Set<string> = new Set<string>();
-	private _insertionTags = ['head', 'body', 'html', '!DOCTYPE'];
 
 	constructor(
 		_extensionUri: vscode.Uri,
@@ -345,29 +344,28 @@ export class ContentLoader extends Disposable {
 	 * @returns {string} the injected string.
 	 */
 	private _injectIntoFile(contents: string): string {
-		// order of preference for script placement:
-		// 1. after <head>
-		// 2. after <body>
-		// 3. after <html>
-		// 4. after <!DOCTYPE >
-		// 5. at the very beginning
-
-		let re: RegExp;
-		let tagEnd = 0;
-		for (const tag of this._insertionTags) {
-			re = new RegExp(`<${tag}[^>]*>`, 'g');
-			re.test(contents);
-
-			tagEnd = re.lastIndex;
-			if (tagEnd != 0) {
-				break;
+		let offset = 0;
+		const consume = (rx: RegExp): void => {
+			rx.lastIndex = offset;
+			if (rx.test(contents)) {
+				offset = rx.lastIndex;
 			}
-		}
+		};
+
+		// whitespace, comments, and xml processor instructions
+		const misc = /(?:\s+|<!--.*?-->|<\?[^>]*>)*/sy;
+
+		consume(misc);
+		consume(/<!DOCTYPE\s[^>]*>/iy);
+		consume(misc);
+		consume(/<html(?:\s[^>]*)?>/iy);
+		consume(misc);
+		consume(/<(?:head|body)(?:\s[^>]*)?>/iy);
 
 		const newContents =
-			contents.substring(0, tagEnd) +
+			contents.substring(0, offset) +
 			this._scriptInjection +
-			contents.substring(tagEnd);
+			contents.substring(offset);
 		return newContents;
 	}
 
