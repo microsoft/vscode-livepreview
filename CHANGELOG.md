@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.16 (September 11, 2025)
+
+- Address some XSS security issues
+- Allow webview access via URL for VS Code
+
 ## 0.4.15 (September 5, 2024)
 
 - Bump `webpack` and `micromatch` dependencies.
