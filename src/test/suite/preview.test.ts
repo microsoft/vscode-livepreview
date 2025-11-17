@@ -95,4 +95,28 @@ describe('PreviewManager', () => {
 		assert.ok(executeCommand.calledOnce);
 		assert.ok(executeCommand.getCall(0).calledWith('extension.js-debug.debugLink', `http://${connection.host}:${connection.httpPort}/index.html`));
 	});
+
+	it("previews files with special characters in path", async () => {
+		const goToFile = sinon.spy(WebviewComm.prototype, 'goToFile');
+
+		// Test file with spaces and hash characters
+		const fileUri = vscode.Uri.joinPath(
+			testWorkspaces[0].uri,
+			'special #01 folder',
+			'test #01 file.html'
+		);
+
+		await previewManager.launchFileInEmbeddedPreview(undefined, connection, fileUri);
+
+		assert.ok(goToFile.callCount >= 1);
+
+		// Verify the path passed to goToFile is properly encoded
+		const pathArgument = goToFile.getCall(goToFile.callCount - 1).args[0];
+		assert.ok(pathArgument.includes('%20'), 'Spaces should be URL-encoded');
+		assert.ok(pathArgument.includes('%23'), 'Hash symbols should be URL-encoded');
+		assert.strictEqual(
+			pathArgument,
+			'/special%20%2301%20folder/test%20%2301%20file.html'
+		);
+	});
 });

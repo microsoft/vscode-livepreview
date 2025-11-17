@@ -101,7 +101,7 @@ export class PreviewManager extends Disposable {
 		file?: vscode.Uri
 	): Promise<void> {
 		const path = file
-			? PathUtil.ConvertToPosixPath(await this._fileUriToPath(file, connection))
+			? await this._fileUriToPath(file, connection)
 			: '/';
 
 		const url = `http://${connection.host}:${connection.httpPort}${path}`;
@@ -165,7 +165,7 @@ export class PreviewManager extends Disposable {
 	 * Transforms Uris into a path that can be used by the server.
 	 * @param {vscode.Uri} file the path to potentially transform.
 	 * @param {Connection} connection the connection to connect using
-	 * @returns {string} the transformed path if the original `file` was realtive.
+	 * @returns {string} the transformed path (properly URI-escaped) if the original `file` was relative.
 	 */
 	private async _fileUriToPath(file: vscode.Uri, connection: Connection): Promise<string> {
 		let path = '/';
@@ -177,7 +177,7 @@ export class PreviewManager extends Disposable {
 				path = `/${path}`;
 			}
 		} else if (connection) {
-			path = connection.getFileRelativeToWorkspace(file.fsPath) ?? '';
+			path = PathUtil.EscapePathParts(connection.getFileRelativeToWorkspace(file.fsPath) ?? '');
 		}
 		return path;
 	}
