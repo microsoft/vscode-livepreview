@@ -53,6 +53,10 @@ describe('PreviewManager', () => {
 		sandbox.restore();
 	});
 
+	afterEach(() => {
+		sinon.restore();
+	});
+
 	it("previews in embedded preview", async () => {
 		const goToFile = sinon.spy(WebviewComm.prototype, 'goToFile');
 
@@ -70,10 +74,14 @@ describe('PreviewManager', () => {
 		assert.ok(goToFile.callCount === 4);
 		assert(previewManager.previewActive);
 
-		assert.ok(goToFile.getCall(0).calledWith('', false));
-		assert.ok(goToFile.getCall(1).calledWith('/index.html', true));
-		assert.ok(goToFile.getCall(2).calledWith('/index.html', true));
-		assert.ok(goToFile.getCall(3).calledWith('/page.html', true));
+		assert.strictEqual(goToFile.getCall(0).args[0], '');
+		assert.strictEqual(goToFile.getCall(0).args[1], false);
+		assert.strictEqual(goToFile.getCall(1).args[0], '/index.html');
+		assert.strictEqual(goToFile.getCall(1).args[1], true);
+		assert.strictEqual(goToFile.getCall(2).args[0], '/index.html');
+		assert.strictEqual(goToFile.getCall(2).args[1], true);
+		assert.strictEqual(goToFile.getCall(3).args[0], '/page.html');
+		assert.strictEqual(goToFile.getCall(3).args[1], true);
 	});
 
 	it("previews in external preview (non-debug)", async () => {
@@ -83,7 +91,8 @@ describe('PreviewManager', () => {
 			vscode.Uri.joinPath(testWorkspaces[0].uri, "/index.html"));
 
 		assert.ok(openInBrowser.calledOnce);
-		assert.ok(openInBrowser.getCall(0).calledWith(`http://${connection.host}:${connection.httpPort}/index.html`, CustomExternalBrowser.edge));
+		assert.strictEqual(openInBrowser.getCall(0).args[0], `http://${connection.host}:${connection.httpPort}/index.html`);
+		assert.strictEqual(openInBrowser.getCall(0).args[1], CustomExternalBrowser.edge);
 	});
 
 	it("previews in external preview (debug)", async () => {
@@ -93,7 +102,8 @@ describe('PreviewManager', () => {
 			vscode.Uri.joinPath(testWorkspaces[0].uri, "/index.html"));
 
 		assert.ok(executeCommand.calledOnce);
-		assert.ok(executeCommand.getCall(0).calledWith('extension.js-debug.debugLink', `http://${connection.host}:${connection.httpPort}/index.html`));
+		assert.strictEqual(executeCommand.getCall(0).args[0], 'extension.js-debug.debugLink');
+		assert.strictEqual(executeCommand.getCall(0).args[1], `http://${connection.host}:${connection.httpPort}/index.html`);
 	});
 
 	it("previews files with special characters in path", async () => {

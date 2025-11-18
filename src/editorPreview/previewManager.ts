@@ -178,6 +178,9 @@ export class PreviewManager extends Disposable {
 			}
 		} else if (connection) {
 			path = PathUtil.EscapePathParts(connection.getFileRelativeToWorkspace(file.fsPath) ?? '');
+			if (path && !path.startsWith('/')) {
+				path = `/${path}`;
+			}
 		}
 		return path;
 	}

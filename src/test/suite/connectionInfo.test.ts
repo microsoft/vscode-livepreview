@@ -108,15 +108,9 @@ describe('ConnectionInfo', () => {
 			'/special #01 folder/test #01 file.html'
 		);
 
-		// Verify that special characters are preserved
+		// Verify that special characters are preserved (not URL-encoded)
 		assert.ok(relativePath?.includes('#'), 'Hash characters should be preserved');
-
-		// Verify that # is encoded as %23
-		assert.ok(relativePath?.includes('%23'), 'Hash symbols should be encoded as %23');
-
-		// Verify no literal spaces or hashes remain
-		assert.ok(!relativePath?.includes(' '), 'No literal spaces should remain');
-		assert.ok(!relativePath?.includes('#'), 'No literal hash symbols should remain');
+		assert.ok(relativePath?.includes(' '), 'Spaces should be preserved');
 	});
 
 
