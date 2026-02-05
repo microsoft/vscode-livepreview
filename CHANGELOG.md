@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.17 (February 5, 2026)
+- Added setting `livePreview.useIntegratedBrowser`
+
 ## 0.4.16 (September 11, 2025)
 
 - Address some XSS security issues
