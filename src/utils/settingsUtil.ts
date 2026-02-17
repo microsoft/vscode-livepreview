@@ -48,7 +48,7 @@ export enum CustomExternalBrowser {
 	edge = 'Edge',
 	chrome = 'Chrome',
 	firefox = 'Firefox',
-	default = 'Default'
+	default = 'Default',
 }
 
 /**
@@ -76,7 +76,7 @@ export const Settings: any = {
 	serverRoot: 'serverRoot',
 	previewDebounceDelay: 'previewDebounceDelay',
 	httpHeaders: 'httpHeaders',
-	useIntegratedBrowser: 'useIntegratedBrowser'
+	useIntegratedBrowser: 'useIntegratedBrowser',
 };
 
 /**
@@ -93,8 +93,13 @@ export class SettingUtil {
 	 * @description Get the current settings JSON.
 	 * @returns {ILivePreviewConfigItem} a JSON object with all of the settings for Live Preview.
 	 */
-	public static GetConfig(scope?: vscode.ConfigurationScope): ILivePreviewConfigItem {
-		const config = vscode.workspace.getConfiguration(SETTINGS_SECTION_ID, scope);
+	public static GetConfig(
+		scope?: vscode.ConfigurationScope
+	): ILivePreviewConfigItem {
+		const config = vscode.workspace.getConfiguration(
+			SETTINGS_SECTION_ID,
+			scope
+		);
 		return {
 			portNumber: config.get<number>(Settings.portNumber, 3000),
 			showServerStatusNotifications: config.get<boolean>(
@@ -131,10 +136,16 @@ export class SettingUtil {
 				false
 			),
 			hostIP: config.get<string>(Settings.hostIP, '127.0.0.1'),
-			customExternalBrowser: config.get<CustomExternalBrowser>(Settings.customExternalBrowser, CustomExternalBrowser.default),
+			customExternalBrowser: config.get<CustomExternalBrowser>(
+				Settings.customExternalBrowser,
+				CustomExternalBrowser.default
+			),
 			serverRoot: config.get<string>(Settings.serverRoot, ''),
 			httpHeaders: config.get<any>(Settings.httpHeaders, DEFAULT_HTTP_HEADERS),
-			useIntegratedBrowser: config.get<boolean>(Settings.useIntegratedBrowser, false),
+			useIntegratedBrowser: config.get<boolean>(
+				Settings.useIntegratedBrowser,
+				false
+			),
 		};
 	}
 

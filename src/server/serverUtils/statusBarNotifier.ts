@@ -46,7 +46,10 @@ export class StatusBarNotifier extends Disposable {
 			portsLabel = vscode.l10n.t('Port: {0}', port);
 		} else {
 			if (this._ports.size === 2) {
-				portsLabel = vscode.l10n.t('Ports: {0}', Array.from(this._ports.values()).join(', '));
+				portsLabel = vscode.l10n.t(
+					'Ports: {0}',
+					Array.from(this._ports.values()).join(', ')
+				);
 			} else {
 				portsLabel = vscode.l10n.t('{0} Ports', this._ports.size);
 			}
@@ -61,9 +64,7 @@ export class StatusBarNotifier extends Disposable {
 					: undefined;
 				bulletPoints.push(
 					`\n\t• ${port} (${
-						workspace
-							? workspace.name
-							: vscode.l10n.t('non-workspace files')
+						workspace ? workspace.name : vscode.l10n.t('non-workspace files')
 					})`
 				);
 			} catch {

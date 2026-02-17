@@ -49,9 +49,12 @@ export class PathUtil {
 	 * Using `c:/a/file/` should return `c:/a/file/` since `c:/a/file/` is a directory already.
 	 */
 	public static async GetParentDir(file: string): Promise<string> {
-
 		const existsStatInfo = await PathUtil.FileExistsStat(file);
-		if (existsStatInfo.exists && existsStatInfo.stat && existsStatInfo.stat.isDirectory()) {
+		if (
+			existsStatInfo.exists &&
+			existsStatInfo.stat &&
+			existsStatInfo.stat.isDirectory()
+		) {
 			return file;
 		}
 		return path.dirname(file);
@@ -62,11 +65,17 @@ export class PathUtil {
 	 * @param {boolean} returnEmptyOnDir whether to return an empty string when given an existing directory.
 	 * @returns {string} The filename from the path; e.g. `c:/a/file/path.txt` returns `path.txt`.
 	 */
-	public static async GetFileName(file: string, returnEmptyOnDir = false): Promise<string> {
-
+	public static async GetFileName(
+		file: string,
+		returnEmptyOnDir = false
+	): Promise<string> {
 		if (returnEmptyOnDir) {
 			const existsStatInfo = await PathUtil.FileExistsStat(file);
-			if (existsStatInfo.exists && existsStatInfo.stat && existsStatInfo.stat.isDirectory()) {
+			if (
+				existsStatInfo.exists &&
+				existsStatInfo.stat &&
+				existsStatInfo.stat.isDirectory()
+			) {
 				return '';
 			}
 		}
@@ -104,7 +113,9 @@ export class PathUtil {
 	 * @param file
 	 * @returns relative path (or undefined if the file does not belong to a workspace)
 	 */
-	public static async getPathRelativeToWorkspace(file: vscode.Uri): Promise<string | undefined> {
+	public static async getPathRelativeToWorkspace(
+		file: vscode.Uri
+	): Promise<string | undefined> {
 		const workspaceFolder = await PathUtil.GetWorkspaceFromURI(file);
 		if (!workspaceFolder) {
 			return undefined;
@@ -159,16 +170,28 @@ export class PathUtil {
 			return undefined;
 		}
 
-		const checkPathBeginsWithForWorkspace = async (workspace: vscode.WorkspaceFolder, file: string): Promise<vscode.WorkspaceFolder | undefined> => {
-			const rootPrefix = await PathUtil.GetValidServerRootForWorkspace(workspace);
-			return PathUtil.PathBeginsWith(file, path.join(workspace.uri.fsPath, rootPrefix)) ? workspace : undefined;
+		const checkPathBeginsWithForWorkspace = async (
+			workspace: vscode.WorkspaceFolder,
+			file: string
+		): Promise<vscode.WorkspaceFolder | undefined> => {
+			const rootPrefix = await PathUtil.GetValidServerRootForWorkspace(
+				workspace
+			);
+			return PathUtil.PathBeginsWith(
+				file,
+				path.join(workspace.uri.fsPath, rootPrefix)
+			)
+				? workspace
+				: undefined;
 		};
 
-		const validWorkspacesForFile = await Promise.all(workspaces?.map((workspace) => {
-			return checkPathBeginsWithForWorkspace(workspace, file);
-		}));
+		const validWorkspacesForFile = await Promise.all(
+			workspaces?.map((workspace) => {
+				return checkPathBeginsWithForWorkspace(workspace, file);
+			})
+		);
 
-		return validWorkspacesForFile.find((workspace) => (workspace !== undefined));
+		return validWorkspacesForFile.find((workspace) => workspace !== undefined);
 	}
 
 	/**
@@ -178,7 +201,8 @@ export class PathUtil {
 	 * @returns {vscode.WorkspaceFolder | undefined} the workspace it belongs to
 	 */
 	public static async GetWorkspaceFromRelativePath(
-		file: string, ignoreFileRoot = false
+		file: string,
+		ignoreFileRoot = false
 	): Promise<vscode.WorkspaceFolder | undefined> {
 		const workspaces = vscode.workspace.workspaceFolders;
 
@@ -186,12 +210,22 @@ export class PathUtil {
 			return undefined;
 		}
 
-		const checkFileExistsStatForWorkspace = async (workspace: vscode.WorkspaceFolder): Promise<boolean> => {
-			const rootPrefix = ignoreFileRoot ? '' : await PathUtil.GetValidServerRootForWorkspace(workspace);
-			return (await PathUtil.FileExistsStat(path.join(workspace.uri.fsPath, rootPrefix, file))).exists;
+		const checkFileExistsStatForWorkspace = async (
+			workspace: vscode.WorkspaceFolder
+		): Promise<boolean> => {
+			const rootPrefix = ignoreFileRoot
+				? ''
+				: await PathUtil.GetValidServerRootForWorkspace(workspace);
+			return (
+				await PathUtil.FileExistsStat(
+					path.join(workspace.uri.fsPath, rootPrefix, file)
+				)
+			).exists;
 		};
 
-		const promises = workspaces.map((workspace) => checkFileExistsStatForWorkspace(workspace));
+		const promises = workspaces.map((workspace) =>
+			checkFileExistsStatForWorkspace(workspace)
+		);
 
 		const idx = (await Promise.all(promises)).findIndex((exists) => exists);
 		if (idx === -1) {
@@ -205,19 +239,32 @@ export class PathUtil {
 	 * @param workspace
 	 * @returns the server root from settings if it would point to an existing directory
 	 */
-	public static async GetValidServerRootForWorkspace(workspace: vscode.WorkspaceFolder): Promise<string> {
+	public static async GetValidServerRootForWorkspace(
+		workspace: vscode.WorkspaceFolder
+	): Promise<string> {
 		const root = SettingUtil.GetConfig(workspace).serverRoot;
-		return (await PathUtil.FileExistsStat(path.join(workspace.uri.fsPath, root))).exists ? root : '';
+		return (
+			await PathUtil.FileExistsStat(path.join(workspace.uri.fsPath, root))
+		).exists
+			? root
+			: '';
 	}
 
 	/**
 	 * @param file
 	 * @returns object containing exists and stat info
 	 */
-	public static async FileExistsStat(file: string): Promise<{ exists: boolean, stat: fs.Stats | undefined }> {
-		return fs.promises.stat(file)
-			.then((stat) => { return { exists: true, stat }; })
-			.catch(() => { return { exists: false, stat: undefined }; });
+	public static async FileExistsStat(
+		file: string
+	): Promise<{ exists: boolean; stat: fs.Stats | undefined }> {
+		return fs.promises
+			.stat(file)
+			.then((stat) => {
+				return { exists: true, stat };
+			})
+			.catch(() => {
+				return { exists: false, stat: undefined };
+			});
 	}
 
 	/**
@@ -226,12 +273,11 @@ export class PathUtil {
 	 * @returns file contents (or empty string if error encountered)
 	 */
 	public static async FileRead(file: string): Promise<string> {
-		return fs.promises.readFile(file, 'utf-8')
+		return fs.promises
+			.readFile(file, 'utf-8')
 			.then((data) => data.toString())
 			.catch(() => '');
 	}
-
-
 
 	/**
 	 * Get the immediate parent of the encoded endpoint directory path. Needed to create index pages

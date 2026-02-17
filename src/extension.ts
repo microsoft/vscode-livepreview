@@ -46,20 +46,25 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(reporter);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start`, async () => {
-			serverPreview.openPreview();
-		})
+		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.start`,
+			async () => {
+				serverPreview.openPreview();
+			}
+		)
 	);
 
 	/**
 	 * Not used directly by the extension, but can be called by a task or another extension to open a preview at a file
 	 */
 	context.subscriptions.push(
-		vscode.commands.registerCommand(`${SETTINGS_SECTION_ID}.start.preview.atFileString`,
+		vscode.commands.registerCommand(
+			`${SETTINGS_SECTION_ID}.start.preview.atFileString`,
 			async (filePath?: string) => {
 				filePath = filePath ?? '/';
 				await serverPreview.openPreviewAtFileString(filePath);
-			})
+			}
+		)
 	);
 
 	context.subscriptions.push(
@@ -192,7 +197,9 @@ export function activate(context: vscode.ExtensionContext): void {
 					return;
 				}
 
-				const relativeFileStr = file.fsPath.substring(workspace.uri.fsPath.length);
+				const relativeFileStr = file.fsPath.substring(
+					workspace.uri.fsPath.length
+				);
 				await SettingUtil.UpdateSettings(
 					Settings.defaultPreviewPath,
 					PathUtil.ConvertToPosixPath(relativeFileStr),

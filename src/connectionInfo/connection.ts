@@ -53,11 +53,12 @@ export class Connection extends Disposable {
 		this._register(
 			vscode.workspace.onDidChangeConfiguration(async (e) => {
 				if (e.affectsConfiguration(SETTINGS_SECTION_ID)) {
-					this._rootPrefix = _workspace ? await PathUtil.GetValidServerRootForWorkspace(_workspace) : '';
+					this._rootPrefix = _workspace
+						? await PathUtil.GetValidServerRootForWorkspace(_workspace)
+						: '';
 				}
 			})
 		);
-
 	}
 
 	/**
@@ -68,13 +69,16 @@ export class Connection extends Disposable {
 	 */
 	public async connected(): Promise<void> {
 		const externalHTTPUri = await this.resolveExternalHTTPUri(this.httpPort);
-		const externalWSUri = await this.resolveExternalWSUri(this.wsPort, this.wsPath);
+		const externalWSUri = await this.resolveExternalWSUri(
+			this.wsPort,
+			this.wsPath
+		);
 		this._onConnected.fire({
 			httpURI: externalHTTPUri,
 			wsURI: externalWSUri,
 			workspace: this._workspace,
 			httpPort: this.httpPort,
-			rootPrefix: this._rootPrefix
+			rootPrefix: this._rootPrefix,
 		});
 	}
 
@@ -94,7 +98,10 @@ export class Connection extends Disposable {
 	 * Use `vscode.env.asExternalUri` to determine the WS host and port on the user's machine.
 	 * @returns {Promise<vscode.Uri>} a promise for the WS URI
 	 */
-	public async resolveExternalWSUri(wsPort?: number, wsPath?: string): Promise<vscode.Uri> {
+	public async resolveExternalWSUri(
+		wsPort?: number,
+		wsPath?: string
+	): Promise<vscode.Uri> {
 		if (!wsPort) {
 			wsPort = this.wsPort;
 		}
@@ -103,7 +110,10 @@ export class Connection extends Disposable {
 			wsPath = this.wsPath;
 		}
 		const wsPortUri = this.constructLocalUri(wsPort);
-		return vscode.Uri.joinPath(await vscode.env.asExternalUri(wsPortUri),wsPath); // ensure that this pathname is retained, as the websocket server must see this in order to authorize
+		return vscode.Uri.joinPath(
+			await vscode.env.asExternalUri(wsPortUri),
+			wsPath
+		); // ensure that this pathname is retained, as the websocket server must see this in order to authorize
 	}
 
 	/**
@@ -167,7 +177,9 @@ export class Connection extends Disposable {
 	 * Get the URI given the relative path
 	 */
 	public getAppendedURI(path: string): vscode.Uri {
-		return this.rootURI ? vscode.Uri.joinPath(this.rootURI, path) : vscode.Uri.file(path);
+		return this.rootURI
+			? vscode.Uri.joinPath(this.rootURI, path)
+			: vscode.Uri.file(path);
 	}
 
 	/**
@@ -178,8 +190,6 @@ export class Connection extends Disposable {
 	 * @returns whether the path is in the workspace
 	 */
 	private _absPathInWorkspace(path: string): boolean {
-		return this.rootPath
-			? PathUtil.PathBeginsWith(path, this.rootPath)
-			: false;
+		return this.rootPath ? PathUtil.PathBeginsWith(path, this.rootPath) : false;
 	}
 }

@@ -84,7 +84,7 @@ export class WebviewComm extends Disposable {
 		URLExt: string,
 		connection: Connection = this.currentConnection,
 		hostURI?: vscode.Uri,
-		windowId?: number | undefined,
+		windowId?: number | undefined
 	): Promise<string> {
 		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);

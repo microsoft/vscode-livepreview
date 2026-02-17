@@ -76,8 +76,9 @@ export class HTMLInjector extends Disposable {
 		}
 
 		// if the HTTP scheme uses SSL, the WS scheme must also use SSL
-		const wsURL = `${httpUri.scheme === 'https' ? 'wss' : 'ws'}://${wsUri.authority
-			}${wsUri.path}`;
+		const wsURL = `${httpUri.scheme === 'https' ? 'wss' : 'ws'}://${
+			wsUri.authority
+		}${wsUri.path}`;
 		let httpURL = `${httpUri.scheme}://${httpUri.authority}`;
 
 		if (httpURL.endsWith('/')) {

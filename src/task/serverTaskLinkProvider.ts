@@ -20,7 +20,8 @@ import { escapeRegExp } from '../utils/utils';
  */
 export class serverTaskLinkProvider
 	extends Disposable
-	implements vscode.TerminalLinkProvider {
+	implements vscode.TerminalLinkProvider
+{
 	// Triggers the editor to open a file, but to the side of the preview,
 	// which means that the manager must use the panel column info from the preview
 	// to open the file in a column where the preview is not.
@@ -188,11 +189,18 @@ export class serverTaskLinkProvider
 	 * @param {string} file the path to open in the editor
 	 * @param {boolean} isDir whether it is a directory.
 	 */
-	private async _openRelativeLinkInWorkspace(file: string, isDir: boolean): Promise<void> {
+	private async _openRelativeLinkInWorkspace(
+		file: string,
+		isDir: boolean
+	): Promise<void> {
 		file = unescape(file);
 		const workspace = await PathUtil.GetWorkspaceFromRelativePath(file);
 		const connection = this._connectionManager.getConnection(workspace);
-		const uri = connection ? connection.getAppendedURI(file) : vscode.Uri.file(await this._endpointManager.decodeLooseFileEndpoint(file) ?? '');
+		const uri = connection
+			? connection.getAppendedURI(file)
+			: vscode.Uri.file(
+					(await this._endpointManager.decodeLooseFileEndpoint(file)) ?? ''
+			  );
 
 		if (isDir) {
 			if (!PathUtil.GetWorkspaceFromAbsolutePath(uri.fsPath)) {

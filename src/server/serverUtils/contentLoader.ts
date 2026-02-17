@@ -156,7 +156,9 @@ export class ContentLoader extends Disposable {
 	 */
 	public createNoRootServer(): IRespInfo {
 		const noServerRoot = vscode.l10n.t('No Server Root');
-		const noWorkspaceOpen = vscode.l10n.t('This server is not based inside of a workspace, so the index does not direct to anything.');
+		const noWorkspaceOpen = vscode.l10n.t(
+			'This server is not based inside of a workspace, so the index does not direct to anything.'
+		);
 		const customMsg = `<p>${noWorkspaceOpen}</p>`;
 		const htmlString = Buffer.from(`
 		<!DOCTYPE html>
@@ -236,7 +238,7 @@ export class ContentLoader extends Disposable {
 
 		dirEntries.forEach(
 			(elem: IIndexDirEntry) =>
-			(directoryContents += `
+				(directoryContents += `
 				<tr>
 				<td><a href="${elem.LinkSrc}/">${elem.LinkName}/</a></td>
 				<td></td>
@@ -246,7 +248,7 @@ export class ContentLoader extends Disposable {
 
 		fileEntries.forEach(
 			(elem: IIndexFileEntry) =>
-			(directoryContents += `
+				(directoryContents += `
 				<tr>
 				<td><a href="${elem.LinkSrc}">${elem.LinkName}</a></td>
 				<td>${elem.FileSize}</td>
@@ -254,7 +256,10 @@ export class ContentLoader extends Disposable {
 				</tr>\n`)
 		);
 
-		const indexOfTitlePath = vscode.l10n.t('Index of {0}', this._escapeHTML(titlePath));
+		const indexOfTitlePath = vscode.l10n.t(
+			'Index of {0}',
+			this._escapeHTML(titlePath)
+		);
 		const name = vscode.l10n.t('Name');
 		const size = vscode.l10n.t('Size');
 		const dateModified = vscode.l10n.t('Date Modified');
@@ -295,7 +300,10 @@ export class ContentLoader extends Disposable {
 	 * @param {boolean} inFilesystem whether the path is in the filesystem (false for untitled files in editor)
 	 * @returns {IRespInfo} the response info
 	 */
-	public async getFileStream(readPath: string, inFilesystem = true): Promise<IRespInfo> {
+	public async getFileStream(
+		readPath: string,
+		inFilesystem = true
+	): Promise<IRespInfo> {
 		this._servedFiles.add(readPath);
 		const workspaceDocuments = vscode.workspace.textDocuments;
 		let i = 0;
@@ -344,7 +352,7 @@ export class ContentLoader extends Disposable {
 		return {
 			Stream: stream,
 			ContentType: contentType,
-			ContentLength: contentLength
+			ContentLength: contentLength,
 		};
 	}
 
@@ -384,10 +392,10 @@ export class ContentLoader extends Disposable {
 	}
 
 	private fsReadDir(path: string): Promise<string[]> {
-		return (new Promise((resolve) => fs.readdir(path,
-			(err, files) => {
+		return new Promise((resolve) =>
+			fs.readdir(path, (err, files) => {
 				resolve(err ? [] : files);
 			})
-		));
+		);
 	}
 }

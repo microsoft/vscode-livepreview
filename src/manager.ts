@@ -10,7 +10,10 @@ import TelemetryReporter from 'vscode-extension-telemetry';
 import { ConnectionManager } from './connectionInfo/connectionManager';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { PreviewType, SettingUtil } from './utils/settingsUtil';
-import { ServerStartedStatus, ServerTaskProvider } from './task/serverTaskProvider';
+import {
+	ServerStartedStatus,
+	ServerTaskProvider,
+} from './task/serverTaskProvider';
 import { EndpointManager } from './infoManagers/endpointManager';
 import { PreviewManager } from './editorPreview/previewManager';
 import { StatusBarNotifier } from './server/serverUtils/statusBarNotifier';
@@ -34,7 +37,8 @@ export interface IServerQuickPickItem extends vscode.QuickPickItem {
  */
 class PanelSerializer
 	extends Disposable
-	implements vscode.WebviewPanelSerializer {
+	implements vscode.WebviewPanelSerializer
+{
 	private readonly _onShouldRevive = this._register(
 		new vscode.EventEmitter<{ webviewPanel: vscode.WebviewPanel; state: any }>()
 	);
@@ -149,7 +153,9 @@ export class Manager extends Disposable {
 
 		this._register(
 			this._serverTaskProvider.onRequestToOpenServer(async (workspace) => {
-				const serverGrouping = await this._getServerGroupingFromWorkspace(workspace);
+				const serverGrouping = await this._getServerGroupingFromWorkspace(
+					workspace
+				);
 				if (!serverGrouping.isRunning) {
 					await serverGrouping.openServer();
 				} else {
@@ -209,7 +215,11 @@ export class Manager extends Disposable {
 				const grouping = await this._getServerGroupingFromWorkspace(workspace);
 				if (workspace) {
 					// PathExistsRelativeToAnyWorkspace already makes sure that file is under correct root prefix
-					fileUri = vscode.Uri.joinPath(workspace.uri, await PathUtil.GetValidServerRootForWorkspace(workspace), file);
+					fileUri = vscode.Uri.joinPath(
+						workspace.uri,
+						await PathUtil.GetValidServerRootForWorkspace(workspace),
+						file
+					);
 				} else {
 					fileUri = vscode.Uri.parse(file);
 				}
@@ -301,10 +311,13 @@ export class Manager extends Disposable {
 	 */
 	public async openPreview(): Promise<void> {
 		const activeFile = vscode.window.activeTextEditor?.document.uri;
-		const activeWorkspace = activeFile ? vscode.workspace.getWorkspaceFolder(activeFile) : vscode.workspace.workspaceFolders?.[0];
+		const activeWorkspace = activeFile
+			? vscode.workspace.getWorkspaceFolder(activeFile)
+			: vscode.workspace.workspaceFolders?.[0];
 
 		// use the active workspace folder. otherwise, use the first workspace folder.
-		let defaultPreviewPath = SettingUtil.GetConfig(activeWorkspace).defaultPreviewPath;
+		let defaultPreviewPath =
+			SettingUtil.GetConfig(activeWorkspace).defaultPreviewPath;
 
 		// if this gave no results, still try to use the the preview path from other settings, but appended to the active workspace
 		// otherwise, still use the active workspace, but with no default path.
@@ -313,7 +326,12 @@ export class Manager extends Disposable {
 		}
 
 		// defaultPreviewPath is relative to the workspace root, regardless of what is set for serverRoot
-		return this.openPreviewAtFileString(defaultPreviewPath, undefined, activeWorkspace, true);
+		return this.openPreviewAtFileString(
+			defaultPreviewPath,
+			undefined,
+			activeWorkspace,
+			true
+		);
 	}
 
 	/**
@@ -321,17 +339,34 @@ export class Manager extends Disposable {
 	 * This is usually used for when the user configures a setting for initial filepath
 	 * @param filePath the string fsPath to use
 	 */
-	public async openPreviewAtFileString(filePath: string, previewType?: string, activeWorkspace?: vscode.WorkspaceFolder, ignoreFileRoot = false): Promise<void> {
+	public async openPreviewAtFileString(
+		filePath: string,
+		previewType?: string,
+		activeWorkspace?: vscode.WorkspaceFolder,
+		ignoreFileRoot = false
+	): Promise<void> {
 		if (filePath === '' && !activeWorkspace) {
 			return this._openPreviewWithNoTarget();
 		}
 
-		const workspace = activeWorkspace ? activeWorkspace : await PathUtil.GetWorkspaceFromRelativePath(filePath, ignoreFileRoot);
+		const workspace = activeWorkspace
+			? activeWorkspace
+			: await PathUtil.GetWorkspaceFromRelativePath(filePath, ignoreFileRoot);
 		if (workspace) {
-			const file = vscode.Uri.joinPath(workspace.uri, ignoreFileRoot ? '' : await PathUtil.GetValidServerRootForWorkspace(workspace), filePath);
-			await this.openPreviewAtFileUri(file, {
-				workspace: workspace,
-			}, previewType);
+			const file = vscode.Uri.joinPath(
+				workspace.uri,
+				ignoreFileRoot
+					? ''
+					: await PathUtil.GetValidServerRootForWorkspace(workspace),
+				filePath
+			);
+			await this.openPreviewAtFileUri(
+				file,
+				{
+					workspace: workspace,
+				},
+				previewType
+			);
 			return;
 		}
 
@@ -340,7 +375,12 @@ export class Manager extends Disposable {
 			const file = vscode.Uri.file(filePath);
 			return this.openPreviewAtFileUri(file, undefined, previewType);
 		} else {
-			vscode.window.showWarningMessage(vscode.l10n.t("The file '{0}' does not exist relative your filesystem root.", filePath));
+			vscode.window.showWarningMessage(
+				vscode.l10n.t(
+					"The file '{0}' does not exist relative your filesystem root.",
+					filePath
+				)
+			);
 			return this._openPreviewWithNoTarget();
 		}
 	}
@@ -392,10 +432,10 @@ export class Manager extends Disposable {
 	}
 
 	/**
- * Runs task for workspace from within extension. Must have at least one workspace open.
- * @param file optional file to use to find the workspace to run the task out of.
- * @returns
- */
+	 * Runs task for workspace from within extension. Must have at least one workspace open.
+	 * @param file optional file to use to find the workspace to run the task out of.
+	 * @returns
+	 */
 	public async runTaskForFile(file?: vscode.Uri): Promise<void> {
 		if (!file) {
 			file = vscode.window.activeTextEditor?.document.uri;
@@ -436,7 +476,9 @@ export class Manager extends Disposable {
 		disposables.push(quickPick);
 
 		quickPick.matchOnDescription = true;
-		quickPick.placeholder = vscode.l10n.t('Select the port that corresponds to the server that you want to stop');
+		quickPick.placeholder = vscode.l10n.t(
+			'Select the port that corresponds to the server that you want to stop'
+		);
 		quickPick.items = await this._getServerPicks();
 
 		disposables.push(
@@ -452,10 +494,10 @@ export class Manager extends Disposable {
 	}
 
 	/**
- * Opens a preview at an internal link that has the format <scheme>://<host>:<port>/<path>
- * @param link
- * @param previewType
- */
+	 * Opens a preview at an internal link that has the format <scheme>://<host>:<port>/<path>
+	 * @param link
+	 * @param previewType
+	 */
 	private async _openPreviewAtLink(
 		link: vscode.Uri,
 		previewType?: string
@@ -485,7 +527,9 @@ export class Manager extends Disposable {
 				return this._openPreview(
 					internal,
 					serverGrouping,
-					vscode.Uri.file(this._endpointManager.changePrefixesForAbsPathDecode(link.path)),
+					vscode.Uri.file(
+						this._endpointManager.changePrefixesForAbsPathDecode(link.path)
+					),
 					debug
 				);
 			}
@@ -493,7 +537,9 @@ export class Manager extends Disposable {
 			const file = connection.getAppendedURI(link.path);
 			this._openPreview(internal, serverGrouping, file, debug);
 		} catch (e) {
-			vscode.window.showErrorMessage(vscode.l10n.t('badURL', 'Tried to open preview on invalid URI'));
+			vscode.window.showErrorMessage(
+				vscode.l10n.t('badURL', 'Tried to open preview on invalid URI')
+			);
 		}
 	}
 
@@ -520,7 +566,11 @@ export class Manager extends Disposable {
 		}
 		if (!serverGrouping) {
 			if (workspace) {
-				serverGrouping = await this._getServerGroupingFromWorkspace(await this._shouldUseWorkspaceForFile(workspace, file) ? workspace : undefined);
+				serverGrouping = await this._getServerGroupingFromWorkspace(
+					(await this._shouldUseWorkspaceForFile(workspace, file))
+						? workspace
+						: undefined
+				);
 			} else if (port) {
 				this._serverGroupings.forEach((potentialServerGrouping) => {
 					if (potentialServerGrouping.port === port) {
@@ -548,20 +598,27 @@ export class Manager extends Disposable {
 		});
 	}
 
-	private async _shouldUseWorkspaceForFile(workspace: vscode.WorkspaceFolder | undefined, file: vscode.Uri): Promise<boolean> {
-
+	private async _shouldUseWorkspaceForFile(
+		workspace: vscode.WorkspaceFolder | undefined,
+		file: vscode.Uri
+	): Promise<boolean> {
 		if (!workspace) {
 			// never use the root prefix path on non-workspace paths
 			return false;
 		}
 
-		const serverRootPrefix = await PathUtil.GetValidServerRootForWorkspace(workspace);
+		const serverRootPrefix = await PathUtil.GetValidServerRootForWorkspace(
+			workspace
+		);
 		if (serverRootPrefix === '') {
 			return true;
 		}
 
 		if (file) {
-			const workspaceURIWithServerRoot = vscode.Uri.joinPath(workspace.uri, serverRootPrefix);
+			const workspaceURIWithServerRoot = vscode.Uri.joinPath(
+				workspace.uri,
+				serverRootPrefix
+			);
 
 			if (workspaceURIWithServerRoot) {
 				if (file.fsPath.startsWith(workspaceURIWithServerRoot.fsPath)) {
@@ -698,7 +755,9 @@ export class Manager extends Disposable {
 				}
 			}
 
-			const grouping = await this._getServerGroupingFromWorkspace(workspaces[0]);
+			const grouping = await this._getServerGroupingFromWorkspace(
+				workspaces[0]
+			);
 			this._openPreview(internal, grouping, undefined);
 		} else {
 			const grouping = await this._getServerGroupingFromWorkspace(undefined);
@@ -743,8 +802,7 @@ export class Manager extends Disposable {
 		return {
 			label: `$(radio-tower) ${connection.httpPort}`,
 			description:
-				grouping.workspace?.name ??
-				vscode.l10n.t('non-workspace files'),
+				grouping.workspace?.name ?? vscode.l10n.t('non-workspace files'),
 			accept: (): void => {
 				grouping.dispose();
 			},

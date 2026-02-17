@@ -190,8 +190,12 @@ export class BrowserPreview extends Disposable {
 			case 'get-window-id':
 				this.windowId = message.id;
 				if (this.windowId) {
-					const currentFullAddress = await this.currentConnection.resolveExternalHTTPUri();
-					const url = new URL(this.currentAddress, currentFullAddress.toString(true));
+					const currentFullAddress =
+						await this.currentConnection.resolveExternalHTTPUri();
+					const url = new URL(
+						this.currentAddress,
+						currentFullAddress.toString(true)
+					);
 					if (!url.searchParams.has('serverWindowId')) {
 						url.searchParams.set('serverWindowId', this.windowId.toString());
 						this._webviewComm.currentAddress = url.pathname + url.search;
@@ -229,7 +233,9 @@ export class BrowserPreview extends Disposable {
 	 */
 	private async _openCurrentAddressInExternalBrowser(): Promise<void> {
 		const givenURL = await this._webviewComm.constructAddress(
-			this._webviewComm.currentAddress, undefined, undefined
+			this._webviewComm.currentAddress,
+			undefined,
+			undefined
 		);
 		const uri = vscode.Uri.parse(givenURL.toString());
 
@@ -261,13 +267,15 @@ export class BrowserPreview extends Disposable {
 			.then((selection: vscode.MessageItem | undefined) => {
 				if (selection) {
 					if (selection === OPEN_EXTERNALLY) {
-						ExternalBrowserUtils.openInBrowser(givenURL, SettingUtil.GetConfig().customExternalBrowser);
+						ExternalBrowserUtils.openInBrowser(
+							givenURL,
+							SettingUtil.GetConfig().customExternalBrowser
+						);
 					}
 				}
 			});
 		// navigate back to the previous page, since the page it went to is invalid
 		await this._webviewComm.reloadWebview();
-
 
 		/* __GDPR__
 			"preview.openExternalBrowser" : {}

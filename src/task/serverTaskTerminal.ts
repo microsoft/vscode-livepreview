@@ -22,7 +22,8 @@ const CHAR_CODE_CTRL_C = 3;
  */
 export class ServerTaskTerminal
 	extends Disposable
-	implements vscode.Pseudoterminal {
+	implements vscode.Pseudoterminal
+{
 	public running = false;
 
 	// This object will request to open and close the server, so its parent
@@ -64,13 +65,14 @@ export class ServerTaskTerminal
 		// At this point we can start using the terminal.
 		if (this._executeServer) {
 			this.running = true;
-			this._onDidWrite.fire(
-				vscode.l10n.t('Opening Server...') + '\r\n'
-			);
+			this._onDidWrite.fire(vscode.l10n.t('Opening Server...') + '\r\n');
 			this._onRequestToOpenServerEmitter.fire(this._workspace);
 		} else {
 			this._onDidWrite.fire(
-				vscode.l10n.t('serverAlreadyRunning','Server already running in another task. Closing now.') + '\r\n'
+				vscode.l10n.t(
+					'serverAlreadyRunning',
+					'Server already running in another task. Closing now.'
+				) + '\r\n'
 			);
 			this.close();
 		}
@@ -88,9 +90,7 @@ export class ServerTaskTerminal
 
 	public handleInput(data: string): void {
 		if (data.length > 0 && data.charCodeAt(0) == CHAR_CODE_CTRL_C) {
-			this._onDidWrite.fire(
-				vscode.l10n.t('Closing the server...') + '\r\n'
-			);
+			this._onDidWrite.fire(vscode.l10n.t('Closing the server...') + '\r\n');
 
 			this._onRequestToCloseServerEmitter.fire(this._workspace);
 		}
@@ -109,19 +109,13 @@ export class ServerTaskTerminal
 		switch (status) {
 			case ServerStartedStatus.JUST_STARTED: {
 				this._onDidWrite.fire(
-					vscode.l10n.t(
-						'Started Server on {0}',
-						formattedAddress + '\r\n'
-					)
+					vscode.l10n.t('Started Server on {0}', formattedAddress + '\r\n')
 				);
 				break;
 			}
 			case ServerStartedStatus.STARTED_BY_EMBEDDED_PREV: {
 				this._onDidWrite.fire(
-					vscode.l10n.t(
-						'Server already on at {0}',
-						formattedAddress + '\r\n> '
-					)
+					vscode.l10n.t('Server already on at {0}', formattedAddress + '\r\n> ')
 				);
 				break;
 			}
@@ -142,9 +136,7 @@ export class ServerTaskTerminal
 	 * @description Called by the parent to tell the terminal that the server has stopped. May have been a result of the task ending or the result of a manual server shutdown.
 	 */
 	public serverStopped(): void {
-		this._onDidWrite.fire(
-			vscode.l10n.t('Server stopped. Bye!') + '\n'
-		);
+		this._onDidWrite.fire(vscode.l10n.t('Server stopped. Bye!') + '\n');
 		this.close();
 	}
 
@@ -153,11 +145,15 @@ export class ServerTaskTerminal
 	 */
 	public serverWillBeStopped(): void {
 		this._onDidWrite.fire(
-			vscode.l10n.t(`This task will finish now, but the server will stay on since you've used the embedded preview recently.`) + '\r\n'
+			vscode.l10n.t(
+				`This task will finish now, but the server will stay on since you've used the embedded preview recently.`
+			) + '\r\n'
 		);
 		this._onDidWrite.fire(
 			TerminalStyleUtil.ColorTerminalString(
-				vscode.l10n.t("Run 'Live Preview: Stop Server' in the command palette to close the server and close any previews.") + '\r\n\r\n',
+				vscode.l10n.t(
+					"Run 'Live Preview: Stop Server' in the command palette to close the server and close any previews."
+				) + '\r\n\r\n',
 				TerminalColor.yellow
 			)
 		);
@@ -171,7 +167,8 @@ export class ServerTaskTerminal
 		const date = new Date();
 
 		this._onDidWrite.fire(
-			`[${FormatDateTime(date, ' ')}] ${msg.method
+			`[${FormatDateTime(date, ' ')}] ${
+				msg.method
 			}: ${TerminalStyleUtil.ColorTerminalString(
 				decodeURI(msg.url),
 				TerminalColor.blue

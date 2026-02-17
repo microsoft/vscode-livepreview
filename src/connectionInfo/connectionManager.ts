@@ -62,7 +62,6 @@ export class ConnectionManager extends Disposable {
 		);
 	}
 
-
 	/**
 	 * get connection by workspaceFolder
 	 * @param workspaceFolder
@@ -89,9 +88,11 @@ export class ConnectionManager extends Disposable {
 	 * @returns connection
 	 */
 	public async createAndAddNewConnection(
-		workspaceFolder: vscode.WorkspaceFolder | undefined,
+		workspaceFolder: vscode.WorkspaceFolder | undefined
 	): Promise<Connection> {
-		const serverRootPrefix = workspaceFolder ? await PathUtil.GetValidServerRootForWorkspace(workspaceFolder) : '';
+		const serverRootPrefix = workspaceFolder
+			? await PathUtil.GetValidServerRootForWorkspace(workspaceFolder)
+			: '';
 
 		const connection = this._register(
 			new Connection(

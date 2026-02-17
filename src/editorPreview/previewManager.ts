@@ -68,7 +68,12 @@ export class PreviewManager extends Disposable {
 		// Check if we should use the integrated browser instead
 		if (await SettingUtil.shouldUseIntegratedBrowser()) {
 			const url = `http://${connection.host}:${connection.httpPort}${path}`;
-			await vscode.commands.executeCommand(INTEGRATED_BROWSER_COMMAND, { url, openToSide: true });
+			await vscode.commands.executeCommand(INTEGRATED_BROWSER_COMMAND, {
+				url,
+				openToSide: true,
+			});
+			// Lock the group to prevent new editors from opening in the same group as the browser
+			await vscode.commands.executeCommand('workbench.action.lockGroup');
 			return;
 		}
 
@@ -118,7 +123,10 @@ export class PreviewManager extends Disposable {
 			vscode.commands.executeCommand('extension.js-debug.debugLink', url);
 		} else {
 			// will already resolve to local address
-			await ExternalBrowserUtils.openInBrowser(url, SettingUtil.GetConfig().customExternalBrowser);
+			await ExternalBrowserUtils.openInBrowser(
+				url,
+				SettingUtil.GetConfig().customExternalBrowser
+			);
 		}
 	}
 
@@ -158,12 +166,18 @@ export class PreviewManager extends Disposable {
 		) {
 			vscode.window
 				.showWarningMessage(
-					vscode.l10n.t('Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root or consider changing your server root settings for Live Preview.'),
+					vscode.l10n.t(
+						'Previewing a file that is not a child of the server root. To see fully correct relative file links, please open a workspace at the project root or consider changing your server root settings for Live Preview.'
+					),
 					DONT_SHOW_AGAIN
 				)
 				.then(async (selection: vscode.MessageItem | undefined) => {
 					if (selection == DONT_SHOW_AGAIN) {
-						await SettingUtil.UpdateSettings(Settings.notifyOnOpenLooseFile, false, vscode.ConfigurationTarget.Global);
+						await SettingUtil.UpdateSettings(
+							Settings.notifyOnOpenLooseFile,
+							false,
+							vscode.ConfigurationTarget.Global
+						);
 					}
 				});
 		}
@@ -176,7 +190,10 @@ export class PreviewManager extends Disposable {
 	 * @param {Connection} connection the connection to connect using
 	 * @returns {string} the transformed path if the original `file` was realtive.
 	 */
-	private async _fileUriToPath(file: vscode.Uri, connection: Connection): Promise<string> {
+	private async _fileUriToPath(
+		file: vscode.Uri,
+		connection: Connection
+	): Promise<string> {
 		let path = '/';
 		if (!connection?.workspace) {
 			this._notifyLooseFileOpen();

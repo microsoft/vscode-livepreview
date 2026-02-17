@@ -131,7 +131,6 @@ export class WSServer extends Disposable {
 	 */
 	private _startWSServer(basePath: string): Promise<void> {
 		return new Promise((resolve, reject) => {
-
 			const _handleWSError = (err: any): void => {
 				if (err.code == 'EADDRINUSE') {
 					this._connection.wsPort++;
@@ -174,7 +173,9 @@ export class WSServer extends Disposable {
 			);
 			this._wss.on('error', (err: Error) => _handleWSError(err));
 			this._wss.on('listening', () => {
-				console.log(`Websocket server is running on port ${this._connection.wsPort}`);
+				console.log(
+					`Websocket server is running on port ${this._connection.wsPort}`
+				);
 				resolve();
 			});
 		});
@@ -237,8 +238,13 @@ export class WSServer extends Disposable {
 
 		if (!basePath) {
 			const decodedLocation =
-				await this._endpointManager.decodeLooseFileEndpoint(PathUtil.ConvertToPosixPath(absolutePath));
-			if (!decodedLocation || !(await PathUtil.FileExistsStat(decodedLocation)).exists) {
+				await this._endpointManager.decodeLooseFileEndpoint(
+					PathUtil.ConvertToPosixPath(absolutePath)
+				);
+			if (
+				!decodedLocation ||
+				!(await PathUtil.FileExistsStat(decodedLocation)).exists
+			) {
 				// shows file not found page, which is injectable
 				return { injectable: true, pathname: url.pathname, port };
 			} else {
@@ -247,8 +253,8 @@ export class WSServer extends Disposable {
 		}
 
 		const existsStatInfo = await PathUtil.FileExistsStat(absolutePath);
-		if (existsStatInfo.stat &&
-			existsStatInfo.stat.isDirectory() ||
+		if (
+			(existsStatInfo.stat && existsStatInfo.stat.isDirectory()) ||
 			isFileInjectable(absolutePath)
 		) {
 			return { injectable: true, pathname: url.pathname, port };

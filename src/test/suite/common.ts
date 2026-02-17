@@ -3,23 +3,30 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as vscode from 'vscode';
-import { AutoRefreshPreview, CustomExternalBrowser, ILivePreviewConfigItem, OpenPreviewTarget, SettingUtil } from '../../utils/settingsUtil';
+import {
+	AutoRefreshPreview,
+	CustomExternalBrowser,
+	ILivePreviewConfigItem,
+	OpenPreviewTarget,
+	SettingUtil,
+} from '../../utils/settingsUtil';
 
-export const testWorkspaces: vscode.WorkspaceFolder[] =
-	[
-		{
-			uri: vscode.Uri.file('C:/Users/TestUser/workspace1'),
-			name: '',
-			index: 0,
-		},
-		{
-			uri: vscode.Uri.file('C:/Users/TestUser/workspace2'),
-			name: '',
-			index: 1,
-		}
-	];
+export const testWorkspaces: vscode.WorkspaceFolder[] = [
+	{
+		uri: vscode.Uri.file('C:/Users/TestUser/workspace1'),
+		name: '',
+		index: 0,
+	},
+	{
+		uri: vscode.Uri.file('C:/Users/TestUser/workspace2'),
+		name: '',
+		index: 1,
+	},
+];
 
-export function makeSetting(nonDefaults: Partial<ILivePreviewConfigItem>): ILivePreviewConfigItem {
+export function makeSetting(
+	nonDefaults: Partial<ILivePreviewConfigItem>
+): ILivePreviewConfigItem {
 	return {
 		serverRoot: '',
 		portNumber: 3000,
@@ -35,9 +42,9 @@ export function makeSetting(nonDefaults: Partial<ILivePreviewConfigItem>): ILive
 		customExternalBrowser: CustomExternalBrowser.edge,
 		previewDebounceDelay: 0,
 		httpHeaders: {
-			"Accept-Ranges": "bytes"
+			'Accept-Ranges': 'bytes',
 		},
 		useIntegratedBrowser: false,
-		...nonDefaults
+		...nonDefaults,
 	};
 }

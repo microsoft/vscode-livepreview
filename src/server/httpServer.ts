@@ -19,7 +19,10 @@ import { IServerMsg } from './serverGrouping';
 import { SETTINGS_SECTION_ID, SettingUtil } from '../utils/settingsUtil';
 
 export class HttpServer extends Disposable {
-	private _server?: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>;
+	private _server?: http.Server<
+		typeof http.IncomingMessage,
+		typeof http.ServerResponse
+	>;
 	private _contentLoader: ContentLoader;
 	private _defaultHeaders: any; // headers will be validated when set on the reponse
 
@@ -93,10 +96,16 @@ export class HttpServer extends Disposable {
 			this._server?.on('error', (err: any) => {
 				if (err.code == 'EADDRINUSE') {
 					this._connection.httpPort++;
-					this._server?.listen(this._connection.httpPort, this._connection.host);
+					this._server?.listen(
+						this._connection.httpPort,
+						this._connection.host
+					);
 				} else if (err.code == 'EADDRNOTAVAIL') {
 					this._connection.resetHostToDefault();
-					this._server?.listen(this._connection.httpPort, this._connection.host);
+					this._server?.listen(
+						this._connection.httpPort,
+						this._connection.host
+					);
 				} else {
 					/* __GDPR__
 						"server.err" : {
@@ -128,26 +137,31 @@ export class HttpServer extends Disposable {
 		req: http.IncomingMessage,
 		res: http.ServerResponse
 	): Promise<void> {
-
-		const writeHeader = (code: number, contentType?: string | undefined, contentLength?: number | undefined): void => {
+		const writeHeader = (
+			code: number,
+			contentType?: string | undefined,
+			contentLength?: number | undefined
+		): void => {
 			try {
 				res.writeHead(code, {
 					...(contentType ? { 'Content-Type': contentType } : {}),
 					...(contentLength ? { 'Content-Length': contentLength } : {}),
 					// add CORP header for codespaces
 					// https://github.com/microsoft/vscode-livepreview/issues/560
-					...{'Cross-Origin-Resource-Policy': 'cross-origin'},
-					...this._defaultHeaders
+					...{ 'Cross-Origin-Resource-Policy': 'cross-origin' },
+					...this._defaultHeaders,
 				});
 			} catch (e) {
 				this._unsetDefaultHeaders(); // unset the headers so we don't keep trying to write them
-				vscode.window.showErrorMessage(vscode.l10n.t('Error writing HTTP headers. Please double-check your Live Preview settings.'));
+				vscode.window.showErrorMessage(
+					vscode.l10n.t(
+						'Error writing HTTP headers. Please double-check your Live Preview settings.'
+					)
+				);
 			}
 		};
 
-		const reportAndReturn = (
-			status: number
-		): void => {
+		const reportAndReturn = (status: number): void => {
 			// write the status to the header, send data for logging, then end.
 			writeHeader(status);
 			this._reportStatus(req, res);
@@ -193,15 +207,14 @@ export class HttpServer extends Disposable {
 		// start processing URL
 
 		const writePageNotFound = (noServerRoot = false): void => {
-			const respInfo = noServerRoot ?
-				this._contentLoader.createNoRootServer() :
-				this._contentLoader.createPageDoesNotExist(absoluteReadPath);
+			const respInfo = noServerRoot
+				? this._contentLoader.createNoRootServer()
+				: this._contentLoader.createPageDoesNotExist(absoluteReadPath);
 			writeHeader(404, respInfo.ContentType, respInfo.ContentLength);
 			this._reportStatus(req, res);
 			stream = respInfo.Stream;
 			stream?.pipe(res);
 		};
-
 
 		if (basePath === '' && (URLPathName === '/' || URLPathName === '')) {
 			writePageNotFound(true);
@@ -253,24 +266,40 @@ export class HttpServer extends Disposable {
 		}
 
 		// path should be valid now
-		const absPathExistsStatInfo = await PathUtil.FileExistsStat(absoluteReadPath);
+		const absPathExistsStatInfo = await PathUtil.FileExistsStat(
+			absoluteReadPath
+		);
 		if (!absPathExistsStatInfo.exists) {
 			writePageNotFound();
 			return;
 		}
-		if (absPathExistsStatInfo.stat && absPathExistsStatInfo.stat.isDirectory()) {
+		if (
+			absPathExistsStatInfo.stat &&
+			absPathExistsStatInfo.stat.isDirectory()
+		) {
 			if (!URLPathName.endsWith('/')) {
 				const queries = urlObj.query;
 				URLPathName = encodeURI(URLPathName);
-				res.setHeader('Location', `${URLPathName}/${queries.length > 0 ? `?${queries}` : ''}`);
+				res.setHeader(
+					'Location',
+					`${URLPathName}/${queries.length > 0 ? `?${queries}` : ''}`
+				);
 				reportAndReturn(302); // redirect
 				return;
 			}
 
 			// Redirect to index.html if the request URL is a directory
-			if ((await PathUtil.FileExistsStat(path.join(absoluteReadPath, 'index.html'))).exists) {
+			if (
+				(
+					await PathUtil.FileExistsStat(
+						path.join(absoluteReadPath, 'index.html')
+					)
+				).exists
+			) {
 				absoluteReadPath = path.join(absoluteReadPath, 'index.html');
-				const respInfo = await this._contentLoader.getFileStream(absoluteReadPath);
+				const respInfo = await this._contentLoader.getFileStream(
+					absoluteReadPath
+				);
 				stream = respInfo.Stream;
 				contentType = respInfo.ContentType ?? '';
 				contentLength = respInfo.ContentLength;
@@ -279,16 +308,16 @@ export class HttpServer extends Disposable {
 				const respInfo = await this._contentLoader.createIndexPage(
 					absoluteReadPath,
 					URLPathName,
-					looseFile
-						? PathUtil.GetEndpointParent(URLPathName)
-						: undefined
+					looseFile ? PathUtil.GetEndpointParent(URLPathName) : undefined
 				);
 				stream = respInfo.Stream;
 				contentType = respInfo.ContentType ?? '';
 				contentLength = respInfo.ContentLength;
 			}
 		} else {
-			const respInfo = await this._contentLoader.getFileStream(absoluteReadPath);
+			const respInfo = await this._contentLoader.getFileStream(
+				absoluteReadPath
+			);
 			stream = respInfo.Stream;
 			contentType = respInfo.ContentType ?? '';
 			contentLength = respInfo.ContentLength;

@@ -8,10 +8,7 @@ import * as net from 'net';
 import { Disposable } from '../utils/dispose';
 import { WSServer } from './wsServer';
 import { HttpServer } from './httpServer';
-import {
-	SettingUtil,
-	Settings,
-} from '../utils/settingsUtil';
+import { SettingUtil, Settings } from '../utils/settingsUtil';
 import { DONT_SHOW_AGAIN } from '../utils/constants';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
@@ -197,7 +194,10 @@ export class ServerGrouping extends Disposable {
 		this._pendingServerWorkspaces.add(this.workspace?.uri.toString());
 		if (!this.isRunning) {
 			const freePort = await this._findFreePort(port);
-			await Promise.all([this._httpServer.start(freePort), this._wsServer.start(freePort + 1)]).then(() => {
+			await Promise.all([
+				this._httpServer.start(freePort),
+				this._wsServer.start(freePort + 1),
+			]).then(() => {
 				this._connected();
 			});
 		}
@@ -312,10 +312,7 @@ export class ServerGrouping extends Disposable {
 		this._isServerOn = true;
 
 		this._showServerStatusMessage(
-			vscode.l10n.t(
-				'Server Started on Port {0}',
-				this._connection.httpPort
-			)
+			vscode.l10n.t('Server Started on Port {0}', this._connection.httpPort)
 		);
 		await this._connection.connected();
 	}

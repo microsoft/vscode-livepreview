@@ -105,8 +105,7 @@ export class UpdateListener extends Disposable {
 
 		this._register(
 			vscode.workspace.onDidChangeConfiguration((e) => {
-				this._debounceDelay =
-					SettingUtil.GetConfig().previewDebounceDelay;
+				this._debounceDelay = SettingUtil.GetConfig().previewDebounceDelay;
 			})
 		);
 	}
@@ -142,6 +141,8 @@ export class UpdateListener extends Disposable {
 
 	private _refreshPreview(): void {
 		clearTimeout(this._debounceTimer);
-		this._debounceTimer = setTimeout(() => { this._shouldRefreshPreviews.fire(); }, this._debounceDelay);
+		this._debounceTimer = setTimeout(() => {
+			this._shouldRefreshPreviews.fire();
+		}, this._debounceDelay);
 	}
 }
