@@ -69,6 +69,8 @@ export class PreviewManager extends Disposable {
 		if (await SettingUtil.shouldUseIntegratedBrowser()) {
 			const url = `http://${connection.host}:${connection.httpPort}${path}`;
 			await vscode.commands.executeCommand(INTEGRATED_BROWSER_COMMAND, { url, openToSide: true });
+			// Lock the browser's editor group to prevent new editors from opening in the same group as the browser
+			await vscode.commands.executeCommand('workbench.action.lockGroup');
 			return;
 		}
 
