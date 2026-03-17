@@ -17,10 +17,10 @@ jobs:
         with:
           node-version: 16
 
-      - run: yarn install --frozen-lockfile
+      - run: npm ci
 
-      - run: yarn run compile
+      - run: npm run compile
 
-      - run: yarn eslint src
+      - run: npx eslint src
 
       - run: xvfb-run -a npm test
