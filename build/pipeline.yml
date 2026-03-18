@@ -30,7 +30,7 @@ extends:
       - script: npm run compile
         displayName: Compile
 
-      - script: npx eslint src
+      - script: npm run eslint
         displayName: Run ESLint
 
       - script: xvfb-run -a npm test
