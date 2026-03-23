@@ -30,19 +30,19 @@ extends:
     customNPMRegistry: ''
     l10nSourcePaths: ./src
     buildSteps:
-      - script: yarn install --frozen-lockfile
+      - script: npm ci
         displayName: Install dependencies
 
-      - script: yarn run compile
+      - script: npm run compile
         displayName: Compile
 
-      - script: yarn eslint src
+      - script: npx eslint src
         displayName: Run ESLint
 
       - script: xvfb-run -a npm test
         displayName: Run Tests
 
-      - script: yarn run patch-prerelease $(Build.BuildNumber)
+      - script: npm run patch-prerelease $(Build.BuildNumber)
         displayName: Apply package.json patch
 
     tsa:
