@@ -323,7 +323,7 @@
     "@vscode/test-electron": "^1.6.1",
     "clean-webpack-plugin": "^4.0.0",
     "copy-webpack-plugin": "^11.0.0",
-    "esbuild": "^0.15.7",
+    "esbuild": "^0.25.0",
     "eslint": "^9.39.4",
     "eslint-plugin-headers": "^1.3.4",
     "mocha": "^9.1.3",
