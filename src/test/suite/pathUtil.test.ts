@@ -7,7 +7,7 @@ import sinon from 'sinon';
 import vscode from 'vscode';
 import { PathUtil } from '../../utils/pathUtil';
 import { SettingUtil } from '../../utils/settingsUtil';
-import { Stats } from 'fs';
+
 import { makeSetting, testWorkspaces } from './common';
 
 
@@ -26,7 +26,7 @@ describe('GetValidServerRootForWorkspace', () => {
 	});
 
 	it('returns serverRoot if exists', async () => {
-		sandbox.stub(PathUtil, 'FileExistsStat').returns(Promise.resolve({ exists: true, stat: new Stats() }));
+		sandbox.stub(PathUtil, 'FileExistsStat').returns(Promise.resolve({ exists: true, stat: undefined }));
 
 		const actual = await PathUtil.GetValidServerRootForWorkspace(testWorkspaces[0]);
 		assert.strictEqual(actual, 'test');
@@ -34,7 +34,7 @@ describe('GetValidServerRootForWorkspace', () => {
 
 
 	it('returns no root if serverRoot does not exists', async () => {
-		sandbox.stub(PathUtil, 'FileExistsStat').returns(Promise.resolve({ exists: false, stat: new Stats() }));
+		sandbox.stub(PathUtil, 'FileExistsStat').returns(Promise.resolve({ exists: false, stat: undefined }));
 
 		const actual = await PathUtil.GetValidServerRootForWorkspace(testWorkspaces[0]);
 		assert.strictEqual(actual, '');
@@ -53,9 +53,9 @@ describe('GetWorkspaceFromRelativePath / GetWorkspaceFromAbsolutePath', () => {
 			'c:/Users/TestUser/workspace2/1/2/3/4.html', 'c:/Users/TestUser/workspace2/test/1/2/3/4.html'];
 		sandbox.stub(PathUtil, 'FileExistsStat').callsFake((path: string) => {
 			if (existingPaths.indexOf(PathUtil.ConvertToPosixPath(path)) > -1) {
-				return Promise.resolve({ exists: true, stat: new Stats() });
+				return Promise.resolve({ exists: true, stat: undefined });
 			}
-			return Promise.resolve({ exists: false, stat: new Stats() });
+			return Promise.resolve({ exists: false, stat: undefined });
 		});
 	});
 

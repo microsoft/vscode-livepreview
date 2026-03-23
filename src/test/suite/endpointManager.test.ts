@@ -7,7 +7,7 @@ import sinon from 'sinon';
 
 import { EndpointManager } from '../../infoManagers/endpointManager';
 import { PathUtil } from '../../utils/pathUtil';
-import { Stats } from 'fs';
+
 
 describe('EndpointManager', () => {
 	let sandbox: sinon.SinonSandbox;
@@ -23,9 +23,9 @@ describe('EndpointManager', () => {
 		];
 		sandbox.stub(PathUtil, 'FileExistsStat').callsFake((path: string) => {
 			if (existingPaths.indexOf(PathUtil.ConvertToPosixPath(path)) > -1) {
-				return Promise.resolve({ exists: true, stat: new Stats() });
+				return Promise.resolve({ exists: true, stat: undefined });
 			}
-			return Promise.resolve({ exists: false, stat: new Stats() });
+			return Promise.resolve({ exists: false, stat: undefined });
 		});
 	});
 
