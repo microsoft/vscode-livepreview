@@ -25,9 +25,9 @@ describe('ConnectionInfo', () => {
 
 		sandbox.stub(PathUtil, 'FileExistsStat').callsFake((path: string) => {
 			if (existingPaths.indexOf(PathUtil.ConvertToPosixPath(path)) > -1) {
-				return Promise.resolve({ exists: true, stat: new Stats() });
+				return Promise.resolve({ exists: true, stat: Object.create(Stats.prototype) });
 			}
-			return Promise.resolve({ exists: false, stat: new Stats() });
+			return Promise.resolve({ exists: false, stat: Object.create(Stats.prototype) });
 		});
 	});
 

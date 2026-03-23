@@ -55,14 +55,14 @@ describe('ServerGrouping', () => {
 		];
 
 		sandbox.stub(PathUtil, 'FileExistsStat').callsFake((path: string) => {
-			const stats = new fs.Stats();
+			const stats = Object.create(fs.Stats.prototype);
 			sandbox.stub(stats, 'isDirectory').callsFake(() => {
 				return existingDirectories.indexOf(PathUtil.ConvertToPosixPath(path)) > -1;
 			});
 			if (existingPaths.indexOf(PathUtil.ConvertToPosixPath(path)) > -1) {
 				return Promise.resolve({ exists: true, stat: stats });
 			}
-			return Promise.resolve({ exists: false, stat: new fs.Stats() });
+			return Promise.resolve({ exists: false, stat: Object.create(fs.Stats.prototype) });
 		});
 
 		sandbox.stub(fs, 'readFileSync').callsFake((path, _) => {

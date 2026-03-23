@@ -42,7 +42,7 @@ export class StatusBarNotifier extends Disposable {
 		let portsTooltip: string;
 
 		if (this._ports.size === 1) {
-			const port = this._ports.values().next().value as number;
+			const [port] = this._ports.values();
 			portsLabel = vscode.l10n.t('Port: {0}', port);
 		} else {
 			if (this._ports.size === 2) {
