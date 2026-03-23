@@ -4,20 +4,15 @@
  *--------------------------------------------------------------------------------------------*/
 
 const js = require('@eslint/js');
-const tsPlugin = require('@typescript-eslint/eslint-plugin');
-const headerPlugin = require('eslint-plugin-header');
+const tseslint = require('typescript-eslint');
+const headers = require('eslint-plugin-headers');
 
-// eslint-plugin-header does not define meta.schema for its rules, which ESLint 9 requires.
-// Setting schema: false disables option validation for this rule.
-// TODO: remove this workaround once eslint-plugin-header adds ESLint 9 flat config support.
-headerPlugin.rules['header'].meta.schema = false;
-
-module.exports = [
+module.exports = tseslint.config(
 	js.configs.recommended,
-	...tsPlugin.configs['flat/recommended'],
+	tseslint.configs.recommended,
 	{
 		plugins: {
-			header: headerPlugin,
+			headers,
 		},
 		rules: {
 			semi: [2, 'always'],
@@ -26,16 +21,17 @@ module.exports = [
 			'@typescript-eslint/explicit-module-boundary-types': 0,
 			'@typescript-eslint/no-non-null-assertion': 0,
 			'@typescript-eslint/explicit-function-return-type': 1,
-			'header/header': [
+			'headers/header-format': [
 				2,
-				'block',
-				[
-					'---------------------------------------------------------------------------------------------',
-					' *  Copyright (c) Microsoft Corporation. All rights reserved.',
-					' *  Licensed under the MIT License. See License.txt in the project root for license information.',
-					' *--------------------------------------------------------------------------------------------',
-				],
+				{
+					source: 'string',
+					style: 'jsdoc',
+					content: 'Copyright (c) Microsoft Corporation. All rights reserved.\nLicensed under the MIT License. See License.txt in the project root for license information.',
+					blockPrefix: '---------------------------------------------------------------------------------------------\n',
+					linePrefix: ' *  ',
+					blockSuffix: '\n *--------------------------------------------------------------------------------------------',
+				},
 			],
 		},
 	},
-];
+);
