@@ -6,4 +6,5 @@ ignore/
 media/codicon*
 media/extension*
 .devcontainer/*
-.DS_Storepackage-lock.json
+.DS_Store
+package-lock.json
