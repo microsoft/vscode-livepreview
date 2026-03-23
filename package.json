@@ -310,6 +310,7 @@
     "compile": "node build/tools/codicon_copy.js && tsc -p ./",
     "watch": "node build/tools/codicon_copy.js && tsc -watch -p ./",
     "format": "prettier ./{src,media}/**/*.{ts,css,html,js} --write",
+    "lint": "eslint src",
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {

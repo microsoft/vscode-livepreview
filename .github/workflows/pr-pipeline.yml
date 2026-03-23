@@ -21,6 +21,6 @@ jobs:
 
       - run: npm run compile
 
-      - run: npx eslint src
+      - run: npm run lint
 
       - run: xvfb-run -a npm test
