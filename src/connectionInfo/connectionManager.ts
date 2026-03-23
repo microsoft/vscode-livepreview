@@ -118,7 +118,7 @@ export class ConnectionManager extends Disposable {
 	public removeConnection(
 		workspaceFolder: vscode.WorkspaceFolder | undefined
 	): void {
-		this._connections.get(workspaceFolder?.uri.toString())?.dispose;
+		this._connections.get(workspaceFolder?.uri.toString())?.dispose();
 		this._connections.delete(workspaceFolder?.uri.toString());
 	}
 
