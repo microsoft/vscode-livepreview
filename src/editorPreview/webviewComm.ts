@@ -210,6 +210,7 @@ export class WebviewComm extends Disposable {
 		const browser_open = vscode.l10n.t('Open in Browser');
 		const find = vscode.l10n.t('Find in Page');
 		const devtools_open = vscode.l10n.t('Open Devtools Pane');
+		const inspect = vscode.l10n.t('Inspect Element');
 
 		return `<!DOCTYPE html>
 		<html lang="en">
@@ -256,6 +257,10 @@ export class WebviewComm extends Disposable {
 								id="url-input"
 								class="url-input"
 								type="text">
+							<button
+								id="inspect"
+								title="${inspect}"
+								class="inspect-button icon leftmost-nav"><i class="codicon codicon-inspect"></i></button>
 							<button
 								id="more"
 								title="${more}"

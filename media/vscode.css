@@ -225,3 +225,8 @@ textarea::placeholder {
 .extras-menu button:focus {
 	background-color: var(--vscode-toolbar-hoverBackground);
 }
+
+#inspect.active {
+  background: var(--vscode-toolbar-hoverBackground);
+  outline: 1px solid var(--vscode-focusBorder);
+}

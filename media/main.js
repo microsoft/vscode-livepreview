@@ -360,6 +360,24 @@
 				showFind();
 				break;
 			}
+			// from child iframe — picker was activated
+			case 'picker-activated': {
+			document.getElementById('inspect').classList.add('active');
+			break;
+			}
+			// from child iframe — picker was deactivated (e.g. after a click)
+			case 'picker-deactivated': {
+			document.getElementById('inspect').classList.remove('active');
+			break;
+			}
+			// from child iframe — user clicked an element
+			case 'element-selected': {
+			vscode.postMessage({
+				command: 'element-selected',
+				text: message.text,
+			});
+			break;
+			}
 		}
 	}
 
@@ -504,6 +522,14 @@
 		document.getElementById('find').addEventListener('click', () => {
 			document.getElementById('extras-menu-pane').hidden = true;
 			showFind();
+		});
+		
+		document.getElementById('inspect').addEventListener('click', () => {
+			document.getElementById('extras-menu-pane').hidden = true;
+			const isActive = document.getElementById('inspect').classList.toggle('active');
+			document.getElementById('hostedContent').contentWindow.postMessage(
+				{ command: 'toggle-picker' }, '*'
+			);
 		});
 
 		document

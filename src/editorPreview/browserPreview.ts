@@ -19,6 +19,23 @@ import { IOpenFileOptions } from '../manager';
 import { ExternalBrowserUtils } from '../utils/externalBrowserUtils';
 
 /**
+ * Info payload sent from the element picker in injectScript.js.
+ */
+interface IElementInfo {
+	tagName: string;
+	id: string | null;
+	className: string | null;
+	openingTag: string | null;
+	ownText: string | null;
+	fullText: string | null;
+	parentInfo: string | null;
+	siblingIndex: number;
+	siblingCount: number;
+	selector: string;
+	href: string;
+}
+
+/**
  * @description the embedded preview object, containing the webview panel showing the preview.
  */
 export class BrowserPreview extends Disposable {
@@ -199,6 +216,21 @@ export class BrowserPreview extends Disposable {
 					}
 				}
 				return;
+
+			// update the inspect button state in the webview
+			case 'picker-activated':
+				
+				this._panel.webview.postMessage({ command: 'picker-activated' });
+				return;
+			case 'picker-deactivated':
+				this._panel.webview.postMessage({ command: 'picker-deactivated' });
+				return;
+			case 'element-selected': {
+				const info: IElementInfo = JSON.parse(message.text);
+				await this._goToElementInSource(info);
+				return;
+			}
+		
 		}
 	}
 
@@ -328,5 +360,163 @@ export class BrowserPreview extends Disposable {
 		} else {
 			this._panel.title = title;
 		}
+	}
+
+	// =========================================================================
+	// Element Picker — source navigation / This is so helpful
+	// =========================================================================
+
+	/**
+	 * @description Given element info from the picker, open the source file and
+	 *  jump to the best-matching line using a multi-signal scoring system.
+	 */
+	private async _goToElementInSource(info: IElementInfo): Promise<void> {
+		const pathname = decodeURIComponent(info.href);
+		const workspace = this._webviewComm.currentConnection.workspace;
+
+		let fileUri: vscode.Uri | undefined;
+		if (workspace) {
+			const relativePath = pathname.startsWith('/') ? pathname.slice(1) : pathname;
+			fileUri = vscode.Uri.joinPath(workspace.uri, relativePath);
+		}
+
+		if (!fileUri) {
+			vscode.window.showWarningMessage(
+				vscode.l10n.t('Live Preview: Could not resolve source file for this element.')
+			);
+			return;
+		}
+
+		try {
+			const doc = await vscode.workspace.openTextDocument(fileUri);
+			const lines = doc.getText().split('\n');
+
+			const bestLine = this._findBestLine(lines, info);
+
+			const editor = await vscode.window.showTextDocument(doc, {
+				viewColumn: vscode.ViewColumn.One,
+				preserveFocus: false,
+			});
+
+			const pos = new vscode.Position(bestLine, 0);
+			editor.selection = new vscode.Selection(pos, pos);
+			editor.revealRange(
+				new vscode.Range(pos, pos),
+				vscode.TextEditorRevealType.InCenter
+			);
+		} catch {
+			vscode.window.showWarningMessage(
+				vscode.l10n.t(
+					'Live Preview: Could not open source file "{0}".',
+					fileUri.fsPath
+				)
+			);
+		}
+	}
+
+	/**
+	 * @description Score every line of the source file against the element info
+	 *  and return the line number with the highest score.
+	 *
+	 *  Scoring signals (additive):
+	 *   +100  line contains id="<id>"
+	 *   + 60  line contains class="<className>" (exact first class)
+	 *   + 40  line contains all classes from className
+	 *   + 30  line contains the full opening tag verbatim
+	 *   + 25  line starts a <tag ...> and contains ownText nearby (within 3 lines)
+	 *   + 20  neighbouring lines contain parentInfo context
+	 *   + 15  siblingIndex matches (element is Nth among same-tag siblings found so far)
+	 *   + 10  line contains fullText snippet (≥ 8 chars)
+	 */
+	private _findBestLine(lines: string[], info: IElementInfo): number {
+		const tag = info.tagName;
+		const tagOpen = `<${tag}`;
+
+		// Pre-build normalised search tokens
+		const firstClass = info.className ? info.className.trim().split(/\s+/)[0] : null;
+		const allClasses = info.className ? info.className.trim().split(/\s+/) : [];
+		const textSnippet = (info.ownText && info.ownText.length >= 8)
+			? info.ownText.slice(0, 60)
+			: (info.fullText && info.fullText.length >= 8)
+				? info.fullText.slice(0, 60)
+				: null;
+
+		// Track how many <tag ...> openings we've seen, for siblingIndex matching
+		let tagOccurrence = -1;
+
+		let bestScore = -1;
+		let bestLine = 0;
+
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			const lineLower = line.toLowerCase();
+
+			// Only score lines that open our tag
+			if (!lineLower.includes(tagOpen)) continue;
+
+			tagOccurrence++;
+			let score = 0;
+
+			// Signal: id match (strongest — IDs should be unique)
+			if (info.id && line.includes(`id="${info.id}"`)) {
+				score += 100;
+			}
+
+			// Signal: exact first class match
+			if (firstClass && line.includes(`class="${firstClass}"`)) {
+				score += 60;
+			}
+
+			// Signal: all classes present in line
+			if (allClasses.length > 0 && allClasses.every(cls => line.includes(cls))) {
+				score += 40;
+			}
+
+			// Signal: full opening tag verbatim
+			if (info.openingTag && line.includes(info.openingTag.trim())) {
+				score += 30;
+			}
+
+			// Signal: text content found within ±3 lines
+			if (textSnippet) {
+				const window = lines
+					.slice(Math.max(0, i - 1), Math.min(lines.length, i + 4))
+					.join(' ');
+				if (window.includes(textSnippet)) {
+					score += 25;
+				}
+			}
+
+			// Signal: parent context found within 5 lines above
+			if (info.parentInfo) {
+				const above = lines
+					.slice(Math.max(0, i - 5), i)
+					.join(' ');
+				const parentTag = info.parentInfo.split(/[#.]/)[0];
+				const parentId = info.parentInfo.includes('#')
+					? info.parentInfo.split('#')[1]?.split('.')[0]
+					: null;
+				const parentClass = info.parentInfo.includes('.')
+					? info.parentInfo.split('.')[1]
+					: null;
+				if (above.toLowerCase().includes(`<${parentTag}`)) {
+					score += 10;
+					if (parentId && above.includes(`id="${parentId}"`)) score += 10;
+					if (parentClass && above.includes(parentClass)) score += 5;
+				}
+			}
+
+			// Signal: sibling index (which occurrence of <tag> is this?)
+			if (info.siblingCount > 1 && tagOccurrence === info.siblingIndex) {
+				score += 15;
+			}
+
+			if (score > bestScore) {
+				bestScore = score;
+				bestLine = i;
+			}
+		}
+
+		return bestLine;
 	}
 }
