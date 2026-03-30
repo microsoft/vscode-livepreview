@@ -505,81 +505,26 @@ function _onPickerKeyDown(e) {
  * @returns {object}
  */
 function _buildElementInfo(el) {
+	// Primary signal: data-lp-line injected by SourceAnnotator at serve time.
+	// This is a direct, deterministic 1-based line number — no heuristics needed.
+	const sourceLine = el.getAttribute('data-lp-line');
+
+	// Fallback signals used only when data-lp-line is absent (e.g. JS-injected nodes)
 	const tag = el.tagName.toLowerCase();
 	const id = el.id || null;
 	const className = typeof el.className === 'string' ? el.className.trim() || null : null;
-
-	// --- Opening tag (attributes only, no children) ---
-	const outerHTML = el.outerHTML ? el.outerHTML.slice(0, 600) : '';
-	const openingTag = (outerHTML.split('>')[0] + '>').slice(0, 200);
-
-	// --- Direct text content (only own text nodes, not children) ---
-	let ownText = '';
-	for (const node of el.childNodes) {
-		if (node.nodeType === Node.TEXT_NODE) {
-			ownText += node.textContent;
-		}
-	}
-	ownText = ownText.trim().slice(0, 120);
-
-	// --- Full text content (for elements like <p>, <h1>, <li>) ---
 	const fullText = el.textContent ? el.textContent.trim().slice(0, 120) : null;
 
-	// --- Parent context: tag + class/id of the direct parent ---
-	const parent = el.parentElement;
-	let parentInfo = null;
-	if (parent && parent !== document.body) {
-		const ptag = parent.tagName.toLowerCase();
-		const pid = parent.id ? '#' + parent.id : '';
-		const pcls = typeof parent.className === 'string' && parent.className.trim()
-			? '.' + parent.className.trim().split(/\s+/)[0]
-			: '';
-		parentInfo = ptag + pid + pcls;
-	}
-
-	// --- Sibling index among same-tag siblings ---
-	let siblingIndex = 0;
-	let siblingCount = 0;
-	if (parent) {
-		const sameSiblings = Array.from(parent.children).filter(s => s.tagName === el.tagName);
-		siblingCount = sameSiblings.length;
-		siblingIndex = sameSiblings.indexOf(el); // 0-based
-	}
-
-	// --- CSS selector path (up to nearest ID ancestor) ---
-	const selectorPath = [];
-	let node = el;
-	while (node && node !== document.body && node.nodeType === Node.ELEMENT_NODE) {
-		let seg = node.tagName.toLowerCase();
-		if (node.id) {
-			seg += '#' + node.id;
-			selectorPath.unshift(seg);
-			break;
-		}
-		const siblings = node.parentElement
-			? Array.from(node.parentElement.children).filter(s => s.tagName === node.tagName)
-			: [];
-		if (siblings.length > 1) {
-			seg += ':nth-of-type(' + (siblings.indexOf(node) + 1) + ')';
-		}
-		selectorPath.unshift(seg);
-		node = node.parentElement;
-	}
-
 	return {
+		sourceLine: sourceLine ? parseInt(sourceLine, 10) : null,
 		tagName: tag,
 		id,
 		className,
-		openingTag,
-		ownText,
 		fullText,
-		parentInfo,
-		siblingIndex,   // 0-based position among same-tag siblings
-		siblingCount,   // total same-tag siblings
-		selector: selectorPath.join(' > '),
 		href: window.location.pathname,
 	};
 }
+
 
 /**
  * @description Activate the element picker: cursor becomes a crosshair, the

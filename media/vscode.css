@@ -226,7 +226,50 @@ textarea::placeholder {
 	background-color: var(--vscode-toolbar-hoverBackground);
 }
 
+.match-nav-container {
+	position: absolute;
+	margin-top: 3px;
+	right: 44px;
+	opacity: 1;
+	z-index: 10;
+}
+
+.match-nav {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	border-radius: 2px;
+	padding: 4px 6px;
+	background: var(--vscode-editor-background);
+	margin-top: 0.5em;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.match-label {
+	font-size: 11px;
+	color: var(--vscode-input-foreground);
+	padding: 0 6px 0 2px;
+	white-space: nowrap;
+	min-width: 40px;
+}
+
+.match-nav-btn {
+	border: none;
+	background: none;
+	color: var(--vscode-icon-foreground);
+	padding: 2px 4px;
+	cursor: pointer;
+	border-radius: 3px;
+	display: flex;
+	align-items: center;
+}
+
+.match-nav-btn:hover {
+	background: var(--vscode-toolbar-hoverBackground);
+}
+
 #inspect.active {
-  background: var(--vscode-toolbar-hoverBackground);
-  outline: 1px solid var(--vscode-focusBorder);
+	background: var(--vscode-toolbar-hoverBackground);
+	outline: 1px solid var(--vscode-focusBorder);
+	outline-offset: 2px;
 }

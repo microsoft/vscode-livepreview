@@ -211,6 +211,9 @@ export class WebviewComm extends Disposable {
 		const find = vscode.l10n.t('Find in Page');
 		const devtools_open = vscode.l10n.t('Open Devtools Pane');
 		const inspect = vscode.l10n.t('Inspect Element');
+		const match_prev = vscode.l10n.t('Previous match');
+		const match_next = vscode.l10n.t('Next match');
+		const match_close = vscode.l10n.t('Close');
 
 		return `<!DOCTYPE html>
 		<html lang="en">
@@ -260,7 +263,7 @@ export class WebviewComm extends Disposable {
 							<button
 								id="inspect"
 								title="${inspect}"
-								class="inspect-button icon leftmost-nav"><i class="codicon codicon-inspect"></i></button>
+								class="inspect-button icon"><i class="codicon codicon-inspect"></i></button>
 							<button
 								id="more"
 								title="${more}"
@@ -313,6 +316,23 @@ export class WebviewComm extends Disposable {
 								</td>
 							</tr>
 						</table>
+					</div>
+					<div class="match-nav-container" id="match-nav-box" hidden=true>
+						<nav class="match-nav">
+							<span id="match-label" class="match-label">1 of 1</span>
+							<button
+								id="match-prev"
+								title="${match_prev}"
+								class="match-prev-button icon match-nav-btn"><i class="codicon codicon-chevron-up"></i></button>
+							<button
+								id="match-next"
+								title="${match_next}"
+								class="match-next-button icon match-nav-btn"><i class="codicon codicon-chevron-down"></i></button>
+							<button
+								id="match-close"
+								title="${match_close}"
+								class="match-close-button icon match-nav-btn"><i class="codicon codicon-chrome-close"></i></button>
+						</nav>
 					</div>
 				</div>
 				<div class="content">
