@@ -7,4 +7,3 @@ media/codicon*
 media/extension*
 .devcontainer/*
 .DS_Store
-package-lock.json
