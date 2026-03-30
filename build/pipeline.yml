@@ -24,19 +24,19 @@ extends:
     publishExtension: ${{ parameters.publishExtension }}
     l10nSourcePaths: ./src
     buildSteps:
-      - script: yarn install --frozen-lockfile
+      - script: npm ci
         displayName: Install dependencies
 
-      - script: yarn run compile
+      - script: npm run compile
         displayName: Compile
 
-      - script: yarn eslint src
+      - script: npm run lint
         displayName: Run ESLint
 
       - script: xvfb-run -a npm test
         displayName: Run Tests
 
-      - script: yarn run validate-stable
+      - script: npm run validate-stable
         displayName: Validate stable version number
 
     tsa:
