@@ -1,6 +1,11 @@
 # Changelog
 
+## 0.4.18 (March 30, 2026)
+
+- Reuse integrated browser tabs when `livePreview.useIntegratedBrowser` setting is enabled (requires VS Code >= 1.114.0).
+
 ## 0.4.17 (February 5, 2026)
+
 - Added `livePreview.useIntegratedBrowser` setting to use VS Code's new Integrated Browser instead of Live Preview Extension's own browser.
 
 ## 0.4.16 (September 11, 2025)
