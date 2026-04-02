@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import TelemetryReporter from 'vscode-extension-telemetry';
+import { TelemetryReporter } from '@vscode/extension-telemetry';
 import { EXTENSION_ID } from './utils/constants';
 import { PathUtil } from './utils/pathUtil';
 import {
@@ -20,11 +20,7 @@ let serverPreview: Manager;
 
 export function activate(context: vscode.ExtensionContext): void {
 	const extPackageJSON = context.extension.packageJSON;
-	reporter = new TelemetryReporter(
-		EXTENSION_ID,
-		extPackageJSON.version,
-		extPackageJSON.aiKey
-	);
+	reporter = new TelemetryReporter(extPackageJSON.aiKey);
 
 	serverPreview = new Manager(
 		context.extensionUri,

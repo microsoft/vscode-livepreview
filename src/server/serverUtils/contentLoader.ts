@@ -7,7 +7,7 @@ import * as Stream from 'stream';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as mime from 'mime';
+import mime from 'mime';
 import { Disposable } from '../../utils/dispose';
 import {
 	FormatFileSize,
@@ -15,7 +15,7 @@ import {
 	isFileInjectable,
 } from '../../utils/utils';
 import { HTMLInjector } from './HTMLInjector';
-import TelemetryReporter from 'vscode-extension-telemetry';
+import { TelemetryReporter } from '@vscode/extension-telemetry';
 import { EndpointManager } from '../../infoManagers/endpointManager';
 import { PathUtil } from '../../utils/pathUtil';
 import { INJECTED_ENDPOINT_NAME } from '../../utils/constants';

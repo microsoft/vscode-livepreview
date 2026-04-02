@@ -6,7 +6,7 @@
 import { Disposable } from './utils/dispose';
 import * as vscode from 'vscode';
 import { PathUtil } from './utils/pathUtil';
-import TelemetryReporter from 'vscode-extension-telemetry';
+import { TelemetryReporter } from '@vscode/extension-telemetry';
 import { ConnectionManager } from './connectionInfo/connectionManager';
 import { BrowserPreview } from './editorPreview/browserPreview';
 import { PreviewType, SettingUtil } from './utils/settingsUtil';

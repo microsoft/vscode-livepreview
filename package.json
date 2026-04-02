@@ -338,11 +338,11 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
-    "@types/express": "^4.17.17",
-    "@vscode/codicons": "^0.0.32",
-    "mime": "^3.0.0",
-    "url": "^0.11.0",
-    "vscode-extension-telemetry": "^0.4.5",
-    "ws": "^8.17.1"
+    "@types/express": "^5.0.6",
+    "@vscode/codicons": "^0.0.45",
+    "@vscode/extension-telemetry": "^1.5.1",
+    "mime": "^4.1.0",
+    "url": "^0.11.4",
+    "ws": "^8.20.0"
   }
 }
