@@ -7,7 +7,7 @@ import * as Stream from 'stream';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as mime from 'mime';
+import mime from 'mime';
 import { Disposable } from '../../utils/dispose';
 import {
 	FormatFileSize,
