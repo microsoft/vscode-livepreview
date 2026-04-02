@@ -13,7 +13,7 @@ import {
 	Settings,
 } from '../utils/settingsUtil';
 import { DONT_SHOW_AGAIN } from '../utils/constants';
-import TelemetryReporter from 'vscode-extension-telemetry';
+import { TelemetryReporter } from '@vscode/extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { Connection } from '../connectionInfo/connection';
 import {

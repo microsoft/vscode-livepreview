@@ -7,7 +7,7 @@ import { OPEN_EXTERNALLY } from '../utils/constants';
 import * as vscode from 'vscode';
 import { Disposable } from '../utils/dispose';
 import { PathUtil } from '../utils/pathUtil';
-import TelemetryReporter from 'vscode-extension-telemetry';
+import { TelemetryReporter } from '@vscode/extension-telemetry';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { WebviewComm } from './webviewComm';
 import { FormatDateTime } from '../utils/utils';

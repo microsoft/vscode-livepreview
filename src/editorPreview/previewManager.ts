@@ -12,7 +12,7 @@ import {
 	INIT_PANEL_TITLE,
 	OUTPUT_CHANNEL_NAME,
 } from '../utils/constants';
-import TelemetryReporter from 'vscode-extension-telemetry';
+import { TelemetryReporter } from '@vscode/extension-telemetry';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { PathUtil } from '../utils/pathUtil';
 import { BrowserPreview } from './browserPreview';

@@ -6,7 +6,7 @@
 import * as vscode from 'vscode';
 import { URL } from 'url';
 import { Disposable } from '../utils/dispose';
-import TelemetryReporter from 'vscode-extension-telemetry';
+import { TelemetryReporter } from '@vscode/extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { ConnectionManager } from '../connectionInfo/connectionManager';
 import { PathUtil } from '../utils/pathUtil';

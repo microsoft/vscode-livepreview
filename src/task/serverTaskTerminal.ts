@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import TelemetryReporter from 'vscode-extension-telemetry';
+import { TelemetryReporter } from '@vscode/extension-telemetry';
 import { Disposable } from '../utils/dispose';
 import {
 	TerminalColor,

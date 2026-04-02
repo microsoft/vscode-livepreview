@@ -10,7 +10,7 @@ import { URL } from 'url';
 import { randomBytes } from 'crypto';
 import { Disposable } from '../utils/dispose';
 import { isFileInjectable } from '../utils/utils';
-import TelemetryReporter from 'vscode-extension-telemetry';
+import { TelemetryReporter } from '@vscode/extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { UriSchemes } from '../utils/constants';
 import { Connection } from '../connectionInfo/connection';

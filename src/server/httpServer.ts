@@ -11,7 +11,7 @@ import * as Stream from 'stream';
 import { Disposable } from '../utils/dispose';
 import { ContentLoader } from './serverUtils/contentLoader';
 import { INJECTED_ENDPOINT_NAME } from '../utils/constants';
-import TelemetryReporter from 'vscode-extension-telemetry';
+import { TelemetryReporter } from '@vscode/extension-telemetry';
 import { EndpointManager } from '../infoManagers/endpointManager';
 import { PathUtil } from '../utils/pathUtil';
 import { Connection } from '../connectionInfo/connection';
