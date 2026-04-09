@@ -311,7 +311,7 @@ export class WebviewComm extends Disposable {
 					</div>
 				</div>
 				<div class="content">
-					<iframe id="hostedContent" src="${httpURL}"></iframe>
+					<iframe id="hostedContent" src="${httpURL}" allow="clipboard-read clipboard-write"></iframe>
 				</div>
 			</div>
 			<div id="link-preview"></div>
