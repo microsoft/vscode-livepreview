@@ -134,7 +134,7 @@ export class SettingUtil {
 			customExternalBrowser: config.get<CustomExternalBrowser>(Settings.customExternalBrowser, CustomExternalBrowser.default),
 			serverRoot: config.get<string>(Settings.serverRoot, ''),
 			httpHeaders: config.get<any>(Settings.httpHeaders, DEFAULT_HTTP_HEADERS),
-			useIntegratedBrowser: config.get<boolean>(Settings.useIntegratedBrowser, false),
+			useIntegratedBrowser: config.get<boolean>(Settings.useIntegratedBrowser, true),
 		};
 	}
 
