@@ -19,7 +19,9 @@ describe('EndpointManager', () => {
 		const existingPaths = ['c:/Users/TestUser/workspace1/index.html', 'c:/Users/TestUser/workspace1/pages/page1.html',
 			'/home/TestUser/workspace1/index.html', '/home/TestUser/workspace1/pages/page1.html',
 			'//other/TestUser/workspace1/index.html', '//other/TestUser/workspace1/pages/page1.html',
-			'c:/Users/TestUser/personal.html'
+			'c:/Users/TestUser/personal.html',
+			'c:/Users/TestUser/workspace1/test #01 file.html',
+			'c:/Users/TestUser/workspace1/my file & test #01.html'
 		];
 		sandbox.stub(PathUtil, 'FileExistsStat').callsFake((path: string) => {
 			if (existingPaths.indexOf(PathUtil.ConvertToPosixPath(path)) > -1) {
@@ -35,9 +37,9 @@ describe('EndpointManager', () => {
 	});
 
 	// storing paths
-	it('returns the identical path for windows when encoding the path', async () => {
+	it('returns the encoded path for windows when encoding the path', async () => {
 		const endpoint = await endpointManager.encodeLooseFileEndpoint('c:/Users/TestUser/workspace1/index.html');
-		assert.strictEqual(endpoint, 'c:/Users/TestUser/workspace1/index.html');
+		assert.strictEqual(endpoint, 'c%3A/Users/TestUser/workspace1/index.html');
 	});
 
 	it('returns the identical path for unix without the leading forward slash when encoding the path', async () => {
@@ -89,5 +91,29 @@ describe('EndpointManager', () => {
 		assert.strictEqual(file1, undefined);
 		assert.strictEqual(file2, undefined);
 		assert.strictEqual(file3, undefined);
+	});
+
+	it('encodes filenames with hash characters correctly', async () => {
+		const testPath = 'c:/Users/TestUser/workspace1/test #01 file.html';
+		const endpoint = await endpointManager.encodeLooseFileEndpoint(testPath);
+		
+		// Verify hash is encoded as %23 and spaces as %20 in filename
+		assert.ok(endpoint.includes('%2301'), 'Hash should be encoded as %23');
+		assert.ok(endpoint.includes('%20'), 'Spaces should be encoded as %20');
+		assert.ok(!endpoint.includes('#'), 'Literal hash should not appear in endpoint');
+		assert.ok(!endpoint.includes(' '), 'Literal spaces should not appear in endpoint');
+	});
+
+	it('round-trips encoding and decoding for files with special characters', async () => {
+		const testPath = 'c:/Users/TestUser/workspace1/my file & test #01.html';
+		
+		// Encode the path
+		const encoded = await endpointManager.encodeLooseFileEndpoint(testPath);
+		
+		// Decode it back
+		const decoded = await endpointManager.decodeLooseFileEndpoint('/' + encoded);
+		
+		// Should get back the original path
+		assert.strictEqual(decoded, testPath);
 	});
 });

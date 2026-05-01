@@ -12,12 +12,17 @@ async function main(): Promise<void> {
 		// Passed to `--extensionDevelopmentPath`
 		const extensionDevelopmentPath = path.resolve(__dirname, '../../');
 
-		// The path to the extension test script
-		// Passed to --extensionTestsPath
-		const extensionTestsPath = path.resolve(__dirname, './suite/index');
+	// The path to the extension test script
+	// Passed to --extensionTestsPath
+	const extensionTestsPath = path.resolve(__dirname, './suite/index');
 
-		// Download VS Code, unzip it and run the integration test
-		await runTests({ extensionDevelopmentPath, extensionTestsPath, launchArgs: ['--disable-extensions'] });
+	// Download VS Code, unzip it and run the integration test
+	await runTests({ 
+		extensionDevelopmentPath, 
+		extensionTestsPath, 
+		launchArgs: ['--disable-extensions'],
+		platform: 'win32-x64-archive'
+	});
 	} catch (err) {
 		console.error('Failed to run tests');
 		process.exit(1);

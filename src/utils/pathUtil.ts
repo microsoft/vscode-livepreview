@@ -12,11 +12,11 @@ import { SettingUtil } from './settingsUtil';
  * A collection of functions to perform path operations
  */
 export class PathUtil {
-	// used to idetify the path separators, `/` or `\\`.
+	// used to identify the path separators, `/` or `\\`.
 	private static _pathSepRegex = /(?:\\|\/)+/;
 
 	/**
-	 * @description escapes a path, but keeps the `/` delimeter intact.
+	 * @description escapes a path, but keeps the `/` delimiter intact.
 	 * @param {string} file the file path to escape.
 	 * @returns {string} the escaped path.
 	 */
@@ -26,7 +26,7 @@ export class PathUtil {
 
 		const newParts = parts
 			.filter((part) => part.length > 0)
-			.map((filterdPart) => encodeURI(filterdPart));
+			.map((filteredPart) => encodeURIComponent(filteredPart));
 		return newParts.join('/');
 	}
 
@@ -39,7 +39,7 @@ export class PathUtil {
 		const parts = file.split('/');
 		const newParts = parts
 			.filter((part) => part.length > 0)
-			.map((filterdPart) => decodeURI(filterdPart));
+			.map((filteredPart) => decodeURIComponent(filteredPart));
 		return newParts.join('/');
 	}
 
