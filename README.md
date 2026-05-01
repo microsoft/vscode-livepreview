@@ -4,7 +4,7 @@
 
 An extension that hosts a local server for you to preview your web projects on!
 
-This extension is most useful for projects where a server is not already created (e.g. not for apps using React, Angular, etc.). To work with these, feel free to run the `Simple Browser: Show` command that is already built-in with VS Code.
+This extension is most useful for projects where a server is not already created (e.g. not for apps using React, Angular, etc.). To work with these, feel free to use the [integrated browser in VS Code](https://code.visualstudio.com/docs/debugtest/integrated-browser).
 
 ## Table of Contents
 - [Features](#features)
