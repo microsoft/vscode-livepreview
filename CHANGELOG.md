@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.19 (April 14, 2026)
+## 0.4.19 (May 12, 2026)
 
 - Addresses [CVE-2026-41612](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2026-41612)
 
