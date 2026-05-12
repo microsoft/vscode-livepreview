@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.19 (May 12, 2026)
+
+- Addresses [CVE-2026-41612](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2026-41612)
+
 ## 0.4.18 (March 30, 2026)
 
 - Reuse integrated browser tabs when `livePreview.useIntegratedBrowser` setting is enabled (requires VS Code >= 1.114.0).
