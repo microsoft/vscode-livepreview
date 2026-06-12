@@ -27,7 +27,6 @@ parameters:
 extends:
   template: azure-pipelines/extension/pre-release.yml@templates
   parameters:
-    customNPMRegistry: ''
     l10nSourcePaths: ./src
     buildSteps:
       - script: npm ci
