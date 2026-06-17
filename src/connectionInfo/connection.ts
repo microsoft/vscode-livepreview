@@ -157,7 +157,8 @@ export class Connection extends Disposable {
 		const workspaceRoot = this.rootPath;
 
 		if (workspaceRoot && this._absPathInWorkspace(path)) {
-			return PathUtil.ConvertToPosixPath(path.substring(workspaceRoot.length));
+			const relativePath = PathUtil.ConvertToPosixPath(path.substring(workspaceRoot.length));
+			return relativePath.startsWith('/') || relativePath === '' ? relativePath : `/${relativePath}`;
 		} else {
 			return undefined;
 		}

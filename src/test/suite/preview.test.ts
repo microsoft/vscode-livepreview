@@ -95,4 +95,12 @@ describe('PreviewManager', () => {
 		assert.ok(executeCommand.calledOnce);
 		assert.ok(executeCommand.getCall(0).calledWith('extension.js-debug.debugLink', `http://${connection.host}:${connection.httpPort}/index.html`));
 	});
+
+	it("does not prefix absolute URLs with the preview host", async () => {
+		const webviewComm = Object.create(WebviewComm.prototype) as WebviewComm;
+		const hostUri = vscode.Uri.parse(`http://${connection.host}:${connection.httpPort}/`);
+
+		assert.equal(await webviewComm.constructAddress('http://example.test/page.html', connection, hostUri), 'http://example.test/page.html');
+		assert.equal(await webviewComm.constructAddress('https://example.test/page.html', connection, hostUri), 'https://example.test/page.html');
+	});
 });

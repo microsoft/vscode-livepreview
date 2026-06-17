@@ -5,6 +5,7 @@
 import assert from 'assert';
 import sinon from 'sinon';
 import vscode from 'vscode';
+import { Connection } from '../../connectionInfo/connection';
 import { ConnectionManager } from '../../connectionInfo/connectionManager';
 import { PathUtil } from '../../utils/pathUtil';
 
@@ -87,6 +88,14 @@ describe('ConnectionInfo', () => {
 	});
 
 
+	it('should include a leading slash when workspace root already ends with a separator', () => {
+		const connection = new Connection(testWorkspaces[0], '', 3000, 3001, '127.0.0.1');
+		sandbox.stub(connection, 'rootPath').get(() => 'C:\\Users\\TestUser\\workspace1\\');
+
+		assert.deepEqual(connection.getFileRelativeToWorkspace('C:\\Users\\TestUser\\workspace1\\index.html'), '/index.html');
+
+		connection.dispose();
+	});
 	it('should be able to create a Connection with an undefined workspace', async () => {
 		const target = sinon.spy();
 		sandbox.stub(SettingUtil, 'GetConfig').returns(makeSetting({}));

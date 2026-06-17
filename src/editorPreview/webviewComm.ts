@@ -86,6 +86,10 @@ export class WebviewComm extends Disposable {
 		hostURI?: vscode.Uri,
 		windowId?: number | undefined,
 	): Promise<string> {
+		if (/^https?:\/\//i.test(URLExt)) {
+			return URLExt;
+		}
+
 		if (URLExt.length > 0 && URLExt[0] == '/') {
 			URLExt = URLExt.substring(1);
 		}
