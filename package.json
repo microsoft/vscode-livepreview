@@ -280,11 +280,7 @@
         "livePreview.useIntegratedBrowser": {
           "type": "boolean",
           "default": true,
-          "description": "%settings.useIntegratedBrowser%",
-          "tags": [
-            "experimental",
-            "onExp"
-          ]
+          "description": "%settings.useIntegratedBrowser%"
         }
       }
     },
