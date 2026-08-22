@@ -122,6 +122,24 @@ describe('GetWorkspaceFromRelativePath / GetWorkspaceFromAbsolutePath', () => {
 	});
 });
 
+describe('EscapePathParts / UnescapePathParts', () => {
+	it('escapes # in a path segment so it is not treated as a URL fragment delimiter', () => {
+		const actual = PathUtil.EscapePathParts('my#folder/index.html');
+		assert.strictEqual(actual, 'my%23folder/index.html');
+	});
+
+	it('round-trips a path segment containing #', () => {
+		const escaped = PathUtil.EscapePathParts('my#folder/index.html');
+		const actual = PathUtil.UnescapePathParts(escaped);
+		assert.strictEqual(actual, 'my#folder/index.html');
+	});
+
+	it('escapes a leading # the same as one in the middle of a segment', () => {
+		const actual = PathUtil.EscapePathParts('#folder/index.html');
+		assert.strictEqual(actual, '%23folder/index.html');
+	});
+});
+
 describe('getEndpointParent', () => {
 	it('returns the correct endpoint parent for full paths', async () => {
 		const endpoint1 = PathUtil.GetEndpointParent('c:/Users/TestUser/workspace1/');
