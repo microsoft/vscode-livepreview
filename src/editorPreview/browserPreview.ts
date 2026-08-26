@@ -19,6 +19,21 @@ import { IOpenFileOptions } from '../manager';
 import { ExternalBrowserUtils } from '../utils/externalBrowserUtils';
 
 /**
+ * Info payload sent from the element picker in injectScript.js.
+ * sourceLine is the 1-based line number injected by SourceAnnotator at serve time.
+ * When present it provides a deterministic, zero-ambiguity source location.
+ * The remaining fields are fallbacks for JS-injected nodes that lack the annotation.
+ */
+interface IElementInfo {
+	sourceLine: number | null;
+	tagName: string;
+	id: string | null;
+	className: string | null;
+	fullText: string | null;
+	href: string;
+}
+
+/**
  * @description the embedded preview object, containing the webview panel showing the preview.
  */
 export class BrowserPreview extends Disposable {
@@ -199,6 +214,19 @@ export class BrowserPreview extends Disposable {
 					}
 				}
 				return;
+
+			// ── Element Picker ────────────────────────────────────────────
+			case 'element-selected': {
+				const info: IElementInfo = JSON.parse(message.text);
+				await this._goToElementInSource(info);
+				return;
+			}
+			case 'navigate-match': {
+				const dir = message.text as 'next' | 'prev';
+				await this._navigateMatch(dir);
+				return;
+			}
+			// ─────────────────────────────────────────────────────────────
 		}
 	}
 
@@ -328,5 +356,207 @@ export class BrowserPreview extends Disposable {
 		} else {
 			this._panel.title = title;
 		}
+	}
+
+	// =========================================================================
+	// Element Picker — source navigation
+	// =========================================================================
+
+	/** Decoration type used to highlight the selected line. */
+	private readonly _matchDecoration = vscode.window.createTextEditorDecorationType({
+		backgroundColor: new vscode.ThemeColor('editor.findMatchHighlightBackground'),
+		isWholeLine: true,
+	});
+
+	/**
+	 * @description Given element info from the picker, open the source file.
+	 * If there is only one match, jump to it directly.
+	 * If there are multiple similar matches, send them all to the webview
+	 * so the user can navigate with ‹ › arrows.
+	 */
+	/**
+	 * @description Given element info from the picker, jump directly to the source line.
+	 *
+	 * Primary path: use info.sourceLine (injected by SourceAnnotator) — deterministic,
+	 * zero ambiguity, works for every element including identical siblings.
+	 *
+	 * Fallback path: if sourceLine is null (JS-injected node), fall back to
+	 * text/id-based search with navigation arrows for ambiguous cases.
+	 */
+	private async _goToElementInSource(info: IElementInfo): Promise<void> {
+		const pathname = decodeURIComponent(info.href);
+		const workspace = this._webviewComm.currentConnection.workspace;
+
+		let fileUri: vscode.Uri | undefined;
+		if (workspace) {
+			const relativePath = pathname.startsWith('/') ? pathname.slice(1) : pathname;
+			fileUri = vscode.Uri.joinPath(workspace.uri, relativePath);
+		}
+
+		if (!fileUri) {
+			vscode.window.showWarningMessage(
+				vscode.l10n.t('Live Preview: Could not resolve source file for this element.')
+			);
+			return;
+		}
+
+		try {
+			const doc = await vscode.workspace.openTextDocument(fileUri);
+
+			// ── Primary path: sourceLine from data-lp-line attribute ──────────
+			if (info.sourceLine !== null) {
+				// sourceLine is 1-based; VS Code Position is 0-based
+				const lineNumber = info.sourceLine - 1;
+
+				// Notify webview: single match, hide nav bar
+				this._panel.webview.postMessage({
+					command: 'match-results',
+					text: JSON.stringify({ current: 1, total: 1 }),
+				});
+
+				const editor = await vscode.window.showTextDocument(doc, {
+					viewColumn: vscode.ViewColumn.One,
+					preserveFocus: true,
+				});
+
+				const pos = new vscode.Position(lineNumber, 0);
+				editor.selection = new vscode.Selection(pos, pos);
+				editor.revealRange(
+					new vscode.Range(pos, pos),
+					vscode.TextEditorRevealType.InCenter
+				);
+				const lineRange = editor.document.lineAt(lineNumber).range;
+				editor.setDecorations(this._matchDecoration, [lineRange]);
+				return;
+			}
+
+			// ── Fallback path: text/id search for JS-injected nodes ───────────
+			const lines = doc.getText().split('');
+			const candidates = this._findFallbackMatches(lines, info);
+
+			if (candidates.length === 0) {
+				vscode.window.showWarningMessage(
+					vscode.l10n.t('Live Preview: Could not locate element in source.')
+				);
+				return;
+			}
+
+			this._fallbackMatches = candidates;
+			this._fallbackIndex = 0;
+			this._fallbackFileUri = fileUri;
+
+			this._panel.webview.postMessage({
+				command: 'match-results',
+				text: JSON.stringify({ current: 1, total: candidates.length }),
+			});
+
+			const editor = await vscode.window.showTextDocument(doc, {
+				viewColumn: vscode.ViewColumn.One,
+				preserveFocus: true,
+			});
+			this._revealFallback(editor, 0);
+		} catch {
+			vscode.window.showWarningMessage(
+				vscode.l10n.t(
+					'Live Preview: Could not open source file "{0}".',
+					fileUri.fsPath
+				)
+			);
+		}
+	}
+
+	// Fallback state for JS-injected nodes that lack data-lp-line
+	private _fallbackMatches: number[] = [];
+	private _fallbackIndex = 0;
+	private _fallbackFileUri: vscode.Uri | undefined;
+
+	/**
+	 * @description Navigate to the next or previous fallback match.
+	 */
+	private async _navigateMatch(direction: 'next' | 'prev'): Promise<void> {
+		if (this._fallbackMatches.length === 0 || !this._fallbackFileUri) { return; }
+
+		if (direction === 'next') {
+			this._fallbackIndex = (this._fallbackIndex + 1) % this._fallbackMatches.length;
+		} else {
+			this._fallbackIndex = (this._fallbackIndex - 1 + this._fallbackMatches.length) % this._fallbackMatches.length;
+		}
+
+		try {
+			const doc = await vscode.workspace.openTextDocument(this._fallbackFileUri);
+			const editor = await vscode.window.showTextDocument(doc, {
+				viewColumn: vscode.ViewColumn.One,
+				preserveFocus: true,
+			});
+			this._revealFallback(editor, this._fallbackIndex);
+			this._panel.webview.postMessage({
+				command: 'match-results',
+				text: JSON.stringify({
+					current: this._fallbackIndex + 1,
+					total: this._fallbackMatches.length,
+				}),
+			});
+		} catch {
+			// noop
+		}
+	}
+
+	/**
+	 * @description Highlight and scroll to a specific fallback match by index.
+	 */
+	private _revealFallback(editor: vscode.TextEditor, index: number): void {
+		const lineNumber = this._fallbackMatches[index];
+		const pos = new vscode.Position(lineNumber, 0);
+		editor.selection = new vscode.Selection(pos, pos);
+		editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter);
+		editor.setDecorations(this._matchDecoration, [editor.document.lineAt(lineNumber).range]);
+	}
+
+	/**
+	 * @description Fallback element search for nodes that lack data-lp-line.
+	 * Uses ID (exact), then text content, then class matching.
+	 * Returns all candidate line numbers sorted best-first.
+	 */
+	private _findFallbackMatches(lines: string[], info: IElementInfo): number[] {
+		const tagOpen = `<${info.tagName}`;
+
+		// ID — unique
+		if (info.id) {
+			const idx = lines.findIndex(l => l.includes(`id="${info.id}"`));
+			if (idx !== -1) { return [idx]; }
+		}
+
+		const textSnippet = info.fullText && info.fullText.length >= 4
+			? info.fullText.slice(0, 80)
+			: null;
+
+		const scored: Array<{ line: number; score: number }> = [];
+
+		for (let i = 0; i < lines.length; i++) {
+			if (!lines[i].toLowerCase().includes(tagOpen)) { continue; }
+			let score = 0;
+
+			if (textSnippet) {
+				const ctx = lines.slice(i, Math.min(lines.length, i + 4)).join(' ');
+				if (ctx.includes(textSnippet)) { score += 60; }
+			}
+
+			if (info.className) {
+				const allClasses = info.className.trim().split(/\s+/);
+				if (allClasses.every(cls => lines[i].includes(cls))) { score += 40; }
+			}
+
+			if (score > 0) { scored.push({ line: i, score }); }
+		}
+
+		if (scored.length === 0) { return []; }
+		scored.sort((a, b) => b.score - a.score);
+		const best = scored[0].score;
+
+		if (scored.length === 1 || best > (scored[1]?.score ?? 0) * 1.4) {
+			return [scored[0].line];
+		}
+
+		return scored.filter(s => s.score >= best * 0.5).map(s => s.line);
 	}
 }

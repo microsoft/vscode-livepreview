@@ -20,6 +20,7 @@ import { EndpointManager } from '../../infoManagers/endpointManager';
 import { PathUtil } from '../../utils/pathUtil';
 import { INJECTED_ENDPOINT_NAME } from '../../utils/constants';
 import { Connection } from '../../connectionInfo/connection';
+import { SourceAnnotator } from './SourceAnnotator';
 
 /**
  * @description the response information to give back to the server object
@@ -349,38 +350,46 @@ export class ContentLoader extends Disposable {
 	}
 
 	/**
-	 * Inject the script tags to reference the custom Live Preview script.
-	 * NOTE: they are injected on the same line as existing content to ensure that
-	 * the debugging works, since `js-debug` relies on the line numbers on the filesystem
-	 * matching the served line numbers.
+	 * Inject the script tags to reference the custom Live Preview script,
+	 * and annotate every HTML opening tag with its source line number via
+	 * `data-lp-line`. This enables the element picker to identify elements
+	 * deterministically without any heuristic scoring.
+	 *
+	 * NOTE: script tags are injected on the same line as existing content to ensure
+	 * that debugging works, since `js-debug` relies on line numbers matching the
+	 * filesystem. The source annotation step runs BEFORE the script injection so
+	 * that the injected `<script>` tag itself does not shift any line numbers.
 	 * @param {string} contents the contents to inject.
 	 * @returns {string} the injected string.
 	 */
 	private _injectIntoFile(contents: string): string {
+		// Step 1: annotate every opening tag with its source line number.
+		// This must happen before script injection so line numbers stay accurate.
+		const annotated = SourceAnnotator.annotate(contents);
+
+		// Step 2: inject the Live Preview script tag (same logic as before).
 		// order of preference for script placement:
 		// 1. after <head>
 		// 2. after <body>
 		// 3. after <html>
 		// 4. after <!DOCTYPE >
 		// 5. at the very beginning
-
 		let re: RegExp;
 		let tagEnd = 0;
 		for (const tag of this._insertionTags) {
 			re = new RegExp(`<${tag}[^>]*>`, 'g');
-			re.test(contents);
-
+			re.test(annotated);
 			tagEnd = re.lastIndex;
 			if (tagEnd != 0) {
 				break;
 			}
 		}
 
-		const newContents =
-			contents.substring(0, tagEnd) +
+		return (
+			annotated.substring(0, tagEnd) +
 			this._scriptInjection +
-			contents.substring(tagEnd);
-		return newContents;
+			annotated.substring(tagEnd)
+		);
 	}
 
 	private fsReadDir(path: string): Promise<string[]> {

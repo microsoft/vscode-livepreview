@@ -360,6 +360,34 @@
 				showFind();
 				break;
 			}
+			// from child iframe — picker signals
+			case 'element-selected': {
+				vscode.postMessage({
+					command: 'element-selected',
+					text: message.text,
+				});
+				break;
+			}
+			case 'picker-activated': {
+				document.getElementById('inspect').classList.add('active');
+				break;
+			}
+			case 'picker-deactivated': {
+				document.getElementById('inspect').classList.remove('active');
+				break;
+			}
+			// from extension — multiple matches found, show nav bar
+			case 'match-results': {
+				console.log('[LivePreview] match-results received:', message.text);
+				const { current, total } = JSON.parse(message.text);
+				if (total > 1) {
+					document.getElementById('match-label').textContent = `${current} of ${total}`;
+					document.getElementById('match-nav-box').hidden = false;
+				} else {
+					document.getElementById('match-nav-box').hidden = true;
+				}
+				break;
+			}
 		}
 	}
 
@@ -517,6 +545,28 @@
 		document
 			.getElementById('find-x')
 			.addEventListener('click', () => hideFind());
+
+		// Inspect element button
+		document.getElementById('inspect').addEventListener('click', () => {
+			document.getElementById('extras-menu-pane').hidden = true;
+			document.getElementById('inspect').classList.toggle('active');
+			document
+				.getElementById('hostedContent')
+				.contentWindow.postMessage({ command: 'toggle-picker' }, '*');
+		});
+
+		// Match navigation bar buttons
+		document.getElementById('match-prev').addEventListener('click', () => {
+			vscode.postMessage({ command: 'navigate-match', text: 'prev' });
+		});
+
+		document.getElementById('match-next').addEventListener('click', () => {
+			vscode.postMessage({ command: 'navigate-match', text: 'next' });
+		});
+
+		document.getElementById('match-close').addEventListener('click', () => {
+			document.getElementById('match-nav-box').hidden = true;
+		});
 	}
 
 	/**
