@@ -132,3 +132,31 @@ describe('getEndpointParent', () => {
 		assert.strictEqual(endpoint3, '.');
 	});
 });
+
+describe('EscapePathParts', () => {
+	it('should encode spaces and special characters while preserving slashes', () => {
+		const input = '/special #01 folder/test #01 file.html';
+		const expected = 'special%20%2301%20folder/test%20%2301%20file.html';
+
+		const actual = PathUtil.EscapePathParts(input);
+
+		assert.strictEqual(actual, expected);
+	});
+
+	it('should handle multiple special characters', () => {
+		const input = '/folder with spaces/file&name.html';
+		const actual = PathUtil.EscapePathParts(input);
+
+		assert.ok(actual.includes('%20'), 'Spaces should be encoded');
+		assert.ok(actual.includes('%26'), 'Ampersands should be encoded');
+		assert.ok(!actual.includes(' '), 'No literal spaces should remain');
+	});
+
+	it('should preserve forward slashes as path delimiters', () => {
+		const input = 'path/to/file.html';
+		const actual = PathUtil.EscapePathParts(input);
+
+		assert.strictEqual(actual, 'path/to/file.html');
+		assert.strictEqual(input.match(/\//g)?.length, actual.match(/\//g)?.length);
+	});
+});

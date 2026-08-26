@@ -115,7 +115,8 @@ export class PageHistory extends Disposable {
 		connection: Connection
 	): INavResponse | undefined {
 		address = PathUtil.ConvertToPosixPath(address);
-		address = PathUtil.EscapePathParts(address);
+		// Note: address is already URL-encoded (from window.location.pathname),
+		// so we should NOT escape it again to avoid double-encoding
 		const action = new Array<NavEditCommands>();
 		const lastItem = this._history[this._backstep];
 		if (
