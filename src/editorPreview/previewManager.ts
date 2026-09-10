@@ -25,7 +25,7 @@ import { ExternalBrowserUtils } from '../utils/externalBrowserUtils';
  * PreviewManager` is a singleton that handles the logic of opening the embedded preview.
  */
 export class PreviewManager extends Disposable {
-	private readonly _outputChannel: vscode.OutputChannel;
+	private _outputChannel: vscode.OutputChannel | undefined;
 	public previewActive = false;
 	public currentPanel: BrowserPreview | undefined;
 	private _notifiedAboutLooseFiles = false;
@@ -48,8 +48,6 @@ export class PreviewManager extends Disposable {
 		private readonly _serverExpired: () => void
 	) {
 		super();
-		this._outputChannel =
-			vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
 	}
 
 	/**
@@ -210,6 +208,12 @@ export class PreviewManager extends Disposable {
 	): void {
 		if (this._currentTimeout) {
 			clearTimeout(this._currentTimeout);
+		}
+
+		if (!this._outputChannel) {
+			this._outputChannel = this._register(
+				vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME)
+			);
 		}
 
 		this.currentPanel = this._register(

@@ -65,8 +65,10 @@ Run `Live Preview: Show Debug Preview` in the command palette to get these debug
 ![external-debug-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/external-debug-demo.gif)
 
 
-### Console Output Channel (For Embedded Preview)
-For a simple view of the embedded preview's console messages, go to the `Output` tab and select `Embedded Live Preview Console` in the dropdown.
+### Console Messages
+When previewing in VS Code's Integrated Browser, open **Developer Tools** from the browser toolbar to view console messages and inspect the page.
+
+The legacy embedded preview still provides the `Embedded Live Preview Console` channel in the `Output` tab. This channel is created only when the legacy preview is opened, such as when `livePreview.useIntegratedBrowser` is disabled or the Integrated Browser is unavailable.
 
 ![console-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/console-demo.gif)
 
