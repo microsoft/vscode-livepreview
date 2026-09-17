@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test File with Special Characters</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        .info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #007acc;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Special Characters Test</h1>
+    <div class="info">
+        <p><strong>Purpose:</strong> This file tests URL encoding of special characters in file paths.</p>
+        <p><strong>Folder name:</strong> <code>special #01 folder</code></p>
+        <p><strong>File name:</strong> <code>test #01 file.html</code></p>
+    </div>
+    <p>If you can see this page correctly, the URL encoding is working properly!</p>
+    <p>Both the folder name and filename contain:</p>
+    <ul>
+        <li>Spaces (should be encoded as %20)</li>
+        <li>Hash symbols # (should be encoded as %23)</li>
+    </ul>
+</body>
+</html>
