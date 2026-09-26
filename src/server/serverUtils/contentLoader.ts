@@ -206,7 +206,7 @@ export class ContentLoader extends Disposable {
 		}
 
 		for (const childFile of childFiles) {
-			const relativeFileWithChild = path.join(relativePath, childFile);
+			const relativeFileWithChild = path.posix.join(relativePath, childFile);
 			const absolutePath = path.join(readPath, childFile);
 
 			const fileStats = (await PathUtil.FileExistsStat(absolutePath)).stat;
