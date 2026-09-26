@@ -14,6 +14,7 @@ import { makeSetting, testWorkspaces } from './common';
 import { Connection } from '../../connectionInfo/connection';
 import { WebviewComm } from '../../editorPreview/webviewComm';
 import { ExternalBrowserUtils } from '../../utils/externalBrowserUtils';
+import { INTEGRATED_BROWSER_COMMAND } from '../../utils/constants';
 
 describe('PreviewManager', () => {
 	let sandbox: sinon.SinonSandbox;
@@ -74,6 +75,39 @@ describe('PreviewManager', () => {
 		assert.ok(goToFile.getCall(1).calledWith('/index.html', true));
 		assert.ok(goToFile.getCall(2).calledWith('/index.html', true));
 		assert.ok(goToFile.getCall(3).calledWith('/page.html', true));
+	});
+
+	it('uses the forwarded address in the integrated browser', async () => {
+		const shouldUseIntegratedBrowser = sinon
+			.stub(SettingUtil, 'shouldUseIntegratedBrowser')
+			.resolves(true);
+		const resolveExternalHTTPUri = sinon
+			.stub(connection, 'resolveExternalHTTPUri')
+			.resolves(
+				vscode.Uri.parse('https://forwarded.example.dev/base/?token=secret')
+			);
+		const executeCommand = sinon.stub(vscode.commands, 'executeCommand');
+
+		try {
+			await previewManager.launchFileInEmbeddedPreview(
+				undefined,
+				connection,
+				vscode.Uri.joinPath(testWorkspaces[0].uri, '/index.html')
+			);
+
+			assert.ok(resolveExternalHTTPUri.calledOnce);
+			assert.ok(
+				executeCommand.calledOnceWith(INTEGRATED_BROWSER_COMMAND, {
+					url: 'https://forwarded.example.dev/base/index.html?token=secret&vscode-livepreview=true',
+					openToSide: true,
+					reuseUrlFilter: '**?vscode-livepreview=true',
+				})
+			);
+		} finally {
+			executeCommand.restore();
+			resolveExternalHTTPUri.restore();
+			shouldUseIntegratedBrowser.restore();
+		}
 	});
 
 	it("previews in external preview (non-debug)", async () => {
