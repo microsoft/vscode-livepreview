@@ -87,6 +87,33 @@ describe('ConnectionInfo', () => {
 	});
 
 
+	it('should handle file paths with spaces and special characters', async () => {
+		sandbox.stub(SettingUtil, 'GetConfig').returns(makeSetting({}));
+		sandbox.stub(vscode.env, 'asExternalUri').callsFake((uri) => Promise.resolve(uri));
+
+		const connection = await connectionManager.createAndAddNewConnection(testWorkspaces[0]);
+
+		// Test file with spaces and hash in both folder and filename
+		const testUri = vscode.Uri.joinPath(
+			testWorkspaces[0].uri,
+			'special #01 folder',
+			'test #01 file.html'
+		);
+
+		const relativePath = connection.getFileRelativeToWorkspace(testUri.fsPath);
+
+		// Verify the path is a plain POSIX path (not URL-encoded)
+		assert.strictEqual(
+			relativePath,
+			'/special #01 folder/test #01 file.html'
+		);
+
+		// Verify that special characters are preserved (not URL-encoded)
+		assert.ok(relativePath?.includes('#'), 'Hash characters should be preserved');
+		assert.ok(relativePath?.includes(' '), 'Spaces should be preserved');
+	});
+
+
 	it('should be able to create a Connection with an undefined workspace', async () => {
 		const target = sinon.spy();
 		sandbox.stub(SettingUtil, 'GetConfig').returns(makeSetting({}));
