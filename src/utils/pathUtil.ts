@@ -26,7 +26,7 @@ export class PathUtil {
 
 		const newParts = parts
 			.filter((part) => part.length > 0)
-			.map((filterdPart) => encodeURI(filterdPart));
+			.map((filterdPart) => encodeURIComponent(filterdPart));
 		return newParts.join('/');
 	}
 
@@ -39,7 +39,7 @@ export class PathUtil {
 		const parts = file.split('/');
 		const newParts = parts
 			.filter((part) => part.length > 0)
-			.map((filterdPart) => decodeURI(filterdPart));
+			.map((filterdPart) => decodeURIComponent(filterdPart));
 		return newParts.join('/');
 	}
 
