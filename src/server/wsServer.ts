@@ -135,18 +135,10 @@ export class WSServer extends Disposable {
 			const _handleWSError = (err: any): void => {
 				if (err.code == 'EADDRINUSE') {
 					this._connection.wsPort++;
-					this._wss = new WSServerWithOriginCheck({
-						port: this._connection.wsPort,
-						host: this._connection.host,
-						path: this._connection.wsPath,
-					});
+					this._startWSServer(basePath).then(resolve, reject);
 				} else if (err.code == 'EADDRNOTAVAIL') {
 					this._connection.resetHostToDefault();
-					this._wss = new WSServerWithOriginCheck({
-						port: this._connection.wsPort,
-						host: this._connection.host,
-						path: this._connection.wsPath,
-					});
+					this._startWSServer(basePath).then(resolve, reject);
 				} else {
 					/* __GDPR__
 						"server.err" : {
