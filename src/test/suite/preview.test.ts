@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import assert from 'assert';
+import * as path from 'path';
 import sinon from 'sinon';
 import vscode from 'vscode';
 import { PreviewManager } from '../../editorPreview/previewManager';
@@ -14,6 +15,7 @@ import { makeSetting, testWorkspaces } from './common';
 import { Connection } from '../../connectionInfo/connection';
 import { WebviewComm } from '../../editorPreview/webviewComm';
 import { ExternalBrowserUtils } from '../../utils/externalBrowserUtils';
+import { INTEGRATED_BROWSER_COMMAND } from '../../utils/constants';
 
 describe('PreviewManager', () => {
 	let sandbox: sinon.SinonSandbox;
@@ -53,6 +55,10 @@ describe('PreviewManager', () => {
 		sandbox.restore();
 	});
 
+	afterEach(() => {
+		sinon.restore();
+	});
+
 	it("previews in embedded preview", async () => {
 		const goToFile = sinon.spy(WebviewComm.prototype, 'goToFile');
 
@@ -70,7 +76,7 @@ describe('PreviewManager', () => {
 		assert.ok(goToFile.callCount === 4);
 		assert(previewManager.previewActive);
 
-		assert.ok(goToFile.getCall(0).calledWith('', false));
+		assert.ok(goToFile.getCall(0).calledWith('/', false));
 		assert.ok(goToFile.getCall(1).calledWith('/index.html', true));
 		assert.ok(goToFile.getCall(2).calledWith('/index.html', true));
 		assert.ok(goToFile.getCall(3).calledWith('/page.html', true));
@@ -95,4 +101,52 @@ describe('PreviewManager', () => {
 		assert.ok(executeCommand.calledOnce);
 		assert.ok(executeCommand.getCall(0).calledWith('extension.js-debug.debugLink', `http://${connection.host}:${connection.httpPort}/index.html`));
 	});
+
+	const rootWorkspace: vscode.WorkspaceFolder = {
+		uri: vscode.Uri.file(path.parse(testWorkspaces[0].uri.fsPath).root),
+		name: 'Filesystem root',
+		index: 0,
+	};
+	for (const { name, workspace, serverRoot } of [
+		{ name: 'filesystem root workspace', workspace: rootWorkspace, serverRoot: '' },
+		{ name: 'trailing server-root separator', workspace: testWorkspaces[0], serverRoot: 'public/' },
+		{ name: 'server root without a trailing separator', workspace: testWorkspaces[0], serverRoot: 'public' },
+	]) {
+		for (const mode of ['integrated', 'external', 'debug', 'legacy'] as const) {
+			it(`opens ${mode} preview with a ${name}`, async () => {
+				const routeSandbox = sinon.createSandbox();
+				const routeConnection = new Connection(workspace, serverRoot, 3000, 3001, '127.0.0.1');
+				const file = vscode.Uri.joinPath(routeConnection.rootURI!, 'index.html');
+				const url = 'http://127.0.0.1:3000/index.html';
+				try {
+					routeSandbox.stub(SettingUtil, 'shouldUseIntegratedBrowser').resolves(mode === 'integrated');
+					if (mode === 'integrated' || mode === 'debug') {
+						const executeCommand = routeSandbox.stub(vscode.commands, 'executeCommand');
+						if (mode === 'integrated') {
+							await previewManager.launchFileInEmbeddedPreview(undefined, routeConnection, file);
+							assert.ok(executeCommand.calledOnceWithExactly(INTEGRATED_BROWSER_COMMAND, {
+								url: `${url}?vscode-livepreview=true`,
+								openToSide: true,
+								reuseUrlFilter: '**?vscode-livepreview=true',
+							}));
+						} else {
+							await previewManager.launchFileInExternalBrowser(true, routeConnection, file);
+							assert.ok(executeCommand.calledOnceWithExactly('extension.js-debug.debugLink', url));
+						}
+					} else if (mode === 'external') {
+						const openInBrowser = routeSandbox.stub(ExternalBrowserUtils, 'openInBrowser');
+						await previewManager.launchFileInExternalBrowser(false, routeConnection, file);
+						assert.ok(openInBrowser.calledOnceWithExactly(url, CustomExternalBrowser.edge));
+					} else {
+						const goToFile = routeSandbox.spy(WebviewComm.prototype, 'goToFile');
+						await previewManager.launchFileInEmbeddedPreview(undefined, routeConnection, file);
+						assert.ok(goToFile.calledOnceWithExactly('/index.html', true, routeConnection));
+					}
+				} finally {
+					routeSandbox.restore();
+					routeConnection.dispose();
+				}
+			});
+		}
+	}
 });
