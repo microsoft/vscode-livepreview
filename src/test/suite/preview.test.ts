@@ -56,6 +56,7 @@ describe('PreviewManager', () => {
 	});
 
 	afterEach(() => {
+		// Restore the original tests' default-sandbox spies before the route tests spy on the same methods.
 		sinon.restore();
 	});
 
@@ -102,11 +103,13 @@ describe('PreviewManager', () => {
 		assert.ok(executeCommand.getCall(0).calledWith('extension.js-debug.debugLink', `http://${connection.host}:${connection.httpPort}/index.html`));
 	});
 
+	// Derive the filesystem root so this case covers both POSIX roots and Windows drive roots.
 	const rootWorkspace: vscode.WorkspaceFolder = {
 		uri: vscode.Uri.file(path.parse(testWorkspaces[0].uri.fsPath).root),
 		name: 'Filesystem root',
 		index: 0,
 	};
+	// Exercise each root shape through all four launch routes; 'public' is the non-trailing-slash control.
 	for (const { name, workspace, serverRoot } of [
 		{ name: 'filesystem root workspace', workspace: rootWorkspace, serverRoot: '' },
 		{ name: 'trailing server-root separator', workspace: testWorkspaces[0], serverRoot: 'public/' },
@@ -138,6 +141,7 @@ describe('PreviewManager', () => {
 						await previewManager.launchFileInExternalBrowser(false, routeConnection, file);
 						assert.ok(openInBrowser.calledOnceWithExactly(url, CustomExternalBrowser.edge));
 					} else {
+						// Legacy webviews receive the rooted path through WebviewComm rather than a browser URL.
 						const goToFile = routeSandbox.spy(WebviewComm.prototype, 'goToFile');
 						await previewManager.launchFileInEmbeddedPreview(undefined, routeConnection, file);
 						assert.ok(goToFile.calledOnceWithExactly('/index.html', true, routeConnection));

@@ -186,6 +186,7 @@ export class PreviewManager extends Disposable {
 		} else if (connection) {
 			path = connection.getFileRelativeToWorkspace(file.fsPath) ?? '';
 		}
+		// Browser launchers append this path to the server origin, so every path needs a leading slash.
 		return path.startsWith('/') ? path : `/${path}`;
 	}
 
