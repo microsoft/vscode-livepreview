@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SuppPower OS - Green Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* 🎨 DESIGN PALETTE - Green Edition */
+    --bg-deep: #1f1f1f;
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --glass-blur: 20px;
+    
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.8);
+    --text-muted: rgba(255, 255, 255, 0.5);
+    
+    /* Vibrant Green Gradients */
+    --grad-green-cyan: linear-gradient(135deg, #22c55e 0%, #06b6d4 100%);
+    --grad-cyan-blue: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 100%);
+    --grad-green-blue: linear-gradient(135deg, #22c55e 0%, #0ea5e9 100%);
+    
+    --accent-green: #22c55e;
+    --accent-cyan: #06b6d4;
+    
+    --font-main: 'Inter', sans-serif;
+    --font-display: 'Poppins', sans-serif;
+    --radius-md: 24px;
+    --radius-lg: 36px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #000000;
+    font-family: var(--font-main);
+    color: var(--text-primary);
+    overflow: hidden;
+    min-height: 100vh;
+  }
+
+  /* Main Container */
+  .app {
+    width: 100vw;
+    height: 100vh;
+    background: var(--bg-deep);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Vibrant Circular Blobs */
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .blob-1 { top: -100px; left: -100px; width: 500px; height: 500px; background: var(--grad-green-cyan); filter: blur(60px); opacity: 0.8; }
+  .blob-2 { bottom: -150px; right: 10%; width: 600px; height: 600px; background: var(--grad-cyan-blue); filter: blur(80px); opacity: 0.7; }
+  .blob-3 { top: 20%; right: -100px; width: 400px; height: 400px; background: var(--grad-green-blue); filter: blur(50px); opacity: 0.6; }
+  .blob-4 { bottom: 10%; left: 20%; width: 300px; height: 300px; background: var(--grad-green-cyan); filter: blur(40px); opacity: 0.5; }
+
+  /* Starry Background */
+  .stars {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, #fff 1px, transparent 1px);
+    background-size: 100px 100px;
+    opacity: 0.1;
+    z-index: 0;
+  }
+
+  .content-wrapper {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 450px 1fr;
+    height: 100%;
+    gap: 30px;
+    padding: 40px;
+  }
+
+  /* Glass Card Utility */
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1.5px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 30px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+    position: relative;
+  }
+
+  /* Sidebar */
+  .sidebar { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px;
+  }
+
+  .logo-section { 
+    display: flex; 
+    align-items: center; 
+    gap: 15px;
+    margin-bottom: 10px;
+  }
+  .logo-icon {
+    width: 56px; 
+    height: 56px;
+    background: var(--grad-green-cyan);
+    border-radius: 18px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-size: 28px; 
+    color: white;
+    box-shadow: 0 10px 25px rgba(34, 197, 94, 0.4);
+  }
+  .logo-text { 
+    font-family: var(--font-display); 
+    font-size: 28px; 
+    font-weight: 800; 
+    color: var(--text-primary);
+  }
+  .logo-sub { 
+    font-size: 12px; 
+    color: var(--accent-green); 
+    font-weight: 800; 
+    text-transform: uppercase; 
+    letter-spacing: 0.15em;
+  }
+
+  .progress-section { 
+    margin-top: 15px;
+  }
+  .progress-meta { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-end; 
+    margin-bottom: 12px;
+  }
+  .progress-label { 
+    font-size: 12px; 
+    font-weight: 800; 
+    color: var(--text-muted); 
+    text-transform: uppercase; 
+    letter-spacing: 0.1em;
+  }
+  .progress-count { 
+    font-size: 48px; 
+    font-weight: 800; 
+    color: var(--accent-green); 
+    line-height: 1; 
+    text-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+  }
+  .progress-total { 
+    font-size: 20px; 
+    color: var(--text-muted); 
+    font-weight: 600;
+  }
+  .progress-track { 
+    height: 8px; 
+    background: rgba(255,255,255,0.05); 
+    border-radius: 20px; 
+    overflow: hidden; 
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .progress-fill { 
+    height: 100%; 
+    background: var(--grad-green-cyan); 
+    transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1); 
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+  }
+
+  .portion-tabs-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+  .portion-tabs-wrap::-webkit-scrollbar { width: 6px; }
+  .portion-tabs-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+  .portion-tabs { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px;
+  }
+  .portion-tab {
+    padding: 16px 20px;
+    border-radius: var(--radius-md);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .portion-tab:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.15);
+  }
+  .portion-tab.active {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: var(--accent-green);
+    box-shadow: 0 10px 25px rgba(34, 197, 94, 0.1);
+    transform: translateX(10px);
+  }
+  .portion-tab-title { 
+    font-size: 14px; 
+    font-weight: 800; 
+    color: var(--text-primary);
+  }
+  .portion-tab-meta { 
+    font-size: 11px; 
+    color: var(--accent-green); 
+    margin-top: 4px; 
+    font-weight: 700;
+  }
+
+  /* Main Content */
+  .main-content { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 25px;
+    overflow: hidden;
+  }
+
+  .hero-card { 
+    padding: 35px;
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+  }
+  .hero-info h2 { 
+    font-size: 12px; 
+    color: var(--accent-green); 
+    text-transform: uppercase; 
+    letter-spacing: 0.15em; 
+    margin-bottom: 8px; 
+    font-weight: 800;
+  }
+  .hero-info h1 { 
+    font-family: var(--font-display); 
+    font-size: 48px; 
+    line-height: 1.1; 
+    margin-bottom: 8px; 
+    color: var(--text-primary);
+    font-weight: 800;
+  }
+  .hero-info p { 
+    font-size: 16px; 
+    color: var(--text-secondary); 
+    font-weight: 500;
+  }
+  
+  .hero-stats { 
+    display: flex; 
+    gap: 40px; 
+    text-align: center;
+  }
+  .stat-item h3 { 
+    font-size: 40px; 
+    font-weight: 800; 
+    color: var(--accent-green); 
+    text-shadow: 0 0 15px rgba(34, 197, 94, 0.2);
+  }
+  .stat-item p { 
+    font-size: 11px; 
+    color: var(--text-muted); 
+    text-transform: uppercase; 
+    font-weight: 800; 
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+
+  .supplements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+  .supplements-grid::-webkit-scrollbar { width: 6px; }
+  .supplements-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+  .supp-card {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    background: rgba(255,255,255,0.03);
+    animation: slideUpFade 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .supp-card:hover {
+    transform: translateY(-6px);
+    background: rgba(255,255,255,0.08);
+    border-color: var(--accent-green);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  }
+  .supp-card.done { 
+    opacity: 0.3; 
+    filter: grayscale(0.7);
+  }
+  
+  .supp-check {
+    width: 40px; 
+    height: 40px;
+    border-radius: 12px;
+    border: 2px solid var(--accent-green);
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    background: transparent;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+  }
+  .supp-card.done .supp-check { 
+    background: var(--accent-green); 
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+    animation: checkScale 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .check-icon { 
+    width: 20px; 
+    height: 20px; 
+    stroke: #000; 
+    stroke-width: 3; 
+    fill: none; 
+    display: none;
+  }
+  .supp-card.done .check-icon { 
+    display: block;
+  }
+
+  .supp-info h4 { 
+    font-size: 16px; 
+    font-weight: 800; 
+    color: var(--text-primary);
+  }
+  .supp-info p { 
+    font-size: 13px; 
+    color: var(--text-secondary); 
+    margin-top: 3px;
+    font-weight: 500;
+  }
+  
+  .badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    margin-top: 10px;
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--accent-green);
+    text-transform: uppercase;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+  }
+
+  .bottom-actions {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    display: flex;
+    gap: 16px;
+    z-index: 10;
+  }
+  .btn {
+    padding: 16px 40px;
+    border-radius: 16px;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1.5px solid var(--glass-border);
+    background: var(--glass-bg);
+    color: var(--text-primary);
+    backdrop-filter: blur(10px);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .btn-primary {
+    background: var(--grad-green-cyan);
+    color: white;
+    border: none;
+    box-shadow: 0 15px 35px rgba(34, 197, 94, 0.3);
+  }
+  .btn:hover { 
+    transform: translateY(-3px); 
+    box-shadow: 0 15px 35px rgba(34, 197, 94, 0.2);
+  }
+  .btn:active {
+    transform: scale(0.95);
+  }
+
+  /* Sheet Modal */
+  .sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .sheet-overlay.open { 
+    opacity: 1; 
+    pointer-events: all;
+  }
+
+  .sheet {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    width: 100%;
+    max-width: 600px;
+    background: linear-gradient(135deg, rgba(31,31,31,0.96) 0%, rgba(25,25,25,0.98) 100%);
+    backdrop-filter: blur(40px);
+    border-radius: 36px 36px 0 0;
+    border-top: 1.5px solid rgba(255,255,255,0.3);
+    padding: 40px 40px 40px 40px;
+    z-index: 201;
+    transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 -12px 40px rgba(0,0,0,0.5);
+  }
+  .sheet.open { 
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .sheet-handle {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.2);
+    margin: 0 auto 20px;
+  }
+  .sheet-name {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .sheet-focus {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    letter-spacing: 0.08em;
+  }
+  .sheet-desc {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .sheet-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 0.5px solid rgba(255,255,255,0.1);
+  }
+  .sheet-row:last-child { 
+    border-bottom: none;
+  }
+  .sheet-row-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 800;
+    letter-spacing: 0.1em;
+  }
+  .sheet-row-val {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .sheet-examine-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius-md);
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: var(--accent-green);
+    font-family: var(--font-main);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    margin-top: 24px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    letter-spacing: 0.05em;
+  }
+  .sheet-examine-btn:hover {
+    background: rgba(34, 197, 94, 0.25);
+    border-color: var(--accent-green);
+  }
+
+  /* Animations */
+  @keyframes slideUpFade {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes checkScale {
+    0% {
+      transform: scale(0.5);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.15);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes glowPulse {
+    0%, 100% {
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 25px rgba(34, 197, 94, 0.5);
+    }
+  }
+
+  /* Stagger Animation */
+  .supp-card:nth-child(1) { animation-delay: 0.05s; }
+  .supp-card:nth-child(2) { animation-delay: 0.1s; }
+  .supp-card:nth-child(3) { animation-delay: 0.15s; }
+  .supp-card:nth-child(4) { animation-delay: 0.2s; }
+  .supp-card:nth-child(5) { animation-delay: 0.25s; }
+  .supp-card:nth-child(6) { animation-delay: 0.3s; }
+  .supp-card:nth-child(7) { animation-delay: 0.35s; }
+  .supp-card:nth-child(8) { animation-delay: 0.4s; }
+
+  .supp-card.done {
+    animation: glowPulse 2s ease-in-out;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="stars"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="blob blob-4"></div>
+
+  <div class="content-wrapper">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="glass-card">
+        <div class="logo-section">
+          <div class="logo-icon">🌿</div>
+          <div>
+            <div class="logo-text">SuppPower OS</div>
+            <div class="logo-sub">Biohacking Console</div>
+          </div>
+        </div>
+        
+        <div class="progress-section">
+          <div class="progress-meta">
+            <span class="progress-label">Tages-Fortschritt</span>
+            <span><span class="progress-count" id="doneCount">0</span><span class="progress-total" id="totalCount"> / 0</span></span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card portion-tabs-wrap">
+        <div class="progress-label" style="margin-bottom: 12px; color: var(--accent-green);">Portionen</div>
+        <div class="portion-tabs" id="portionTabs"></div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="glass-card hero-card">
+        <div class="hero-info">
+          <h2 id="heroLabel">PORTION 1</h2>
+          <h1 id="heroTitle">—</h1>
+          <p id="heroSubtitle">—</p>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <h3 id="heroTotal">—</h3>
+            <p>Gesamt</p>
+          </div>
+          <div class="stat-item">
+            <h3 id="heroDone">—</h3>
+            <p>Erledigt</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="supplements-grid" id="supplementList"></div>
+    </div>
+  </div>
+
+  <div class="bottom-actions">
+    <button class="btn" onclick="resetPortion()">↺ Reset</button>
+    <button class="btn btn-primary" onclick="markAllDone()">Alle erledigt →</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
+<div class="sheet" id="detailSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-name" id="sheetName"></div>
+  <div class="sheet-focus" id="sheetFocus"></div>
+  <div class="sheet-desc" id="sheetDesc"></div>
+  <div class="sheet-row"><span class="sheet-row-label">EVIDENCE</span><span class="sheet-row-val" id="sheetEvidence"></span></div>
+  <div class="sheet-row"><span class="sheet-row-label">FOCUS</span><span class="sheet-row-val" id="sheetFocusVal"></span></div>
+  <div class="sheet-row"><span class="sheet-row-label">STATUS</span><span class="sheet-row-val" id="sheetStatus"></span></div>
+  <a class="sheet-examine-btn" id="sheetExamineLink" href="#" target="_blank">→ Examine.com öffnen</a>
+</div>
+
+<script>
+const portions = [
+  {
+    id: "p1", title: "Portion 1", meta: "AMPK & Reset", subtitle: "Morgens nüchtern", color: "#4ade80",
+    supplements: [
+      { id: "nmn", name: "NMN", description: "Zelluläre Energie & NAD+", focus: "NAD", evidence: "★★☆", examineSlug: "nicotinamide-mononucleotide" },
+      { id: "nac", name: "NAC", description: "Glutathion & Detox", focus: "Detox", evidence: "★★★", examineSlug: "n-acetylcysteine" },
+      { id: "ber", name: "Berberine", description: "AMPK Aktivator & Metabolismus", focus: "AMPK", evidence: "★★★", examineSlug: "berberine" },
+      { id: "res", name: "Resveratrol", description: "Sirtuine & Zellschutz", focus: "AMPK", evidence: "★★☆", examineSlug: "resveratrol" }
+    ]
+  },
+  {
+    id: "p2", title: "Portion 2", meta: "Basis & Mikronährstoffe", subtitle: "Frühstück", color: "#60a5fa",
+    supplements: [
+      { id: "vd3", name: "Vitamin D3", description: "Immunsystem & Knochendichte", focus: "Immune", evidence: "★★★", examineSlug: "vitamin-d" },
+      { id: "vk2", name: "Vitamin K2", description: "Kalziumtransport & Arterien", focus: "Cardio", evidence: "★★☆", examineSlug: "vitamin-k2" },
+      { id: "mg", name: "Magnesium", description: "300+ Enzymprozesse", focus: "neutral", evidence: "★★★", examineSlug: "magnesium" },
+      { id: "zn", name: "Zink", description: "Immunfunktion & Testosteron", focus: "Immune", evidence: "★★★", examineSlug: "zinc" },
+      { id: "om3", name: "Omega-3", description: "Entzündungshemmung & Gehirn", focus: "neutral", evidence: "★★★", examineSlug: "fish-oil" }
+    ]
+  },
+  {
+    id: "p3", title: "Portion 3", meta: "mTOR & Aufbau", subtitle: "Pre-Workout", color: "#f97316",
+    supplements: [
+      { id: "cre", name: "Creatin", description: "ATP & muskuläre Kraft", focus: "mTOR", evidence: "★★★", examineSlug: "creatine" },
+      { id: "leu", name: "Leucin", description: "mTOR-Trigger & Proteinsynthese", focus: "mTOR", evidence: "★★★", examineSlug: "leucine" },
+      { id: "caf", name: "Koffein", description: "Fokus & Performance", focus: "AMPK", evidence: "★★★", examineSlug: "caffeine" }
+    ]
+  },
+  {
+    id: "p4", title: "Portion 4", meta: "Recovery & Stress", subtitle: "Post-Workout", color: "#c084fc",
+    supplements: [
+      { id: "ash", name: "Ashwagandha", description: "Cortisol & Stressadaptation", focus: "Stress", evidence: "★★★", examineSlug: "ashwagandha" },
+      { id: "rho", name: "Rhodiola", description: "Fatigue & mentale Resilienz", focus: "Stress", evidence: "★★☆", examineSlug: "rhodiola-rosea" },
+      { id: "cit", name: "L-Citrullin", description: "NO-Produktion & Durchblutung", focus: "Cardio", evidence: "★★★", examineSlug: "citrulline" }
+    ]
+  },
+  {
+    id: "p5", title: "Portion 5", meta: "Mittagessen", subtitle: "Zu Mittag", color: "#f59e0b",
+    supplements: [
+      { id: "q10", name: "CoQ10", description: "Mitochondriale Energie", focus: "AMPK", evidence: "★★★", examineSlug: "coenzyme-q10" },
+      { id: "ala", name: "Alpha-Liponsäure", description: "Antioxidans & Insulinsensitivität", focus: "AMPK", evidence: "★★★", examineSlug: "alpha-lipoic-acid" },
+      { id: "pip", name: "Piperin", description: "Bioverfügbarkeit +20–2000%", focus: "neutral", evidence: "★★★", examineSlug: "piperine" }
+    ]
+  },
+  {
+    id: "p6", title: "Portion 6", meta: "Gehirn & Fokus", subtitle: "Nachmittags", color: "#22d3ee",
+    supplements: [
+      { id: "lion", name: "Lion's Mane", description: "NGF & neuronale Plastizität", focus: "neutral", evidence: "★★☆", examineSlug: "lions-mane-mushroom" },
+      { id: "bac", name: "Bacopa", description: "Gedächtnis & Acetylcholin", focus: "neutral", evidence: "★★★", examineSlug: "bacopa-monnieri" },
+      { id: "gin", name: "Ginkgo", description: "Durchblutung & Kognition", focus: "Cardio", evidence: "★★☆", examineSlug: "ginkgo-biloba" }
+    ]
+  },
+  {
+    id: "p7", title: "Portion 7", meta: "Abendessen", subtitle: "Zu Abend", color: "#fb7185",
+    supplements: [
+      { id: "cur", name: "Curcumin", description: "Entzündungshemmung & NF-κB", focus: "neutral", evidence: "★★★", examineSlug: "curcumin" },
+      { id: "que", name: "Quercetin", description: "Senolytikum & Antioxidans", focus: "AMPK", evidence: "★★☆", examineSlug: "quercetin" }
+    ]
+  },
+  {
+    id: "p8", title: "Portion 8", meta: "Schlaf & Regeneration", subtitle: "Vor dem Schlafen", color: "#818cf8",
+    supplements: [
+      { id: "mel", name: "Melatonin", description: "Schlafeinleitung & Antioxidans", focus: "Sleep", evidence: "★★★", examineSlug: "melatonin" },
+      { id: "gli", name: "Glycin", description: "Schlafqualität & Kollagen", focus: "Sleep", evidence: "★★★", examineSlug: "glycine" },
+      { id: "l-t", name: "L-Theanin", description: "Entspannung ohne Sedierung", focus: "Stress", evidence: "★★★", examineSlug: "theanine" },
+      { id: "app", name: "Apigenin", description: "Anxiolytikum & Schlaftiefe", focus: "Sleep", evidence: "★★☆", examineSlug: "apigenin" }
+    ]
+  }
+];
+
+const STORAGE_KEY = 'supppower_state_green_v3';
+let state = {};
+let activePortionIdx = 0;
+
+function getTodayString() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function loadAppState() {
+  portions.forEach(p => p.supplements.forEach(s => {
+    state[s.id] = 'open';
+  }));
+
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    saveAppState();
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    const today = getTodayString();
+
+    if (parsed.dayStamp !== today) {
+      activePortionIdx = 0;
+      saveAppState();
+      return;
+    }
+
+    if (parsed.activePortionIdx >= 0 && parsed.activePortionIdx < portions.length) {
+      activePortionIdx = parsed.activePortionIdx;
+    }
+
+    if (parsed.state && typeof parsed.state === 'object') {
+      Object.keys(parsed.state).forEach(key => {
+        if (key in state) {
+          state[key] = parsed.state[key];
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Load error:', err);
+    saveAppState();
+  }
+}
+
+function saveAppState() {
+  const payload = {
+    dayStamp: getTodayString(),
+    activePortionIdx,
+    state
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+}
+
+function renderTabs() {
+  const container = document.getElementById('portionTabs');
+  container.innerHTML = portions.map((p, idx) => {
+    const allDone = p.supplements.every(s => state[s.id] === 'done');
+    return `
+      <div class="glass-card portion-tab ${idx === activePortionIdx ? 'active' : ''}" onclick="selectPortion(${idx})">
+        <div class="portion-tab-title">${p.title}</div>
+        <div class="portion-tab-meta">${p.meta}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderHero() {
+  const p = portions[activePortionIdx];
+  const doneCount = p.supplements.filter(s => state[s.id] === 'done').length;
+  document.getElementById('heroLabel').textContent = p.title.toUpperCase();
+  document.getElementById('heroTitle').textContent = p.meta;
+  document.getElementById('heroSubtitle').textContent = '⌚ ' + p.subtitle;
+  document.getElementById('heroTotal').textContent = p.supplements.length;
+  document.getElementById('heroDone').textContent = doneCount;
+}
+
+function renderSupplements() {
+  const p = portions[activePortionIdx];
+  const container = document.getElementById('supplementList');
+  container.innerHTML = p.supplements.map(s => `
+    <div class="glass-card supp-card ${state[s.id] === 'done' ? 'done' : ''}" onclick="toggleSupp('${s.id}')">
+      <div class="supp-check">
+        <svg class="check-icon" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <div class="supp-info">
+        <h4>${s.name}</h4>
+        <p>${s.description}</p>
+        <span class="badge">${s.focus}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleSupp(id) {
+  state[id] = state[id] === 'done' ? 'open' : 'done';
+  saveAppState();
+  renderProgress();
+  renderHero();
+  renderSupplements();
+  renderTabs();
+
+  if (navigator.vibrate && state[id] === 'done') {
+    navigator.vibrate([15, 10, 15]);
+  }
+}
+
+function selectPortion(idx) {
+  activePortionIdx = idx;
+  saveAppState();
+  renderTabs();
+  renderHero();
+  renderSupplements();
+
+  if (navigator.vibrate) navigator.vibrate(8);
+}
+
+function renderProgress() {
+  let done = 0;
+  let total = 0;
+  portions.forEach(p => p.supplements.forEach(s => {
+    total++;
+    if (state[s.id] === 'done') done++;
+  }));
+  document.getElementById('doneCount').textContent = done;
+  document.getElementById('totalCount').textContent = ` / ${total}`;
+  const pct = total ? (done / total * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function resetPortion() {
+  const p = portions[activePortionIdx];
+  p.supplements.forEach(s => {
+    state[s.id] = 'open';
+  });
+  saveAppState();
+  renderProgress();
+  renderHero();
+  renderSupplements();
+  renderTabs();
+  if (navigator.vibrate) navigator.vibrate([20, 10, 20, 10, 20]);
+}
+
+function markAllDone() {
+  const p = portions[activePortionIdx];
+  const allDone = p.supplements.every(s => state[s.id] === 'done');
+  if (allDone) return;
+
+  p.supplements.forEach(s => {
+    state[s.id] = 'done';
+  });
+  saveAppState();
+  renderProgress();
+  renderHero();
+  renderSupplements();
+  renderTabs();
+  if (navigator.vibrate) navigator.vibrate([30, 15, 30]);
+}
+
+function openSheet(s) {
+  document.getElementById('sheetName').textContent = s.name;
+  document.getElementById('sheetFocus').textContent = 'FOCUS: ' + s.focus;
+  document.getElementById('sheetDesc').textContent = s.description;
+  document.getElementById('sheetEvidence').textContent = s.evidence;
+  document.getElementById('sheetFocusVal').textContent = s.focus;
+  document.getElementById('sheetStatus').textContent = state[s.id] === 'done' ? '✓ Erledigt' : 'Offen';
+  document.getElementById('sheetExamineLink').href = `https://examine.com/supplements/${s.examineSlug}/`;
+  document.getElementById('sheetOverlay').classList.add('open');
+  document.getElementById('detailSheet').classList.add('open');
+}
+
+function closeSheet() {
+  document.getElementById('sheetOverlay').classList.remove('open');
+  document.getElementById('detailSheet').classList.remove('open');
+}
+
+// Init
+loadAppState();
+renderProgress();
+renderTabs();
+renderHero();
+renderSupplements();
+</script>
+</body>
+</html>
