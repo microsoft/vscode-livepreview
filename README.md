@@ -66,11 +66,10 @@ Run `Live Preview: Show Debug Preview` in the command palette to get these debug
 
 
 ### Console Messages
-When previewing in VS Code's Integrated Browser, open **Developer Tools** from the browser toolbar to view console messages and inspect the page.
+Live Preview uses VS Code's Integrated Browser by default. To view messages from `console.log()` and other console methods, open **Developer Tools** from the browser toolbar and select the **Console** tab. You can also use Developer Tools to inspect the page. See the [Integrated Browser Developer Tools documentation](https://code.visualstudio.com/docs/debugtest/integrated-browser#_developer-tools) for more information.
 
-The legacy embedded preview still provides the `Embedded Live Preview Console` channel in the `Output` tab. This channel is created only when the legacy preview is opened, such as when `livePreview.useIntegratedBrowser` is disabled or the Integrated Browser is unavailable.
+The `Embedded Live Preview Console` channel in VS Code's `Output` tab does **not** display messages from the Integrated Browser. It is only available for the legacy embedded preview, when `livePreview.useIntegratedBrowser` is disabled or the Integrated Browser is unavailable.
 
-![console-demo](https://raw.githubusercontent.com/microsoft/vscode-livepreview/main/img/console-demo.gif)
 
 ### Workspace-less Previewing
 No workspace? No problem! For a quick preview of your file, the server can also access files outside of your workspace to preview.
