@@ -209,6 +209,14 @@ function handleMessage(event) {
 			});
 			break;
 		}
+		// ── Element Picker ────────────────────────────────────────────────────
+		case 'toggle-picker':
+			pickerActive ? deactivatePicker() : activatePicker();
+			break;
+		case 'deactivate-picker':
+			deactivatePicker();
+			break;
+		// ─────────────────────────────────────────────────────────────────────
 		default: {
 			if (
 				event.data.command != 'perform-url-check' &&
@@ -335,4 +343,215 @@ function reloadPage() {
 		: false;
 	if (block) return;
 	window.location.reload();
+}
+
+// =============================================================================
+// Element Picker
+// =============================================================================
+
+let pickerActive = false;
+let _highlightOverlay = null;
+let _tooltipEl = null;
+
+/**
+ * @description Create the highlight overlay and tooltip DOM elements used while
+ *  the picker is active. Safe to call multiple times — only creates once.
+ */
+function _createPickerElements() {
+	if (_highlightOverlay) return;
+
+	_highlightOverlay = document.createElement('div');
+	Object.assign(_highlightOverlay.style, {
+		position: 'fixed',
+		pointerEvents: 'none',
+		zIndex: '2147483646',
+		outline: '2px solid #007acc',
+		background: 'rgba(0,122,204,0.10)',
+		borderRadius: '2px',
+		boxSizing: 'border-box',
+		transition: 'top 0.05s,left 0.05s,width 0.05s,height 0.05s',
+	});
+
+	_tooltipEl = document.createElement('div');
+	Object.assign(_tooltipEl.style, {
+		position: 'fixed',
+		pointerEvents: 'none',
+		zIndex: '2147483647',
+		background: '#007acc',
+		color: '#ffffff',
+		fontSize: '11px',
+		lineHeight: '1.4',
+		padding: '2px 7px',
+		borderRadius: '3px',
+		fontFamily: 'monospace, monospace',
+		whiteSpace: 'nowrap',
+		maxWidth: '340px',
+		overflow: 'hidden',
+		textOverflow: 'ellipsis',
+	});
+
+	document.body.appendChild(_highlightOverlay);
+	document.body.appendChild(_tooltipEl);
+}
+
+/**
+ * @description Remove and null the picker overlay elements.
+ */
+function _removePickerElements() {
+	_highlightOverlay && _highlightOverlay.remove();
+	_tooltipEl && _tooltipEl.remove();
+	_highlightOverlay = null;
+	_tooltipEl = null;
+}
+
+/**
+ * @description Build a short, human-readable label for an element (e.g. `p.intro` or `div#header`).
+ * @param {Element} el
+ * @returns {string}
+ */
+function _getElementLabel(el) {
+	const tag = el.tagName.toLowerCase();
+	const id = el.id ? `#${el.id}` : '';
+	const classes = el.classList.length
+		? '.' + Array.from(el.classList).slice(0, 2).join('.')
+		: '';
+	return `${tag}${id}${classes}`;
+}
+
+/**
+ * @description mousemove handler while picker is active. Updates the highlight
+ *  overlay and tooltip to follow the element under the cursor.
+ * @param {MouseEvent} e
+ */
+function _onPickerMouseMove(e) {
+	if (!pickerActive) return;
+
+	// Temporarily hide overlay so elementFromPoint is not confused by it
+	if (_highlightOverlay) _highlightOverlay.style.display = 'none';
+	if (_tooltipEl) _tooltipEl.style.display = 'none';
+
+	const el = document.elementFromPoint(e.clientX, e.clientY);
+
+	if (_highlightOverlay) _highlightOverlay.style.display = '';
+	if (_tooltipEl) _tooltipEl.style.display = '';
+
+	if (!el || el === document.documentElement || el === document.body) return;
+
+	const rect = el.getBoundingClientRect();
+	Object.assign(_highlightOverlay.style, {
+		top: rect.top + 'px',
+		left: rect.left + 'px',
+		width: rect.width + 'px',
+		height: rect.height + 'px',
+	});
+
+	const label = _getElementLabel(el);
+	_tooltipEl.textContent = label;
+
+	// Position tooltip above the element, but clamp so it stays on screen
+	const tipHeight = 22;
+	const tipTop = rect.top >= tipHeight + 4 ? rect.top - tipHeight - 2 : rect.bottom + 4;
+	const tipLeft = Math.max(0, Math.min(rect.left, window.innerWidth - 180));
+	Object.assign(_tooltipEl.style, {
+		top: tipTop + 'px',
+		left: tipLeft + 'px',
+	});
+}
+
+/**
+ * @description click handler while picker is active. Sends the selected
+ *  element's info to the parent (webview panel) and deactivates the picker.
+ * @param {MouseEvent} e
+ */
+function _onPickerClick(e) {
+	if (!pickerActive) return;
+	e.preventDefault();
+	e.stopImmediatePropagation();
+
+	// Hide overlays to get the real element underneath
+	if (_highlightOverlay) _highlightOverlay.style.display = 'none';
+	if (_tooltipEl) _tooltipEl.style.display = 'none';
+
+	const el = document.elementFromPoint(e.clientX, e.clientY);
+
+	if (!el || el === document.documentElement || el === document.body) {
+		deactivatePicker();
+		return;
+	}
+
+	const info = _buildElementInfo(el);
+	postParentMessage({ command: 'element-selected', text: JSON.stringify(info) });
+
+	deactivatePicker();
+}
+
+/**
+ * @description keydown handler while picker is active. Pressing Escape cancels
+ *  the picker without selecting anything.
+ * @param {KeyboardEvent} e
+ */
+function _onPickerKeyDown(e) {
+	if (!pickerActive) return;
+	if (e.key === 'Escape') {
+		e.stopImmediatePropagation();
+		deactivatePicker();
+	}
+}
+
+/**
+ * @description Serialize the key information needed for the extension to locate
+ *  the element in the source file.
+ * @param {Element} el
+ * @returns {object}
+ */
+function _buildElementInfo(el) {
+	// Primary signal: data-lp-line injected by SourceAnnotator at serve time.
+	// This is a direct, deterministic 1-based line number — no heuristics needed.
+	const sourceLine = el.getAttribute('data-lp-line');
+
+	// Fallback signals used only when data-lp-line is absent (e.g. JS-injected nodes)
+	const tag = el.tagName.toLowerCase();
+	const id = el.id || null;
+	const className = typeof el.className === 'string' ? el.className.trim() || null : null;
+	const fullText = el.textContent ? el.textContent.trim().slice(0, 120) : null;
+
+	return {
+		sourceLine: sourceLine ? parseInt(sourceLine, 10) : null,
+		tagName: tag,
+		id,
+		className,
+		fullText,
+		href: window.location.pathname,
+	};
+}
+
+
+/**
+ * @description Activate the element picker: cursor becomes a crosshair, the
+ *  highlight overlay tracks the hovered element, and the next click sends the
+ *  element info to the extension.
+ */
+function activatePicker() {
+	if (pickerActive) return;
+	pickerActive = true;
+	_createPickerElements();
+	document.documentElement.style.cursor = 'crosshair';
+	document.addEventListener('mousemove', _onPickerMouseMove, true);
+	document.addEventListener('click', _onPickerClick, true);
+	document.addEventListener('keydown', _onPickerKeyDown, true);
+	postParentMessage({ command: 'picker-activated' });
+}
+
+/**
+ * @description Deactivate the element picker, restore cursor and remove listeners.
+ */
+function deactivatePicker() {
+	if (!pickerActive) return;
+	pickerActive = false;
+	_removePickerElements();
+	document.documentElement.style.cursor = '';
+	document.removeEventListener('mousemove', _onPickerMouseMove, true);
+	document.removeEventListener('click', _onPickerClick, true);
+	document.removeEventListener('keydown', _onPickerKeyDown, true);
+	postParentMessage({ command: 'picker-deactivated' });
 }
